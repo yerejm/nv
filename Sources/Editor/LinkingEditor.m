@@ -18,6 +18,7 @@
 #import "LinkingEditor.h"
 #import "GlobalPrefs.h"
 #import "AppController.h"
+#import "AugmentedScrollView.h"
 #import "AppController_Importing.h"
 #import "NotesTableView.h"
 #import "LinkingEditor_Indentation.h"
@@ -81,7 +82,8 @@ CGFloat _perceptualDarkness(NSColor*a);
 	 @selector(setBackgroundTextColor:sender:),
 	 @selector(setForegroundTextColor:sender:),
      @selector(setManagesTextWidthInWindow:sender:),
-     @selector(setMaxNoteBodyWidth:sender:), nil];
+     @selector(setMaxNoteBodyWidth:sender:), @selector(setUseThemedScrollbars:sender:), nil];
+    NVConfigureScrolling(self.enclosingScrollView);
 	
 	[self setTextContainerInset:NSMakeSize(3, 8)];
 	[self setSmartInsertDeleteEnabled:NO];
@@ -106,6 +108,10 @@ CGFloat _perceptualDarkness(NSColor*a);
 }
 
 - (void)settingChangedForSelectorString:(NSString*)selectorString {
+    if ([selectorString isEqualToString:SEL_STR(setUseThemedScrollbars:sender:)] ||
+        [selectorString isEqualToString:SEL_STR(setForegroundTextColor:sender:)] ||
+        [selectorString isEqualToString:SEL_STR(setBackgroundTextColor:sender:)])
+        NVConfigureScrolling(self.enclosingScrollView);
     if ([selectorString isEqualToString:SEL_STR(setManagesTextWidthInWindow:sender:)] ||
         [selectorString isEqualToString:SEL_STR(setMaxNoteBodyWidth:sender:)]) {
         [self updateTextWidth];

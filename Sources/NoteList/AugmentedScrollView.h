@@ -21,3 +21,8 @@
 
 @interface AugmentedScrollView : NSScrollView
 @end
+
+@interface NVOverlayScroller : NSScroller
+@end
+
+void NVConfigureScrolling(NSScrollView *scrollView);

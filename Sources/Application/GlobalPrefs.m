@@ -71,6 +71,7 @@ static NSString *NoteBodyMaxWidthKey = @"NoteBodyMaxWidth";
 static NSString *ColorSchemeKey = @"InterfaceColorScheme";
 static NSString *AlternatingRowsKey = @"AlternatingRows";
 static NSString *ShowNoteListGridKey = @"ShowNoteListGrid";
+static NSString *UseThemedScrollbarsKey = @"UseThemedScrollbars";
 static NSString *BookmarksKey = @"Bookmarks";
 static NSString *LastScrollOffsetKey = @"LastScrollOffset";
 static NSString *LastSearchStringKey = @"LastSearchString";
@@ -134,6 +135,7 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
             @3, ColorSchemeKey,
             @NO, AlternatingRowsKey,
             @YES, ShowNoteListGridKey,
+            @NO, UseThemedScrollbarsKey,
 			[NSNumber numberWithBool:YES], MakeURLsClickableKey,
 			[NSNumber numberWithBool:YES], HighlightSearchTermsKey, 
 			[NSNumber numberWithBool:YES], TableColumnsHaveBodyPreviewKey, 
@@ -761,6 +763,11 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
     [self notifyCallbacksForSelector:@selector(setBackgroundTextColor:sender:) excludingSender:nil];
 }
 - (BOOL)alternatingRows { return [defaults boolForKey:AlternatingRowsKey]; }
+- (BOOL)useThemedScrollbars { return [defaults boolForKey:UseThemedScrollbarsKey]; }
+- (void)setUseThemedScrollbars:(BOOL)value sender:(id)sender {
+    [defaults setBool:value forKey:UseThemedScrollbarsKey];
+    SEND_CALLBACKS();
+}
 - (void)setAlternatingRows:(BOOL)value sender:(id)sender {
     [defaults setBool:value forKey:AlternatingRowsKey];
     SEND_CALLBACKS();

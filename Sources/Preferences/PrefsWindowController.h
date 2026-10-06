@@ -68,6 +68,7 @@
 - (IBAction)changedColorScheme:(id)sender;
 - (IBAction)changedAlternatingRows:(id)sender;
 - (IBAction)changedNoteListGrid:(id)sender;
+- (IBAction)changedThemedScrollbars:(id)sender;
 
 - (IBAction)changedBackgroundTextColorWell:(id)sender;
 - (IBAction)changedForegroundTextColorWell:(id)sender;

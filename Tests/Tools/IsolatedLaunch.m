@@ -19,6 +19,7 @@
 #import "PTHotKey.h"
 #import "PTKeyCombo.h"
 #import "DualField.h"
+#import "AugmentedScrollView.h"
 #import "RBSplitView/RBSplitView.h"
 #import "TemporaryFileCachePreparer.h"
 #import "AcceptanceEditorSession.h"
@@ -371,6 +372,11 @@ static void RunAcceptance(void) {
         for (NSMenuItem *item in sortMenu.itemArray)
             if (item.state == NSControlStateValueOn) directionShown = [item.title hasSuffix:@"↓"] || [item.title hasSuffix:@"↑"];
         Check(@"sort menu exposes current direction", directionShown);
+        [appearancePrefs setUseThemedScrollbars:YES sender:nil];
+        Check(@"themed overlay scrollbars apply to list and editor", [noteTable.enclosingScrollView.verticalScroller isKindOfClass:[NVOverlayScroller class]] && [editor.enclosingScrollView.verticalScroller isKindOfClass:[NVOverlayScroller class]] && editor.enclosingScrollView.scrollerStyle == NSScrollerStyleOverlay);
+        Check(@"scrollbars retain native interaction and elasticity", editor.enclosingScrollView.verticalScroller.controlSize == NSControlSizeRegular && editor.enclosingScrollView.verticalScrollElasticity == NSScrollElasticityAllowed && editor.enclosingScrollView.verticalScroller.target == editor.enclosingScrollView);
+        [appearancePrefs setUseThemedScrollbars:NO sender:nil];
+        Check(@"turning off themed scrollbars restores system style", [editor.enclosingScrollView.verticalScroller class] == [NSScroller class] && editor.enclosingScrollView.scrollerStyle == [NSScroller preferredScrollerStyle]);
         [appearancePrefs setColorScheme:3 sender:nil];
         [appearancePrefs setForegroundTextColor:[NSColor whiteColor] sender:nil];
         [appearancePrefs setBackgroundTextColor:[NSColor colorWithCalibratedWhite:0.12 alpha:1] sender:nil];

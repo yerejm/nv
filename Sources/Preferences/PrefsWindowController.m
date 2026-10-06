@@ -177,6 +177,9 @@
 - (IBAction)changedNoteListGrid:(id)sender {
     [prefsController setShowNoteListGrid:[sender state] == NSControlStateValueOn sender:self];
 }
+- (IBAction)changedThemedScrollbars:(id)sender {
+    [prefsController setUseThemedScrollbars:[sender state] == NSControlStateValueOn sender:self];
+}
 - (IBAction)changedSearchHighlightColorWell:(id)sender {
 	[prefsController setSearchTermHighlightColor:[searchHighlightColorWell color] sender:self];
 }
@@ -445,6 +448,10 @@
     [grid setFrame:NSMakeRect(24, 82, 460, 24)];
     [grid setState:[prefsController showNoteListGrid]];
     [displayView addSubview:grid];
+    NSButton *scrollbars = [NSButton checkboxWithTitle:NSLocalizedString(@"Use themed overlay scrollbars", nil) target:self action:@selector(changedThemedScrollbars:)];
+    [scrollbars setFrame:NSMakeRect(24, 49, 460, 24)];
+    [scrollbars setState:[prefsController useThemedScrollbars]];
+    [displayView addSubview:scrollbars];
 	
 	[window setDelegate:self];
 	
