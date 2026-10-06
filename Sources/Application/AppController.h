@@ -34,7 +34,7 @@
 
 @interface AppController : NSObject
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-<NSMenuItemValidation, NSApplicationDelegate, NSToolbarDelegate, NSTableViewDelegate, NSWindowDelegate, NSTextFieldDelegate, NSTextViewDelegate>
+<NSMenuItemValidation, NSApplicationDelegate, NSToolbarDelegate, NSTableViewDelegate, NSWindowDelegate, NSTextFieldDelegate, NSTextViewDelegate, NSTokenFieldDelegate>
 #endif
 {
     IBOutlet DualField *field;
@@ -64,6 +64,10 @@
 	BOOL activationRequested;
 	BOOL changingViewLayout;
 	BOOL fullScreenOriginalLayout, fullScreenSearchVisible, fullScreenEditorFocused;
+    NSTokenField *multiTagField;
+    NSTextField *wordCountLabel;
+    id modifierMonitor;
+    BOOL temporaryWordCount;
 	ViewLocationContext listUpdateViewCtx;
 	BOOL isFilteringFromTyping, typedStringIsCached;
 	BOOL isCreatingANote;
@@ -91,6 +95,10 @@ void outletObjectAwoke(id sender);
 - (IBAction)editNoteExternally:(id)sender;
 - (IBAction)printNote:(id)sender;
 - (IBAction)tagNote:(id)sender;
+- (void)applySharedTags:(NSArray *)tags toNotes:(NSArray *)notes originalSharedTags:(NSArray *)sharedTags;
+- (void)flagsChanged:(NSEvent *)event;
+- (void)updateWordCount;
+- (IBAction)toggleWordCount:(id)sender;
 - (IBAction)importNotes:(id)sender;
 - (IBAction)switchViewLayout:(id)sender;
 - (IBAction)toggleCollapse:(id)sender;

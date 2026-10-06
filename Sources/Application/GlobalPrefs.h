@@ -169,6 +169,12 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 - (NSColor *)interfaceSeparatorColor;
 - (BOOL)useThemedScrollbars;
 - (void)setUseThemedScrollbars:(BOOL)value sender:(id)sender;
+- (BOOL)useAutoPairing;
+- (void)setUseAutoPairing:(BOOL)value sender:(id)sender;
+- (BOOL)rightToLeftEditing;
+- (void)setRightToLeftEditing:(BOOL)value sender:(id)sender;
+- (BOOL)showWordCount;
+- (void)setShowWordCount:(BOOL)value sender:(id)sender;
 
 - (BOOL)autoCompleteSearches;
 - (BOOL)autoFormatsMarkdownHeadings;

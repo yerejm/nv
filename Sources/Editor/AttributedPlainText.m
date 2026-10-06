@@ -374,7 +374,7 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 
 - (void)addStrikethroughNearDoneTagsForRange:(NSRange)changedRange {
 	//scan line by line
-	//if the line ends in " @done", then strikethrough everything prior and add NVHiddenDoneTagAttributeName
+	//Strike text preceding a trailing TaskPaper completion tag, including dated tags.
 	//if the line doesn't end in " @done", and it has NVHiddenDoneTagAttributeName + NSStrikethroughStyleAttributeName,
 	//  then remove both attributes
 	//all other NSStrikethroughStyleAttributeName by itself will be ignored
@@ -382,7 +382,7 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 	if (![[GlobalPrefs defaultPrefs] autoFormatsDoneTag])
 		return;
 		
-	NSString *doneTag = @" @done";
+	NSRegularExpression *donePattern = [NSRegularExpression regularExpressionWithPattern:@"[ \t]@done(?:\\([^\\r\\n)]*\\)|[ \t]+-[ \t]+[^\\r\\n]*)?[ \t]*$" options:0 error:NULL];
 	NSCharacterSet *newlineSet = [NSCharacterSet newlineCharacterSet];
 	
 	NSRange lineEndRange, scanRange = changedRange;
@@ -396,15 +396,15 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 			
 			NSRange thisLineRange = NSMakeRange(scanRange.location, lineEndRange.location - scanRange.location);
 			
-			//this detection is not good enough; it can't handle the case of @done(date)
-			if ([[[self string] substringWithRange:thisLineRange] hasSuffix:doneTag]) {
+			NSTextCheckingResult *done = [donePattern firstMatchInString:self.string options:0 range:thisLineRange];
+			if (done) {
 				
 				//add strikethrough and NVHiddenDoneTagAttributeName attributes, because this line ends in @done
 				[self addAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInt:NSUnderlineStyleSingle], 
 									 NSStrikethroughStyleAttributeName, [NSNull null], NVHiddenDoneTagAttributeName, nil] 
-							  range:NSMakeRange(thisLineRange.location, thisLineRange.length - [doneTag length])];
+							  range:NSMakeRange(thisLineRange.location, done.range.location - thisLineRange.location)];
 				//and the done tag itself should never be struck-through; remove that just in case typing attributes had carried over from elsewhere
-				[self removeAttribute:NSStrikethroughStyleAttributeName range:NSMakeRange(NSMaxRange(thisLineRange) - [doneTag length], [doneTag length])];
+				[self removeAttribute:NSStrikethroughStyleAttributeName range:done.range];
 				
 			} else if ([self attribute:NVHiddenDoneTagAttributeName existsInRange:thisLineRange]) {
 				

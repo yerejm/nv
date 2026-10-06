@@ -42,6 +42,7 @@
 #import "InvocationRecorder.h"
 #import "LinearDividerShader.h"
 #import "SecureTextEntryManager.h"
+#import "LabelsListController.h"
 #import "NSString_CustomTruncation.h"
 
 
@@ -103,6 +104,10 @@
 	[window setDelegate:self];
 	[field setDelegate:self];
 	[textView setDelegate:self];
+    modifierMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskFlagsChanged handler:^NSEvent *(NSEvent *event) {
+        if (event.window == window) [self flagsChanged:event];
+        return event;
+    }];
 	[splitView setDelegate:self];
 	
 	//set up temporary FastListDataSource containing false visible notes
@@ -127,6 +132,19 @@
 		
 		[splitSubview addSubview:editorStatusView positioned:NSWindowAbove relativeTo:splitSubview];
 		[editorStatusView setFrame:[[textView enclosingScrollView] frame]];
+        NSScrollView *editorScroll = [textView enclosingScrollView];
+        wordCountLabel = [[NSTextField labelWithString:@""] retain];
+        [wordCountLabel setFont:[NSFont systemFontOfSize:11]];
+        [wordCountLabel setAlignment:NSTextAlignmentRight];
+        [wordCountLabel setDrawsBackground:YES];
+        [wordCountLabel setTranslatesAutoresizingMaskIntoConstraints:NO];
+        [wordCountLabel setHidden:YES];
+        [editorScroll addSubview:wordCountLabel];
+        [NSLayoutConstraint activateConstraints:@[
+            [wordCountLabel.trailingAnchor constraintEqualToAnchor:editorScroll.trailingAnchor constant:-24],
+            [wordCountLabel.bottomAnchor constraintEqualToAnchor:editorScroll.bottomAnchor constant:-4],
+            [wordCountLabel.widthAnchor constraintEqualToConstant:170],
+            [wordCountLabel.heightAnchor constraintEqualToConstant:18]]];
 		
 		[notesTableView restoreColumns];
 		
@@ -264,6 +282,7 @@ void outletObjectAwoke(id sender) {
 	 @selector(setNoteBodyFont:sender:),  //when to tell notationcontroller to restyle its notes
 	 @selector(setForegroundTextColor:sender:),  //ditto
      @selector(setBackgroundTextColor:sender:),
+     @selector(setShowWordCount:sender:),
 	 @selector(setTableFontSize:sender:),  //when to tell notationcontroller to regenerate the (now potentially too-short) note-body previews
 	 @selector(addTableColumn:sender:),  //ditto
 	 @selector(removeTableColumn:sender:),  //ditto
@@ -411,6 +430,10 @@ terminateApp:
 	[notesMenu setSubmenu:[[ExternalEditorListController sharedInstance] addEditNotesMenu] forItem:[notesMenu itemWithTag:88]];
 	
 	NSMenu *viewMenu = [[[NSApp mainMenu] itemWithTag:VIEW_MENU_ID] submenu];
+    NSInteger wordCountIndex = [viewMenu indexOfItemWithTarget:self andAction:@selector(toggleWordCount:)];
+    NSMenuItem *wordItem = wordCountIndex == -1 ? [viewMenu addItemWithTitle:NSLocalizedString(@"Show Word Count", nil) action:@selector(toggleWordCount:) keyEquivalent:@""] : [viewMenu itemAtIndex:wordCountIndex];
+    [wordItem setTarget:self];
+    [wordItem setState:[prefsController showWordCount]];
 	NSInteger collapseIndex = [viewMenu indexOfItemWithTarget:self andAction:@selector(toggleCollapse:)];
 	NSMenuItem *collapseItem;
 	if (collapseIndex == -1) {
@@ -459,6 +482,7 @@ terminateApp:
     [notationController regenerateAllPreviews];
     [notesTableView reloadDataIfNotEditing];
     [splitView setNeedsDisplay:YES];
+    [self updateWordCount];
 }
 
 - (void)tableView:(NSTableView *)table willDisplayCell:(id)cell forTableColumn:(NSTableColumn *)column row:(NSInteger)row {
@@ -628,12 +652,48 @@ terminateApp:
 	NSIndexSet *indexes = [notesTableView selectedRowIndexes];
 	
 	if ([indexes count] > 1) {
-		//show dialog for multiple notes, add or remove tags from them all using a dialog
-		//tags to remove is constituted by a union of all selected notes' tags
-		NSLog(@"multiple rows");	
+        NSArray *notes = [notationController notesAtIndexes:indexes];
+        NSMutableArray *shared = [NSMutableArray arrayWithArray:[labelsOfNote(notes.firstObject) labelCompatibleWords]];
+        for (NoteObject *note in notes) {
+            NSSet *tags = [NSSet setWithArray:[[labelsOfNote(note) labelCompatibleWords] valueForKey:@"lowercaseString"]];
+            for (NSString *tag in [[shared copy] autorelease])
+                if (![tags containsObject:tag.lowercaseString]) [shared removeObject:tag];
+        }
+        NSAlert *alert = NVMakeAlert(NSLocalizedString(@"Edit Shared Tags", nil), NSLocalizedString(@"Edit tags shared by the selected notes. Other tags are kept.", nil), NSLocalizedString(@"Apply", nil), NSLocalizedString(@"Cancel", nil), nil);
+        NSTokenField *tags = [[[NSTokenField alloc] initWithFrame:NSMakeRect(0, 0, 380, 55)] autorelease];
+        [tags setTokenizingCharacterSet:[NSCharacterSet labelSeparatorCharacterSet]];
+        [tags setObjectValue:shared];
+        [tags setDelegate:self];
+        [tags setAccessibilityLabel:NSLocalizedString(@"Shared tags", nil)];
+        [alert setAccessoryView:tags];
+        multiTagField = tags;
+        [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
+            if (response == NSAlertFirstButtonReturn)
+                [self applySharedTags:[tags objectValue] toNotes:notes originalSharedTags:shared];
+            multiTagField = nil;
+        }];
+		[window.attachedSheet makeFirstResponder:tags];
 	} else if ([indexes count] == 1) {
 		[notesTableView editRowAtColumnWithIdentifier:NoteLabelsColumnString];		
 	}
+}
+
+- (NSArray *)tokenField:(NSTokenField *)tokenField completionsForSubstring:(NSString *)substring indexOfToken:(NSInteger)index indexOfSelectedItem:(NSInteger *)selectedIndex {
+    return [[notationController labelsListDataSource] labelTitlesPrefixedByString:substring indexOfSelectedItem:selectedIndex minusWordSet:[NSSet setWithArray:[tokenField objectValue] ?: @[]]];
+}
+
+- (void)applySharedTags:(NSArray *)tags toNotes:(NSArray *)notes originalSharedTags:(NSArray *)sharedTags {
+    NSSet *oldShared = [NSSet setWithArray:[sharedTags valueForKey:@"lowercaseString"]];
+    for (NoteObject *note in notes) {
+        NSMutableArray *result = [NSMutableArray array];
+        NSMutableSet *seen = [NSMutableSet set];
+        for (NSString *tag in [labelsOfNote(note) labelCompatibleWords])
+            if (![oldShared containsObject:tag.lowercaseString]) { [result addObject:tag]; [seen addObject:tag.lowercaseString]; }
+        for (NSString *value in tags)
+            for (NSString *tag in [value labelCompatibleWords])
+                if (tag.length && ![seen containsObject:tag.lowercaseString]) { [result addObject:tag]; [seen addObject:tag.lowercaseString]; }
+        [note setLabelString:[result componentsJoinedByString:@", "]];
+    }
 }
 
 - (void)noteImporter:(AlienNoteImporter*)importer importedNotes:(NSArray*)notes {
@@ -647,6 +707,11 @@ terminateApp:
 }
 
 - (void)settingChangedForSelectorString:(NSString*)selectorString {
+    if ([selectorString isEqualToString:SEL_STR(setShowWordCount:sender:)]) {
+        [self updateWordCount];
+        [self updateNoteMenus];
+        return;
+    }
     if ([selectorString isEqualToString:SEL_STR(setAliasDataForDefaultDirectory:sender:)]) {
 		//defaults changed for the database location -- load the new one!
 		
@@ -942,6 +1007,36 @@ terminateApp:
 	currentNote = [aNote retain];
 }
 
+- (void)updateWordCount {
+    BOOL visible = currentNote && !textView.hidden && ([prefsController showWordCount] || temporaryWordCount);
+    [wordCountLabel setHidden:!visible];
+    NSScrollView *scroll = textView.enclosingScrollView;
+    [scroll setAutomaticallyAdjustsContentInsets:NO];
+    [scroll setContentInsets:NSEdgeInsetsMake(0, 0, visible ? 24 : 0, 0)];
+    if (!visible) return;
+    __block NSUInteger count = 0;
+    [textView.string enumerateSubstringsInRange:NSMakeRange(0, textView.string.length)
+        options:NSStringEnumerationByWords | NSStringEnumerationSubstringNotRequired
+        usingBlock:^(NSString *substring, NSRange range, NSRange enclosingRange, BOOL *stop) { count++; }];
+    [wordCountLabel setStringValue:[NSString stringWithFormat:NSLocalizedString(@"%lu words", nil), (unsigned long)count]];
+    [wordCountLabel setTextColor:[prefsController interfaceSecondaryColor]];
+    [wordCountLabel setBackgroundColor:[prefsController backgroundTextColor]];
+}
+
+- (IBAction)toggleWordCount:(id)sender {
+    [prefsController setShowWordCount:![prefsController showWordCount] sender:nil];
+}
+
+- (void)flagsChanged:(NSEvent *)event {
+    temporaryWordCount = (event.modifierFlags & NSEventModifierFlagOption) != 0;
+    [self updateWordCount];
+}
+
+- (void)windowDidResignKey:(NSNotification *)notification {
+    temporaryWordCount = NO;
+    [self updateWordCount];
+}
+
 - (NoteObject*)selectedNoteObject {
 	return currentNote;
 }
@@ -1185,6 +1280,7 @@ terminateApp:
 	[textView clearFindPanel];
 	[textView setHidden:enable];
 	[editorStatusView setHidden:!enable];
+    [self updateWordCount];
 	
 	if (enable) {
 		[editorStatusView setLabelStatus:[notesTableView numberOfSelectedRows]];
@@ -1221,6 +1317,8 @@ terminateApp:
 		
 		//restore string
 		[[textView textStorage] setAttributedString:[note contentString]];
+        if ([prefsController rightToLeftEditing]) [textView updateWritingDirection];
+        [self updateWordCount];
 		
 		//[textView setAutomaticallySelectedRange:NSMakeRange(0,0)];
 		
@@ -1253,6 +1351,7 @@ terminateApp:
 	
 	if (textObject == textView) {
 		[currentNote setContentString:[textView textStorage]];
+        [self updateWordCount];
 	}
 }
 
@@ -1695,6 +1794,8 @@ terminateApp:
 }
 
 - (void)dealloc {
+    if (modifierMonitor) [NSEvent removeMonitor:modifierMonitor];
+    [wordCountLabel release];
 	[previousActiveApplication release];
 	[windowUndoManager release];
 	[dividerShader release];

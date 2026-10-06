@@ -180,6 +180,12 @@
 - (IBAction)changedThemedScrollbars:(id)sender {
     [prefsController setUseThemedScrollbars:[sender state] == NSControlStateValueOn sender:self];
 }
+- (IBAction)changedAutoPairing:(id)sender {
+    [prefsController setUseAutoPairing:[sender state] == NSControlStateValueOn sender:self];
+}
+- (IBAction)changedWritingDirection:(id)sender {
+    [prefsController setRightToLeftEditing:[sender state] == NSControlStateValueOn sender:self];
+}
 - (IBAction)changedSearchHighlightColorWell:(id)sender {
 	[prefsController setSearchTermHighlightColor:[searchHighlightColorWell color] sender:self];
 }
@@ -403,8 +409,8 @@
     [item setLabel:localizedTitle];
     //[item setToolTip:@"General settings: appearance and behavior"];
     [item setImage:[[[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:name ofType:@"tiff"]] autorelease]];
-    if ([name isEqualToString:@"Display"])
-        [item setImage:[NSImage imageWithSystemSymbolName:@"rectangle.split.2x1" accessibilityDescription:localizedTitle]];
+    if ([name isEqualToString:@"Display"] || [name isEqualToString:@"Writing"])
+        [item setImage:[NSImage imageWithSystemSymbolName:[name isEqualToString:@"Display"] ? @"rectangle.split.2x1" : @"text.cursor" accessibilityDescription:localizedTitle]];
     [item setTarget:self];
     [item setAction:@selector(switchViews:)];
     [items setObject:item forKey:name];
@@ -412,6 +418,19 @@
 }
 
 - (void)awakeFromNib {
+    writingView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 520, 180)];
+    NSButton *pairing = [NSButton checkboxWithTitle:NSLocalizedString(@"Pair brackets and double quotes automatically", nil) target:self action:@selector(changedAutoPairing:)];
+    [pairing setFrame:NSMakeRect(24, 125, 472, 26)];
+    [pairing setState:[prefsController useAutoPairing]];
+    [writingView addSubview:pairing];
+    NSButton *direction = [NSButton checkboxWithTitle:NSLocalizedString(@"Edit notes from right to left", nil) target:self action:@selector(changedWritingDirection:)];
+    [direction setFrame:NSMakeRect(24, 89, 472, 26)];
+    [direction setState:[prefsController rightToLeftEditing]];
+    [writingView addSubview:direction];
+    NSTextField *shortcutHint = [NSTextField labelWithString:NSLocalizedString(@"⌘Return inserts a paragraph below; ⇧⌘Return inserts above.", nil)];
+    [shortcutHint setFrame:NSMakeRect(24, 42, 472, 24)];
+    [shortcutHint setTextColor:[NSColor secondaryLabelColor]];
+    [writingView addSubview:shortcutHint];
     displayView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 520, 340)];
     limitTextWidthButton = [NSButton checkboxWithTitle:NSLocalizedString(@"Limit text width in windows", nil) target:self action:@selector(changedTextWidthLimit:)];
     [limitTextWidthButton setFrame:NSMakeRect(24, 292, 460, 24)];
@@ -496,6 +515,7 @@
     [self addToolbarItemWithName:@"Editing"];
 	[self addToolbarItemWithName:@"Fonts & Colors"];
     [self addToolbarItemWithName:@"Display"];
+    [self addToolbarItemWithName:@"Writing"];
 		
     toolbar = [[NSToolbar alloc] initWithIdentifier:@"preferencePanes"];
     [toolbar setDelegate:self];
@@ -520,7 +540,7 @@
 }
 
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar*)theToolbar {
-    return [NSArray arrayWithObjects:@"General", @"Notes", @"Editing", @"Fonts & Colors", @"Display", nil];
+    return [NSArray arrayWithObjects:@"General", @"Notes", @"Editing", @"Fonts & Colors", @"Display", @"Writing", nil];
 }
 
 - (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar {
@@ -553,6 +573,8 @@
         prefsView = fontsColorsView;
     } else if ([sender isEqualToString:@"Display"]) {
         prefsView = displayView;
+    } else if ([sender isEqualToString:@"Writing"]) {
+        prefsView = writingView;
 	} else {
 		NSLog(@"unknown sender: %@", sender);
 	}

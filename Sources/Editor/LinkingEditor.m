@@ -82,7 +82,7 @@ CGFloat _perceptualDarkness(NSColor*a);
 	 @selector(setBackgroundTextColor:sender:),
 	 @selector(setForegroundTextColor:sender:),
      @selector(setManagesTextWidthInWindow:sender:),
-     @selector(setMaxNoteBodyWidth:sender:), @selector(setUseThemedScrollbars:sender:), nil];
+     @selector(setMaxNoteBodyWidth:sender:), @selector(setUseThemedScrollbars:sender:), @selector(setRightToLeftEditing:sender:), nil];
     NVConfigureScrolling(self.enclosingScrollView);
 	
 	[self setTextContainerInset:NSMakeSize(3, 8)];
@@ -108,6 +108,10 @@ CGFloat _perceptualDarkness(NSColor*a);
 }
 
 - (void)settingChangedForSelectorString:(NSString*)selectorString {
+    if ([selectorString isEqualToString:SEL_STR(setRightToLeftEditing:sender:)]) {
+        [self updateWritingDirection];
+        return;
+    }
     if ([selectorString isEqualToString:SEL_STR(setUseThemedScrollbars:sender:)] ||
         [selectorString isEqualToString:SEL_STR(setForegroundTextColor:sender:)] ||
         [selectorString isEqualToString:SEL_STR(setBackgroundTextColor:sender:)])
@@ -188,6 +192,14 @@ CGFloat _perceptualDarkness(NSColor*a);
     if (self.textContainerInset.width != inset)
         [self setTextContainerInset:NSMakeSize(inset, 8)];
     updatingTextWidth = NO;
+}
+
+- (void)updateWritingDirection {
+    NSWritingDirection direction = [[GlobalPrefs defaultPrefs] rightToLeftEditing] ? NSWritingDirectionRightToLeft : NSWritingDirectionNatural;
+    NSRange selection = self.selectedRange;
+    if (self.textStorage.length) [self setSelectedRange:NSMakeRange(0, self.textStorage.length)];
+    [self setBaseWritingDirection:direction];
+    [self setSelectedRange:selection];
 }
 
 - (void)setFrameSize:(NSSize)size {
@@ -782,6 +794,11 @@ copyRTFType:
 				[self clickedOnLink:aLink atIndex:charIndex];
 				return YES;
 			}
+            if (self.window.firstResponder == self && !([anEvent modifierFlags] & (NSEventModifierFlagOption | NSEventModifierFlagControl))) {
+                if ([anEvent modifierFlags] & NSEventModifierFlagShift) [self insertParagraphAbove:self];
+                else [self insertParagraphBelow:self];
+                return YES;
+            }
 		} else if ((keyChar == NSBackspaceCharacter || keyChar == NSDeleteCharacter) && [[self window] firstResponder] == self) {
 			if ([[self string] length]) {
 				[self doCommandBySelector:@selector(deleteToBeginningOfLine:)];
@@ -803,6 +820,50 @@ copyRTFType:
 		return;
 	}
 	[super keyDown:anEvent];
+}
+
+- (void)insertParagraphAbove:(id)sender {
+    NSRange paragraph = [self.string paragraphRangeForRange:self.selectedRange];
+    [self setSelectedRange:NSMakeRange(paragraph.location, 0)];
+    [self insertText:@"\n" replacementRange:self.selectedRange];
+    [self setSelectedRange:NSMakeRange(paragraph.location, 0)];
+}
+
+- (void)insertParagraphBelow:(id)sender {
+    NSRange paragraph = [self.string paragraphRangeForRange:self.selectedRange];
+    NSUInteger insertion = NSMaxRange(paragraph);
+    if (insertion && [[NSCharacterSet newlineCharacterSet] characterIsMember:[self.string characterAtIndex:insertion - 1]]) insertion--;
+    [self setSelectedRange:NSMakeRange(insertion, 0)];
+    [self insertNewline:sender];
+}
+
+- (void)insertText:(id)value replacementRange:(NSRange)replacementRange {
+    NSString *text = [value isKindOfClass:[NSAttributedString class]] ? [value string] : value;
+    NSRange range = replacementRange.location == NSNotFound ? self.selectedRange : replacementRange;
+    if ([[GlobalPrefs defaultPrefs] useAutoPairing] && !self.hasMarkedText && text.length == 1 && NSMaxRange(range) <= self.string.length) {
+        NSDictionary *pairs = @{@"(":@")", @"[":@"]", @"{":@"}", @"\"":@"\""};
+        NSString *closing = pairs[text];
+        if (!range.length && range.location < self.string.length && [@")]}\"" containsString:text] &&
+            [[self.string substringWithRange:NSMakeRange(range.location, 1)] isEqualToString:text]) {
+            [self setSelectedRange:NSMakeRange(range.location + 1, 0)];
+            return;
+        }
+        BOOL wordFollows = range.location < self.string.length && [[NSCharacterSet alphanumericCharacterSet] characterIsMember:[self.string characterAtIndex:range.location]];
+        if (closing && (range.length || !wordFollows)) {
+            NSMutableAttributedString *wrapped = [[[NSMutableAttributedString alloc] initWithString:text attributes:self.typingAttributes] autorelease];
+            if (range.length) [wrapped appendAttributedString:[self.textStorage attributedSubstringFromRange:range]];
+            [wrapped appendAttributedString:[[[NSAttributedString alloc] initWithString:closing attributes:self.typingAttributes] autorelease]];
+            [super insertText:wrapped replacementRange:range];
+            [self setSelectedRange:NSMakeRange(range.location + 1, range.length)];
+            return;
+        }
+    }
+    [super insertText:value replacementRange:replacementRange];
+}
+
+- (void)flagsChanged:(NSEvent *)event {
+    [(AppController *)[NSApp delegate] flagsChanged:event];
+    [super flagsChanged:event];
 }
 
 - (BOOL)jumpToRenaming {
@@ -885,6 +946,15 @@ copyRTFType:
 }
 
 - (void)deleteBackward:(id)sender {
+    NSRange selection = self.selectedRange;
+    if ([[GlobalPrefs defaultPrefs] useAutoPairing] && !self.hasMarkedText && !selection.length && selection.location > 0 && selection.location < self.string.length) {
+        NSString *left = [self.string substringWithRange:NSMakeRange(selection.location - 1, 1)];
+        NSString *right = [self.string substringWithRange:NSMakeRange(selection.location, 1)];
+        if ([@{@"(":@")", @"[":@"]", @"{":@"}", @"\"":@"\""}[left] isEqualToString:right]) {
+            [self insertText:@"" replacementRange:NSMakeRange(selection.location - 1, 2)];
+            return;
+        }
+    }
 	
 	NSRange charRange = [self rangeForUserTextChange];
 	if (charRange.location != NSNotFound) {

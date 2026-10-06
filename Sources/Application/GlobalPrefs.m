@@ -72,6 +72,9 @@ static NSString *ColorSchemeKey = @"InterfaceColorScheme";
 static NSString *AlternatingRowsKey = @"AlternatingRows";
 static NSString *ShowNoteListGridKey = @"ShowNoteListGrid";
 static NSString *UseThemedScrollbarsKey = @"UseThemedScrollbars";
+static NSString *UseAutoPairingKey = @"UseAutoPairing";
+static NSString *RightToLeftEditingKey = @"RightToLeftEditing";
+static NSString *ShowWordCountKey = @"ShowWordCount";
 static NSString *BookmarksKey = @"Bookmarks";
 static NSString *LastScrollOffsetKey = @"LastScrollOffset";
 static NSString *LastSearchStringKey = @"LastSearchString";
@@ -136,6 +139,9 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
             @NO, AlternatingRowsKey,
             @YES, ShowNoteListGridKey,
             @NO, UseThemedScrollbarsKey,
+            @NO, UseAutoPairingKey,
+            @NO, RightToLeftEditingKey,
+            @NO, ShowWordCountKey,
 			[NSNumber numberWithBool:YES], MakeURLsClickableKey,
 			[NSNumber numberWithBool:YES], HighlightSearchTermsKey, 
 			[NSNumber numberWithBool:YES], TableColumnsHaveBodyPreviewKey, 
@@ -764,6 +770,18 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 }
 - (BOOL)alternatingRows { return [defaults boolForKey:AlternatingRowsKey]; }
 - (BOOL)useThemedScrollbars { return [defaults boolForKey:UseThemedScrollbarsKey]; }
+- (BOOL)useAutoPairing { return [defaults boolForKey:UseAutoPairingKey]; }
+- (void)setUseAutoPairing:(BOOL)value sender:(id)sender {
+    [defaults setBool:value forKey:UseAutoPairingKey]; SEND_CALLBACKS();
+}
+- (BOOL)rightToLeftEditing { return [defaults boolForKey:RightToLeftEditingKey]; }
+- (void)setRightToLeftEditing:(BOOL)value sender:(id)sender {
+    [defaults setBool:value forKey:RightToLeftEditingKey]; SEND_CALLBACKS();
+}
+- (BOOL)showWordCount { return [defaults boolForKey:ShowWordCountKey]; }
+- (void)setShowWordCount:(BOOL)value sender:(id)sender {
+    [defaults setBool:value forKey:ShowWordCountKey]; SEND_CALLBACKS();
+}
 - (void)setUseThemedScrollbars:(BOOL)value sender:(id)sender {
     [defaults setBool:value forKey:UseThemedScrollbarsKey];
     SEND_CALLBACKS();
