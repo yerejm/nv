@@ -364,6 +364,8 @@ terminateApp:
 - (BOOL)validateMenuItem:(NSMenuItem*)menuItem {
 	SEL selector = [menuItem action];
 	NSInteger numberSelected = [notesTableView numberOfSelectedRows];
+	if (selector == @selector(toggleCollapse:))
+		return currentNote != nil || [[splitView subviewAtPosition:0] isCollapsed];
 	
 	if (selector == @selector(printNote:) || 
 		selector == @selector(deleteNote:) ||
@@ -407,6 +409,17 @@ terminateApp:
 	[notesMenu setSubmenu:[[ExternalEditorListController sharedInstance] addEditNotesMenu] forItem:[notesMenu itemWithTag:88]];
 	
 	NSMenu *viewMenu = [[[NSApp mainMenu] itemWithTag:VIEW_MENU_ID] submenu];
+	NSInteger collapseIndex = [viewMenu indexOfItemWithTarget:self andAction:@selector(toggleCollapse:)];
+	NSMenuItem *collapseItem;
+	if (collapseIndex == -1) {
+		collapseItem = [viewMenu addItemWithTitle:@"" action:@selector(toggleCollapse:) keyEquivalent:@"n"];
+		[collapseItem setTarget:self];
+		[collapseItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand | NSEventModifierFlagOption];
+	} else {
+		collapseItem = [viewMenu itemAtIndex:collapseIndex];
+	}
+	[collapseItem setTitle:[[splitView subviewAtPosition:0] isCollapsed] ?
+		NSLocalizedString(@"Expand Notes List", nil) : NSLocalizedString(@"Collapse Notes List", nil)];
 	
 	menuIndex = [viewMenu indexOfItemWithTarget:notesTableView andAction:@selector(toggleNoteBodyPreviews:)];
 	NSMenuItem *bodyPreviewItem = nil;
@@ -431,27 +444,31 @@ terminateApp:
 
 - (void)_configureDividerForCurrentLayout {
 	BOOL horiz = [prefsController horizontalLayout];
+	RBSplitSubview *notesPane = [splitView subviewAtPosition:0];
+	BOOL collapsed = [notesPane isCollapsed];
+	changingViewLayout = YES;
+	if (collapsed) [notesPane expand];
 	[splitView setVertical:horiz];
 	
 	if (!verticalDividerImg && [splitView divider]) verticalDividerImg = [[splitView divider] retain];
-	[splitView setDivider: horiz ? nil : verticalDividerImg];
-	[splitView setDividerThickness: horiz ? 0.0 : 8.0];
+	[splitView setDivider:verticalDividerImg];
+	[splitView setDividerThickness:5.0];
 	
 	[[notesTableView enclosingScrollView] setBorderType: horiz ? NSNoBorder : NSBezelBorder];
 	
 	NSSize size = [[splitView subviewAtPosition:0] frame].size;
 	[[notesTableView enclosingScrollView] setFrame: horiz ? NSMakeRect(1, 0, size.width - 1, size.height - 1) : (NSRect){.size = size, .origin = NSZeroPoint}];
 	
-	[[splitView subviewAtPosition:0] setMinDimension:horiz ? 100.0 : 0.0 andMaxDimension:0.0];
-	[splitSubview setMinDimension:horiz ? 100.0 : 0.0 andMaxDimension:0.0];
+	[notesPane setMinDimension:horiz ? 100.0 : 60.0 andMaxDimension:0.0];
+	[splitSubview setMinDimension:100.0 andMaxDimension:0.0];
+	if (collapsed) [notesPane collapse];
+	changingViewLayout = NO;
 }
 
 - (IBAction)switchViewLayout:(id)sender {
 	ViewLocationContext ctx = [notesTableView viewingLocation];
 	ctx.pivotRowWasEdge = NO;
 	[notesTableView noteFirstVisibleRow];
-	
-	[self _expandToolbar];
 	
 	[prefsController setHorizontalLayout:![prefsController horizontalLayout] sender:self];
 	[notationController updateDateStringsIfNecessary];
@@ -1413,20 +1430,9 @@ terminateApp:
 	[notesTableView noteFirstVisibleRow];
 	
 	if ([theEvent clickCount]>1) {
-		BOOL wasVisible = [toolbar isVisible];
-		if (wasVisible) {
-			//pseudo-collapsing splitviews; the built-in collapsing makes it difficult to handle dragging to hide toolbar
-			[[splitView subviewAtPosition:0] setDimension:1.0];
-			[splitView adjustSubviews];
-			[self _collapseToolbar];
-		} else {
-			[self _expandToolbar];
-		}
-		if (!wasVisible && [window firstResponder] == window) {
-			[field selectText:sender];
-		}
-		return NO;
-	}
+        [self toggleCollapse:sender];
+        return NO;
+    }
 	return YES;
 }
 
@@ -1446,18 +1452,13 @@ terminateApp:
 }
 
 - (void)_expandToolbar {
-	if (![toolbar isVisible]) {
-		[window setTitle:@"Notation"];
-		if (currentNote)
-			[field setStringValue:titleOfNote(currentNote)];
-		[window toggleToolbarShown:nil];
-		if (![splitView isDragging])
-			[[splitView subviewAtPosition:0] setDimension:100.0];
-		[[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"ToolbarHidden"];
-	}
-	if ([[splitView subviewAtPosition:0] isCollapsed])
-		[[splitView subviewAtPosition:0] expand];
-
+    if ([[splitView subviewAtPosition:0] isCollapsed])
+        [[splitView subviewAtPosition:0] expand];
+    if (![toolbar isVisible]) {
+        [window setTitle:@"Notation"];
+        [window toggleToolbarShown:nil];
+        [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"ToolbarHidden"];
+    }
 }
 
 - (void)_collapseToolbar {
@@ -1469,31 +1470,9 @@ terminateApp:
 	}
 }
 
-- (BOOL)splitView:(RBSplitView*)sender shouldResizeWindowForDivider:(NSUInteger)divider 
-	  betweenView:(RBSplitSubview*)leading andView:(RBSplitSubview*)trailing willGrow:(BOOL)grow {
-
-	if ([sender isDragging]) {
-		BOOL toolbarVisible = [toolbar isVisible];
-		NSPoint mouse = [sender convertPoint:[[window currentEvent] locationInWindow] fromView:nil];
-		
-		if ((toolbarVisible && !grow && mouse.y < -28.0 && ![leading canShrink]) || 
-			(!toolbarVisible && grow)) {
-			BOOL wasVisible = toolbarVisible;
-			if (toolbarVisible) {
-				[self _collapseToolbar];
-			} else {
-				[self _expandToolbar];
-			}
-			
-			if (!wasVisible && [window firstResponder] == window) {
-				//if dualfield had first responder previously, it might need to be restored 
-				//if it had been removed from the view hierarchy due to hiding the toolbar
-				[field selectText:sender];
-			}
-		}
-	}
-
-	return NO;
+- (BOOL)splitView:(RBSplitView*)sender shouldResizeWindowForDivider:(NSUInteger)divider
+      betweenView:(RBSplitSubview*)leading andView:(RBSplitSubview*)trailing willGrow:(BOOL)grow {
+    return NO;
 }
 
 - (void)tableViewColumnDidResize:(NSNotification *)aNotification {
@@ -1514,19 +1493,33 @@ terminateApp:
 	return NSZeroRect;
 }
 
-- (NSUInteger)splitView:(RBSplitView*)sender dividerForPoint:(NSPoint)point inSubview:(RBSplitSubview*)subview {
-	if ([(AugmentedScrollView*)[notesTableView enclosingScrollView] shouldDragWithPoint:point sender:sender]) {
-		return 0;       // [firstSplit position], which we assume to be zero
-	}
-	return NSNotFound;
-}
-
 - (BOOL)splitView:(RBSplitView*)sender canCollapse:(RBSplitSubview*)subview {
 	if ([sender subviewAtPosition:0] == subview) {
-		//this is the list view; let it collapse in horizontal layout when a note is being edited
-		return [prefsController horizontalLayout] && currentNote != nil;
+		return currentNote != nil;
 	}
 	return NO;
+}
+
+- (IBAction)toggleCollapse:(id)sender {
+	RBSplitSubview *notesPane = [splitView subviewAtPosition:0];
+	if ([notesPane isCollapsed]) [notesPane expand];
+	else if (currentNote) [notesPane collapse];
+	[splitView adjustSubviews];
+}
+
+- (void)splitView:(RBSplitView*)sender didCollapse:(RBSplitSubview*)subview {
+	if (changingViewLayout) return;
+	[self _collapseToolbar];
+	[window makeFirstResponder:textView];
+	[sender adjustSubviews];
+	[self updateNoteMenus];
+}
+
+- (void)splitView:(RBSplitView*)sender didExpand:(RBSplitSubview*)subview {
+	if (changingViewLayout) return;
+	[self _expandToolbar];
+	[sender adjustSubviews];
+	[self updateNoteMenus];
 }
 
 

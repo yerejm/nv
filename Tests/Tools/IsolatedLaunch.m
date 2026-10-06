@@ -17,6 +17,7 @@
 #import "PTHotKeyCenter.h"
 #import "PTHotKey.h"
 #import "PTKeyCombo.h"
+#import "RBSplitView/RBSplitView.h"
 #import "TemporaryFileCachePreparer.h"
 #import "AcceptanceEditorSession.h"
 #include <sys/mount.h>
@@ -269,6 +270,27 @@ static void RunAcceptance(void) {
         Check(@"search content", [[notation notesListDataSource] count] == 1);
         [app revealNote:note options:NVEditNoteToReveal | NVOrderFrontWindow];
         Check(@"editor focus", window.firstResponder == editor);
+        RBSplitView *split = [app valueForKey:@"splitView"];
+        RBSplitSubview *listPane = [split subviewAtPosition:0];
+        BOOL originalLayout = [[GlobalPrefs defaultPrefs] horizontalLayout];
+        [app toggleCollapse:nil];
+        Check(@"notes list and search collapse together", listPane.isCollapsed && !window.toolbar.visible && window.firstResponder == editor);
+        [app switchViewLayout:nil];
+        Check(@"collapsed notes list survives orientation change", listPane.isCollapsed && !window.toolbar.visible);
+        [app toggleCollapse:nil];
+        Check(@"notes list and search expand together", !listPane.isCollapsed && window.toolbar.visible);
+        Check(@"widescreen divider is visible and draggable", split.divider != nil && split.dividerThickness >= 5);
+        [app toggleCollapse:nil];
+        [app switchViewLayout:nil];
+        Check(@"collapsed notes list survives return to original orientation", listPane.isCollapsed && [[GlobalPrefs defaultPrefs] horizontalLayout] == originalLayout);
+        [app toggleCollapse:nil];
+        NSRect paneFrame = listPane.frame;
+        NSPoint dividerPoint = split.isVertical ? NSMakePoint(NSMaxX(paneFrame) + 2, NSMidY(paneFrame)) : NSMakePoint(NSMidX(paneFrame), NSMaxY(paneFrame) + 2);
+        NSEvent *doubleClick = [NSEvent mouseEventWithType:NSEventTypeLeftMouseDown location:[split convertPoint:dividerPoint toView:nil]
+            modifierFlags:0 timestamp:0 windowNumber:window.windowNumber context:nil eventNumber:0 clickCount:2 pressure:1];
+        [split mouseDown:doubleClick];
+        Check(@"divider double-click collapses notes list", listPane.isCollapsed && !window.toolbar.visible);
+        [app toggleCollapse:nil];
         NSString *original = [[editor.string copy] autorelease];
         [editor setSelectedRange:NSMakeRange(editor.string.length, 0)];
         [editor insertText:@"\nAcceptance edit [[Project Alpha]] https://example.com" replacementRange:editor.selectedRange];

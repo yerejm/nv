@@ -19,21 +19,5 @@
 
 #import <Cocoa/Cocoa.h>
 
-@interface  DragSquareView : NSView
-{
-	NSImage *dragImage;
-}
-
-@end
-
-
 @interface AugmentedScrollView : NSScrollView
-{
-	BOOL showDragSquare;
-	DragSquareView *dragSquare;
-}
-
-- (BOOL)shouldDragWithPoint:(NSPoint)point sender:(id)sender;
-- (void)_positionDragSquare;
-
 @end

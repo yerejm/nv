@@ -62,6 +62,7 @@
 	NSRunningApplication *previousActiveApplication;
 	BOOL activatedFromAnotherSpace;
 	BOOL activationRequested;
+	BOOL changingViewLayout;
 	ViewLocationContext listUpdateViewCtx;
 	BOOL isFilteringFromTyping, typedStringIsCached;
 	BOOL isCreatingANote;
@@ -90,6 +91,7 @@ void outletObjectAwoke(id sender);
 - (IBAction)tagNote:(id)sender;
 - (IBAction)importNotes:(id)sender;
 - (IBAction)switchViewLayout:(id)sender;
+- (IBAction)toggleCollapse:(id)sender;
 
 - (IBAction)fieldAction:(id)sender;
 - (NoteObject*)createNoteIfNecessary;
