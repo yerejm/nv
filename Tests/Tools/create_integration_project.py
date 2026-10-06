@@ -27,7 +27,8 @@ sources = [source for source in sources if source.name != 'main.m']
 sources.extend(ROOT / 'Tests' / filename for filename in [
     'Notes/Storage/NativeStorageTests.m', 'Application/NativeQuitTests.m',
     'Resources/NativeResourceTests.m', 'Application/NativeLinkRoutingTests.m',
-    'Application/NativeActivationTests.m'])
+    'Application/NativeActivationTests.m', 'Integrations/AcceptanceEditorTests.m',
+    'Support/AcceptanceEditorSession.m'])
 objects = {}
 
 
@@ -38,7 +39,7 @@ def add(value):
 
 
 group, children, refs = file_groups(add, [str(source.relative_to(ROOT)) for source in sources]
-                                  + ['Tests/Support/TestPaths.h'])
+                                  + ['Tests/Support/TestPaths.h', 'Tests/Support/AcceptanceEditorSession.h'])
 refs = refs[:len(sources)]
 product = add(dict(isa='PBXFileReference', path='NativeIntegrationTests.xctest',
                    sourceTree='BUILT_PRODUCTS_DIR', explicitFileType='wrapper.cfbundle'))

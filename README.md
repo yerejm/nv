@@ -13,7 +13,7 @@ Native macOS application, built with `Notation.xcodeproj` and the `Notation` sch
 - `Vendor`: imported hotkey, external-editor, split-view and hashcash code, with its existing notices.
 - `Resources`: images, scripting definitions and localisation directories. Xcode localisation variant groups preserve bundle resource names.
 - `Configuration`: the application Info.plist and prefix header.
-- `Tests`: mirrors source subsystem ownership; cross-subsystem compatibility tests live in `Integration`, shared path helpers in `Support`, fixed inputs in `Fixtures`, and project generators in `Tools`.
+- `Tests`: mirrors source subsystem ownership, including compatibility checks under `Notes/Model`, `Notes/Storage/Crypto` and `Preferences`; shared path helpers live in `Support`, fixed inputs in `Fixtures`, and project generators in `Tools`.
 - `script`: build, launch and test entry points. Generated output stays under ignored `build`.
 
 Physical source directories match Xcode groups. Target build phases explicitly select compiled files; adding a file to a folder does not add it to a target. Preserve archived Objective-C class names when organising files.
@@ -29,6 +29,8 @@ Physical source directories match Xcode groups. Target build phases explicitly s
 ```
 
 `./script/build_and_run.sh` builds and opens the development app with isolated preferences and notes. Its `--verify` option runs the full GUI acceptance suite, including TextEdit, full-screen transitions and quit/reopen checks, and requires an unlocked desktop. Use the build and test commands above for routine source and folder changes.
+
+`./script/test_external_editor.sh` checks only the external-editor lifecycle. It opens a generated document in a separate background TextEdit instance with document restoration disabled, closes that instance, and removes its temporary document. Existing TextEdit instances are preserved. The full acceptance suite uses the same ownership checks, closes the editor in `finally`, and retains an exit-trap cleanup fallback for errors, timeouts and interrupts. Runner cleanup cancels future launches and makes pending launches close their returned instance. Only the PID, launch date and bundle identity recorded for the test instance permit termination.
 
 To regenerate the test projects after changing source membership or paths:
 

@@ -16,7 +16,9 @@ def add(value):
 
 
 sources = [
-    'Tests/Integration/CompatibilityTests.m', 'Tests/Application/CallbackTests.m',
+    'Tests/Notes/Model/DeletedNoteObjectTests.m',
+    'Tests/Notes/Storage/Crypto/CryptoCompatibilityTests.m',
+    'Tests/Preferences/PreferencesIsolationTests.m', 'Tests/Application/CallbackTests.m',
     'Tests/Notes/Storage/Crypto/CryptoTests.m', 'Tests/Editor/HyperlinkTests.m',
     'Tests/Editor/CursorTests.m', 'build/generated-tests/EditorCursor.m',
     'build/generated-tests/VolumeIdentity.m', 'build/generated-tests/HyperlinkUnits.m',

@@ -16,8 +16,10 @@
 #import "PTHotKey.h"
 #import "PTKeyCombo.h"
 #import "TemporaryFileCachePreparer.h"
+#import "AcceptanceEditorSession.h"
 #include <sys/mount.h>
 #include <dlfcn.h>
+#include <objc/runtime.h>
 
 @interface AppController (ServiceAcceptance)
 - (void)createFromSelection:(NSPasteboard *)pasteboard userData:(NSString *)userData error:(NSString **)error;
@@ -138,6 +140,36 @@ static void RunReopenAcceptance(void) {
     FinishAcceptance(@"reopen-result.json");
 }
 
+static void CheckExternalEditor(NoteObject *note) {
+    NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
+    NSURL *editorURL = [workspace URLForApplicationWithBundleIdentifier:@"com.apple.TextEdit"];
+    ExternalEditor *editor = [[[NSClassFromString(@"ExternalEditor") alloc] initWithBundleID:@"com.apple.TextEdit" resolvedURL:editorURL] autorelease];
+    NVAcceptanceEditorSession *session = [[[NVAcceptanceEditorSession alloc] initWithDirectory:acceptanceRoot] autorelease];
+    SEL selector = @selector(openURLs:withAppBundleIdentifier:options:additionalEventParamDescriptor:launchIdentifiers:);
+    Method method = class_getInstanceMethod([NSWorkspace class], selector);
+    IMP original = method_getImplementation(method);
+    __block BOOL opened = NO;
+    IMP isolated = imp_implementationWithBlock(^BOOL(NSWorkspace *target, NSArray *URLs, NSString *identifier,
+        NSWorkspaceLaunchOptions options, NSAppleEventDescriptor *descriptor, NSArray **identifiers) {
+        if ([identifier isEqualToString:@"com.apple.TextEdit"] &&
+            [URLs isEqualToArray:@[[NSURL fileURLWithPath:note.noteFilePath]]]) {
+            opened = [session openURLs:URLs withApplicationAtURL:editorURL workspace:target timeout:10];
+            return opened;
+        }
+        return ((BOOL (*)(id, SEL, NSArray *, NSString *, NSWorkspaceLaunchOptions, NSAppleEventDescriptor *, NSArray **))original)
+            (target, selector, URLs, identifier, options, descriptor, identifiers);
+    });
+    method_setImplementation(method, isolated);
+    @try {
+        Check(@"TextEdit external editor opens local note", [editor isInstalled] && [editor canEditNoteDirectly:note] &&
+            [[NSClassFromString(@"ODBEditor") sharedODBEditor] editNote:note inEditor:editor context:nil] && opened);
+    } @finally {
+        method_setImplementation(method, original);
+        imp_removeBlock(isolated);
+        Check(@"temporary external editor closed", [session tearDown]);
+    }
+}
+
 static void CompleteDesktopAcceptance(AppController *app, NotationController *notation, NSWindow *window, LinkingEditor *editor) {
     @try {
         [NSApp hide:nil];
@@ -163,8 +195,7 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         Check(@"hotkey registration and Carbon event dispatch", registered && eventStatus == noErr && hotkeyCount == 1);
         [center unregisterHotKey:hotkey];
         NoteObject *note = [app valueForKey:@"currentNote"];
-        ExternalEditor *textEdit = [[[NSClassFromString(@"ExternalEditor") alloc] initWithBundleID:@"com.apple.TextEdit" resolvedURL:[[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:@"com.apple.TextEdit"]] autorelease];
-        Check(@"TextEdit external editor opens local note", [textEdit isInstalled] && [textEdit canEditNoteDirectly:note] && [[NSClassFromString(@"ODBEditor") sharedODBEditor] editNote:note inEditor:textEdit context:nil]);
+        CheckExternalEditor(note);
         [notation.notationPrefs setNotesStorageFormat:SingleDatabaseFormat];
         Check(@"return to database storage", [notation flushAllNoteChanges]);
         CheckEditingCache(NO);

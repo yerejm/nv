@@ -11,6 +11,7 @@ RUN_DATA="$RUN_ROOT/build/isolated-run"
 RUN_APP="$RUN_ROOT/build/isolated-app/Notational Velocity Development.app"
 RUN_EXECUTABLE="$RUN_APP/Contents/MacOS/NVDevelopment"
 RUN_LIBRARY="$RUN_ROOT/build/isolated-launch.dylib"
+RUN_EDITOR_HELPER="$RUN_ROOT/build/acceptance-editor"
 
 /usr/bin/pkill -x NVDevelopment >/dev/null 2>&1 || true
 /usr/bin/xcodebuild -project "$RUN_ROOT/Notation.xcodeproj" -scheme Notation \
@@ -37,9 +38,27 @@ while IFS= read -r RUN_INCLUDE_DIRECTORY; do
 done < <(/usr/bin/python3 "$RUN_ROOT/Tests/Tools/project_layout.py")
 /usr/bin/xcrun clang -arch arm64 -mmacosx-version-min=15.0 -dynamiclib -undefined dynamic_lookup \
     "${RUN_INCLUDE_FLAGS[@]}" \
-    "$RUN_ROOT/Tests/Tools/IsolatedLaunch.m" -framework Cocoa -framework Carbon -o "$RUN_LIBRARY"
+    "$RUN_ROOT/Tests/Tools/IsolatedLaunch.m" "$RUN_ROOT/Tests/Support/AcceptanceEditorSession.m" \
+    -framework Cocoa -framework Carbon -o "$RUN_LIBRARY"
 RUN_ENV=(--env "DYLD_INSERT_LIBRARIES=$RUN_LIBRARY" --env "NV_ISOLATED_ROOT=$RUN_DATA" --env "TMPDIR=$RUN_DATA/tmp/")
 if [[ "$RUN_MODE" == --verify ]]; then
+    /usr/bin/xcrun clang -arch arm64 -mmacosx-version-min=15.0 "${RUN_INCLUDE_FLAGS[@]}" \
+        "$RUN_ROOT/Tests/Tools/AcceptanceEditor.m" "$RUN_ROOT/Tests/Support/AcceptanceEditorSession.m" \
+        -framework Cocoa -o "$RUN_EDITOR_HELPER"
+    cleanup_acceptance() {
+        RUN_EXIT_STATUS=$?
+        trap - EXIT
+        "$RUN_EDITOR_HELPER" --cleanup "$RUN_DATA" || { echo "External editor teardown failed: $RUN_DATA" >&2; RUN_EXIT_STATUS=1; }
+        while IFS= read -r RUN_CACHE_DEVICE; do
+            /sbin/umount "$RUN_DATA/tmp/NVProtectedEditingSpace" || RUN_EXIT_STATUS=1
+            /usr/bin/hdiutil detach "$RUN_CACHE_DEVICE" || RUN_EXIT_STATUS=1
+        done < <(/sbin/mount | /usr/bin/awk -v cache="$RUN_DATA/tmp/NVProtectedEditingSpace" 'index($0, " on " cache " (") { devices[++count]=$1 } END { for(i=count;i>0;i--) print devices[i] }')
+        exit "$RUN_EXIT_STATUS"
+    }
+    trap cleanup_acceptance EXIT
+    trap 'exit 130' INT
+    trap 'exit 143' TERM
+    trap 'exit 129' HUP
     rm -f "$RUN_DATA/result.json"
     RUN_ENV+=(--env NV_AUTOMATED_ACCEPTANCE=YES)
 fi
@@ -78,10 +97,6 @@ case "$RUN_MODE" in
                     if ! /usr/bin/pgrep -x NVDevelopment >/dev/null; then break; fi
                     sleep 1
                 done
-                while IFS= read -r RUN_CACHE_DEVICE; do
-                    /sbin/umount "$RUN_DATA/tmp/NVProtectedEditingSpace" || RUN_FAILED=1
-                    /usr/bin/hdiutil detach "$RUN_CACHE_DEVICE" || RUN_FAILED=1
-                done < <(/sbin/mount | /usr/bin/awk -v cache="$RUN_DATA/tmp/NVProtectedEditingSpace" 'index($0, " on " cache " (") { devices[++count]=$1 } END { for(i=count;i>0;i--) print devices[i] }')
                 exit "$RUN_FAILED"
             fi
             sleep 1
