@@ -21,12 +21,15 @@ Physical source directories match Xcode groups. Target build phases explicitly s
 ## Build and verification
 
 ```sh
-/usr/bin/xcodebuild -project Notation.xcodeproj -scheme Notation \
-    -configuration Development -derivedDataPath build/app CODE_SIGNING_ALLOWED=NO build
-./script/test.sh
-./script/test_native.sh
-/usr/bin/python3 Tests/Build/test_build_policy.py
+make debug
+make release
+make test
+make clean
 ```
+
+`make debug` builds the Development configuration; `make release` builds Deployment. Both put the runnable app at `build/Notational Velocity.app`, replacing the previous build. The executable is inside the bundle at `Contents/MacOS/Notational Velocity`; Xcode intermediates stay under `build/app`. App builds disable code signing by default; use `make release CODE_SIGNING_ALLOWED=YES` to enable the project's signing settings. Running `make` without a target builds debug.
+
+`make test` runs the compatibility and native integration unit suites, including localized resource loading, followed by the build-policy checks. `make clean` removes the entire `build` directory, including app bundles, intermediates, generated test notes, logs and reports. Everything under `build` is disposable; keep durable notes and documentation outside it. Targets run serially even when `make -j` is used because both app configurations share their build directory.
 
 `./script/build_and_run.sh` builds and opens the development app with isolated preferences and notes. Its `--verify` option runs the full GUI acceptance suite, including TextEdit, full-screen transitions and quit/reopen checks, and requires an unlocked desktop. Use the build and test commands above for routine source and folder changes.
 
