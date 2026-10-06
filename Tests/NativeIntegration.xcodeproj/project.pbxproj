@@ -2033,7 +2033,6 @@
 					<string>$(SRCROOT)/../Vendor/PTHotKeys</string>
 					<string>$(SRCROOT)/../Vendor/ODBEditor</string>
 					<string>$(SRCROOT)/../Vendor/RBSplitView</string>
-					<string>$(SRCROOT)/../Vendor/hashcash</string>
 					<string>$(SRCROOT)/Support</string>
 				</array>
 				<key>GENERATE_INFOPLIST_FILE</key>
@@ -2112,7 +2111,6 @@
 					<string>$(SRCROOT)/../Vendor/PTHotKeys</string>
 					<string>$(SRCROOT)/../Vendor/ODBEditor</string>
 					<string>$(SRCROOT)/../Vendor/RBSplitView</string>
-					<string>$(SRCROOT)/../Vendor/hashcash</string>
 					<string>$(SRCROOT)/Support</string>
 				</array>
 				<key>GENERATE_INFOPLIST_FILE</key>

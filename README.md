@@ -10,8 +10,8 @@ Native macOS application, built with `Notation.xcodeproj` and the `Notation` sch
 - `Sources/Notes/Storage/Crypto`: encryption and key derivation; historical codecs are under `Legacy`.
 - `Sources/Editor`, `NoteList`, `Preferences`, `Interchange` and `Integrations`: their corresponding application subsystems.
 - `Sources/Support`: shared Foundation and AppKit helpers.
-- `Vendor`: imported hotkey, external-editor, split-view and hashcash code, with its existing notices.
-- `Resources`: images, scripting definitions and localisation directories. Xcode localisation variant groups preserve bundle resource names.
+- `Vendor`: imported hotkey, external-editor and split-view code, with its existing notices.
+- `Resources`: images, scripting definitions and the active `en`, `de`, `fr`, `it`, `pt` and `zh_CN` localisations. Xcode localisation variant groups preserve bundle resource names.
 - `Configuration`: the application Info.plist and prefix header.
 - `Tests`: mirrors source subsystem ownership, including compatibility checks under `Notes/Model`, `Notes/Storage/Crypto` and `Preferences`; shared path helpers live in `Support`, fixed inputs in `Fixtures`, and project generators in `Tools`.
 - `script`: build, launch and test entry points. Generated output stays under ignored `build`.
