@@ -128,5 +128,5 @@ def prune(filename, controls):
     filename.write_text('<?xml version="1.0" encoding="UTF-8"?>\n' + text + '\n')
 
 
-for filename in ROOT.glob('*.lproj/*.nib/designable.nib'):
+for filename in (ROOT / 'Resources').glob('*.lproj/*.nib/designable.nib'):
     prune(filename, filename.parent.name in ['MainMenu.nib', 'NotationPrefsView.nib'])

@@ -1,4 +1,5 @@
 #import <XCTest/XCTest.h>
+#import "TestPaths.h"
 #import "NoteObject.h"
 #import "DeletedNoteObject.h"
 #import "FrozenNotation.h"
@@ -176,7 +177,7 @@
     [reopened closeAllResources];
 }
 - (NSData *)fixture:(NSString *)name {
-    NSString *directory = [[@__FILE__ stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"Fixtures"];
+    NSString *directory = NVFixturePath(@"");
     NSData *data = [NSData dataWithContentsOfFile:[directory stringByAppendingPathComponent:name]];
     XCTAssertNotNil(data);
     return data;

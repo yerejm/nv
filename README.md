@@ -1,0 +1,40 @@
+# Notational Velocity
+
+Native macOS application, built with `Notation.xcodeproj` and the `Notation` scheme.
+
+## Repository layout
+
+- `Sources/Application`: application lifecycle, commands and global preferences.
+- `Sources/Notes/Model`: notes, labels, identities and archive metadata.
+- `Sources/Notes/Storage`: local persistence, file monitoring, journals and database preferences. The directory/file manager categories stay beside `NotationController`.
+- `Sources/Notes/Storage/Crypto`: encryption and key derivation; historical codecs are under `Legacy`.
+- `Sources/Editor`, `NoteList`, `Preferences`, `Interchange` and `Integrations`: their corresponding application subsystems.
+- `Sources/Support`: shared Foundation and AppKit helpers.
+- `Vendor`: imported hotkey, external-editor, split-view and hashcash code, with its existing notices.
+- `Resources`: images, scripting definitions and localisation directories. Xcode localisation variant groups preserve bundle resource names.
+- `Configuration`: the application Info.plist and prefix header.
+- `Tests`: mirrors source subsystem ownership; cross-subsystem compatibility tests live in `Integration`, shared path helpers in `Support`, fixed inputs in `Fixtures`, and project generators in `Tools`.
+- `script`: build, launch and test entry points. Generated output stays under ignored `build`.
+
+Physical source directories match Xcode groups. Target build phases explicitly select compiled files; adding a file to a folder does not add it to a target. Preserve archived Objective-C class names when organising files.
+
+## Build and verification
+
+```sh
+/usr/bin/xcodebuild -project Notation.xcodeproj -scheme Notation \
+    -configuration Development -derivedDataPath build/app CODE_SIGNING_ALLOWED=NO build
+./script/test.sh
+./script/test_native.sh
+/usr/bin/python3 Tests/Build/test_build_policy.py
+```
+
+`./script/build_and_run.sh` builds and opens the development app with isolated preferences and notes. Its `--verify` option runs the full GUI acceptance suite, including TextEdit, full-screen transitions and quit/reopen checks, and requires an unlocked desktop. Use the build and test commands above for routine source and folder changes.
+
+To regenerate the test projects after changing source membership or paths:
+
+```sh
+/usr/bin/python3 Tests/Tools/bootstrap_test_project.py
+/usr/bin/python3 Tests/Tools/create_integration_project.py
+```
+
+The compatibility project uses selected production files and extracted units. The integration project compiles the application's actual source list, excluding `main.m`. Both retain explicit source membership and mirror the relevant physical directories in Xcode. Test fixtures remain shared across subsystems; see [their provenance](Tests/Fixtures/README.md).

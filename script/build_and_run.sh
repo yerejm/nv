@@ -31,8 +31,12 @@ mv "$RUN_APP/Contents/MacOS/Notational Velocity" "$RUN_EXECUTABLE"
 /usr/libexec/PlistBuddy -c 'Delete :CFBundleURLTypes' "$RUN_APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Delete :NSServices' "$RUN_APP/Contents/Info.plist"
 /usr/bin/codesign --force --sign - --identifier net.notational.velocity.development "$RUN_APP"
+RUN_INCLUDE_FLAGS=()
+while IFS= read -r RUN_INCLUDE_DIRECTORY; do
+    RUN_INCLUDE_FLAGS+=(-I "$RUN_INCLUDE_DIRECTORY")
+done < <(/usr/bin/python3 "$RUN_ROOT/Tests/Tools/project_layout.py")
 /usr/bin/xcrun clang -arch arm64 -mmacosx-version-min=15.0 -dynamiclib -undefined dynamic_lookup \
-    -I "$RUN_ROOT" -I "$RUN_ROOT/RBSplitView" -I "$RUN_ROOT/PTHotKeys" -I "$RUN_ROOT/ODBEditor" \
+    "${RUN_INCLUDE_FLAGS[@]}" \
     "$RUN_ROOT/Tests/Tools/IsolatedLaunch.m" -framework Cocoa -framework Carbon -o "$RUN_LIBRARY"
 RUN_ENV=(--env "DYLD_INSERT_LIBRARIES=$RUN_LIBRARY" --env "NV_ISOLATED_ROOT=$RUN_DATA" --env "TMPDIR=$RUN_DATA/tmp/")
 if [[ "$RUN_MODE" == --verify ]]; then

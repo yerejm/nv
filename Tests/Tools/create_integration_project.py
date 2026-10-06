@@ -1,12 +1,10 @@
 import pathlib
 import plistlib
-import json
-import subprocess
+
+from project_layout import application_project, file_groups, header_search_paths
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
-original = json.loads(subprocess.check_output([
-    '/usr/bin/plutil', '-convert', 'json', '-o', '-',
-    str(ROOT / 'Notation.xcodeproj/project.pbxproj')]))
+original = application_project()
 original_objects = original['objects']
 paths = {}
 
@@ -27,7 +25,9 @@ phase = next(original_objects[key] for key in app['buildPhases']
 sources = [paths[original_objects[key]['fileRef']] for key in phase['files']]
 sources = [source for source in sources if source.name != 'main.m']
 sources.extend(ROOT / 'Tests' / filename for filename in [
-    'NativeStorageTests.m', 'NativeQuitTests.m', 'NativeResourceTests.m', 'NativeLinkRoutingTests.m', 'NativeActivationTests.m'])
+    'Notes/Storage/NativeStorageTests.m', 'Application/NativeQuitTests.m',
+    'Resources/NativeResourceTests.m', 'Application/NativeLinkRoutingTests.m',
+    'Application/NativeActivationTests.m'])
 objects = {}
 
 
@@ -37,12 +37,12 @@ def add(value):
     return key
 
 
-refs = [add(dict(isa='PBXFileReference', path='../' + str(source.relative_to(ROOT)),
-                 sourceTree='SOURCE_ROOT', lastKnownFileType='sourcecode.c.objc'
-                 if source.suffix == '.m' else 'sourcecode.c.c')) for source in sources]
+group, children, refs = file_groups(add, [str(source.relative_to(ROOT)) for source in sources]
+                                  + ['Tests/Support/TestPaths.h'])
+refs = refs[:len(sources)]
 product = add(dict(isa='PBXFileReference', path='NativeIntegrationTests.xctest',
                    sourceTree='BUILT_PRODUCTS_DIR', explicitFileType='wrapper.cfbundle'))
-group = add(dict(isa='PBXGroup', children=refs + [product], sourceTree='<group>'))
+children.append(product)
 builds = [add(dict(isa='PBXBuildFile', fileRef=ref)) for ref in refs]
 sourcephase = add(dict(isa='PBXSourcesBuildPhase', buildActionMask=2147483647,
                        files=builds, runOnlyForDeploymentPostprocessing=0))
@@ -52,9 +52,8 @@ frameworks = ['XCTest', 'Cocoa', 'Carbon', 'CoreServices', 'SecurityInterface',
               'Security', 'WebKit', 'ApplicationServices', 'SystemConfiguration', 'IOKit', 'PDFKit']
 settings = dict(
     ARCHS='arm64', SDKROOT='macosx', MACOSX_DEPLOYMENT_TARGET='15.0',
-    CLANG_ENABLE_OBJC_ARC='NO', GCC_PREFIX_HEADER='$(SRCROOT)/../Notation_Prefix.pch',
-    HEADER_SEARCH_PATHS=['$(SRCROOT)/..', '$(SRCROOT)/../PTHotKeys', '$(SRCROOT)/../ODBEditor',
-                         '$(SRCROOT)/../RBSplitView', '$(SRCROOT)/../hashcash'],
+    CLANG_ENABLE_OBJC_ARC='NO', GCC_PREFIX_HEADER='$(SRCROOT)/../Configuration/Notation_Prefix.pch',
+    HEADER_SEARCH_PATHS=header_search_paths(),
     GENERATE_INFOPLIST_FILE='YES', PRODUCT_BUNDLE_IDENTIFIER='net.notational.velocity.native-tests',
     PRODUCT_NAME='NativeIntegrationTests',
     FRAMEWORK_SEARCH_PATHS='$(PLATFORM_DIR)/Developer/Library/Frameworks',

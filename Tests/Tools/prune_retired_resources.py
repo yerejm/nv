@@ -112,4 +112,4 @@ def prune(filename):
 if __name__ == '__main__':
     for localization in ['en', 'de', 'it', 'fr', 'pt', 'zh_CN']:
         for name in ['MainMenu', 'NotationPrefsView']:
-            prune(ROOT / f'{localization}.lproj/{name}.nib/keyedobjects.nib')
+            prune(ROOT / f'Resources/{localization}.lproj/{name}.nib/keyedobjects.nib')

@@ -1,4 +1,5 @@
 #import <XCTest/XCTest.h>
+#import "TestPaths.h"
 #import "DeletedNoteObject.h"
 #import "pbkdf2.h"
 #import "broken_md5.h"
@@ -19,8 +20,7 @@
     [super tearDown];
 }
 - (NSData *)fixture:(NSString *)name {
-    NSString *testDirectory = [@__FILE__ stringByDeletingLastPathComponent];
-    NSData *data = [NSData dataWithContentsOfFile:[testDirectory stringByAppendingPathComponent:[@"Fixtures" stringByAppendingPathComponent:name]]];
+    NSData *data = [NSData dataWithContentsOfFile:NVFixturePath(name)];
     XCTAssertNotNil(data);
     return data;
 }

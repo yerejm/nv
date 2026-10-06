@@ -1,4 +1,5 @@
 #import <XCTest/XCTest.h>
+#import "TestPaths.h"
 #import "GlobalPrefs.h"
 #import "NotationPrefs.h"
 #import "NotationPrefsViewController.h"
@@ -10,7 +11,7 @@
 @implementation NativeResourceTests
 - (void)testLoadsAllLocalizedCompiledResources {
     [NSApplication sharedApplication];
-    NSString *root = [[@__FILE__ stringByDeletingLastPathComponent] stringByDeletingLastPathComponent];
+    NSString *root = NVResourcesDirectory();
     NSString *directory = [NSTemporaryDirectory() stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]];
     XCTAssertTrue([[NSFileManager defaultManager] createDirectoryAtPath:directory withIntermediateDirectories:YES attributes:nil error:NULL]);
     FSRef reference;

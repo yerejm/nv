@@ -1,4 +1,5 @@
 #import <XCTest/XCTest.h>
+#import "TestPaths.h"
 #import "AttributedPlainText.h"
 #import "NSString_NV.h"
 
@@ -13,7 +14,7 @@
     return links;
 }
 - (void)testSaved77CasePolicy {
-    NSString *fixture = [[@__FILE__ stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"Fixtures/hyperlink-policy.json"];
+    NSString *fixture = NVFixturePath(@"hyperlink-policy.json");
     NSArray *cases = [NSJSONSerialization JSONObjectWithData:[NSData dataWithContentsOfFile:fixture] options:0 error:NULL];
     XCTAssertEqual(cases.count, 77U);
     for (NSDictionary *entry in cases) {

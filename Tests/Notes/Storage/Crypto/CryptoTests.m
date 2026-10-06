@@ -1,4 +1,5 @@
 #import <XCTest/XCTest.h>
+#import "TestPaths.h"
 #import "NSData_transformations.h"
 #import "NSString_NV.h"
 
@@ -18,7 +19,7 @@ NSData *NVVolumeUUIDForName(NSData *name);
     return data;
 }
 - (NSArray *)aesVectors {
-    NSString *fixture = [[@__FILE__ stringByDeletingLastPathComponent] stringByAppendingPathComponent:@"Fixtures/crypto-vectors.json"];
+    NSString *fixture = NVFixturePath(@"crypto-vectors.json");
     NSDictionary *vectors = [NSJSONSerialization JSONObjectWithData:[NSData dataWithContentsOfFile:fixture] options:0 error:NULL];
     XCTAssertNotNil(vectors);
     return vectors[@"aes"];

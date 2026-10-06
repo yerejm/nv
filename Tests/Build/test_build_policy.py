@@ -4,7 +4,7 @@ import plistlib
 import subprocess
 import unittest
 
-ROOT = pathlib.Path(__file__).resolve().parents[1]
+ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 
 class BuildPolicyTests(unittest.TestCase):
@@ -27,7 +27,7 @@ class BuildPolicyTests(unittest.TestCase):
                 self.assertNotIn('-whatsloaded', str(settings))
 
     def test_bundle_minimum_and_architecture_match(self):
-        with (ROOT / 'Info.plist').open('rb') as source:
+        with (ROOT / 'Configuration/Info.plist').open('rb') as source:
             info = plistlib.load(source)
         self.assertEqual(info['LSMinimumSystemVersion'], '15.0')
         self.assertEqual(info.get('LSArchitecturePriority'), ['arm64'])
@@ -37,8 +37,10 @@ class BuildPolicyTests(unittest.TestCase):
         project = (ROOT / 'Notation.xcodeproj/project.pbxproj').read_text()
         self.assertNotIn('/opt/openssl/', project)
         self.assertNotIn('libcrypto.dylib', project)
-        for filename in ['NSData_transformations.h', 'NSData_transformations.m',
-                         'NSString_NV.m', 'NotationFileManager.m']:
+        for filename in ['Sources/Notes/Storage/Crypto/NSData_transformations.h',
+                         'Sources/Notes/Storage/Crypto/NSData_transformations.m',
+                         'Sources/Support/NSString_NV.m',
+                         'Sources/Notes/Storage/NotationFileManager.m']:
             with self.subTest(filename=filename):
                 self.assertNotIn('openssl/', (ROOT / filename).read_text())
 
@@ -48,9 +50,8 @@ class BuildPolicyTests(unittest.TestCase):
                          (ROOT / 'Notation.xcodeproj/project.pbxproj').read_text())
 
     def test_no_private_spaces_api(self):
-        for filename in ['AppController.m', 'AppController.h', 'Spaces.c', 'Spaces.h']:
-            source = ROOT / filename
-            if source.exists():
+        for source in (ROOT / 'Sources').rglob('*'):
+            if source.suffix in ('.m', '.h', '.c'):
                 self.assertNotIn('CGSGetWorkspace', source.read_text())
                 self.assertNotIn('_CGSDefaultConnection', source.read_text())
                 self.assertNotIn('CurrentContextForWindowNumber', source.read_text())
@@ -58,14 +59,14 @@ class BuildPolicyTests(unittest.TestCase):
     def test_no_updater_or_remote_sync_implementation(self):
         self.assertFalse((ROOT / 'Sparkle.framework').exists())
         self.assertFalse((ROOT / 'dsa_pub.pem').exists())
-        with (ROOT / 'Info.plist').open('rb') as source:
+        with (ROOT / 'Configuration/Info.plist').open('rb') as source:
             self.assertFalse(any(key.startswith('SU') for key in plistlib.load(source)))
         project = (ROOT / 'Notation.xcodeproj/project.pbxproj').read_text()
         for name in ['Sparkle.framework', 'SimplenoteSession', 'SimplenoteEntryCollector',
                      'SyncSessionController', 'SyncResponseFetcher', 'NotationSyncServiceManager']:
             self.assertNotIn(name, project)
-            self.assertFalse((ROOT / (name + '.m')).exists())
-        for source in ROOT.glob('*.m'):
+            self.assertFalse(list((ROOT / 'Sources').rglob(name + '.m')))
+        for source in (ROOT / 'Sources').rglob('*.m'):
             self.assertNotIn('simple-note.appspot.com', source.read_text())
             self.assertNotIn('SUUpdater', source.read_text())
 

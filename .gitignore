@@ -7,11 +7,12 @@ build/*
 # Mac OS X specific
 .DS_Store
 profile
-English.lproj/MainMenu~.nib/classes.nib
-English.lproj/MainMenu~.nib/data.dependency
-English.lproj/MainMenu~.nib/info.nib
-English.lproj/MainMenu~.nib/keyedobjects.nib
+Resources/English.lproj/MainMenu~.nib/classes.nib
+Resources/English.lproj/MainMenu~.nib/data.dependency
+Resources/English.lproj/MainMenu~.nib/info.nib
+Resources/English.lproj/MainMenu~.nib/keyedobjects.nib
+
+__pycache__/
 
 .codex
 HANDOFF.md
-

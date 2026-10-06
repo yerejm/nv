@@ -15,7 +15,7 @@ def method(source, prefix):
     return source[start:end].strip()
 
 
-source = (ROOT / 'GlobalPrefs.m').read_text()
+source = (ROOT / 'Sources/Application/GlobalPrefs.m').read_text()
 assignment = re.search(r'runCallbacksIMP = .*?;', source).group()
 callback = source[source.index('static void sendCallbacksForGlobalPrefs'):source.index('\n- (id)init')]
 methods = [method(source, prefix) for prefix in [
@@ -43,7 +43,7 @@ static NSString *ConfirmNoteDeletionKey = @"ConfirmNoteDeletion";
 }
 ''' + '\n'.join(methods) + '\n@end\n')
 
-source = (ROOT / 'NSString_NV.m').read_text()
+source = (ROOT / 'Sources/Support/NSString_NV.m').read_text()
 methods = [method(source, prefix) for prefix in [
     '- (NSString *)stringByReplacingPercentEscapes', '- (NSString*)stringWithPercentEscapes',
     '- (CFUUIDBytes)uuidBytes', '+ (NSString*)uuidStringWithBytes:',
@@ -51,7 +51,7 @@ methods = [method(source, prefix) for prefix in [
 (OUTPUT / 'NSStringUtilities.m').write_text('#import "NSString_NV.h"\n#import "NSData_transformations.h"\n'
     '@implementation NSString (NVTestUnits)\n' + '\n'.join(methods) + '\n@end\n')
 
-source = (ROOT / 'AttributedPlainText.m').read_text()
+source = (ROOT / 'Sources/Editor/AttributedPlainText.m').read_text()
 start = source.index('- (void)addLinkAttributesForRange:')
 end = source.index('-(void)addAttributesForMarkdownHeadingLinesInRange:', start)
 imports = '#import <AutoHyperlinks/AutoHyperlinks.h>\n' if '#import <AutoHyperlinks/' in source else ''
@@ -60,7 +60,7 @@ imports = '#import <AutoHyperlinks/AutoHyperlinks.h>\n' if '#import <AutoHyperli
     '@implementation NSMutableAttributedString (NVLinkTestUnits)\n'
     + source[start:end] + '\n@end\n')
 
-source = (ROOT / 'NotationFileManager.m').read_text()
+source = (ROOT / 'Sources/Notes/Storage/NotationFileManager.m').read_text()
 start = source.index('static void uuid_create_md5_from_name(')
 end = source.index('\n\nCFUUIDRef CopyHFSVolumeUUIDForMount', start)
 imports = '#include <CommonCrypto/CommonDigest.h>\n' if 'CommonCrypto/CommonDigest.h' in source else ''
@@ -73,7 +73,7 @@ NSData *NVVolumeUUIDForName(NSData *name) {
 }
 ''')
 
-source = (ROOT / 'LinkingEditor.m').read_text()
+source = (ROOT / 'Sources/Editor/LinkingEditor.m').read_text()
 category_start = source.index('@interface NSCursor (WhiteIBeamCursor)')
 category_end = source.index('@implementation LinkingEditor', category_start)
 unit = '\n'.join(method(source, prefix) for prefix in [

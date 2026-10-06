@@ -3,6 +3,8 @@ import pathlib
 import plistlib
 import subprocess
 
+from project_layout import file_groups, header_search_paths
+
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 objects = {}
 
@@ -13,14 +15,21 @@ def add(value):
     return key
 
 
-sources = ['CompatibilityTests.m', 'CallbackTests.m', 'CryptoTests.m', 'HyperlinkTests.m', 'CursorTests.m', '../build/generated-tests/EditorCursor.m', '../build/generated-tests/VolumeIdentity.m', '../build/generated-tests/HyperlinkUnits.m', '../NSData_transformations.m', '../build/generated-tests/NSStringUtilities.m', '../build/generated-tests/GlobalPrefsCallbacks.m', '../DeletedNoteObject.m', '../pbkdf2.c',
-           '../hmacsha1.c', '../broken_md5.c']
-refs = [add(dict(isa='PBXFileReference', path=source, sourceTree='<group>',
-                 lastKnownFileType='sourcecode.c.objc' if source.endswith('.m')
-                 else 'sourcecode.c.c')) for source in sources]
+sources = [
+    'Tests/Integration/CompatibilityTests.m', 'Tests/Application/CallbackTests.m',
+    'Tests/Notes/Storage/Crypto/CryptoTests.m', 'Tests/Editor/HyperlinkTests.m',
+    'Tests/Editor/CursorTests.m', 'build/generated-tests/EditorCursor.m',
+    'build/generated-tests/VolumeIdentity.m', 'build/generated-tests/HyperlinkUnits.m',
+    'Sources/Notes/Storage/Crypto/NSData_transformations.m',
+    'build/generated-tests/NSStringUtilities.m', 'build/generated-tests/GlobalPrefsCallbacks.m',
+    'Sources/Notes/Model/DeletedNoteObject.m', 'Sources/Notes/Storage/Crypto/pbkdf2.c',
+    'Sources/Notes/Storage/Crypto/hmacsha1.c', 'Sources/Notes/Storage/Crypto/Legacy/broken_md5.c',
+]
+group, children, refs = file_groups(add, sources + ['Tests/Support/TestPaths.h'])
+refs = refs[:len(sources)]
 product = add(dict(isa='PBXFileReference', path='CompatibilityTests.xctest',
                    sourceTree='BUILT_PRODUCTS_DIR', explicitFileType='wrapper.cfbundle'))
-group = add(dict(isa='PBXGroup', children=refs + [product], sourceTree='<group>'))
+children.append(product)
 builds = [add(dict(isa='PBXBuildFile', fileRef=ref)) for ref in refs]
 sourcephase = add(dict(isa='PBXSourcesBuildPhase', buildActionMask=2147483647,
                        files=builds, runOnlyForDeploymentPostprocessing=0))
@@ -28,8 +37,8 @@ frameworkphase = add(dict(isa='PBXFrameworksBuildPhase', buildActionMask=2147483
                           files=[], runOnlyForDeploymentPostprocessing=0))
 settings = dict(
     ARCHS='arm64', SDKROOT='macosx', MACOSX_DEPLOYMENT_TARGET='15.0',
-    CLANG_ENABLE_OBJC_ARC='NO', GCC_PREFIX_HEADER='$(SRCROOT)/../Notation_Prefix.pch',
-    HEADER_SEARCH_PATHS='$(SRCROOT)/..', GENERATE_INFOPLIST_FILE='YES',
+    CLANG_ENABLE_OBJC_ARC='NO', GCC_PREFIX_HEADER='$(SRCROOT)/../Configuration/Notation_Prefix.pch',
+    HEADER_SEARCH_PATHS=header_search_paths(), GENERATE_INFOPLIST_FILE='YES',
     PRODUCT_BUNDLE_IDENTIFIER='net.notational.velocity.tests', PRODUCT_NAME='CompatibilityTests',
     FRAMEWORK_SEARCH_PATHS=['$(PLATFORM_DIR)/Developer/Library/Frameworks', '$(SRCROOT)/..'],
     OTHER_LDFLAGS=['-framework', 'XCTest', '-framework', 'Cocoa', '-framework', 'Carbon', '-framework', 'WebKit', '-lz'],
