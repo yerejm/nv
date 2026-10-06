@@ -65,8 +65,12 @@ CGFloat _perceptualDarkness(NSColor*a);
 	
 	[self setUsesFindBar:YES];
 	[self setIncrementalSearchingEnabled:YES];
-	textFinder = [[[NSTextFinder alloc] init] retain];
+	textFinder = [[NSTextFinder alloc] init];
  	[textFinder setClient:(id)self];
+    [textFinder setFindBarContainer:self.enclosingScrollView];
+    [textFinder setIncrementalSearchingEnabled:YES];
+    [self setAutomaticQuoteSubstitutionEnabled:[prefsController useSmartQuotes]];
+    [self setAutomaticDashSubstitutionEnabled:[prefsController useSmartDashes]];
     [self setContinuousSpellCheckingEnabled:[prefsController checkSpellingAsYouType]];
 	if (IsSnowLeopardOrLater) {
 		[self setAutomaticTextReplacementEnabled:[prefsController useTextReplacement]];
@@ -75,6 +79,8 @@ CGFloat _perceptualDarkness(NSColor*a);
     [prefsController registerWithTarget:self forChangesInSettings:
 	 @selector(setCheckSpellingAsYouType:sender:),
 	 @selector(setUseTextReplacement:sender:),
+     @selector(setUseSmartQuotes:sender:), @selector(setUseSmartDashes:sender:),
+     @selector(setUseSmartInsertDelete:sender:),
 	 @selector(setNoteBodyFont:sender:),
 	 @selector(setMakeURLsClickable:sender:),
 	 @selector(setSearchTermHighlightColor:sender:),
@@ -86,7 +92,7 @@ CGFloat _perceptualDarkness(NSColor*a);
     NVConfigureScrolling(self.enclosingScrollView);
 	
 	[self setTextContainerInset:NSMakeSize(3, 8)];
-	[self setSmartInsertDeleteEnabled:NO];
+	[self setSmartInsertDeleteEnabled:[prefsController useSmartInsertDelete]];
 	[self setUsesRuler:NO];
 	[self setUsesFontPanel:NO];
 	[self setDrawsBackground:YES];
@@ -108,6 +114,18 @@ CGFloat _perceptualDarkness(NSColor*a);
 }
 
 - (void)settingChangedForSelectorString:(NSString*)selectorString {
+    if ([selectorString isEqualToString:SEL_STR(setUseSmartQuotes:sender:)]) {
+        [self setAutomaticQuoteSubstitutionEnabled:[prefsController useSmartQuotes]];
+        return;
+    }
+    if ([selectorString isEqualToString:SEL_STR(setUseSmartDashes:sender:)]) {
+        [self setAutomaticDashSubstitutionEnabled:[prefsController useSmartDashes]];
+        return;
+    }
+    if ([selectorString isEqualToString:SEL_STR(setUseSmartInsertDelete:sender:)]) {
+        [self setSmartInsertDeleteEnabled:[prefsController useSmartInsertDelete]];
+        return;
+    }
     if ([selectorString isEqualToString:SEL_STR(setRightToLeftEditing:sender:)]) {
         [self updateWritingDirection];
         return;
@@ -351,25 +369,38 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
     return ([[controlField stringValue] length] > 0);
 }*/
 
-- (void)toggleAutomaticTextReplacement:(id)sender {
-	
-	[super toggleAutomaticTextReplacement:sender];
-	
-	[prefsController setUseTextReplacement:[self isAutomaticTextReplacementEnabled] sender:self];
+- (void)setAutomaticTextReplacementEnabled:(BOOL)enabled {
+    [super setAutomaticTextReplacementEnabled:enabled];
+    if (prefsController && enabled != [prefsController useTextReplacement])
+        [prefsController setUseTextReplacement:enabled sender:self];
 }
 
-- (void)toggleContinuousSpellChecking:(id)sender {
-
-	[super toggleContinuousSpellChecking:sender];
-	
-	[prefsController setCheckSpellingAsYouType:[self isContinuousSpellCheckingEnabled] sender:self];
+- (void)setContinuousSpellCheckingEnabled:(BOOL)enabled {
+    [super setContinuousSpellCheckingEnabled:enabled];
+    if (prefsController && enabled != [prefsController checkSpellingAsYouType])
+        [prefsController setCheckSpellingAsYouType:enabled sender:self];
 }
 
-- (BOOL)isContinuousSpellCheckingEnabled {
-	//optimization so that we don't spell-check while scrolling through notes that don't have focus
-    NSView *responder = (NSView*)[[self window] firstResponder];
-    
-    return (responder == self && [super isContinuousSpellCheckingEnabled]);
+- (void)setAutomaticQuoteSubstitutionEnabled:(BOOL)enabled {
+    [super setAutomaticQuoteSubstitutionEnabled:enabled];
+    if (prefsController && enabled != [prefsController useSmartQuotes])
+        [prefsController setUseSmartQuotes:enabled sender:self];
+}
+
+- (void)setAutomaticDashSubstitutionEnabled:(BOOL)enabled {
+    [super setAutomaticDashSubstitutionEnabled:enabled];
+    if (prefsController && enabled != [prefsController useSmartDashes])
+        [prefsController setUseSmartDashes:enabled sender:self];
+}
+
+- (void)setSmartInsertDeleteEnabled:(BOOL)enabled {
+    [super setSmartInsertDeleteEnabled:enabled];
+    if (prefsController && enabled != [prefsController useSmartInsertDelete])
+        [prefsController setUseSmartInsertDelete:enabled sender:self];
+}
+
+- (void)checkSpelling:(id)sender {
+    if (self.window.firstResponder == self) [super checkSpelling:sender];
 }
 
 - (BOOL)didRenderFully {
@@ -746,38 +777,51 @@ copyRTFType:
 	[self setSelectedRange:newRange];
 }
 
-- (IBAction)performFindPanelAction:(id)sender {
-	id controller = (AppController *)[NSApp delegate];
-    
-    NSInteger rowNumber = -1;
-    NSInteger totalNotes = [notesTableView numberOfRows];
-    NSInteger tag = [sender tag];
-    
-    if (![controller selectedNoteObject]) {
-		rowNumber = (tag == NSFindPanelActionPrevious ? totalNotes - 1 : 0);
+- (void)configureFindMenu:(NSMenu *)menu {
+    for (NSMenuItem *item in menu.itemArray) {
+        if (item.action == @selector(performFindPanelAction:) || item.action == @selector(performTextFinderAction:))
+            [item setTarget:self];
+        if (item.submenu) [self configureFindMenu:item.submenu];
     }
-    
-    if (rowNumber > -1 && tag != NSFindPanelActionShowFindPanel) {
-		//when skipping notes, also set the selection depending on find direction
-		[notesTableView selectRowAndScroll:rowNumber];
-		[self setSelectedRange:NSMakeRange((tag == NSFindPanelActionPrevious ? [[self string] length] : 0),0)];
-	} else if (rowNumber == 0)
-		return;
-    
-	if ([controller selectedNoteObject])
-		[[self window] makeFirstResponder:self];
-	
-    [super performFindPanelAction:sender];
-	
-	lastAutomaticallySelectedRange = [self selectedRange];
+}
+
+- (IBAction)performFindPanelAction:(id)sender {
+    [self performTextFinderAction:sender];
+}
+
+- (void)performTextFinderAction:(id)sender {
+    AppController *controller = (id)NSApp.delegate;
+    NSTextFinderAction action = [sender tag];
+    BOOL showing = action == NSTextFinderActionShowFindInterface || action == NSTextFinderActionShowReplaceInterface;
+    NSString *seed = nil;
+    if (showing && !self.enclosingScrollView.isFindBarVisible) {
+        seed = [[controller fieldSearchString] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
+        if (![seed length]) seed = [[NSPasteboard generalPasteboard] stringForType:NSPasteboardTypeString];
+    }
+    if (![controller selectedNoteObject]) {
+        NSInteger count = notesTableView.numberOfRows;
+        if (!count) return;
+        [notesTableView selectRowAndScroll:action == NSTextFinderActionPreviousMatch ? count - 1 : 0];
+        [self setSelectedRange:NSMakeRange(action == NSTextFinderActionPreviousMatch ? self.string.length : 0, 0)];
+    }
+    [self.window makeFirstResponder:self];
+    if ([seed length]) {
+        NSPasteboard *pasteboard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
+        [pasteboard declareTypes:@[NSPasteboardTypeString] owner:nil];
+        [pasteboard setString:seed forType:NSPasteboardTypeString];
+    }
+    [textFinder performAction:action];
+    lastAutomaticallySelectedRange = self.selectedRange;
+}
+
+- (void)noteFindContentWillChange {
+    [textFinder noteClientStringWillChange];
+    [textFinder cancelFindIndicator];
 }
 
 - (void)clearFindPanel {
-	if (([[self enclosingScrollView]findBarView]!=nil)) {
-	   [textFinder setFindIndicatorNeedsUpdate:YES];
-	   [textFinder cancelFindIndicator];
-	   [textFinder performAction:NSTextFinderActionHideFindInterface];
-	}
+    [self noteFindContentWillChange];
+    [textFinder performAction:NSTextFinderActionHideFindInterface];
 }
 
 - (BOOL)performKeyEquivalent:(NSEvent *)anEvent {
@@ -1054,6 +1098,7 @@ copyRTFType:
 	[self fixCursorForBackgroundUpdatingMouseInside:NO];
 }
 - (void)mouseExited:(NSEvent*)anEvent {
+    [super mouseExited:anEvent];
 	mouseInside = NO;
 	[self fixCursorForBackgroundUpdatingMouseInside:NO];
 }
@@ -1098,6 +1143,11 @@ copyRTFType:
 	//need to fix this for better style detection
 	
 	SEL action = [menuItem action];
+    if (action == @selector(performFindPanelAction:) || action == @selector(performTextFinderAction:)) {
+        if (![(AppController *)NSApp.delegate selectedNoteObject])
+            return notesTableView.numberOfRows > 0;
+        return [textFinder validateAction:menuItem.tag];
+    }
 	if (action == @selector(defaultStyle:) ||
 		action == @selector(bold:) ||
 		action == @selector(italic:) ||
@@ -1310,7 +1360,9 @@ cancelCompetion:
 		changedRange.length -= affectedCharRange.length;
 	}
 	
-	return [super shouldChangeTextInRange:affectedCharRange replacementString:replacementString];
+    BOOL allowed = [super shouldChangeTextInRange:affectedCharRange replacementString:replacementString];
+    if (allowed && replacementString) [textFinder noteClientStringWillChange];
+    return allowed;
 }
 
 #ifdef notyet
@@ -1586,6 +1638,9 @@ static long (*GetGetScriptManagerVariablePointer())(short) {
 }
 
 - (void)dealloc {
+    [textFinder setClient:nil];
+    [textFinder setFindBarContainer:nil];
+    [textFinder release];
 	[[NSNotificationCenter defaultCenter] removeObserver: self];
 	[super dealloc];
 }

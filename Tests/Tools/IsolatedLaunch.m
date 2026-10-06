@@ -68,6 +68,16 @@ __attribute__((used, section("__DATA,__interpose"))) static struct {
 - (void)stopLoading {}
 @end
 
+static NSMenuItem *FindMenuCommand(NSMenu *menu) {
+    for (NSMenuItem *item in menu.itemArray) {
+        if ((item.action == @selector(performFindPanelAction:) || item.action == @selector(performTextFinderAction:)) && item.tag == NSTextFinderActionShowFindInterface)
+            return item;
+        NSMenuItem *nested = item.submenu ? FindMenuCommand(item.submenu) : nil;
+        if (nested) return nested;
+    }
+    return nil;
+}
+
 static void Check(NSString *name, BOOL passed) {
     [checks addObject:@{@"check": name, @"passed": @(passed)}];
     NSLog(@"NV acceptance: %@ %@", passed ? @"PASS" : @"FAIL", name);
@@ -401,6 +411,57 @@ static void RunAcceptance(void) {
         Check(@"shared-tag changes preserve unique tags", [labelsOfNote(firstTagged) containsString:@"unique-one"] && [labelsOfNote(secondTagged) containsString:@"unique-two"] && [labelsOfNote(firstTagged) containsString:@"new-tag"] && ![labelsOfNote(secondTagged).lowercaseString containsString:@"shared"]);
         [firstTagged setLabelString:@""];
         [secondTagged setLabelString:@""];
+        [app revealNote:note options:NVEditNoteToReveal];
+        NSMenuItem *findCommand = FindMenuCommand(NSApp.mainMenu);
+        Check(@"Find menu targets the note editor from search focus", findCommand && findCommand.target == editor);
+        [app searchForString:@"Retained"];
+        [[app valueForKey:@"notesTableView"] deselectAll:nil];
+        [NSApp sendAction:findCommand.action to:findCommand.target from:findCommand];
+        Pump(0.3);
+        Check(@"Find opens and selects a note when nothing is selected", [app selectedNoteObject] && editor.enclosingScrollView.isFindBarVisible);
+        Check(@"Find starts with the global search text", [[[NSPasteboard pasteboardWithName:NSPasteboardNameFind] stringForType:NSPasteboardTypeString] isEqualToString:@"Retained"]);
+        [app searchForString:@""];
+        [app revealNote:note options:NVEditNoteToReveal];
+        NSPasteboard *clipboard = [NSPasteboard generalPasteboard];
+        NSMutableDictionary *savedClipboard = [NSMutableDictionary dictionary];
+        for (NSString *type in clipboard.types) {
+            NSData *data = [clipboard dataForType:type];
+            if (data) savedClipboard[type] = data;
+        }
+        [clipboard declareTypes:@[NSPasteboardTypeString] owner:nil];
+        [clipboard setString:@"Retained" forType:NSPasteboardTypeString];
+        [NSApp sendAction:findCommand.action to:findCommand.target from:findCommand];
+        Check(@"Find uses clipboard text when global search is empty", [[[NSPasteboard pasteboardWithName:NSPasteboardNameFind] stringForType:NSPasteboardTypeString] isEqualToString:@"Retained"]);
+        [clipboard declareTypes:savedClipboard.allKeys owner:nil];
+        for (NSString *type in savedClipboard) [clipboard setData:savedClipboard[type] forType:type];
+        NSView *findBar = editor.enclosingScrollView.findBarView;
+        [app revealNote:secondTagged options:NVEditNoteToReveal];
+        Pump(0.3);
+        Check(@"Find bar survives switching notes", editor.enclosingScrollView.isFindBarVisible && editor.enclosingScrollView.findBarView == findBar);
+        NSMenuItem *nextMatch = [[[NSMenuItem alloc] initWithTitle:@"Next" action:@selector(performFindPanelAction:) keyEquivalent:@""] autorelease];
+        nextMatch.tag = NSTextFinderActionNextMatch;
+        [app revealNote:note options:NVEditNoteToReveal];
+        [editor setSelectedRange:NSMakeRange(0, 0)];
+        [editor performFindPanelAction:nextMatch];
+        Pump(0.2);
+        Check(@"Find searches the newly displayed note", editor.selectedRange.length && [[editor.string substringWithRange:editor.selectedRange] localizedCaseInsensitiveContainsString:@"Retained"]);
+        [editor clearFindPanel];
+        [window makeFirstResponder:[app valueForKey:@"field"]];
+        [editor setContinuousSpellCheckingEnabled:YES];
+        Check(@"spelling preference stays enabled without editor focus", editor.isContinuousSpellCheckingEnabled && displayPrefs.checkSpellingAsYouType);
+        [editor setAutomaticTextReplacementEnabled:YES];
+        [editor setAutomaticQuoteSubstitutionEnabled:YES];
+        [editor setAutomaticDashSubstitutionEnabled:YES];
+        [editor setSmartInsertDeleteEnabled:YES];
+        Check(@"native substitution changes persist", displayPrefs.useTextReplacement && displayPrefs.useSmartQuotes && displayPrefs.useSmartDashes && displayPrefs.useSmartInsertDelete);
+        [displayPrefs setUseTextReplacement:NO sender:nil];
+        [displayPrefs setUseSmartQuotes:NO sender:nil];
+        [displayPrefs setUseSmartDashes:NO sender:nil];
+        [displayPrefs setUseSmartInsertDelete:NO sender:nil];
+        Check(@"preference changes update native editing behavior", !editor.isAutomaticTextReplacementEnabled && !editor.isAutomaticQuoteSubstitutionEnabled && !editor.isAutomaticDashSubstitutionEnabled && !editor.smartInsertDeleteEnabled);
+        [app bringFocusToControlField:nil];
+        Pump(0.2);
+        Check(@"activation finishes with the search field focused", window.firstResponder == [[app valueForKey:@"field"] currentEditor]);
         [app revealNote:note options:NVEditNoteToReveal];
         NSString *filename = note.noteFilePath;
         NSTask *externalWriter = [[[NSTask alloc] init] autorelease];

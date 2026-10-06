@@ -44,6 +44,17 @@
     [note setSyncObjectAndKeyMD:@{ @"key": @"sanitized-retired-id", @"version": @7 } forService:@"Simplenote"];
     return note;
 }
+- (void)testDecodedImmutableContentRemainsEditable {
+    NoteObject *note = [self sampleNote];
+    NSAttributedString *immutable = [[NSAttributedString alloc] initWithString:@"Archived styled text" attributes:@{NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle)}];
+    [note->contentString release];
+    note->contentString = (id)immutable;
+    NoteObject *decoded = NVUnarchiveObject(NVArchiveObject(note));
+    XCTAssertTrue([decoded->contentString isKindOfClass:[NSMutableAttributedString class]]);
+    [decoded->contentString.mutableString appendString:@" edited"];
+    XCTAssertEqualObjects(decoded->contentString.string, @"Archived styled text edited");
+    XCTAssertEqualObjects([decoded->contentString attribute:NSUnderlineStyleAttributeName atIndex:0 effectiveRange:NULL], @(NSUnderlineStyleSingle));
+}
 - (void)testFileReferenceTracksRenameAndRejectsReplacement {
     NSString *path = [self.temporaryDirectory stringByAppendingPathComponent:@"original.txt"];
     NSString *renamed = [self.temporaryDirectory stringByAppendingPathComponent:@"renamed.txt"];

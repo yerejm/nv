@@ -105,6 +105,12 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 - (BOOL)tabKeyIndents;
 
 - (void)setUseTextReplacement:(BOOL)value sender:(id)sender;
+- (BOOL)useSmartQuotes;
+- (void)setUseSmartQuotes:(BOOL)value sender:(id)sender;
+- (BOOL)useSmartDashes;
+- (void)setUseSmartDashes:(BOOL)value sender:(id)sender;
+- (BOOL)useSmartInsertDelete;
+- (void)setUseSmartInsertDelete:(BOOL)value sender:(id)sender;
 - (BOOL)useTextReplacement;	
 
 - (void)setCheckSpellingAsYouType:(BOOL)value sender:(id)sender;

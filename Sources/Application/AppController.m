@@ -70,6 +70,7 @@
 }
 
 - (void)awakeFromNib {
+    [textView configureFindMenu:NSApp.mainMenu];
 	prefsController = [GlobalPrefs defaultPrefs];
 	
 
@@ -1241,6 +1242,7 @@ terminateApp:
 				//restore the un-selected state, but only if something had been first selected to cause that state to be saved
 				[field setStringValue:typedString];
 			}
+			[textView noteFindContentWillChange];
 			[textView setString:@""];
 		}
 		[self _expandToolbar];
@@ -1273,11 +1275,8 @@ terminateApp:
 }
 
 - (void)setEmptyViewState:(BOOL)state {
-    //return;
-    
-	//NSInteger numberSelected = [notesTableView numberOfSelectedRows];
-	BOOL enable = /*numberSelected != 1;*/ state;
-	[textView clearFindPanel];
+	BOOL enable = state;
+    if (state) [textView clearFindPanel];
 	[textView setHidden:enable];
 	[editorStatusView setHidden:!enable];
     [self updateWordCount];
@@ -1316,6 +1315,7 @@ terminateApp:
 		}
 		
 		//restore string
+		[textView noteFindContentWillChange];
 		[[textView textStorage] setAttributedString:[note contentString]];
         if ([prefsController rightToLeftEditing]) [textView updateWritingDirection];
         [self updateWordCount];
@@ -1337,8 +1337,6 @@ terminateApp:
 		
 		//NSString *words = noteIndex != [notationController preferredSelectedNoteIndex] ? typedString : nil;
 		//[textView setFutureSelectionRange:noteSelectionRange highlightingWords:words];
-		[textView clearFindPanel];
-		
 		return YES;
 	}
 	
@@ -1741,7 +1739,9 @@ terminateApp:
 - (void)contentsUpdatedForNote:(NoteObject*)aNoteObject {
 	if (aNoteObject == currentNote) {
 		
-		[[textView textStorage] setAttributedString:[aNoteObject contentString]];
+		[textView noteFindContentWillChange];
+        [[textView textStorage] setAttributedString:[aNoteObject contentString]];
+        [self updateWordCount];
 	}
 }
 
@@ -1825,8 +1825,6 @@ terminateApp:
 - (IBAction)bringFocusToControlField:(id)sender {
 	[self _expandToolbar];
 	
-	[field selectText:sender];
-	
 	if (![NSApp isActive]) {
 		[self captureActivationOrigin];
 		[NSApp activateIgnoringOtherApps:YES];
@@ -1834,6 +1832,13 @@ terminateApp:
 	if (![window isMainWindow]) [window makeKeyAndOrderFront:sender];
 	
 	[self setEmptyViewState:currentNote == nil];
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(selectSearchAfterActivation) object:nil];
+    if ([NSApp isActive] && window.isKeyWindow) [self selectSearchAfterActivation];
+    else [self performSelector:@selector(selectSearchAfterActivation) withObject:nil afterDelay:0];
+}
+
+- (void)selectSearchAfterActivation {
+    if ([NSApp isActive] && window.isKeyWindow) [field selectText:nil];
 }
 
 - (void)captureActivationOrigin {

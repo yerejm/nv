@@ -41,7 +41,8 @@
 		[prefsController registerWithTarget:self forChangesInSettings:
 		 @selector(resolveNoteBodyFontFromNotationPrefsFromSender:), 
 		 @selector(setCheckSpellingAsYouType:sender:), 
-		 @selector(setConfirmNoteDeletion:sender:), nil];
+		 @selector(setConfirmNoteDeletion:sender:),
+         @selector(setUseSmartQuotes:sender:), @selector(setUseSmartDashes:sender:), @selector(setUseSmartInsertDelete:sender:), nil];
     }
     return self;
 }
@@ -183,6 +184,12 @@
 - (IBAction)changedAutoPairing:(id)sender {
     [prefsController setUseAutoPairing:[sender state] == NSControlStateValueOn sender:self];
 }
+- (IBAction)changedSmartSubstitutions:(id)sender {
+    BOOL enabled = [sender state] == NSControlStateValueOn;
+    if (sender == smartQuotesButton) [prefsController setUseSmartQuotes:enabled sender:self];
+    else if (sender == smartDashesButton) [prefsController setUseSmartDashes:enabled sender:self];
+    else [prefsController setUseSmartInsertDelete:enabled sender:self];
+}
 - (IBAction)changedWritingDirection:(id)sender {
     [prefsController setRightToLeftEditing:[sender state] == NSControlStateValueOn sender:self];
 }
@@ -274,6 +281,9 @@
 }
 
 - (void)settingChangedForSelectorString:(NSString*)selectorString {
+    [smartQuotesButton setState:[prefsController useSmartQuotes]];
+    [smartDashesButton setState:[prefsController useSmartDashes]];
+    [smartInsertDeleteButton setState:[prefsController useSmartInsertDelete]];
     if ([selectorString isEqualToString:SEL_STR(resolveNoteBodyFontFromNotationPrefsFromSender:)]) {
 		[self previewNoteBodyFont];
 	} else if ([selectorString isEqualToString:SEL_STR(setCheckSpellingAsYouType:sender:)]) {
@@ -418,15 +428,27 @@
 }
 
 - (void)awakeFromNib {
-    writingView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 520, 180)];
+    writingView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 520, 290)];
     NSButton *pairing = [NSButton checkboxWithTitle:NSLocalizedString(@"Pair brackets and double quotes automatically", nil) target:self action:@selector(changedAutoPairing:)];
-    [pairing setFrame:NSMakeRect(24, 125, 472, 26)];
+    [pairing setFrame:NSMakeRect(24, 235, 472, 26)];
     [pairing setState:[prefsController useAutoPairing]];
     [writingView addSubview:pairing];
     NSButton *direction = [NSButton checkboxWithTitle:NSLocalizedString(@"Edit notes from right to left", nil) target:self action:@selector(changedWritingDirection:)];
-    [direction setFrame:NSMakeRect(24, 89, 472, 26)];
+    [direction setFrame:NSMakeRect(24, 199, 472, 26)];
     [direction setState:[prefsController rightToLeftEditing]];
     [writingView addSubview:direction];
+    smartQuotesButton = [NSButton checkboxWithTitle:NSLocalizedString(@"Use smart quotes", nil) target:self action:@selector(changedSmartSubstitutions:)];
+    smartDashesButton = [NSButton checkboxWithTitle:NSLocalizedString(@"Use smart dashes", nil) target:self action:@selector(changedSmartSubstitutions:)];
+    smartInsertDeleteButton = [NSButton checkboxWithTitle:NSLocalizedString(@"Adjust spaces when inserting or deleting text", nil) target:self action:@selector(changedSmartSubstitutions:)];
+    NSArray *substitutionButtons = @[smartQuotesButton, smartDashesButton, smartInsertDeleteButton];
+    for (NSUInteger index = 0; index < substitutionButtons.count; index++) {
+        NSButton *button = substitutionButtons[index];
+        [button setFrame:NSMakeRect(24, 163 - index * 36, 472, 26)];
+        [writingView addSubview:button];
+    }
+    [smartQuotesButton setState:[prefsController useSmartQuotes]];
+    [smartDashesButton setState:[prefsController useSmartDashes]];
+    [smartInsertDeleteButton setState:[prefsController useSmartInsertDelete]];
     NSTextField *shortcutHint = [NSTextField labelWithString:NSLocalizedString(@"⌘Return inserts a paragraph below; ⇧⌘Return inserts above.", nil)];
     [shortcutHint setFrame:NSMakeRect(24, 42, 472, 24)];
     [shortcutHint setTextColor:[NSColor secondaryLabelColor]];

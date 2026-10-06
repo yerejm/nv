@@ -36,7 +36,7 @@ enum {LAST_FIND_UNKNOWN, LAST_FIND_NO, LAST_FIND_YES};
     IBOutlet NotesTableView *notesTableView;
 
 	GlobalPrefs *prefsController;
-	id textFinder;
+	NSTextFinder *textFinder;
 	BOOL didRenderFully;
 	
 	BOOL didChangeIntoAutomaticRange;
@@ -81,6 +81,8 @@ enum {LAST_FIND_UNKNOWN, LAST_FIND_NO, LAST_FIND_YES};
 
 - (void)setupFontMenu;
 - (void)clearFindPanel;
+- (void)noteFindContentWillChange;
+- (void)configureFindMenu:(NSMenu *)menu;
 - (BOOL)didRenderFully;
 @end
 

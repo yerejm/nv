@@ -62,6 +62,7 @@
     NSTextField *textWidthLabel;
     NSPopUpButton *colorSchemeButton;
     NSView *writingView;
+    NSButton *smartQuotesButton, *smartDashesButton, *smartInsertDeleteButton;
 }
 - (void)showWindow:(id)sender;
 - (IBAction)changedTextWidth:(id)sender;
@@ -72,6 +73,7 @@
 - (IBAction)changedThemedScrollbars:(id)sender;
 - (IBAction)changedAutoPairing:(id)sender;
 - (IBAction)changedWritingDirection:(id)sender;
+- (IBAction)changedSmartSubstitutions:(id)sender;
 
 - (IBAction)changedBackgroundTextColorWell:(id)sender;
 - (IBAction)changedForegroundTextColorWell:(id)sender;

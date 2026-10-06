@@ -48,6 +48,9 @@ static NSString *NoteBodyFontKey = @"NoteBodyFont";
 static NSString *ConfirmNoteDeletionKey = @"ConfirmNoteDeletion";
 static NSString *CheckSpellingInNoteBodyKey = @"CheckSpellingInNoteBody";
 static NSString *TextReplacementInNoteBodyKey = @"TextReplacementInNoteBody";
+static NSString *SmartQuotesKey = @"NSAutomaticQuoteSubstitutionEnabled";
+static NSString *SmartDashesKey = @"NSAutomaticDashSubstitutionEnabled";
+static NSString *SmartInsertDeleteKey = @"UseSmartInsertDelete";
 static NSString *QuitWhenClosingMainWindowKey = @"QuitWhenClosingMainWindow";
 static NSString *TabKeyIndentsKey = @"TabKeyIndents";
 static NSString *PastePreservesStyleKey = @"PastePreservesStyle";
@@ -142,6 +145,7 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
             @NO, UseAutoPairingKey,
             @NO, RightToLeftEditingKey,
             @NO, ShowWordCountKey,
+            @NO, SmartInsertDeleteKey,
 			[NSNumber numberWithBool:YES], MakeURLsClickableKey,
 			[NSNumber numberWithBool:YES], HighlightSearchTermsKey, 
 			[NSNumber numberWithBool:YES], TableColumnsHaveBodyPreviewKey, 
@@ -279,6 +283,18 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
     SEND_CALLBACKS();
 }
 
+- (BOOL)useSmartQuotes { return [defaults boolForKey:SmartQuotesKey]; }
+- (void)setUseSmartQuotes:(BOOL)value sender:(id)sender {
+    [defaults setBool:value forKey:SmartQuotesKey]; SEND_CALLBACKS();
+}
+- (BOOL)useSmartDashes { return [defaults boolForKey:SmartDashesKey]; }
+- (void)setUseSmartDashes:(BOOL)value sender:(id)sender {
+    [defaults setBool:value forKey:SmartDashesKey]; SEND_CALLBACKS();
+}
+- (BOOL)useSmartInsertDelete { return [defaults boolForKey:SmartInsertDeleteKey]; }
+- (void)setUseSmartInsertDelete:(BOOL)value sender:(id)sender {
+    [defaults setBool:value forKey:SmartInsertDeleteKey]; SEND_CALLBACKS();
+}
 - (BOOL)useTextReplacement {
     return [defaults boolForKey:TextReplacementInNoteBodyKey];
 }
