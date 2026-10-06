@@ -1,0 +1,881 @@
+[
+  {
+    "id": "https",
+    "input": "https://example.com/path?x=1&y=2#fragment",
+    "matches": [
+      {
+        "text": "https://example.com/path?x=1&y=2#fragment",
+        "length": 41,
+        "url": "https://example.com/path?x=1&y=2#fragment",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "http",
+    "input": "http://example.com",
+    "matches": [
+      {
+        "text": "http://example.com",
+        "length": 18,
+        "url": "http://example.com",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "www",
+    "input": "www.example.com",
+    "matches": [
+      {
+        "text": "www.example.com",
+        "length": 15,
+        "url": "http://www.example.com",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "bare_domain",
+    "input": "example.com",
+    "matches": [
+      {
+        "text": "example.com",
+        "length": 11,
+        "url": "http://example.com",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "bare_domain_path",
+    "input": "example.org/path",
+    "matches": [
+      {
+        "text": "example.org/path",
+        "length": 16,
+        "url": "http://example.org/path",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "new_tld",
+    "input": "example.technology",
+    "matches": []
+  },
+  {
+    "id": "dev_domain",
+    "input": "example.dev",
+    "matches": []
+  },
+  {
+    "id": "email",
+    "input": "alice@example.com",
+    "matches": [
+      {
+        "text": "alice@example.com",
+        "length": 17,
+        "url": "mailto:alice@example.com",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "email_plus",
+    "input": "alice+notes@example.dev",
+    "matches": [
+      {
+        "text": "alice+notes@example.dev",
+        "length": 23,
+        "url": "mailto:alice+notes@example.dev",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "mailto",
+    "input": "mailto:alice@example.com",
+    "matches": [
+      {
+        "text": "mailto:alice@example.com",
+        "length": 24,
+        "url": "mailto:alice@example.com",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "mailto_query",
+    "input": "mailto:alice@example.com?subject=Hello",
+    "matches": [
+      {
+        "text": "mailto:alice@example.com?subject=Hello",
+        "length": 38,
+        "url": "mailto:alice@example.com?subject=Hello",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "ftp",
+    "input": "ftp://example.com/file.txt",
+    "matches": [
+      {
+        "text": "ftp://example.com/file.txt",
+        "length": 26,
+        "url": "ftp://example.com/file.txt",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "ftps",
+    "input": "ftps://example.com/file.txt",
+    "matches": [
+      {
+        "text": "ftps://example.com/file.txt",
+        "length": 27,
+        "url": "ftps://example.com/file.txt",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "file",
+    "input": "file:///Users/Test/Note.txt",
+    "matches": [
+      {
+        "text": "file:///Users/Test/Note.txt",
+        "length": 27,
+        "url": "file:///Users/Test/Note.txt",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "file_encoded_space",
+    "input": "file:///Users/Test/Some%20Note.txt",
+    "matches": [
+      {
+        "text": "file:///Users/Test/Some%20Note.txt",
+        "length": 34,
+        "url": "file:///Users/Test/Some%20Note.txt",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "file_raw_space",
+    "input": "file:///Users/Test/Some Note.txt",
+    "matches": [
+      {
+        "text": "file:///Users/Test/Some",
+        "length": 23,
+        "url": "file:///Users/Test/Some",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "file_reference",
+    "input": "file:///.file/id=12345",
+    "matches": []
+  },
+  {
+    "id": "nv",
+    "input": "nv://find/Project%20Alpha",
+    "matches": [
+      {
+        "text": "nv://find/Project%20Alpha",
+        "length": 25,
+        "url": "nv://find/Project%20Alpha",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "nv_uuid",
+    "input": "nv://find/Title/?NV=MTIzNDU2Nzg5MA%3D%3D",
+    "matches": [
+      {
+        "text": "nv://find/Title/?NV=MTIzNDU2Nzg5MA%3D%3D",
+        "length": 40,
+        "url": "nv://find/Title/?NV=MTIzNDU2Nzg5MA%3D%3D",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "wiki",
+    "input": "[[Project Alpha]]",
+    "matches": [
+      {
+        "start": 2,
+        "length": 13,
+        "text": "Project Alpha",
+        "url": "nv://find/Project%20Alpha"
+      }
+    ]
+  },
+  {
+    "id": "wiki_url",
+    "input": "[[https://example.com]]",
+    "matches": [
+      {
+        "start": 2,
+        "length": 19,
+        "text": "https://example.com",
+        "url": "nv://find/https%3A%2F%2Fexample.com"
+      }
+    ]
+  },
+  {
+    "id": "rdar",
+    "input": "rdar://12345678",
+    "matches": [
+      {
+        "text": "rdar://12345678",
+        "length": 15,
+        "url": "rdar://12345678",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "ssh",
+    "input": "ssh://alice@example.com:22/home/alice",
+    "matches": [
+      {
+        "text": "ssh://alice@example.com:22/home/alice",
+        "length": 37,
+        "url": "ssh://alice@example.com:22/home/alice",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "sftp",
+    "input": "sftp://example.com/file.txt",
+    "matches": [
+      {
+        "text": "sftp://example.com/file.txt",
+        "length": 27,
+        "url": "sftp://example.com/file.txt",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "vscode",
+    "input": "vscode://file/Users/Test/app.py",
+    "matches": [
+      {
+        "text": "vscode://file/Users/Test/app.py",
+        "length": 31,
+        "url": "vscode://file/Users/Test/app.py",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "slack",
+    "input": "slack://channel?team=T123&id=C456",
+    "matches": [
+      {
+        "text": "slack://channel?team=T123&id=C456",
+        "length": 33,
+        "url": "slack://channel?team=T123&id=C456",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "spotify",
+    "input": "spotify:track:1234567890",
+    "matches": [
+      {
+        "text": "spotify:track:1234567890",
+        "length": 24,
+        "url": "spotify:track:1234567890",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "news",
+    "input": "news:comp.lang.objective-c",
+    "matches": [
+      {
+        "text": "news:comp.lang.objective-c",
+        "length": 26,
+        "url": "news:comp.lang.objective-c",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "tel",
+    "input": "tel:+15551234567",
+    "matches": [
+      {
+        "text": "tel:+15551234567",
+        "length": 16,
+        "url": "tel:+15551234567",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "localhost",
+    "input": "http://localhost:8080/path",
+    "matches": [
+      {
+        "text": "http://localhost:8080/path",
+        "length": 26,
+        "url": "http://localhost:8080/path",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "ip",
+    "input": "http://192.168.1.10:8080/path",
+    "matches": [
+      {
+        "text": "http://192.168.1.10:8080/path",
+        "length": 29,
+        "url": "http://192.168.1.10:8080/path",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "ipv6",
+    "input": "https://[2001:db8::1]/path",
+    "matches": [
+      {
+        "text": "https://[2001:db8::1]/path",
+        "length": 26,
+        "url": "https://[2001:db8::1]/path",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "localhost_bare",
+    "input": "localhost:8080/path",
+    "matches": []
+  },
+  {
+    "id": "unicode_host",
+    "input": "https://例え.テスト/",
+    "matches": [
+      {
+        "text": "https://例え.テスト/",
+        "length": 15,
+        "url": "https://xn--r8jz45g.xn--zckzah/",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "unicode_path",
+    "input": "https://example.com/日本語",
+    "matches": [
+      {
+        "text": "https://example.com/日本語",
+        "length": 23,
+        "url": "https://example.com/%E6%97%A5%E6%9C%AC%E8%AA%9E",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "emoji_prefix",
+    "input": "😀 https://example.com/path",
+    "matches": [
+      {
+        "text": "https://example.com/path",
+        "length": 24,
+        "url": "https://example.com/path",
+        "start": 3
+      }
+    ]
+  },
+  {
+    "id": "emoji_path",
+    "input": "https://example.com/😀",
+    "matches": [
+      {
+        "text": "https://example.com/😀",
+        "length": 22,
+        "url": "https://example.com/%F0%9F%98%80",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "unicode_email",
+    "input": "ユーザー@example.com",
+    "matches": [
+      {
+        "text": "ユーザー@example.com",
+        "length": 16,
+        "url": "mailto:%E3%83%A6%E3%83%BC%E3%82%B6%E3%83%BC@example.com",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "unicode_space",
+    "input": "Visit https://example.com today",
+    "matches": [
+      {
+        "text": "https://example.com",
+        "length": 19,
+        "url": "https://example.com",
+        "start": 6
+      }
+    ]
+  },
+  {
+    "id": "trailing_period",
+    "input": "Visit https://example.com/path.",
+    "matches": [
+      {
+        "text": "https://example.com/path",
+        "length": 24,
+        "url": "https://example.com/path",
+        "start": 6
+      }
+    ]
+  },
+  {
+    "id": "trailing_comma",
+    "input": "See https://example.com/path, then continue.",
+    "matches": [
+      {
+        "text": "https://example.com/path",
+        "length": 24,
+        "url": "https://example.com/path",
+        "start": 4
+      }
+    ]
+  },
+  {
+    "id": "trailing_question",
+    "input": "Did you see https://example.com/path?",
+    "matches": [
+      {
+        "text": "https://example.com/path",
+        "length": 24,
+        "url": "https://example.com/path",
+        "start": 12
+      }
+    ]
+  },
+  {
+    "id": "wrapped_parens",
+    "input": "(https://example.com/path)",
+    "matches": [
+      {
+        "text": "https://example.com/path",
+        "length": 24,
+        "url": "https://example.com/path",
+        "start": 1
+      }
+    ]
+  },
+  {
+    "id": "balanced_parens",
+    "input": "https://example.com/wiki/Foo_(bar)",
+    "matches": [
+      {
+        "text": "https://example.com/wiki/Foo_(bar)",
+        "length": 34,
+        "url": "https://example.com/wiki/Foo_(bar)",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "extra_closing_parens",
+    "input": "https://example.com/wiki/Foo_(bar)).",
+    "matches": [
+      {
+        "text": "https://example.com/wiki/Foo_(bar)",
+        "length": 34,
+        "url": "https://example.com/wiki/Foo_(bar)",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "wrapped_brackets",
+    "input": "[https://example.com/path]",
+    "matches": [
+      {
+        "text": "https://example.com/path",
+        "length": 24,
+        "url": "https://example.com/path",
+        "start": 1
+      }
+    ]
+  },
+  {
+    "id": "wrapped_angles",
+    "input": "<https://example.com/path>",
+    "matches": [
+      {
+        "text": "https://example.com/path",
+        "length": 24,
+        "url": "https://example.com/path",
+        "start": 1
+      }
+    ]
+  },
+  {
+    "id": "wrapped_quotes",
+    "input": "\"https://example.com/path\"",
+    "matches": [
+      {
+        "text": "https://example.com/path",
+        "length": 24,
+        "url": "https://example.com/path",
+        "start": 1
+      }
+    ]
+  },
+  {
+    "id": "markdown",
+    "input": "[title](https://example.com/wiki/Foo_(bar))",
+    "matches": [
+      {
+        "text": "https://example.com/wiki/Foo_(bar)",
+        "length": 34,
+        "url": "https://example.com/wiki/Foo_(bar)",
+        "start": 8
+      }
+    ]
+  },
+  {
+    "id": "backticks",
+    "input": "`https://example.com/path`",
+    "matches": [
+      {
+        "text": "https://example.com/path",
+        "length": 24,
+        "url": "https://example.com/path",
+        "start": 1
+      }
+    ]
+  },
+  {
+    "id": "multiple",
+    "input": "https://example.com and alice@example.org and www.example.net",
+    "matches": [
+      {
+        "text": "https://example.com",
+        "length": 19,
+        "url": "https://example.com",
+        "start": 0
+      },
+      {
+        "text": "alice@example.org",
+        "length": 17,
+        "url": "mailto:alice@example.org",
+        "start": 24
+      },
+      {
+        "text": "www.example.net",
+        "length": 15,
+        "url": "http://www.example.net",
+        "start": 46
+      }
+    ]
+  },
+  {
+    "id": "newline",
+    "input": "https://example.com/first\nhttps://example.org/second",
+    "matches": [
+      {
+        "text": "https://example.com/first",
+        "length": 25,
+        "url": "https://example.com/first",
+        "start": 0
+      },
+      {
+        "text": "https://example.org/second",
+        "length": 26,
+        "url": "https://example.org/second",
+        "start": 26
+      }
+    ]
+  },
+  {
+    "id": "uppercase",
+    "input": "HTTPS://EXAMPLE.COM/PATH",
+    "matches": [
+      {
+        "text": "HTTPS://EXAMPLE.COM/PATH",
+        "length": 24,
+        "url": "HTTPS://EXAMPLE.COM/PATH",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "userinfo",
+    "input": "https://alice:password@example.com/path",
+    "matches": [
+      {
+        "text": "https://alice:password@example.com/path",
+        "length": 39,
+        "url": "https://alice:password@example.com/path",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "punctuation_query",
+    "input": "https://example.com/search?q=hello&filter=(a,b)",
+    "matches": [
+      {
+        "text": "https://example.com/search?q=hello&filter=(a,b)",
+        "length": 47,
+        "url": "https://example.com/search?q=hello&filter=(a,b)",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "encoded_path",
+    "input": "https://example.com/a%20b%2Fc",
+    "matches": [
+      {
+        "text": "https://example.com/a%20b%2Fc",
+        "length": 29,
+        "url": "https://example.com/a%20b%2Fc",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "invalid_space",
+    "input": "https://example.com/a b",
+    "matches": [
+      {
+        "text": "https://example.com/a",
+        "length": 21,
+        "url": "https://example.com/a",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "invalid_scheme",
+    "input": "http://",
+    "matches": []
+  },
+  {
+    "id": "invalid_host",
+    "input": "http://not-a-real-host",
+    "matches": [
+      {
+        "text": "http://not-a-real-host",
+        "length": 22,
+        "url": "http://not-a-real-host",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "partial_link",
+    "input": "https://exa",
+    "matches": [
+      {
+        "text": "https://exa",
+        "length": 11,
+        "url": "https://exa",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "url_no_slashes",
+    "input": "https:example.com/path",
+    "matches": [
+      {
+        "text": "example.com/path",
+        "length": 16,
+        "url": "http://example.com/path",
+        "start": 6
+      }
+    ]
+  },
+  {
+    "id": "numeric_text",
+    "input": "Version 1.2.3 and 555-123-4567",
+    "matches": []
+  },
+  {
+    "id": "empty",
+    "input": "",
+    "matches": []
+  },
+  {
+    "id": "plain",
+    "input": "ordinary prose without a link",
+    "matches": []
+  },
+  {
+    "id": "email_plus_com",
+    "input": "alice+notes@example.com",
+    "matches": [
+      {
+        "text": "alice+notes@example.com",
+        "length": 23,
+        "url": "mailto:alice+notes@example.com",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "email_dev",
+    "input": "alice@example.dev",
+    "matches": [
+      {
+        "text": "alice@example.dev",
+        "length": 17,
+        "url": "mailto:alice@example.dev",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "mailto_query_encoded",
+    "input": "mailto:alice@example.com?subject=Hello%20World",
+    "matches": [
+      {
+        "text": "mailto:alice@example.com?subject=Hello%20World",
+        "length": 46,
+        "url": "mailto:alice@example.com?subject=Hello%20World",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "markdown_simple",
+    "input": "[title](https://example.com/path)",
+    "matches": [
+      {
+        "text": "https://example.com/path",
+        "length": 24,
+        "url": "https://example.com/path",
+        "start": 8
+      }
+    ]
+  },
+  {
+    "id": "parens_simple",
+    "input": "https://example.com/path).",
+    "matches": [
+      {
+        "text": "https://example.com/path",
+        "length": 24,
+        "url": "https://example.com/path",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "comma_query",
+    "input": "https://example.com/path?x=1,",
+    "matches": [
+      {
+        "text": "https://example.com/path?x=1",
+        "length": 28,
+        "url": "https://example.com/path?x=1",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "nv_plain",
+    "input": "nv://find/Project",
+    "matches": [
+      {
+        "text": "nv://find/Project",
+        "length": 17,
+        "url": "nv://find/Project",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "file_spaces_context",
+    "input": "Open file:///Users/Test/Some%20Note.txt today",
+    "matches": [
+      {
+        "text": "file:///Users/Test/Some%20Note.txt",
+        "length": 34,
+        "url": "file:///Users/Test/Some%20Note.txt",
+        "start": 5
+      }
+    ]
+  },
+  {
+    "id": "smb",
+    "input": "smb://server/share",
+    "matches": [
+      {
+        "text": "smb://server/share",
+        "length": 18,
+        "url": "smb://server/share",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "afp",
+    "input": "afp://server/share",
+    "matches": [
+      {
+        "text": "afp://server/share",
+        "length": 18,
+        "url": "afp://server/share",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "magnet",
+    "input": "magnet:?xt=urn:btih:1234567890",
+    "matches": []
+  },
+  {
+    "id": "feed",
+    "input": "feed://example.com/rss",
+    "matches": [
+      {
+        "text": "feed://example.com/rss",
+        "length": 22,
+        "url": "feed://example.com/rss",
+        "start": 0
+      }
+    ]
+  },
+  {
+    "id": "custom",
+    "input": "customscheme://example.com/path",
+    "matches": [
+      {
+        "text": "customscheme://example.com/path",
+        "length": 31,
+        "url": "customscheme://example.com/path",
+        "start": 0
+      }
+    ]
+  }
+]

@@ -71,7 +71,6 @@ typedef struct _NoteFilterContext {
 	//not determined until it's time to read to or write from a text file
 	FSRef *noteFileRef;
 
-	//the first for syncing w/ NV server, as the ID cannot be encrypted
 	CFUUIDBytes uniqueNoteIDBytes;
 	
 	NSMutableDictionary *syncServicesMD;
@@ -168,8 +167,6 @@ NSInteger compareFileSize(id *a, id *b);
 - (void)setSyncObjectAndKeyMD:(NSDictionary*)aDict forService:(NSString*)serviceName;
 - (void)removeAllSyncMDForService:(NSString*)serviceName;
 //- (void)removeKey:(NSString*)aKey forService:(NSString*)serviceName;
-- (void)updateWithSyncBody:(NSString*)newBody andTitle:(NSString*)newTitle;
-- (void)registerModificationWithOwnedServices;
 
 - (OSStatus)writeCurrentFileEncodingToFSRef:(FSRef*)fsRef;
 - (void)_setFileEncoding:(NSStringEncoding)encoding;

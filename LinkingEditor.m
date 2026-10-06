@@ -90,10 +90,6 @@ CGFloat _perceptualDarkness(NSColor*a);
 	[self updateTextColors];
 	
 	[[self window] setAcceptsMouseMovedEvents:YES];
-	if (IsLeopardOrLater) {
-        defaultIBeamCursorIMP = (id(*)(Class, SEL))method_getImplementation(class_getClassMethod([NSCursor class], @selector(IBeamCursor)));
-        whiteIBeamCursorIMP = (id(*)(Class, SEL))method_getImplementation(class_getClassMethod([NSCursor class], @selector(whiteIBeamCursor)));
-	}
 
 	didRenderFully = NO;
 	[[self layoutManager] setDelegate:self];
@@ -967,27 +963,19 @@ copyRTFType:
 }
 
 - (void)fixCursorForBackgroundUpdatingMouseInside:(BOOL)setMouseInside {
-	
-	if (IsLeopardOrLater && whiteIBeamCursorIMP && defaultIBeamCursorIMP) {
-		if (setMouseInside)
-			mouseInside = [self mouse:[self convertPoint:[[self window] mouseLocationOutsideOfEventStream] fromView:nil] inRect:[self bounds]];
-		
-		BOOL shouldBeWhite = mouseInside && backgroundIsDark && ![self isHidden];
-		Class class = [NSCursor class];
-		
-		//set method implementation directly; whiteIBeamCursorIMP and defaultIBeamCursorIMP always point to the same respective blocks of code
-		Method defaultIBeamCursorMethod = class_getClassMethod(class, @selector(IBeamCursor));
-		method_setImplementation(defaultIBeamCursorMethod, shouldBeWhite ? whiteIBeamCursorIMP : defaultIBeamCursorIMP);
-		
-		NSCursor *currentCursor = [NSCursor currentCursor];
-		NSCursor *whiteCursor = whiteIBeamCursorIMP(class, @selector(whiteIBeamCursor));
-		NSCursor *defaultCursor = defaultIBeamCursorIMP(class, @selector(IBeamCursor));
-		
-		//if the current cursor is set incorrectly, and and it's not a non-IBeam cursor, then update it (IBeamCursor points to our recently-set implementation)
-		if ((currentCursor == whiteCursor) != shouldBeWhite && (currentCursor == whiteCursor || currentCursor == defaultCursor)) {
-			[[NSCursor IBeamCursor] set];
-		}
-	}
+    if (setMouseInside)
+        mouseInside = [self mouse:[self convertPoint:[[self window] mouseLocationOutsideOfEventStream] fromView:nil] inRect:[self bounds]];
+    [[self window] invalidateCursorRectsForView:self];
+    if (mouseInside && ![self isHidden]) [[self editorCursor] set];
+}
+
+- (NSCursor *)editorCursor {
+    return backgroundIsDark ? [NSCursor whiteIBeamCursor] : [NSCursor IBeamCursor];
+}
+
+- (void)resetCursorRects {
+    [super resetCursorRects];
+    [self addCursorRect:[self visibleRect] cursor:[self editorCursor]];
 }
 
 //hiding or showing the view does not always produce mouseEntered/Exited events

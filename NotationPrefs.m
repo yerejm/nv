@@ -24,7 +24,6 @@
 #import "NotationPrefs.h"
 #import "GlobalPrefs.h"
 #import "NSString_NV.h"
-#import "SimplenoteSession.h"
 #import "NSCollection_utils.h"
 #import "NotationPrefsViewController.h"
 #import "NSData_transformations.h"
@@ -40,17 +39,11 @@
 
 #define KEYCHAIN_SERVICENAME "Notational Velocity"
 
-#define INIT_DICT_ACCT() NSMutableDictionary *accountDict = ServiceAccountDictInit(self, serviceName)
 
 NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotification";
 
 @implementation NotationPrefs
 
-NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serviceName) {
-	NSMutableDictionary *accountDict = [prefs->syncServiceAccounts objectForKey:serviceName];
-	if (!accountDict) [prefs->syncServiceAccounts setObject:(accountDict = [[NSMutableDictionary alloc] init]) forKey:serviceName];
-	return accountDict;
-}
 
 + (int)appVersion {
 	return [[[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"] intValue];
@@ -287,41 +280,6 @@ NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serv
 	return syncServiceAccounts;
 }
 
-- (NSDictionary*)syncAccountForServiceName:(NSString*)serviceName {
-	return [syncServiceAccounts objectForKey:serviceName];
-}
-
-- (NSString*)syncPasswordForServiceName:(NSString*)serviceName {
-	//if non-existing, fetch from keychain and cache
-	
-	INIT_DICT_ACCT();
-	
-	NSString *password = [accountDict objectForKey:@"password"];
-	if (password) return password;
-	
-	//fetch keychain
-	void *passwordData = NULL;
-	UInt32 passwordLength = 0;
-	SecKeychainItemRef returnedItem = NULL;	
-	
-	const char *kcSyncAccountName = [self keychainSyncAccountNameForService:serviceName];
-	if (!kcSyncAccountName) return nil;
-	
-	OSStatus err = SecKeychainFindGenericPassword(NULL, strlen(KEYCHAIN_SERVICENAME), KEYCHAIN_SERVICENAME,
-												  strlen(kcSyncAccountName), kcSyncAccountName, &passwordLength, &passwordData, &returnedItem);
-	if (err != noErr) {
-		NSLog(@"Error finding keychain password for service account %@: %d\n", serviceName, err);
-		return nil;
-	}
-	password = [[[NSString alloc] initWithBytes:passwordData length:passwordLength encoding:NSUTF8StringEncoding] autorelease];
-	
-	//cache password found in keychain
-	[accountDict setObject:password forKey:@"password"];
-	
-	SecKeychainItemFreeContent(NULL, passwordData);
-	return password;
-}
-
 - (NSDictionary*)syncServiceAccountsForArchiving {
 	NSMutableDictionary *tempDict = [[syncServiceAccounts mutableCopy] autorelease];
 	
@@ -337,21 +295,6 @@ NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serv
 		[account removeObjectForKey:@"password"];
 	}
 	return tempDict;
-}
-
-- (BOOL)syncNotesShouldMergeForServiceName:(NSString*)serviceName {
-	NSDictionary *accountDict = [self syncAccountForServiceName:serviceName];
-	NSString *username = [accountDict objectForKey:@"username"];
-	return username && [[accountDict objectForKey:@"shouldmerge"] isEqualToString:username];
-}
-
-- (NSUInteger)syncFrequencyInMinutesForServiceName:(NSString*)serviceName {
-	NSUInteger freq = MIN([[[self syncAccountForServiceName:serviceName] objectForKey:@"frequency"] unsignedIntValue], 30U);
-	return freq == 0 ? 5 : freq;
-}
-
-- (BOOL)syncServiceIsEnabled:(NSString*)serviceName {
-	return [[[self syncAccountForServiceName:serviceName] objectForKey:@"enabled"] boolValue];
 }
 
 - (unsigned int)keyLengthInBits {
@@ -694,135 +637,6 @@ NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serv
 	}
 }
 
-- (void)setSyncEnabled:(BOOL)isEnabled forService:(NSString*)serviceName {
-	INIT_DICT_ACCT();
-	
-	if ([self syncServiceIsEnabled:serviceName] != isEnabled) {
-		[accountDict setObject:[NSNumber numberWithBool:isEnabled] forKey:@"enabled"];
-		
-		preferencesChanged = YES;
-		[delegate syncSettingsChangedForService:serviceName];
-	}
-}
-
-- (void)setSyncFrequency:(NSUInteger)frequencyInMinutes forService:(NSString*)serviceName {
-	INIT_DICT_ACCT();
-	
-	if ([self syncFrequencyInMinutesForServiceName:serviceName] != frequencyInMinutes) {
-		[accountDict setObject:[NSNumber numberWithUnsignedInt:frequencyInMinutes] forKey:@"frequency"];
-		preferencesChanged = YES;
-		[delegate syncSettingsChangedForService:serviceName];
-	}
-}
-
-- (void)setSyncShouldMerge:(BOOL)shouldMerge inCurrentAccountForService:(NSString*)serviceName {
-	INIT_DICT_ACCT();
-	
-	if ([self syncNotesShouldMergeForServiceName:serviceName] != shouldMerge) {
-		NSString *username = [accountDict objectForKey:@"username"];
-		if (username) {
-			NSLog(@"%s: %d, %@", _cmd, shouldMerge, username);
-			if (shouldMerge) {
-				[accountDict setObject:username forKey:@"shouldmerge"];
-			} else {
-				[accountDict removeObjectForKey:@"shouldmerge"];
-			}
-			preferencesChanged = YES;
-		} else {
-			NSLog(@"%s: no username found in %@", serviceName);
-		}
-	}
-}
-
-- (void)setSyncUsername:(NSString*)username forService:(NSString*)serviceName {
-	
-	INIT_DICT_ACCT();
-	
-	if (![[accountDict objectForKey:@"username"] isEqualToString:username]) {
-		[accountDict setObject:username forKey:@"username"];
-		
-		preferencesChanged = YES;
-		[delegate syncSettingsChangedForService:serviceName];
-	}
-}
-
-- (const char*)keychainSyncAccountNameForService:(NSString*)serviceName {
-	NSString *username = [[self syncAccountForServiceName:serviceName] objectForKey:@"username"];
-	return [username length] ? [[username stringByAppendingFormat:@"-%@", serviceName] UTF8String] : NULL;
-}
-
-- (void)setSyncPassword:(NSString*)password forService:(NSString*)serviceName {
-	//a username _MUST_ already exist in the account dict in order for the password to be saved in the keychain
-	
-	INIT_DICT_ACCT();
-	
-	if (![[accountDict objectForKey:@"password"] isEqualToString:password]) {
-		[accountDict setObject:password forKey:@"password"];
-		
-		NSData *passwordData = [password dataUsingEncoding:NSUTF8StringEncoding];
-		
-		const char *kcSyncAccountName = [self keychainSyncAccountNameForService:serviceName];
-		if (kcSyncAccountName) {
-			//insert this password into the keychain for this service
-			SecKeychainItemRef itemRef = NULL;
-			if (SecKeychainFindGenericPassword(NULL, strlen(KEYCHAIN_SERVICENAME), KEYCHAIN_SERVICENAME, strlen(kcSyncAccountName), kcSyncAccountName, NULL, NULL, &itemRef) != noErr) {
-				itemRef = NULL;
-			}
-			if (itemRef) {
-				//modify existing data; item already exists
-				SecKeychainAttribute attrs[] = {
-					{ kSecAccountItemAttr, strlen(kcSyncAccountName), (char*)kcSyncAccountName },
-					{ kSecServiceItemAttr, strlen(KEYCHAIN_SERVICENAME), (char*)KEYCHAIN_SERVICENAME } };
-				
-				const SecKeychainAttributeList attributes = { sizeof(attrs) / sizeof(attrs[0]), attrs };
-				
-				OSStatus status = noErr;
-				if (noErr != (status = SecKeychainItemModifyAttributesAndData(itemRef, &attributes, [passwordData length], [passwordData bytes]))) {
-					NSLog(@"Error modifying keychain data with different service password: %d", status);
-				}
-				CFRelease(itemRef);
-			} else {
-				//add new data; item does not exist
-				OSStatus status = noErr;
-				if (noErr != (status = SecKeychainAddGenericPassword(NULL, strlen(KEYCHAIN_SERVICENAME), KEYCHAIN_SERVICENAME,
-																	 strlen(kcSyncAccountName), kcSyncAccountName, [passwordData length], [passwordData bytes], NULL))) {
-					NSLog(@"Error adding new service password to keychain: %d", status);
-				}
-			}
-		} else {
-			NSLog(@"not storing password in keychain for %@ because a sync account name couldn't be created", serviceName);
-		}
-			
-		preferencesChanged = YES;
-		[delegate syncSettingsChangedForService:serviceName];
-	}
-}
-
-- (void)removeSyncPasswordForService:(NSString*)serviceName {
-	INIT_DICT_ACCT();
-	
-	if ([accountDict objectForKey:@"password"]) {
-		[accountDict removeObjectForKey:@"password"];
-		
-		const char *kcSyncAccountName = [self keychainSyncAccountNameForService:serviceName];
-		if (kcSyncAccountName) {
-			SecKeychainItemRef itemRef = NULL;
-			if (SecKeychainFindGenericPassword(NULL, strlen(KEYCHAIN_SERVICENAME), KEYCHAIN_SERVICENAME, strlen(kcSyncAccountName), kcSyncAccountName, NULL, NULL, &itemRef) != noErr) {
-				itemRef = NULL;
-			}	
-			if (itemRef) {
-				OSStatus err = SecKeychainItemDelete(itemRef);
-				if (err != noErr) NSLog(@"Error deleting keychain item for service %@: %d, serviceName", err);
-				CFRelease(itemRef);
-			}
-		} else {
-			NSLog(@"not removing password for %@ because a keychain sync account name couldn't be created", serviceName);
-		}
-		
-		[delegate syncSettingsChangedForService:serviceName];
-	}
-}
-
 - (NSUInteger)tableIndexOfDiskUUID:(CFUUIDRef)UUIDRef {
 	//if this UUID doesn't yet exist, then add it and return the last index
 	
@@ -840,37 +654,6 @@ NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serv
 	preferencesChanged = YES;
 	
 	return [seenDiskUUIDEntries count] - 1;
-}
-
-- (void)checkForKnownRedundantSyncConduitsAtPath:(NSString*)dbPath {
-	//is inside dropbox folder and notes are separate files
-	//is set to sync with any service
-	//then display warning
-	
-	NSArray *enabledValues = [[syncServiceAccounts allValues] objectsFromDictionariesForKey:@"enabled"];	
-	if ([enabledValues containsObject:[NSNumber numberWithBool:YES]] && SingleDatabaseFormat != notesStorageFormat) {
-		//this DB is syncing with a service and is storing separate files; could it be syncing with anything else, too?
-		
-		//this logic will need to be more sophisticated anyway when multiple sync services are supported
-		NSString *syncServiceTitle = [SimplenoteSession localizedServiceTitle];
-		
-		NSDictionary *stDict = [[NSUserDefaults standardUserDefaults] persistentDomainForName:@"com.hogbaysoftware.SimpleText"];
-		NSString *simpleTextFolder = [stDict objectForKey:@"SyncedDocumentsPathKey"];
-		if (!simpleTextFolder) simpleTextFolder = [NSHomeDirectory() stringByAppendingPathComponent:@"SimpleText"];
-		//for dropbox, a 'select value from config where key = "dropbox_path";' sqlite query would be necessary to get the true path
-		NSString *dropboxFolder = [NSHomeDirectory() stringByAppendingPathComponent:@"Dropbox"];
-		
-		NSString *offendingFileConduitName = nil;
-		if ([[dbPath lowercaseString] hasPrefix:[simpleTextFolder lowercaseString]]) {
-			offendingFileConduitName = NSLocalizedString(@"SimpleText", nil);
-		} else if ([[dbPath lowercaseString] hasPrefix:[dropboxFolder lowercaseString]]) {
-			offendingFileConduitName = NSLocalizedString(@"Dropbox", nil);
-		}
-		if (offendingFileConduitName) {
-			NSRunAlertPanel([NSString stringWithFormat:NSLocalizedString(@"<Feedback loop warning title>", nil), offendingFileConduitName, syncServiceTitle], 
-							[NSString stringWithFormat:NSLocalizedString(@"<Feedback loop warning message>", nil), syncServiceTitle], NSLocalizedString(@"OK", nil), nil, nil);
-		}
-	}
 }
 
 - (void)setKeyLengthInBits:(unsigned int)newLength {

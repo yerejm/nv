@@ -25,7 +25,7 @@
 #import "NotationController.h"
 
 /* this class is responsible for managing all preferences specific to a notational database,
-including encryption, file formats, synchronization, passwords management, and others */
+including encryption, file formats, password management, and others */
 
 #define EPOC_ITERATION 4
 
@@ -82,11 +82,6 @@ NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serv
 - (BOOL)doesEncryption;
 - (NSDictionary*)syncServiceAccounts;
 - (NSDictionary*)syncServiceAccountsForArchiving;
-- (NSDictionary*)syncAccountForServiceName:(NSString*)serviceName;
-- (NSString*)syncPasswordForServiceName:(NSString*)serviceName;
-- (NSUInteger)syncFrequencyInMinutesForServiceName:(NSString*)serviceName;
-- (BOOL)syncNotesShouldMergeForServiceName:(NSString*)serviceName;
-- (BOOL)syncServiceIsEnabled:(NSString*)serviceName;
 - (unsigned int)keyLengthInBits;
 - (unsigned int)hashIterationCount;
 - (UInt32)epochIteration;
@@ -116,17 +111,9 @@ NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serv
 - (void)setConfirmsFileDeletion:(BOOL)value;
 - (void)setDoesEncryption:(BOOL)value;
 - (void)setSecureTextEntry:(BOOL)value;
-- (const char*)keychainSyncAccountNameForService:(NSString*)serviceName;
-- (void)setSyncUsername:(NSString*)username forService:(NSString*)serviceName;
-- (void)setSyncPassword:(NSString*)password forService:(NSString*)serviceName;
-- (void)setSyncFrequency:(NSUInteger)frequencyInMinutes forService:(NSString*)serviceName;
-- (void)setSyncEnabled:(BOOL)isEnabled forService:(NSString*)serviceName;
-- (void)setSyncShouldMerge:(BOOL)shouldMerge inCurrentAccountForService:(NSString*)serviceName;
-- (void)removeSyncPasswordForService:(NSString*)serviceName;
 - (void)setKeyLengthInBits:(unsigned int)newLength;
 
 - (NSUInteger)tableIndexOfDiskUUID:(CFUUIDRef)UUIDRef;
-- (void)checkForKnownRedundantSyncConduitsAtPath:(NSString*)dbPath;
 
 + (NSString*)pathExtensionForFormat:(int)format;
 
@@ -161,7 +148,6 @@ NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serv
 @interface NotationPrefs (DelegateMethods)
 
 - (void)databaseEncryptionSettingsChanged;
-- (void)syncSettingsChangedForService:(NSString*)serviceName;
 - (void)databaseSettingsChangedFromOldFormat:(int)oldFormat;
 
 @end

@@ -25,7 +25,6 @@
 #import "NSCollection_utils.h"
 #import "GlobalPrefs.h"
 #import "NSString_NV.h"
-#import <AutoHyperlinks/AutoHyperlinks.h>
 
 
 NSString *NVHiddenDoneTagAttributeName = @"NVDoneTag";
@@ -214,30 +213,51 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 	if (!changedRange.length)
 		return;
 	
-	//lazily loads Adium's BSD-licensed Auto-Hyperlinks:
-	//http://trac.adium.im/wiki/AutoHyperlinksFramework
-	
-	static Class AHHyperlinkScanner = Nil;
-	static Class AHMarkedHyperlink = Nil;
-	if (!AHHyperlinkScanner || !AHMarkedHyperlink) {
-		if (![[NSBundle bundleWithPath:[[[NSBundle mainBundle] privateFrameworksPath] stringByAppendingPathComponent:@"AutoHyperlinks.framework"]] load]) {
-			NSLog(@"Could not load AutoHyperlinks framework");
-			return;
-		}
-		AHHyperlinkScanner = NSClassFromString(@"AHHyperlinkScanner");
-		AHMarkedHyperlink = NSClassFromString(@"AHMarkedHyperlink");
-	}
-	
-	id scanner = [AHHyperlinkScanner hyperlinkScannerWithString:[[self string] substringWithRange:changedRange]];
-	id markedLink = nil;
-	while ((markedLink = [scanner nextURI])) {
-		NSURL *markedLinkURL = nil;
-		if ((markedLinkURL = [markedLink URL]) && !([markedLinkURL isFileURL] && [[markedLinkURL absoluteString] 
-																				  rangeOfString:@"/.file/" options:NSLiteralSearch].location != NSNotFound)) {
-			[self addAttribute:NSLinkAttributeName value:markedLinkURL 
-						 range:NSMakeRange([markedLink range].location + changedRange.location, [markedLink range].length)];
-		}
-	}
+    static NSDataDetector *detector;
+    static NSRegularExpression *spotifyDetector, *unicodeEmailDetector;
+    static dispatch_once_t detectorOnce;
+    dispatch_once(&detectorOnce, ^{
+        detector = [[NSDataDetector dataDetectorWithTypes:NSTextCheckingTypeLink error:NULL] retain];
+        spotifyDetector = [[NSRegularExpression regularExpressionWithPattern:@"\\bspotify:[A-Za-z0-9:]+" options:0 error:NULL] retain];
+        unicodeEmailDetector = [[NSRegularExpression regularExpressionWithPattern:@"(?<![\\p{L}\\p{N}._%+\\-])[\\p{L}\\p{N}._%+\\-]+@[\\p{L}\\p{N}.\\-]+\\.[\\p{L}]{2,}" options:0 error:NULL] retain];
+    });
+    NSString *scannedText = [[self string] substringWithRange:changedRange];
+    NSRange scannedRange = NSMakeRange(0, [scannedText length]);
+    for (NSTextCheckingResult *match in [detector matchesInString:scannedText options:0 range:scannedRange]) {
+        NSRange range = [match range];
+        NSString *token = [scannedText substringWithRange:range];
+        NSInteger balance = 0;
+        for (NSUInteger index = 0; index < [token length]; index++) {
+            unichar character = [token characterAtIndex:index];
+            if (character == '(') balance++;
+            else if (character == ')') balance--;
+        }
+        while ([token hasSuffix:@")"] && balance < 0) {
+            token = [token substringToIndex:[token length] - 1];
+            balance++;
+        }
+        while ([token hasSuffix:@"`"]) token = [token substringToIndex:[token length] - 1];
+        if ([token hasSuffix:@"?"] && [token rangeOfString:@"?"].location == [token length] - 1)
+            token = [token substringToIndex:[token length] - 1];
+        NSURL *url = [token length] == range.length ? [match URL] : [NSURL URLWithString:token];
+        if (!url || ([url isFileURL] && [[url absoluteString] rangeOfString:@"/.file/" options:NSLiteralSearch].location != NSNotFound)) continue;
+        [self addAttribute:NSLinkAttributeName value:url range:NSMakeRange(range.location + changedRange.location, [token length])];
+    }
+    for (NSTextCheckingResult *match in [spotifyDetector matchesInString:scannedText options:0 range:scannedRange]) {
+        NSRange range = [match range];
+        NSURL *url = [NSURL URLWithString:[scannedText substringWithRange:range]];
+        if (url) [self addAttribute:NSLinkAttributeName value:url range:NSMakeRange(range.location + changedRange.location, range.length)];
+    }
+    for (NSTextCheckingResult *match in [unicodeEmailDetector matchesInString:scannedText options:0 range:scannedRange]) {
+        NSRange range = [match range];
+        NSString *email = [scannedText substringWithRange:range];
+        if ([email canBeConvertedToEncoding:NSASCIIStringEncoding]) continue;
+        range.location += changedRange.location;
+        NSURL *existingURL = [self attribute:NSLinkAttributeName atIndex:range.location effectiveRange:NULL];
+        if (existingURL && ![[existingURL scheme] isEqualToString:@"mailto"]) continue;
+        NSURL *url = [NSURL URLWithString:[@"mailto:" stringByAppendingString:email]];
+        if (url) [self addAttribute:NSLinkAttributeName value:url range:range];
+    }
 
 	//also detect double-bracketed URLs here
 	[self _addDoubleBracketedNVLinkAttributesForRange:changedRange];

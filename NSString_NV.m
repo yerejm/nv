@@ -148,45 +148,6 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
     return dateString;
 }
 
-// TODO: possibly obsolete? SN api2 formats dates as doubles from start of unix epoch
-CFDateFormatterRef simplenoteDateFormatter(int lowPrecision) {
-	//CFStringRef dateStr = CFSTR("2010-01-02 23:23:31.876229");
-	static CFDateFormatterRef dateFormatter = NULL;
-	static CFDateFormatterRef lowPrecisionDateFormatter = NULL;
-	static CFLocaleRef locale = NULL;
-	static CFTimeZoneRef zone = NULL;
-	if (!dateFormatter) {
-		locale = CFLocaleCreate(NULL,CFSTR("en"));
-		zone = CFTimeZoneCreateWithTimeIntervalFromGMT(NULL, 0.0);		
-		dateFormatter = CFDateFormatterCreate(NULL, locale, kCFDateFormatterNoStyle, kCFDateFormatterNoStyle);
-		lowPrecisionDateFormatter = CFDateFormatterCreate(NULL, locale, kCFDateFormatterNoStyle, kCFDateFormatterNoStyle);
-		CFDateFormatterSetFormat(dateFormatter, CFSTR("yyyy-MM-dd HH:mm:ss.SSSSSS"));
-		CFDateFormatterSetFormat(lowPrecisionDateFormatter, CFSTR("yyyy-MM-dd HH:mm:ss"));
-		CFDateFormatterSetProperty(dateFormatter, kCFDateFormatterTimeZone, zone);
-		CFDateFormatterSetProperty(lowPrecisionDateFormatter, kCFDateFormatterTimeZone, zone);
-	}
-	return lowPrecision ? lowPrecisionDateFormatter	: dateFormatter;
-}
-
-// TODO: possibly obsolete? SN api2 formats dates as doubles from start of unix epoch
-+ (NSString*)simplenoteDateWithAbsoluteTime:(CFAbsoluteTime)absTime {
-	CFStringRef str = CFDateFormatterCreateStringWithAbsoluteTime(NULL, simplenoteDateFormatter(0), absTime);
-	return [(id)str autorelease];
-}
-
-// TODO: possibly obsolete? SN api2 formats dates as doubles from start of unix epoch
-- (CFAbsoluteTime)absoluteTimeFromSimplenoteDate {
-	
-	CFAbsoluteTime absTime = 0;
-	if (!CFDateFormatterGetAbsoluteTimeFromString(simplenoteDateFormatter(0), (CFStringRef)self, NULL, &absTime)) {
-		if (!CFDateFormatterGetAbsoluteTimeFromString(simplenoteDateFormatter(1), (CFStringRef)self, NULL, &absTime)) {
-			NSLog(@"can't get date from %@; returning current time instead", self);
-			return 0;
-		}
-	}
-	return absTime;
-}
-
 - (NSArray*)labelCompatibleWords {
 	NSArray *array = nil;
 	if (IsLeopardOrLater) {
@@ -581,29 +542,9 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 }
 
 - (NSData *)decodeBase64WithNewlines:(BOOL)encodedWithNewlines {
-    // Create a memory buffer containing Base64 encoded string data
-	const char *utf8String = [self UTF8String];
-	if (!utf8String)
-		return nil;
-	
-    BIO * mem = BIO_new_mem_buf((void *)utf8String, strlen(utf8String));
-    
-    // Push a Base64 filter so that reading from the buffer decodes it
-    BIO * b64 = BIO_new(BIO_f_base64());
-    if (!encodedWithNewlines)
-        BIO_set_flags(b64, BIO_FLAGS_BASE64_NO_NL);
-    mem = BIO_push(b64, mem);
-    
-    // Decode into an NSMutableData
-    NSMutableData * data = [NSMutableData data];
-    char inbuf[512];
-    int inlen;
-    while ((inlen = BIO_read(mem, inbuf, sizeof(inbuf))) > 0)
-        [data appendBytes: inbuf length: inlen];
-    
-    // Clean up and go home
-    BIO_free_all(mem);
-    return data;
+    NSDataBase64DecodingOptions options = encodedWithNewlines ? NSDataBase64DecodingIgnoreUnknownCharacters : 0;
+    NSData *decoded = [[[NSData alloc] initWithBase64EncodedString:self options:options] autorelease];
+    return decoded ? [NSMutableData dataWithData:decoded] : [NSMutableData data];
 }
 
 @end

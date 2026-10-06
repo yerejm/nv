@@ -23,7 +23,6 @@
 #import "NotationPrefs.h"
 #import "PrefsWindowController.h"
 #import "NoteAttributeColumn.h"
-#import "NotationSyncServiceManager.h"
 #import "NotationDirectoryManager.h"
 #import "NotationFileManager.h"
 #import "NSString_NV.h"
@@ -36,11 +35,9 @@
 #import "LinkingEditor.h"
 #import "EmptyView.h"
 #import "DualField.h"
-#import "TitlebarButton.h"
 #import "RBSplitView/RBSplitView.h"
 #import "AugmentedScrollView.h"
 #import "BookmarksController.h"
-#import "SyncSessionController.h"
 #import "MultiplePageView.h"
 #import "InvocationRecorder.h"
 #import "LinearDividerShader.h"
@@ -95,8 +92,6 @@
 	[window setToolbar:toolbar];
 	
 	[window setShowsToolbarButton:NO];
-	titleBarButton = [[TitlebarButton alloc] initWithFrame:NSMakeRect(0, 0, 17.0, 17.0) pullsDown:YES];
-	[titleBarButton addToWindow:window];
 	
 //	if (IsLeopardOrLater)
 //		[window setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
@@ -176,27 +171,6 @@ void outletObjectAwoke(id sender) {
 	[notationController updateLabelConnectionsAfterDecoding];
 	[notationController checkIfNotationIsTrashed];
 	[[SecureTextEntryManager sharedInstance] checkForIncompatibleApps];
-	
-	//connect sparkle programmatically to avoid loading its framework at nib awake;
-	
-	if (!NSClassFromString(@"SUUpdater")) {
-		NSString *frameworkPath = [[[NSBundle bundleForClass:[self class]] privateFrameworksPath] stringByAppendingPathComponent:@"Sparkle.framework"];
-		if ([[NSBundle bundleWithPath:frameworkPath] load]) {
-			id updater = [NSClassFromString(@"SUUpdater") performSelector:@selector(sharedUpdater)];
-			[sparkleUpdateItem setTarget:updater];
-			[sparkleUpdateItem setAction:@selector(checkForUpdates:)];
-			if (![[prefsController notationPrefs] firstTimeUsed]) {
-				//don't do anything automatically on the first launch; afterwards, check every 4 days, as specified in Info.plist
-				SEL checksSEL = @selector(setAutomaticallyChecksForUpdates:);
-                typedef void (*UpdaterMethod)(id, SEL, BOOL);
-                UpdaterMethod updaterChecks;
-                updaterChecks = (UpdaterMethod)[updater methodForSelector:checksSEL];
-                updaterChecks(updater, checksSEL, YES);
-			}
-		} else {
-			NSLog(@"Could not load %@!", frameworkPath);
-		}
-	}
 	
 	[NSApp setServicesProvider:self];
 }
@@ -319,8 +293,6 @@ terminateApp:
     if (newNotation) {
 		if (notationController) {
 			[notationController closeAllResources];
-			[[NSNotificationCenter defaultCenter] removeObserver:self name:SyncSessionsChangedVisibleStatusNotification 
-														  object:[notationController syncSessionController]];
 		}
 		
 		NotationController *oldNotation = notationController;
@@ -355,14 +327,6 @@ terminateApp:
 			[self _forceRegeneratePreviewsForTitleColumn];
 			[notesTableView setNeedsDisplay:YES];
 		}
-		[titleBarButton setMenu:[[notationController syncSessionController] syncStatusMenu]];
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(syncSessionsChangedVisibleStatus:) 
-													 name:SyncSessionsChangedVisibleStatusNotification 
-												   object:[notationController syncSessionController]]; 
-		
-		//these should probably be triggered from within NotationController:
-		[notationController performSelector:@selector(startSyncServices) withObject:nil afterDelay:0.0];
-		
 		if ([[notationController notationPrefs] secureTextEntry]) {
 			[[SecureTextEntryManager sharedInstance] enableSecureTextEntry];
 		} else {
@@ -766,19 +730,12 @@ terminateApp:
 }
 
 - (void)applicationWillBecomeActive:(NSNotification *)aNotification {
-	
-	if (IsLeopardOrLater) {
-		SpaceSwitchingContext thisSpaceSwitchCtx;
-		CurrentContextForWindowNumber([window windowNumber], &thisSpaceSwitchCtx);
-		//what if the app is switched-to in another way? then the last-stored spaceSwitchCtx will cause us to return to the wrong app
-		//unfortunately this notification occurs only after NV has become the front process, but we can still verify the space number
-		
-		if (thisSpaceSwitchCtx.userSpace != spaceSwitchCtx.userSpace || 
-			thisSpaceSwitchCtx.windowSpace != spaceSwitchCtx.windowSpace) {
-			//forget the last space-switch info if it's effectively different from how we're switching into the app now
-			bzero(&spaceSwitchCtx, sizeof(SpaceSwitchingContext));
-		}
+	if (!activationRequested) {
+		[previousActiveApplication release];
+		previousActiveApplication = nil;
+		activatedFromAnotherSpace = NO;
 	}
+	activationRequested = NO;
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification {
@@ -1389,8 +1346,7 @@ terminateApp:
 		if (opts & NVOrderFrontWindow) {
 			//for external url-handling, often the app will already have been brought to the foreground
 			if (![NSApp isActive]) {
-				if (IsLeopardOrLater)
-					CurrentContextForWindowNumber([window windowNumber], &spaceSwitchCtx);
+				[self captureActivationOrigin];
 				[NSApp activateIgnoringOtherApps:YES];
 			}
 			if (![window isKeyWindow])
@@ -1658,18 +1614,6 @@ terminateApp:
 	}
 }
 
-- (void)syncSessionsChangedVisibleStatus:(NSNotification*)aNotification {
-	SyncSessionController *syncSessionController = [aNotification object];
-	if ([syncSessionController hasErrors]) {
-		[titleBarButton setStatusIconType:AlertIcon];
-	} else if ([syncSessionController hasRunningSessions]) {
-		[titleBarButton setStatusIconType:SynchronizingIcon];
-	} else {
-		[titleBarButton setStatusIconType: [[NSUserDefaults standardUserDefaults] boolForKey:@"ShowSyncMenu"] ? DownArrowIcon : NoIcon ];
-	}	
-}
-
-
 - (IBAction)fixFileEncoding:(id)sender {
 	if (currentNote) {
 		[notationController synchronizeNoteChanges:nil];
@@ -1681,42 +1625,6 @@ terminateApp:
 - (void)windowWillClose:(NSNotification *)aNotification {
     if ([prefsController quitWhenClosingWindow])
 		[NSApp terminate:nil];
-}
-
-- (void)_finishSyncWait {
-	//always post to next runloop to ensure that a sleep-delay response invocation, if one is also queued, runs before this one
-	//if the app quits before the sleep-delay response posts, then obviously sleep will be delayed by quite a bit
-	[self performSelector:@selector(syncWaitQuit:) withObject:nil afterDelay:0];
-}
-
-- (IBAction)syncWaitQuit:(id)sender {
-	//need this variable to allow overriding the wait
-	waitedForUncommittedChanges = YES;
-	NSString *errMsg = [[notationController syncSessionController] changeCommittingErrorMessage];
-	if ([errMsg length]) NSRunAlertPanel(NSLocalizedString(@"Changes could not be uploaded.", nil), errMsg, @"Quit", nil, nil);
-	
-	[NSApp terminate:nil];
-}
-
-- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
-	//if a sync session is still running, then wait for it to finish before sending terminatereply
-	//otherwise, if there are unsynced notes to send, then push them right now and wait until session is no longer running	
-	//use waitForUncommitedChangesWithTarget:selector: and provide a callback to send NSTerminateNow
-	
-	InvocationRecorder *invRecorder = [InvocationRecorder invocationRecorder];
-	[[invRecorder prepareWithInvocationTarget:self] _finishSyncWait];
-	
-	if (!waitedForUncommittedChanges &&
-		[[notationController syncSessionController] waitForUncommitedChangesWithInvocation:[invRecorder invocation]]) {
-		
-		[[NSApp windows] makeObjectsPerformSelector:@selector(orderOut:) withObject:nil];
-		[syncWaitPanel center];
-		[syncWaitPanel makeKeyAndOrderFront:nil];
-		[syncWaitSpinner startAnimation:nil];
-		//use NSTerminateCancel instead of NSTerminateLater because we need the runloop functioning in order to receive start/stop sync notifications
-		return NSTerminateCancel;
-	}
-	return NSTerminateNow;
 }
 
 - (void)applicationWillTerminate:(NSNotification *)aNotification {	
@@ -1737,8 +1645,6 @@ terminateApp:
 	[[NSApp windows] makeObjectsPerformSelector:@selector(close)];
 	[notationController stopFileNotifications];
 	
-	//wait for syncing to finish, showing a progress bar
-	
     if ([notationController flushAllNoteChanges])
 		[notationController closeJournal];
 	else
@@ -1748,6 +1654,7 @@ terminateApp:
 }
 
 - (void)dealloc {
+	[previousActiveApplication release];
 	[windowUndoManager release];
 	[dividerShader release];
 	
@@ -1761,17 +1668,13 @@ terminateApp:
 - (IBAction)toggleNVActivation:(id)sender {
 	
 	if ([NSApp isActive] && [window isMainWindow]) {
-		
-		SpaceSwitchingContext laterSpaceSwitchCtx;
-		if (IsLeopardOrLater)
-			CurrentContextForWindowNumber([window windowNumber], &laterSpaceSwitchCtx);
-		
-		if (!IsLeopardOrLater || !CompareContextsAndSwitch(&spaceSwitchCtx, &laterSpaceSwitchCtx)) {
-			//hide only if we didn't need to or weren't able to switch spaces
+		if (!activatedFromAnotherSpace || [previousActiveApplication isTerminated] ||
+			![previousActiveApplication activateWithOptions:NSApplicationActivateIgnoringOtherApps]) {
 			[NSApp hide:sender];
 		}
-		//clear the space-switch context that we just looked at, to ensure it's not reused inadvertently
-		bzero(&spaceSwitchCtx, sizeof(SpaceSwitchingContext));
+		[previousActiveApplication release];
+		previousActiveApplication = nil;
+		activatedFromAnotherSpace = NO;
 		return;
 	}
 	[self bringFocusToControlField:sender];
@@ -1783,12 +1686,19 @@ terminateApp:
 	[field selectText:sender];
 	
 	if (![NSApp isActive]) {
-		CurrentContextForWindowNumber([window windowNumber], &spaceSwitchCtx);
+		[self captureActivationOrigin];
 		[NSApp activateIgnoringOtherApps:YES];
 	}
 	if (![window isMainWindow]) [window makeKeyAndOrderFront:sender];
 	
 	[self setEmptyViewState:currentNote == nil];
+}
+
+- (void)captureActivationOrigin {
+	[previousActiveApplication release];
+	previousActiveApplication = [[[NSWorkspace sharedWorkspace] frontmostApplication] retain];
+	activatedFromAnotherSpace = ![window isOnActiveSpace];
+	activationRequested = YES;
 }
 
 - (NSWindow*)window {

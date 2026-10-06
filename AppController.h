@@ -21,7 +21,6 @@
 
 #import "NotationController.h"
 #import "NotesTableView.h"
-#import "Spaces.h"
 
 @class LinkingEditor;
 @class EmptyView;
@@ -31,7 +30,6 @@
 @class DualField;
 @class RBSplitView;
 @class RBSplitSubview;
-@class TitlebarButton;
 @class LinearDividerShader;
 
 @interface AppController : NSObject 
@@ -45,15 +43,10 @@
     IBOutlet NotesTableView *notesTableView;
     IBOutlet LinkingEditor *textView;
 	IBOutlet EmptyView *editorStatusView;
-	IBOutlet NSMenuItem *sparkleUpdateItem;
     IBOutlet NSWindow *window;
-	IBOutlet NSPanel *syncWaitPanel;
-	IBOutlet NSProgressIndicator *syncWaitSpinner;
 	NSToolbar *toolbar;
 	NSToolbarItem *dualFieldItem;
-	TitlebarButton *titleBarButton;
 	
-	BOOL waitedForUncommittedChanges;
 	
 	NSImage *verticalDividerImg;
 	LinearDividerShader *dividerShader;
@@ -66,7 +59,9 @@
     GlobalPrefs *prefsController;
     NotationController *notationController;
 	
-	SpaceSwitchingContext spaceSwitchCtx;
+	NSRunningApplication *previousActiveApplication;
+	BOOL activatedFromAnotherSpace;
+	BOOL activationRequested;
 	ViewLocationContext listUpdateViewCtx;
 	BOOL isFilteringFromTyping, typedStringIsCached;
 	BOOL isCreatingANote;
@@ -112,9 +107,6 @@ void outletObjectAwoke(id sender);
 - (NoteObject*)selectedNoteObject;
 
 - (void)restoreListStateUsingPreferences;
-
-- (void)_finishSyncWait;
-- (IBAction)syncWaitQuit:(id)sender;
 
 - (void)setTableAllowsMultipleSelection;
 

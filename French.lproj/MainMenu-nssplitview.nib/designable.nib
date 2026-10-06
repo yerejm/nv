@@ -1898,14 +1898,6 @@
 				</object>
 				<object class="IBConnectionRecord">
 					<object class="IBOutletConnection" key="connection">
-						<string key="label">sparkleUpdateItem</string>
-						<reference key="source" ref="912518894"/>
-						<reference key="destination" ref="724070073"/>
-					</object>
-					<int key="connectionID">1052</int>
-				</object>
-				<object class="IBConnectionRecord">
-					<object class="IBOutletConnection" key="connection">
 						<string key="label">nextKeyView</string>
 						<reference key="source" ref="840697282"/>
 						<reference key="destination" ref="81305855"/>
@@ -3250,64 +3242,6 @@
 		<object class="IBClassDescriber" key="IBDocument.Classes">
 			<object class="NSMutableArray" key="referencedPartialClassDescriptions">
 				<bool key="EncodedWithXMLCoder">YES</bool>
-				<object class="IBPartialClassDescription">
-					<string key="className">AppController</string>
-					<string key="superclassName">NSObject</string>
-					<object class="NSMutableDictionary" key="actions">
-						<bool key="EncodedWithXMLCoder">YES</bool>
-						<object class="NSArray" key="dict.sortedKeys">
-							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>bringFocusToControlField:</string>
-							<string>deleteNote:</string>
-							<string>exportNote:</string>
-							<string>fieldAction:</string>
-							<string>importNotes:</string>
-							<string>printNote:</string>
-							<string>renameNote:</string>
-							<string>showPreferencesWindow:</string>
-							<string>tagNote:</string>
-						</object>
-						<object class="NSMutableArray" key="dict.values">
-							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
-							<string>id</string>
-						</object>
-					</object>
-					<object class="NSMutableDictionary" key="outlets">
-						<bool key="EncodedWithXMLCoder">YES</bool>
-						<object class="NSArray" key="dict.sortedKeys">
-							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>editorStatusView</string>
-							<string>field</string>
-							<string>notesTableView</string>
-							<string>sparkleUpdateItem</string>
-							<string>splitView</string>
-							<string>textView</string>
-							<string>window</string>
-						</object>
-						<object class="NSMutableArray" key="dict.values">
-							<bool key="EncodedWithXMLCoder">YES</bool>
-							<string>EmptyView</string>
-							<string>DualField</string>
-							<string>NotesTableView</string>
-							<string>NSMenuItem</string>
-							<string>NSSplitView</string>
-							<string>LinkingEditor</string>
-							<string>NSWindow</string>
-						</object>
-					</object>
-					<object class="IBClassDescriptionSource" key="sourceIdentifier">
-						<string key="majorKey">IBProjectSource</string>
-						<string key="minorKey">AppController.h</string>
-					</object>
-				</object>
 				<object class="IBPartialClassDescription">
 					<string key="className">AppController</string>
 					<string key="superclassName">NSObject</string>

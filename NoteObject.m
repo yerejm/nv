@@ -32,9 +32,6 @@
 #import "NSFileManager_NV.h"
 #include "BufferUtils.h"
 #import "NotationFileManager.h"
-#import "NotationSyncServiceManager.h"
-#import "SyncServiceSessionProtocol.h"
-#import "SyncSessionController.h"
 #import "ExternalEditorListController.h"
 #import "NSData_transformations.h"
 #import "NSCollection_utils.h"
@@ -247,8 +244,6 @@ NSInteger compareFileSize(id *a, id *b) {
 
 
 #include "SynchronizedNoteMixIns.h"
-
-//syncing w/ server and from journal;
 
 DefModelAttrAccessor(filenameOfNote, filename)
 DefModelAttrAccessor(fileSizeOfNote, logicalSize)
@@ -982,7 +977,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		}
 		
 		[self makeNoteDirtyUpdateTime:YES updateFile:YES];
-		//[self registerModificationWithOwnedServices];
 		
 		[delegate note:self attributeChanged:NoteLabelsColumnString];
 	}
@@ -1077,16 +1071,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 
 - (NSURL*)uniqueNoteLink {
 		
-	NSArray *svcs = [[SyncSessionController class] allServiceNames];
-	NSMutableDictionary *idsDict = [NSMutableDictionary dictionaryWithCapacity:[svcs count] + 1];
-
-	//include all identifying keys in case the title changes later
-	NSUInteger i = 0;
-	for (i=0; i<[svcs count]; i++) {
-		NSString *syncID = [[syncServicesMD objectForKey:[svcs objectAtIndex:i]]
-							objectForKey:[[[SyncSessionController allServiceClasses] objectAtIndex:i] nameOfKeyElement]];
-		if (syncID) [idsDict setObject:syncID forKey:[svcs objectAtIndex:i]];
-	}
+	NSMutableDictionary *idsDict = [NSMutableDictionary dictionaryWithCapacity:1];
 	[idsDict setObject:[[NSData dataWithBytes:&uniqueNoteIDBytes length:16] encodeBase64WithNewlines:NO] forKey:@"NV"];
 	
 	return [NSURL URLWithString:[@"nv://find/" stringByAppendingFormat:@"%@/?%@", [titleString stringWithPercentEscapes], 
@@ -1374,8 +1359,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		if ((updated = [self updateFromFile])) {
 			[self makeNoteDirtyUpdateTime:NO updateFile:NO];
 			//need to update modification time manually
-			[self registerModificationWithOwnedServices];
-			[delegate schedulePushToAllSyncServicesForNote:self];
 			//[[delegate delegate] contentsUpdatedForNote:self];
 		}
 	}
@@ -1531,23 +1514,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
     return YES;
 }
 
-- (void)updateWithSyncBody:(NSString*)newBody andTitle:(NSString*)newTitle {
-	
-	NSMutableAttributedString *attributedBodyString = [[NSMutableAttributedString alloc] initWithString:newBody attributes:[[GlobalPrefs defaultPrefs] noteBodyAttributes]];
-	[attributedBodyString addLinkAttributesForRange:NSMakeRange(0, [attributedBodyString length])];
-	[attributedBodyString addStrikethroughNearDoneTagsForRange:NSMakeRange(0, [attributedBodyString length])];
-	[attributedBodyString addAttributesForMarkdownHeadingLinesInRange:NSMakeRange(0, [attributedBodyString length])];
-	
-	//should eventually sync changes back to disk:
-	[self setContentString:[attributedBodyString autorelease]];
-
-	//actions that user-editing via AppDelegate would have handled for us:
-    [self updateContentCacheCStringIfNecessary];
-	[undoManager removeAllActions];
-
-	[self setTitleString:newTitle];
-}
-
 - (void)moveFileToTrash {
 	OSStatus err = noErr;
 	if ((err = [delegate moveFileToTrash:noteFileRefInit(self) forFilename:filename]) != noErr) {
@@ -1579,18 +1545,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
     return [wal writeRemovalForNote:self];
 }
 
-- (void)registerModificationWithOwnedServices {
-	//mirror this note's current mod date to services with which it is already synced
-	//there is no point calling this method unless the modification time is 
-	[[SyncSessionController allServiceClasses] makeObjectsPerformSelector:@selector(registerLocalModificationForNote:) withObject:self];
-}
-
-- (void)removeAllSyncServiceMD {
-	//potentially dangerous
-	[syncServicesMD removeAllObjects];
-}
-
-
 - (void)makeNoteDirtyUpdateTime:(BOOL)updateTime updateFile:(BOOL)updateFile {
 	
 	if (updateFile)
@@ -1607,12 +1561,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 			if (UCConvertCFAbsoluteTimeToUTCDateTime(modifiedDate, &fileModifiedDate) != noErr)
 				NSLog(@"Unable to set file modification date from current date");
 		}
-	}
-	if (updateFile && updateTime) {
-		//if this is a change that affects the actual content of a note such that we would need to updateFile
-		//and the modification time was actually updated, then dirty the note with the sync services, too
-		[self registerModificationWithOwnedServices];
-		[delegate schedulePushToAllSyncServicesForNote:self];
 	}
 	
 	//queue note to be written
@@ -1720,7 +1668,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	//can't use updateFromCatalogEntry because it would assign ownership via various metadata
 	
 	if ([self updateFromData:[NSMutableData dataWithContentsOfFile:path options:NSUncachedRead error:NULL] inFormat:PlainTextFormat]) {
-		//reflect the temp file's changes directly back to the backing-store-file, database, and sync services
 		[self makeNoteDirtyUpdateTime:YES updateFile:YES];
 		
 		[delegate note:self attributeChanged:NotePreviewString];
@@ -1845,7 +1792,6 @@ BOOL noteTitleIsAPrefixOfOtherNoteTitle(NoteObject *longerNote, NoteObject *shor
 
 - (void)_undoManagerDidChange:(NSNotification *)notification {
 	[self makeNoteDirtyUpdateTime:YES updateFile:YES];
-    //queue note to be synchronized to disk (and network if necessary)
 }
 
 
