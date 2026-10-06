@@ -47,10 +47,10 @@
 }
 
 //1 for OK, 0 for cancelled, some other number for something else
-- (int)loadedUserPassphraseData {
+- (NSModalResponse)loadedUserPassphraseData {
 	
 	if (!window) {
-		if (![NSBundle loadNibNamed:@"PassphraseRetriever" owner:self])  {
+		if (!NVLoadNib(@"PassphraseRetriever", self))  {
 			NSLog(@"Failed to load PassphraseRetriever.nib");
 			NSBeep();
 			return 0;
@@ -58,7 +58,7 @@
 	}
 	
 	NSString *startingDirectory = NSLocalizedString(@"the current notes directory",nil);
-	FSRef notesDirectoryRef;
+	NVFileReference notesDirectoryRef;
 	
 	if ([[[notationPrefs delegate] aliasDataForNoteDirectory] fsRefAsAlias:&notesDirectoryRef]) {
 		NSString *resolvedPath = [[NSFileManager defaultManager] pathWithFSRef:&notesDirectoryRef];
@@ -71,7 +71,7 @@
 	BOOL notationExists = [[GlobalPrefs defaultPrefs] notationPrefs] != nil;
 	
 	[cancelButton setKeyEquivalent: notationExists ? @"\033" : @"q"];
-	[cancelButton setKeyEquivalentModifierMask: notationExists ? 0 : NSCommandKeyMask];
+	[cancelButton setKeyEquivalentModifierMask: notationExists ? 0 : NSEventModifierFlagCommand];
 	[cancelButton setTitle: notationExists ? NSLocalizedString(@"Cancel",nil) : NSLocalizedString(@"Quit",nil)];
 	[cancelButton setTarget: notationExists ? self : NSApp];
 	[cancelButton setAction: notationExists ? @selector(cancelAction:) : @selector(terminate:)];
@@ -79,7 +79,7 @@
 
 	[rememberKeychainButton setState:[notationPrefs storesPasswordInKeychain]];
 	
-	int result = [NSApp runModalForWindow:window];
+	NSModalResponse result = [NSApp runModalForWindow:window];
 	
 	[passphraseField setStringValue:@""];
 	[self textDidChange:nil];
@@ -122,8 +122,7 @@
 		[window close];
 		
 	} else {
-		NSBeginAlertSheet(NSLocalizedString(@"Sorry, you entered an incorrect passphrase.",nil), NSLocalizedString(@"OK",nil), 
-						  nil, nil, window, nil, NULL, NULL, NULL, NSLocalizedString(@"Please try again.",nil));
+		NVBeginAlertSheet(NVMakeAlert(NSLocalizedString(@"Sorry, you entered an incorrect passphrase.",nil), NSLocalizedString(@"Please try again.",nil), NSLocalizedString(@"OK",nil), nil, nil), window, nil, NULL, NULL);
 		[passphraseField setStringValue:@""];
 		[self textDidChange:nil];
 	}	

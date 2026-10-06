@@ -1,4 +1,6 @@
 #import <Cocoa/Cocoa.h>
+#import "NVFileReference.h"
+#import "NVArchive.h"
 #import "NSData_transformations.h"
 #import "AppController.h"
 #import "AppController_Importing.h"
@@ -145,19 +147,22 @@ static void CheckExternalEditor(NoteObject *note) {
     NSURL *editorURL = [workspace URLForApplicationWithBundleIdentifier:@"com.apple.TextEdit"];
     ExternalEditor *editor = [[[NSClassFromString(@"ExternalEditor") alloc] initWithBundleID:@"com.apple.TextEdit" resolvedURL:editorURL] autorelease];
     NVAcceptanceEditorSession *session = [[[NVAcceptanceEditorSession alloc] initWithDirectory:acceptanceRoot] autorelease];
-    SEL selector = @selector(openURLs:withAppBundleIdentifier:options:additionalEventParamDescriptor:launchIdentifiers:);
+    SEL selector = @selector(openURLs:withApplicationAtURL:configuration:completionHandler:);
     Method method = class_getInstanceMethod([NSWorkspace class], selector);
     IMP original = method_getImplementation(method);
     __block BOOL opened = NO;
-    IMP isolated = imp_implementationWithBlock(^BOOL(NSWorkspace *target, NSArray *URLs, NSString *identifier,
-        NSWorkspaceLaunchOptions options, NSAppleEventDescriptor *descriptor, NSArray **identifiers) {
-        if ([identifier isEqualToString:@"com.apple.TextEdit"] &&
+    __block BOOL openingIsolatedInstance = NO;
+    IMP isolated = imp_implementationWithBlock(^void(NSWorkspace *target, NSArray *URLs, NSURL *applicationURL,
+        NSWorkspaceOpenConfiguration *configuration, void (^completion)(NSRunningApplication *, NSError *)) {
+        if (!openingIsolatedInstance && [applicationURL isEqual:editorURL] &&
             [URLs isEqualToArray:@[[NSURL fileURLWithPath:note.noteFilePath]]]) {
+            openingIsolatedInstance = YES;
             opened = [session openURLs:URLs withApplicationAtURL:editorURL workspace:target timeout:10];
-            return opened;
+            openingIsolatedInstance = NO;
+            return;
         }
-        return ((BOOL (*)(id, SEL, NSArray *, NSString *, NSWorkspaceLaunchOptions, NSAppleEventDescriptor *, NSArray **))original)
-            (target, selector, URLs, identifier, options, descriptor, identifiers);
+        ((void (*)(id, SEL, NSArray *, NSURL *, NSWorkspaceOpenConfiguration *, id))original)
+            (target, selector, URLs, applicationURL, configuration, completion);
     });
     method_setImplementation(method, isolated);
     @try {
@@ -233,7 +238,7 @@ static void BeginFullScreenAcceptance(AppController *app, NotationController *no
             exitObserver = nil;
             finished = YES;
             Check(@"full screen exits", (window.styleMask & NSWindowStyleMaskFullScreen) == 0);
-            dispatch_async(dispatch_get_main_queue(), ^{ CompleteDesktopAcceptance(app, notation, window, editor); });
+            [[NSRunLoop mainRunLoop] performBlock:^{ CompleteDesktopAcceptance(app, notation, window, editor); }];
         }];
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC / 5), dispatch_get_main_queue(), ^{ [window toggleFullScreen:nil]; });
     }];
@@ -285,14 +290,14 @@ static void RunAcceptance(void) {
         [app interpretNVURL:identityLink];
         Check(@"UUID routing after rename", [app valueForKey:@"currentNote"] == note && [notation noteForUUIDBytes:&uuid] == note);
         NSPasteboard *pasteboard = [NSPasteboard pasteboardWithUniqueName];
-        [pasteboard declareTypes:@[NSStringPboardType] owner:nil];
-        [pasteboard setString:@"Service acceptance\nSanitized selection" forType:NSStringPboardType];
+        [pasteboard declareTypes:@[NSPasteboardTypeString] owner:nil];
+        [pasteboard setString:@"Service acceptance\nSanitized selection" forType:NSPasteboardTypeString];
         NSString *serviceError = nil;
         [app createFromSelection:pasteboard userData:nil error:&serviceError];
         Check(@"Services selection creates note", !serviceError && [[notation valueForKey:@"allNotes"] count] == 2);
         [pasteboard releaseGlobally];
-        FSRef exportDirectory;
-        FSPathMakeRef((const UInt8 *)acceptanceRoot.fileSystemRepresentation, &exportDirectory, NULL);
+        NVFileReference exportDirectory;
+        NVPathMakeReference((const UInt8 *)acceptanceRoot.fileSystemRepresentation, &exportDirectory, NULL);
         Check(@"text export", [note exportToDirectoryRef:&exportDirectory withFilename:@"Exported acceptance.txt" usingFormat:PlainTextFormat overwrite:NO] == noErr);
         Check(@"text import", [notation openFiles:@[[acceptanceRoot stringByAppendingPathComponent:@"Exported acceptance.txt"]]]);
         [notation.notationPrefs setNotesStorageFormat:PlainTextFormat];
@@ -343,8 +348,8 @@ __attribute__((constructor)) static void ConfigureIsolatedLaunch(void) {
             exit(75);
         }
         NSString *directory = [acceptanceRoot stringByAppendingPathComponent:@"notes"];
-        FSRef reference;
-        if (FSPathMakeRef((const UInt8 *)directory.fileSystemRepresentation, &reference, NULL) != noErr)
+        NVFileReference reference;
+        if (NVPathMakeReference((const UInt8 *)directory.fileSystemRepresentation, &reference, NULL) != noErr)
             exit(78);
         NSData *alias = [NSData aliasDataForFSRef:&reference];
         if (!alias) exit(78);
@@ -356,8 +361,10 @@ __attribute__((constructor)) static void ConfigureIsolatedLaunch(void) {
         if (getenv("NV_AUTOMATED_ACCEPTANCE")) {
             [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidFinishLaunchingNotification object:nil queue:nil usingBlock:^(NSNotification *notification) {
                 dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC), dispatch_get_main_queue(), ^{
-                    if (getenv("NV_REOPEN_ACCEPTANCE")) RunReopenAcceptance();
-                    else RunAcceptance();
+                    [[NSRunLoop mainRunLoop] performBlock:^{
+                        if (getenv("NV_REOPEN_ACCEPTANCE")) RunReopenAcceptance();
+                        else RunAcceptance();
+                    }];
                 });
             }];
         }

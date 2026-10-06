@@ -1,3 +1,4 @@
+#import "AppController.h"
 /*Copyright (c) 2010, Zachary Schneirov. All rights reserved.
     This file is part of Notational Velocity.
 
@@ -78,7 +79,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	NSInteger (*reverseSortFunctions[])(id*, id*) = { compareTitleStringReverse, compareLabelStringReverse, compareDateModifiedReverse, 
 	    compareDateCreatedReverse };
 	
-	unsigned int i;
+	NSUInteger i;
 	for (i=0; i<sizeof(colStrings)/sizeof(NSString*); i++) {
 	    NoteAttributeColumn *column = [[NoteAttributeColumn alloc] initWithIdentifier:colStrings[i]];
 	    [column setEditable:(colMutators[i] != NULL)];
@@ -118,6 +119,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 }
 
 - (void)dealloc {
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	[loadStatusAttributes release];
     [allColumns release];
 	[allColsDict release];
@@ -128,7 +130,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 
 //extracted from initialization to run in a safe way
 - (void)restoreColumns {
-	unsigned int i;
+	NSUInteger i;
 	
 	//if columns currently exist, then remove them first, so that nstableview's autosave/restore works properly
 	if ([[self tableColumns] count]) {
@@ -162,9 +164,11 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	 @selector(setTableFontSize:sender:),
 	 @selector(setHorizontalLayout:sender:), nil];
 	
-	[self registerForDraggedTypes:[NSArray arrayWithObjects:NSFilenamesPboardType, NSRTFPboardType, NSRTFDPboardType, NSStringPboardType, nil]];
+	[self registerForDraggedTypes:[NSArray arrayWithObjects:NVFilenamesPasteboardType, NSPasteboardTypeRTF, NSPasteboardTypeRTFD, NSPasteboardTypeString, nil]];
 	
 	NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
+	[center addObserver:self selector:@selector(_fieldEditorTextDidChange:) name:NSTextDidChangeNotification object:nil];
+	[center addObserver:self selector:@selector(_fieldEditorTextDidEndEditing:) name:NSTextDidEndEditingNotification object:nil];
 	
 	[center addObserver:self selector:@selector(windowDidBecomeMain:)
 				   name:NSWindowDidBecomeMainNotification object:[self window]];
@@ -196,11 +200,11 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	if ([sender draggingSource] == self)
 		return NO;
 		
-	return [[NSApp delegate] addNotesFromPasteboard:[sender draggingPasteboard]];
+	return [(AppController *)[NSApp delegate] addNotesFromPasteboard:[sender draggingPasteboard]];
 }
 
 - (void)paste:(id)sender {
-	[[NSApp delegate] addNotesFromPasteboard:[NSPasteboard generalPasteboard]];
+	[(AppController *)[NSApp delegate] addNotesFromPasteboard:[NSPasteboard generalPasteboard]];
 }
 
 - (float)tableFontHeight {
@@ -314,7 +318,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	BOOL isOneRow = !horiz || (![globalPrefs tableColumnsShowPreview] && !ColumnIsSet(NoteLabelsColumn, [globalPrefs tableColumnsBitmap]));
 	
 	if (IsLeopardOrLater)
-		[self setSelectionHighlightStyle:isOneRow ? NSTableViewSelectionHighlightStyleRegular : NSTableViewSelectionHighlightStyleSourceList];
+		[self setStyle:isOneRow ? NSTableViewStylePlain : NSTableViewStyleSourceList];
 	[self setBackgroundColor: [NSColor textBackgroundColor]];
 	
 	NSLayoutManager *lm = [[NSLayoutManager alloc] init];
@@ -353,16 +357,16 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	}
 }
 
-- (double)distanceFromRow:(int)aRow forVisibleArea:(NSRect)visibleRect {
+- (double)distanceFromRow:(NSInteger)aRow forVisibleArea:(NSRect)visibleRect {
 	return [self rectOfRow:aRow].origin.y - visibleRect.origin.y;
 }
 
 - (ViewLocationContext)viewingLocation {
 	ViewLocationContext ctx;
 	
-	int pivotRow = [[self selectedRowIndexes] firstIndex];
+	NSInteger pivotRow = [[self selectedRowIndexes] firstIndex];
 	
-	int nRows = [self numberOfRows];
+	NSInteger nRows = [self numberOfRows];
 	
 	NSRect visibleRect = [self visibleRect];
 	NSRange range = [self rowsInRect:visibleRect];
@@ -380,7 +384,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	ctx.nonRetainedPivotObject = nil;
 	ctx.verticalDistanceToPivotRow = 0;
 	
-	if ((unsigned int)pivotRow < (unsigned int)nRows) {
+	if ((NSUInteger)pivotRow < (NSUInteger)nRows) {
 		if ((ctx.nonRetainedPivotObject = [(FastListDataSource*)[self dataSource] immutableObjects][pivotRow])) {
 			ctx.verticalDistanceToPivotRow = [self distanceFromRow:pivotRow forVisibleArea:visibleRect];
 		}
@@ -398,7 +402,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 			NSInteger lastRow = [self numberOfRows] - 1;
 			
 			if (ctx.pivotRowWasEdge && (pivotIndex != 0 && pivotIndex != lastRow)) {
-				pivotIndex = abs(pivotIndex - 0) < abs(pivotIndex - lastRow) ? 0 : lastRow;
+				pivotIndex = labs(pivotIndex) < labs(pivotIndex - lastRow) ? 0 : lastRow;
 				ctx.verticalDistanceToPivotRow = 0;
 				//NSLog(@"edge pivot dislodged!");
 			}
@@ -415,7 +419,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	
 	NSClipView *clipView = [[self enclosingScrollView] contentView];
 
-	[clipView scrollToPoint:[clipView constrainScrollPoint:rowRect.origin]];
+	[clipView scrollToPoint:[clipView constrainBoundsRect:(NSRect){rowRect.origin, [clipView bounds].size}].origin];
 	[[self enclosingScrollView] reflectScrolledClipView:clipView];
 }
 
@@ -465,18 +469,18 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 		[self addTableColumn:column];
 	}
 	[globalPrefs addTableColumn:[column identifier] sender:self];
-	
+
 	if ([globalPrefs horizontalLayout]) //for now, for extending rowheight when tags are shown/hidden
 		[self _configureAttributesForCurrentLayout];
-	
+
 	if ([[column identifier] isEqualToString:[globalPrefs sortedTableColumnKey]]) {
 		[(NoteAttributeColumn*)[self highlightedTableColumn] updateWidthForHighlight];
 		[self setHighlightedTableColumn:column];
 		[(NoteAttributeColumn*)column updateWidthForHighlight];
 	}
-	
+
 	[self updateHeaderViewForColumns];
-	
+
 	viewMenusValid = NO;
 	return YES;
 }
@@ -484,18 +488,18 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 - (void)updateHeaderViewForColumns {
 	id oldHeader = [self headerView];
 	id newHeader = headerView;
-	
+
 	if ([[self tableColumns] count] == 1 && [self tableColumnWithIdentifier:NoteTitleColumnString]) {
-	    
+
 	    //if only displaying title, remove the column header; it is redundant
 		newHeader = nil;
 	}
-	
+
 	if (oldHeader != newHeader) {
 		//[headerView setTableView:newHeader ? self : nil];
 		[self setHeaderView:newHeader];
 		[self setCornerView:newHeader ? cornerView : nil];
-	
+
 		if ([self respondsToSelector:@selector(_sizeRowHeaderToFitIfNecessary)]) {
 			//hopefully 10.5 has this
 			[self _sizeRowHeaderToFitIfNecessary];
@@ -507,7 +511,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 			//anything else
 			NSWindow *win = [self window];
 			NSRect frame = [win frame];
-			
+
 			//this is a nasty little hack
 			frame.size.height -= 2.6;
 			frame.size.width -= 2.6;
@@ -650,7 +654,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 
 - (NSMenu *)menuForEvent:(NSEvent *)theEvent {
     NSPoint mousePoint = [self convertPoint:[theEvent locationInWindow] fromView:nil];
-    int row = [self rowAtPoint:mousePoint];
+    NSInteger row = [self rowAtPoint:mousePoint];
 	
     if (row >= 0) {
 		[self selectRowIndexes:[NSIndexSet indexSetWithIndex:row]
@@ -660,7 +664,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	if (![self numberOfSelectedRows])
 		return nil;
 	
-	return [self defaultNoteCommandsMenuWithTarget:[NSApp delegate]];
+	return [self defaultNoteCommandsMenuWithTarget:(AppController *)[NSApp delegate]];
 }
 
 static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, SEL aSel, id target, NSInteger tag) {
@@ -682,7 +686,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	
 	NSMenuItem *noteLinkItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Copy URL",@"contextual menu item title to copy urls")
 														  action:@selector(copyNoteLink:) keyEquivalent:@"c"];
-	[noteLinkItem setKeyEquivalentModifierMask:NSCommandKeyMask|NSAlternateKeyMask];
+	[noteLinkItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand|NSEventModifierFlagOption];
 	[noteLinkItem setTarget:target];
 	[theMenu addItem:[noteLinkItem autorelease]];
 
@@ -734,8 +738,8 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 #endif
 
 
-- (NSDragOperation)draggingSourceOperationMaskForLocal:(BOOL)isLocal {
-	return isLocal ? NSDragOperationNone : NSDragOperationCopy;
+- (NSDragOperation)draggingSession:(NSDraggingSession *)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
+	return context == NSDraggingContextWithinApplication ? NSDragOperationNone : NSDragOperationCopy;
 }
 
 - (void)mouseDown:(NSEvent*)event {
@@ -748,14 +752,14 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 		[[self window] makeKeyAndOrderFront:self];
 	}
 	
-	unsigned int flags = [event modifierFlags]; 
-    if (flags & NSAlternateKeyMask) { // option click starts a drag 
+	NSUInteger flags = [event modifierFlags];
+    if (flags & NSEventModifierFlagOption) { // option click starts a drag
 		
 		NSPoint mousePoint = [self convertPoint:[event locationInWindow] fromView:nil];
         NSPoint dragPoint = NSMakePoint(mousePoint.x - 16, mousePoint.y + 16); 
 		NSIndexSet *selectedRows = [self selectedRowIndexes];
 		
-		int row = [self rowAtPoint:mousePoint];
+		NSInteger row = [self rowAtPoint:mousePoint];
 		if (row >= 0) {
 			[self selectRowIndexes:[NSIndexSet indexSetWithIndex:row]
 			  byExtendingSelection:[selectedRows containsIndex:row] && [selectedRows count] > 1];
@@ -765,7 +769,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 		
         NSArray *notes = [(FastListDataSource*)[self dataSource] objectsAtFilteredIndexes:selectedRows];
 		NSMutableArray *paths = [NSMutableArray arrayWithCapacity:[notes count]];
-		unsigned int i;
+		NSUInteger i;
 		for (i=0;i<[notes count]; i++) {
 			NoteObject *note = [notes objectAtIndex:i];
 			//for now, allow option-dragging-out only for notes with separate file-backing stores
@@ -777,12 +781,16 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 		if ([paths count] > 0) {
 			NSImage *image = [[NSWorkspace sharedWorkspace] iconForFile:[paths lastObject]];
 			
-			NSPasteboard *pboard = [NSPasteboard pasteboardWithName:NSDragPboard]; 
-			[pboard declareTypes:[NSArray arrayWithObject:NSFilenamesPboardType] owner:nil];
-			[pboard setPropertyList:paths forType:NSFilenamesPboardType];			
+			NSMutableArray *items = [NSMutableArray arrayWithCapacity:[paths count]];
+			for (NSString *path in paths) {
+				NSDraggingItem *item = [[[NSDraggingItem alloc] initWithPasteboardWriter:[NSURL fileURLWithPath:path]] autorelease];
+				[item setDraggingFrame:(NSRect){dragPoint, [image size]} contents:image];
+				[items addObject:item];
+			}
 			
 			[NSApp preventWindowOrdering]; 
-			[self dragImage:image at:dragPoint offset:NSZeroSize event:event pasteboard:pboard source:self slideBack:YES]; 
+			NSDraggingSession *session = [self beginDraggingSessionWithItems:items event:event source:self];
+			[session setAnimatesToStartingPositionsOnCancelOrFail:YES];
 			return;
 		} else {
 			NSBeep();
@@ -800,9 +808,9 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	unichar keyChar = [theEvent firstCharacter];
 
     if (keyChar == NSNewlineCharacter || keyChar == NSCarriageReturnCharacter || keyChar == NSEnterCharacter) {
-		unsigned int sel = [self selectedRow];
-		if (sel < (unsigned)[self numberOfRows] && [self numberOfSelectedRows] == 1) {
-			int colIndex = [self columnWithIdentifier:NoteTitleColumnString];
+		NSUInteger sel = [self selectedRow];
+		if (sel < (NSUInteger)[self numberOfRows] && [self numberOfSelectedRows] == 1) {
+			NSInteger colIndex = [self columnWithIdentifier:NoteTitleColumnString];
 			if (colIndex > -1) {
 				[self editColumn:colIndex row:sel withEvent:theEvent select:YES];
 			} else {
@@ -811,7 +819,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 			return;
 		}
     } else if (keyChar == NSDeleteCharacter || keyChar == NSDeleteFunctionKey || keyChar == NSDeleteCharFunctionKey) {
-		[[NSApp delegate] deleteNote:self];
+		[(AppController *)[NSApp delegate] deleteNote:self];
 		return;
 	} else if (keyChar == NSTabCharacter) {
 		[[self window] selectNextKeyView:self];
@@ -824,7 +832,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	
 	NSUInteger modifiers = [theEvent modifierFlags];
 	
-	if (modifiers & NSCommandKeyMask) {
+	if (modifiers & NSEventModifierFlagCommand) {
 		//replicating up/down with option key
 		if (UPCHAR(keyChar)) {
 			[self selectRowAndScroll:0];
@@ -835,24 +843,24 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 		}
 	}
 	
-	if (modifiers & NSShiftKeyMask) {
+	if (modifiers & NSEventModifierFlagShift) {
 		if (DOWNCHAR(keyChar) || UPCHAR(keyChar)) {
 			
 			NSIndexSet *indexes = [self selectedRowIndexes];
-			int count = [indexes count];
+			NSInteger count = [indexes count];
 			if (count <= 1) {                 // reset affinity, since there's at most one item selected
 				affinity = 0;
 			} else if (affinity == 0) {                     // affinity not set, so take current direction
 				affinity = DOWNCHAR(keyChar) ? 1 : -1;      // down == down-document == means positive affinity
 			} else {
-				int row = -1;                           // affinity had been set, so enforce it
+				NSInteger row = -1;                           // affinity had been set, so enforce it
 				if (DOWNCHAR(keyChar) && (affinity != 1)) {           // down not allowed here
 					row = [indexes firstIndex];
 				} else if (UPCHAR(keyChar) && (affinity != -1)) {    // up not allowed here
 					row = [indexes lastIndex];
 				}
 				if (row >= 0) {
-					int scrollTo = row - affinity;
+					NSInteger scrollTo = row - affinity;
 					[self scrollRowToVisible:scrollTo];  // make sure we can see things
 					[self deselectRow:row];         // deselect the last row
 					return;     // skip further processing of the key event
@@ -885,13 +893,13 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 //thus avoiding annoying flicker and slow-down
 - (BOOL)performKeyEquivalent:(NSEvent *)theEvent {
 	
-	unsigned mods = [theEvent modifierFlags];
+	NSUInteger mods = [theEvent modifierFlags];
 	
-	BOOL isControlKeyPressed = (mods & NSControlKeyMask) != 0 && [userDefaults boolForKey: @"UseCtrlForSwitchingNotes"];
-	BOOL isCommandKeyPressed = (mods & NSCommandKeyMask) != 0;
+	BOOL isControlKeyPressed = (mods & NSEventModifierFlagControl) != 0 && [userDefaults boolForKey: @"UseCtrlForSwitchingNotes"];
+	BOOL isCommandKeyPressed = (mods & NSEventModifierFlagCommand) != 0;
 
 	// Also catch Ctrl-J/-K to match the shortcuts of other apps
-	if ((isControlKeyPressed || isCommandKeyPressed) && ((mods & NSShiftKeyMask) == 0)) {
+	if ((isControlKeyPressed || isCommandKeyPressed) && ((mods & NSEventModifierFlagShift) == 0)) {
 		
 		// Determine the keyChar:
 		unichar keyChar = ' '; 
@@ -904,7 +912,7 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 		
 		// Handle J and K for both Control and Command
 		if ( keyChar == kNext_Tag || keyChar == kPrev_Tag ) {
-			if (mods & NSAlternateKeyMask) {
+			if (mods & NSEventModifierFlagOption) {
 				[self selectRowAndScroll:((keyChar == kNext_Tag) ? [self numberOfRows] - 1 :  0)];
 			} else {
 				[self _incrementNoteSelectionByTag:keyChar];
@@ -932,8 +940,8 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 }
 
 - (void)_incrementNoteSelectionByTag:(NSInteger)tag {
-	int rowNumber = [self selectedRow];
-	int totalNotes = [self numberOfRows];
+	NSInteger rowNumber = [self selectedRow];
+	NSInteger totalNotes = [self numberOfRows];
 	
 	if (rowNumber == -1) {
 		rowNumber = (tag == kPrev_Tag ? totalNotes - 1 : 0);
@@ -970,7 +978,7 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 	if (command == @selector(moveToEndOfLine:) || command == @selector(moveToRightEndOfLine:)) {
 	
 		NSEvent *event = [[self window] currentEvent];
-		if ([event type] == NSKeyDown && ![event isARepeat] && 
+		if ([event type] == NSEventTypeKeyDown && ![event isARepeat] &&
 			NSEqualRanges([aTextView selectedRange], NSMakeRange([[aTextView string] length], 0))) {
 			//command-right at the end of the title--jump to editing the note!
 			[[self window] makeFirstResponder:[self nextValidKeyView]];
@@ -1055,7 +1063,7 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 		return NO;
 	
 	NSEventType type = [event type];
-	if (type == NSLeftMouseDown || type == NSLeftMouseUp) {
+	if (type == NSEventTypeLeftMouseDown || type == NSEventTypeLeftMouseUp) {
 		
 		NSPoint p = [self convertPoint:[event locationInWindow] fromView:nil];
 		
@@ -1065,12 +1073,12 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 		
 		return [self mouse:p inRect:tagCellRect];
 		
-	} else if (type == NSKeyDown) {
+	} else if (type == NSEventTypeKeyDown) {
 		
 		//activated either using the shortcut or using tab, when there was already an editor, and the last event invoked rename
 		//checking for the keyboard equivalent here is redundant in theory
 		
-		return ([event firstCharacter] == 't' && ([event modifierFlags] & (NSShiftKeyMask | NSCommandKeyMask)) != 0) || 
+		return ([event firstCharacter] == 't' && ([event modifierFlags] & (NSEventModifierFlagShift | NSEventModifierFlagCommand)) != 0) ||
 		([event firstCharacter] == NSTabCharacter && !lastEventActivatedTagEdit && [self currentEditor]);
 	}
 	
@@ -1123,11 +1131,11 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 		NoteAttributeColumn *col = [self noteAttributeColumnForIdentifier:NoteTitleColumnString];
 		if (tagsInTitleColumn && dereferencingFunction(col) != unifiedCellSingleLineForNote) {
 			//the textview will comply! when editing tags, use a smaller font, right-aligned
-			[editor setAlignment:NSRightTextAlignment range:range];
+			[editor setAlignment:NSTextAlignmentRight range:range];
 			NSFont *smallerFont = [NSFont systemFontOfSize:[globalPrefs tableFontSize] - 1.0];
 			[editor setFont:smallerFont range:range];
 			NSMutableParagraphStyle *pstyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
-			[pstyle setAlignment:NSRightTextAlignment];
+			[pstyle setAlignment:NSTextAlignmentRight];
 			[editor setTypingAttributes:[NSDictionary dictionaryWithObjectsAndKeys:pstyle, NSParagraphStyleAttributeName, smallerFont, NSFontAttributeName, nil]];
 		}
 #endif
@@ -1136,9 +1144,9 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 	}	
 }
 
-- (void)textDidEndEditing:(NSNotification *)aNotification {
-	[super textDidEndEditing:aNotification];
-	[self updateTitleDereferencorState];
+- (void)_fieldEditorTextDidEndEditing:(NSNotification *)aNotification {
+	if ([aNotification object] == [self currentEditor])
+		[self performSelector:@selector(updateTitleDereferencorState) withObject:nil afterDelay:0];
 }
 
 - (BOOL)abortEditing {
@@ -1149,12 +1157,13 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 
 - (void)cancelOperation:(id)sender {
 	[self abortEditing];
-	[[NSApp delegate] cancelOperation:sender];
+	[(AppController *)[NSApp delegate] cancelOperation:sender];
 }
 
-- (void)textDidChange:(NSNotification *)aNotification {
+- (void)_fieldEditorTextDidChange:(NSNotification *)aNotification {
+	if ([aNotification object] != [self currentEditor]) return;
 	NSInteger col = [self editedColumn];
-	if (col > -1 && [self attributeSetterForColumn:[[self tableColumns] objectAtIndex:col]] == @selector(setLabelString:)) {
+	if (col > -1 && [self attributeSetterForColumn:(NoteAttributeColumn *)[[self tableColumns] objectAtIndex:col]] == @selector(setLabelString:)) {
 		//text changed while editing tags; autocomplete!
 		
 		NSTextView *editor = [aNotification object];

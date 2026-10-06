@@ -25,6 +25,7 @@ sources = [
     'Sources/Notes/Storage/Crypto/NSData_transformations.m',
     'build/generated-tests/NSStringUtilities.m', 'build/generated-tests/GlobalPrefsCallbacks.m',
     'Sources/Notes/Model/DeletedNoteObject.m', 'Sources/Notes/Storage/Crypto/pbkdf2.c',
+    'Sources/Notes/Storage/NVFileReference.c', 'Sources/Notes/Storage/Crypto/NVMD5.c',
     'Sources/Notes/Storage/Crypto/hmacsha1.c', 'Sources/Notes/Storage/Crypto/Legacy/broken_md5.c',
 ]
 group, children, refs = file_groups(add, sources + ['Tests/Support/TestPaths.h'])
@@ -43,7 +44,7 @@ settings = dict(
     HEADER_SEARCH_PATHS=header_search_paths(), GENERATE_INFOPLIST_FILE='YES',
     PRODUCT_BUNDLE_IDENTIFIER='net.notational.velocity.tests', PRODUCT_NAME='CompatibilityTests',
     FRAMEWORK_SEARCH_PATHS=['$(PLATFORM_DIR)/Developer/Library/Frameworks', '$(SRCROOT)/..'],
-    OTHER_LDFLAGS=['-framework', 'XCTest', '-framework', 'Cocoa', '-framework', 'Carbon', '-framework', 'WebKit', '-lz'],
+    OTHER_LDFLAGS=['-framework', 'XCTest', '-framework', 'Cocoa', '-framework', 'UniformTypeIdentifiers', '-framework', 'Carbon', '-framework', 'WebKit', '-lz'],
     ALWAYS_SEARCH_USER_PATHS='NO')
 configs = [add(dict(isa='XCBuildConfiguration', name=name, buildSettings=settings))
            for name in ['Debug', 'Release']]

@@ -1,3 +1,5 @@
+#import "AppController_Importing.h"
+#import "AppController.h"
 //
 //  ExternalEditorListController.m
 //  Notation
@@ -30,6 +32,10 @@
 static NSString *UserEEIdentifiersKey = @"UserEEIdentifiers";
 static NSString *DefaultEEIdentifierKey = @"DefaultEEIdentifier";
 NSString *ExternalEditorsChangedNotification = @"ExternalEditorsChanged";
+
+@interface NSMenu (ExternalEditorListMenu)
+- (void)_updateMenuForEEListController:(ExternalEditorListController*)controller;
+@end
 
 @implementation ExternalEditor
 
@@ -101,32 +107,24 @@ NSString *ExternalEditorsChangedNotification = @"ExternalEditorsChanged";
 
 - (NSImage*)iconImage {
 	if (!iconImg) {
-		FSRef appRef;
-		if (CFURLGetFSRef((CFURLRef)[self resolvedURL], &appRef))
+		NVFileReference appRef;
+		if (NVURLGetFileReference((CFURLRef)[self resolvedURL], &appRef))
 			iconImg = [[NSImage smallIconForFSRef:&appRef] retain];
 	}
 	return iconImg;
 }
 
-- (NSString*)displayName {
-	if (!displayName) {
-		LSCopyDisplayNameForURL((CFURLRef)[self resolvedURL], (CFStringRef*)&displayName);
-	}
-	return displayName;
+- (NSString *)displayName {
+    if (!displayName) displayName = [[[NSFileManager defaultManager] displayNameAtPath:[[self resolvedURL] path]] retain];
+    return displayName;
 }
 
-- (NSURL*)resolvedURL {
-	if (!resolvedURL && !installCheckFailed) {
-		
-		OSStatus err = LSFindApplicationForInfo(kLSUnknownCreator, (CFStringRef)bundleIdentifier, NULL, NULL, (CFURLRef*)&resolvedURL);
-		
-		if (kLSApplicationNotFoundErr == err) {
-			installCheckFailed = YES;
-		} else if (noErr != err) {
-			NSLog(@"LSFindApplicationForInfo error for bundle identifier '%@': %d", bundleIdentifier, err);
-		}
-	}
-	return resolvedURL;
+- (NSURL *)resolvedURL {
+    if (!resolvedURL && !installCheckFailed) {
+        resolvedURL = [[[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:bundleIdentifier] retain];
+        installCheckFailed = resolvedURL == nil;
+    }
+    return resolvedURL;
 }
 
 - (BOOL)isInstalled {
@@ -243,18 +241,18 @@ static ExternalEditorListController* sharedInstance = nil;
 
 + (NSSet*)ODBAppIdentifiers {
 	static NSSet *_ODBAppIdentifiers = nil;
-	if (!_ODBAppIdentifiers) 
+	if (!_ODBAppIdentifiers)
 		_ODBAppIdentifiers = [[NSSet alloc] initWithObjects:
-							  @"de.codingmonkeys.SubEthaEdit", @"com.barebones.bbedit", @"com.barebones.textwrangler", 
-							  @"com.macromates.textmate", @"com.transtex.texeditplus", @"jp.co.artman21.JeditX", @"org.gnu.Aquamacs", 
-							  @"org.smultron.Smultron", @"com.peterborgapps.Smultron", @"org.fraise.Fraise", @"com.aynimac.CotEditor", @"com.macrabbit.cssedit", 
-							  @"com.talacia.Tag", @"org.skti.skEdit", @"com.cgerdes.ji", @"com.optima.PageSpinner", @"com.hogbaysoftware.WriteRoom", 
+							  @"de.codingmonkeys.SubEthaEdit", @"com.barebones.bbedit", @"com.barebones.textwrangler",
+							  @"com.macromates.textmate", @"com.transtex.texeditplus", @"jp.co.artman21.JeditX", @"org.gnu.Aquamacs",
+							  @"org.smultron.Smultron", @"com.peterborgapps.Smultron", @"org.fraise.Fraise", @"com.aynimac.CotEditor", @"com.macrabbit.cssedit",
+							  @"com.talacia.Tag", @"org.skti.skEdit", @"com.cgerdes.ji", @"com.optima.PageSpinner", @"com.hogbaysoftware.WriteRoom",
 							  @"com.hogbaysoftware.WriteRoom.mac", @"org.vim.MacVim", @"com.forgedit.ForgEdit", @"com.tacosw.TacoHTMLEdit", @"com.macrabbit.espresso", nil];
 	return _ODBAppIdentifiers;
 }
 
 - (void)addUserEditorFromDialog:(id)sender {
-	
+
 	//always send menuChanged notification because this class is the target of its menus, 
 	//so the notification is the only way to maintain a consistent selected item in PrefsWindowController
 	[self performSelector:@selector(menusChanged) withObject:nil afterDelay:0.0];
@@ -263,9 +261,9 @@ static ExternalEditorListController* sharedInstance = nil;
     [openPanel setResolvesAliases:YES];
     [openPanel setAllowsMultipleSelection:NO];
     
-    if ([openPanel runModalForDirectory:@"/Applications" file:nil types:[NSArray arrayWithObject:@"app"]] == NSOKButton) {
-		if (![openPanel filename]) goto errorReturn;
-		NSURL *appURL = [NSURL fileURLWithPath:[openPanel filename]];
+    if (NVRunOpenPanel(openPanel, @"/Applications", nil, @[@"app"]) == NSModalResponseOK) {
+		if (![[openPanel URL] path]) goto errorReturn;
+		NSURL *appURL = [NSURL fileURLWithPath:[[openPanel URL] path]];
 		if (!appURL) goto errorReturn;
 		
 		ExternalEditor *ed = [[ExternalEditor alloc] initWithBundleID:nil resolvedURL:appURL];
@@ -368,11 +366,11 @@ errorReturn:
 			
 		if (!isPrefsMenu && [[self defaultExternalEditor] isEqual:ed]) {
 			[theMenuItem setKeyEquivalent:@"E"];
-			[theMenuItem setKeyEquivalentModifierMask: NSCommandKeyMask | NSShiftKeyMask];
+			[theMenuItem setKeyEquivalentModifierMask: NSEventModifierFlagCommand | NSEventModifierFlagShift];
 		}
 		//PrefsWindowController maintains default-editor selection by updating on ExternalEditorsChangedNotification
 			
-		[theMenuItem setTarget: isPrefsMenu ? self : [NSApp delegate]];
+		[theMenuItem setTarget: isPrefsMenu ? self : (AppController *)[NSApp delegate]];
 		
 		[theMenuItem setRepresentedObject:ed];
 		
@@ -431,9 +429,7 @@ errorReturn:
 
 //this category exists because I want to use -makeObjectsPerformSelector: in -menusChanged
 
-@interface NSMenu (ExternalEditorListMenu)
-- (void)_updateMenuForEEListController:(ExternalEditorListController*)controller;
-@end
+
 
 @implementation NSMenu (ExternalEditorListMenu)
 - (void)_updateMenuForEEListController:(ExternalEditorListController*)controller {

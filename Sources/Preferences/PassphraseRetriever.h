@@ -34,7 +34,7 @@
 
 + (PassphraseRetriever *)retrieverWithNotationPrefs:(NotationPrefs*)prefs;
 - (id)initWithNotationPrefs:(NotationPrefs*)prefs;
-- (int)loadedUserPassphraseData;
+- (NSModalResponse)loadedUserPassphraseData;
 - (IBAction)cancelAction:(id)sender;
 - (IBAction)differentNotes:(id)sender;
 - (IBAction)okAction:(id)sender;

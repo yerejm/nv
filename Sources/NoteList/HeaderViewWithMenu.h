@@ -1,4 +1,4 @@
-/* HeaderViewWIthMenu */
+/* HeaderViewWithMenu */
 
 /*Copyright (c) 2010, Zachary Schneirov. All rights reserved.
     This file is part of Notational Velocity.

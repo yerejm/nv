@@ -255,8 +255,8 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 		if (description) {
 			theMenuItem = [[[NSMenuItem alloc] initWithTitle:description action:@selector(restoreBookmark:) 
 											   keyEquivalent:[NSString stringWithFormat:@"%d", (i % 9) + 1]] autorelease];
-			if (i > 8) [theMenuItem setKeyEquivalentModifierMask:NSCommandKeyMask | NSShiftKeyMask];
-			if (i > 17) [theMenuItem setKeyEquivalentModifierMask:NSCommandKeyMask | NSShiftKeyMask | NSControlKeyMask];
+			if (i > 8) [theMenuItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand | NSEventModifierFlagShift];
+			if (i > 17) [theMenuItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand | NSEventModifierFlagShift | NSEventModifierFlagControl];
 			[theMenuItem setRepresentedObject:bookmark];
 			[theMenuItem setTarget:self];
 			[bookmarksMenu addItem:theMenuItem];
@@ -309,7 +309,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 		//communicate with revealer here--tell it to search for this string and highlight note
 		isRestoringSearch = YES;
 		
-		//BOOL inBG = ([[window currentEvent] modifierFlags] & NSCommandKeyMask) == 0;
+		//BOOL inBG = ([[window currentEvent] modifierFlags] & NSEventModifierFlagCommand) == 0;
 		[appController bookmarksController:self restoreNoteBookmark:bookmark inBackground:inBG];
 		[self selectBookmarkInTableView:bookmark];
 		
@@ -342,7 +342,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 		ctrlCharStr = [[NSString stringWithCharacters:&ch length:1] retain];
 	}
 	
-	return [NSString stringWithFormat:@"%@%@%@ %l", rowIndex > 17 ? ctrlCharStr : @"", rowIndex > 8 ? shiftCharStr : @"", cmdCharStr, (rowIndex % 9) + 1];
+	return [NSString stringWithFormat:@"%@%@%@ %ld", rowIndex > 17 ? ctrlCharStr : @"", rowIndex > 8 ? shiftCharStr : @"", cmdCharStr, (long)((rowIndex % 9) + 1)];
 }
 
 - (NSInteger)numberOfRowsInTableView:(NSTableView *)aTableView {
@@ -354,13 +354,13 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 }
 
 - (void)doubleClicked:(id)sender {
-	int row = [bookmarksTableView selectedRow];
+	NSInteger row = [bookmarksTableView selectedRow];
 	if (row > -1) [self restoreNoteBookmark:[bookmarks objectAtIndex:row] inBackground:NO];
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
 	if (!isRestoringSearch && !isSelectingProgrammatically) {
-		int row = [bookmarksTableView selectedRow];
+		NSInteger row = [bookmarksTableView selectedRow];
 		if (row > -1) {
 			if ([bookmarks objectAtIndex:row] != currentBookmark) {
 				[self restoreNoteBookmark:[bookmarks objectAtIndex:row] inBackground:YES];
@@ -371,13 +371,10 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 	}
 }
 
-- (BOOL)tableView:(NSTableView *)tv writeRows:(NSArray*)rows toPasteboard:(NSPasteboard*)pboard {
-    NSArray *typesArray = [NSArray arrayWithObject:MovedBookmarksType];
-	
-	[pboard declareTypes:typesArray owner:self];
-    [pboard setPropertyList:rows forType:MovedBookmarksType];
-	
-    return YES;
+- (id<NSPasteboardWriting>)tableView:(NSTableView *)tableView pasteboardWriterForRow:(NSInteger)row {
+    NSPasteboardItem *item = [[[NSPasteboardItem alloc] init] autorelease];
+    [item setPropertyList:@[@(row)] forType:MovedBookmarksType];
+    return item;
 }
 
 - (NSDragOperation)tableView:(NSTableView*)tv validateDrop:(id <NSDraggingInfo>)info proposedRow:(NSInteger)row
@@ -397,17 +394,17 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
     if ([info draggingSource] == bookmarksTableView) {
 		NSArray *rows = [[info draggingPasteboard] propertyListForType:MovedBookmarksType];
 		NSInteger theRow = [[rows objectAtIndex:0] intValue];
-		
+
 		id object = [[bookmarks objectAtIndex:theRow] retain];
-		
+
 		if (row != theRow + 1 && row != theRow) {
 			NoteBookmark* selectedBookmark = nil;
-			int selRow = [bookmarksTableView selectedRow];
+			NSInteger selRow = [bookmarksTableView selectedRow];
 			if (selRow > -1) selectedBookmark = [bookmarks objectAtIndex:selRow];
-			
+
 			if (row < theRow)
 				[bookmarks removeObjectAtIndex:theRow];
-			
+
 			if (row <= (int)[bookmarks count])
 				[bookmarks insertObject:object atIndex:row];
 			else
@@ -471,7 +468,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 
 - (void)loadWindowIfNecessary {
 	if (!window) {
-		if (![NSBundle loadNibNamed:@"SavedSearches" owner:self])  {
+		if (!NVLoadNib(@"SavedSearches", self))  {
 			NSLog(@"Failed to load SavedSearches.nib");
 			NSBeep();
 			return;
@@ -497,9 +494,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 }
 
 - (void)clearAllBookmarks:(id)sender {
-	if (NSRunAlertPanel(NSLocalizedString(@"Remove all bookmarks?",@"alert title when clearing bookmarks"), 
-						NSLocalizedString(@"You cannot undo this action.",nil), 
-						NSLocalizedString(@"Remove All Bookmarks",nil), NSLocalizedString(@"Cancel",nil), NULL) == NSAlertDefaultReturn) {
+	if (NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"Remove all bookmarks?",@"alert title when clearing bookmarks"), NSLocalizedString(@"You cannot undo this action.",nil), NSLocalizedString(@"Remove All Bookmarks",nil), NSLocalizedString(@"Cancel",nil), NULL) == NSAlertFirstButtonReturn) {
 
 		[bookmarks removeAllObjects];
 	
@@ -511,7 +506,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 	
 	if (![appController selectedNoteObject]) {
 		
-		NSRunAlertPanel(NSLocalizedString(@"No note selected.",@"alert title when bookmarking no note"), NSLocalizedString(@"You must select a note before it can be added as a bookmark.",nil), NSLocalizedString(@"OK",nil), nil, NULL);
+		NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"No note selected.",@"alert title when bookmarking no note"), NSLocalizedString(@"You must select a note before it can be added as a bookmark.",nil), NSLocalizedString(@"OK",nil), nil, NULL);
 		
 	} else if ([bookmarks count] < 27) {
 		NSString *newString = [[appController fieldSearchString] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];		
@@ -534,14 +529,14 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 		[bookmark release];
 	} else {
 		//there are only so many numbers and modifiers
-		NSRunAlertPanel(NSLocalizedString(@"Too many bookmarks.",nil), NSLocalizedString(@"You cannot create more than 26 bookmarks. Try removing some first.",nil), NSLocalizedString(@"OK",nil), nil, NULL);
+		NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"Too many bookmarks.",nil), NSLocalizedString(@"You cannot create more than 26 bookmarks. Try removing some first.",nil), NSLocalizedString(@"OK",nil), nil, NULL);
 	}
 }
 
 - (void)removeBookmark:(id)sender {
 	
 	NoteBookmark *bookmark = nil;
-	int row = [bookmarksTableView selectedRow];
+	NSInteger row = [bookmarksTableView selectedRow];
 	if (row > -1) {
 		bookmark = [bookmarks objectAtIndex:row];
 		[bookmarks removeObjectIdenticalTo:bookmark];

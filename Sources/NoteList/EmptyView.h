@@ -22,9 +22,9 @@
 @interface EmptyView : NSView
 {
     IBOutlet NSTextField *labelText;
-	int lastNotesNumber;
+	NSInteger lastNotesNumber;
 }
 
-- (void)setLabelStatus:(int)notesNumber;
+- (void)setLabelStatus:(NSInteger)notesNumber;
 
 @end

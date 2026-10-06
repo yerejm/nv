@@ -102,7 +102,7 @@ static inline CGFloat fMAX(CGFloat a,CGFloat b) {
 		for (i=0;i<subcount;i++) {
 			RBSplitView* sv = [[subviews objectAtIndex:i] asSplitView];
 			if (sv) {
-				NSString* subst = clear?@"":[aString stringByAppendingFormat:@"[%d]",i];
+				NSString* subst = clear?@"":[aString stringByAppendingFormat:@"[%ld]",(long)i];
 				[sv setAutosaveName:subst recursively:YES];
 			}
 		}
@@ -364,11 +364,11 @@ static inline CGFloat fMAX(CGFloat a,CGFloat b) {
 // This pair of methods allows you to move the dividers for background windows while holding down
 // the command key, without bringing the window to the foreground.
 - (BOOL)acceptsFirstMouse:(NSEvent*)theEvent {
-	return ([theEvent modifierFlags]&NSCommandKeyMask)==0;
+	return ([theEvent modifierFlags]&NSEventModifierFlagCommand)==0;
 }
 
 - (BOOL)shouldDelayWindowOrderingForEvent:(NSEvent*)theEvent {
-	return ([theEvent modifierFlags]&NSCommandKeyMask)!=0;
+	return ([theEvent modifierFlags]&NSEventModifierFlagCommand)!=0;
 }
 
 // These 3 methods handle view background colors and opacity. The default is the window background.
@@ -458,7 +458,7 @@ static inline CGFloat fMAX(CGFloat a,CGFloat b) {
 // This pair of methods gets and sets the divider image. Setting the image automatically adjusts the
 // divider thickness. A nil image means a 0-pixel wide divider, unless you set a thickness explicitly.
 // For a nested RBSplitView, the divider is copied from the containing RBSplitView, and
-// setting it has no effect. The returned image is always flipped.
+// setting it has no effect.
 - (NSImage*)divider {
 	RBSplitView* sv = [self couplingSplitView];
 	return sv?[sv divider]:divider;
@@ -467,14 +467,7 @@ static inline CGFloat fMAX(CGFloat a,CGFloat b) {
 - (void)setDivider:(NSImage*)image {
 	if (![self couplingSplitView]) {
 		[divider autorelease];
-		if ([image isFlipped]) {
-// If the image is flipped, we just retain it.
-			divider = [image retain];
-		} else {
-// if the image isn't flipped, we copy the image instead of retaining it, and flip it.
-			divider = [image copy];
-			[divider setFlipped:YES];
-		}
+		divider = [image copy];
 // We set the thickness to 0.0 so the image dimension will prevail.
 		[self setDividerThickness:0.0];
 		[self setMustAdjust];
@@ -693,10 +686,11 @@ static inline CGFloat fMAX(CGFloat a,CGFloat b) {
 // Now we loop handling mouse events until we get a mouse up event, while showing the drag cursor.
 				[[RBSplitView cursor:RBSVDragCursor] push];
 				[self RB___setDragging:YES];
-				while ((theEvent = [NSApp nextEventMatchingMask:NSLeftMouseDownMask|NSLeftMouseDraggedMask|NSLeftMouseUpMask untilDate:[NSDate distantFuture] inMode:NSEventTrackingRunLoopMode dequeue:YES])&&([theEvent type]!=NSLeftMouseUp)) {
+				while ((theEvent = [NSApp nextEventMatchingMask:NSEventMaskLeftMouseDown|NSEventMaskLeftMouseDragged|NSEventMaskLeftMouseUp untilDate:[NSDate distantFuture] inMode:NSEventTrackingRunLoopMode dequeue:YES])&&([theEvent type]!=NSEventTypeLeftMouseUp)) {
 // Set up a local autorelease pool for the loop to prevent buildup of temporary objects.
 					NSAutoreleasePool* pool = [[NSAutoreleasePool alloc] init];
-					NSDisableScreenUpdates();
+					[NSAnimationContext beginGrouping];
+            [[NSAnimationContext currentContext] setDuration:0];
 // Track the mouse along the main coordinate. 
 					[self RB___trackMouseEvent:theEvent from:where withBase:NSZeroPoint inDivider:i];
 					if (ldivdr!=NSNotFound) {
@@ -727,7 +721,7 @@ static inline CGFloat fMAX(CGFloat a,CGFloat b) {
 							OTHER(twhere) = OTHER(trect.origin)+toffset;
 						}
 					}
-					NSEnableScreenUpdates();
+					[NSAnimationContext endGrouping];
 					[pool release];
 				}
 				[self RB___setDragging:NO];
@@ -825,7 +819,7 @@ static inline CGFloat fMAX(CGFloat a,CGFloat b) {
 		NSColor* bg = [self background];
 		if (bg) {
 			[bg set];
-			NSRectFillUsingOperation(rect,NSCompositeSourceOver);
+			NSRectFillUsingOperation(rect,NSCompositingOperationSourceOver);
 		}
 	}
 // Center the image, if there is one.
@@ -842,7 +836,7 @@ static inline CGFloat fMAX(CGFloat a,CGFloat b) {
 	}
 // Draw the image if the delegate returned a non-empty rect.
 	if (!NSIsEmptyRect(dorect)) {
-		[anImage drawInRect:dorect fromRect:imrect operation:NSCompositeSourceOver fraction:1.0];
+		[anImage drawInRect:dorect fromRect:imrect operation:NSCompositingOperationSourceOver fraction:1.0 respectFlipped:YES hints:nil];
 	}
 }
 
@@ -949,7 +943,6 @@ static inline CGFloat fMAX(CGFloat a,CGFloat b) {
 		if (data) {
 			NSBitmapImageRep* rep = [NSBitmapImageRep imageRepWithData:data];
 			NSImage* image = [[[NSImage alloc] initWithSize:[rep size]] autorelease];
-			[image setFlipped:YES];
 			[image addRepresentation:rep];
 			[self setDivider:image];
 		} else {
@@ -1300,7 +1293,7 @@ static inline CGFloat fMAX(CGFloat a,CGFloat b) {
 // This method is called by the mouseDown:method for every tracking event. It's separated out as it's
 // called from the Interface Builder palette in a slightly different way, and also if you have a
 // separate drag view designated by the delegate. You'll never need to call this directly.
-// theEvent is the event (which should be a NSLeftMouseDragged event).
+// theEvent is the event (which should be a NSEventTypeLeftMouseDragged event).
 // where is the point where the original mouse-down happened, corrected for the current divider position,
 // and expressed in local coordinates.
 // base is an offset (x,y) applied to the mouse location (usually will be zero)
@@ -1681,7 +1674,7 @@ static inline CGFloat fMAX(CGFloat a,CGFloat b) {
 // We're at the last subview, so we now check if the actual and calculated dimensions
 // are the same.
 			CGFloat remain = DIM(bounds.size)-DIM(newframe.origin);
-			if (last&&(fabsf(remain)>0.0)) {
+			if (last&&(fabs(remain)>0.0)) {
 // We'll resize the last expanded subview to whatever it takes to squeeze within the frame.
 // Normally the change should be at most one pixel, but if too many subviews were constrained,
 // this may be a large value, and the last subview may be resized beyond its constraints;

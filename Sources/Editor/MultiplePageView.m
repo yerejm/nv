@@ -99,7 +99,7 @@ static float defaultTextPadding(void) {
     return printInfo;
 }
 
-- (void)setNumberOfPages:(unsigned)num {
+- (void)setNumberOfPages:(NSUInteger)num {
     if (numPages != num) {
 	NSRect oldFrame = [self frame];
         NSRect newFrame;
@@ -112,7 +112,7 @@ static float defaultTextPadding(void) {
     }
 }
 
-- (unsigned)numberOfPages {
+- (NSUInteger)numberOfPages {
     return numPages;
 }
     
@@ -133,7 +133,7 @@ static float defaultTextPadding(void) {
     return paperSize;
 }
 
-- (NSRect)documentRectForPageNumber:(unsigned)pageNumber {	/* First page is page 0, of course! */
+- (NSRect)documentRectForPageNumber:(NSUInteger)pageNumber {	/* First page is page 0, of course! */
     NSRect rect = [self pageRectForPageNumber:pageNumber];
     rect.origin.x += [printInfo leftMargin] - defaultTextPadding();
     rect.origin.y += [printInfo topMargin];
@@ -141,7 +141,7 @@ static float defaultTextPadding(void) {
     return rect;
 }
 
-- (NSRect)pageRectForPageNumber:(unsigned)pageNumber {
+- (NSRect)pageRectForPageNumber:(NSUInteger)pageNumber {
     NSRect rect;
     rect.size = [printInfo paperSize];
     rect.origin = [self frame].origin;
@@ -152,9 +152,9 @@ static float defaultTextPadding(void) {
 - (void)drawRect:(NSRect)rect {
     if ([[NSGraphicsContext currentContext] isDrawingToScreen]) {
         NSSize paperSize = [printInfo paperSize];
-        unsigned firstPage = rect.origin.y / (paperSize.height + [self pageSeparatorHeight]);
-        unsigned lastPage = NSMaxY(rect) / (paperSize.height + [self pageSeparatorHeight]);
-        unsigned cnt;
+        NSUInteger firstPage = rect.origin.y / (paperSize.height + [self pageSeparatorHeight]);
+        NSUInteger lastPage = NSMaxY(rect) / (paperSize.height + [self pageSeparatorHeight]);
+        NSUInteger cnt;
 		
 		NSAssert(NO, @"MultiplePageView should not be drawing to screen");
         
@@ -183,7 +183,7 @@ static float defaultTextPadding(void) {
 	return textStorage;
 }
 
-- (int)printedPageCountForAttributedString:(NSAttributedString*)string {
+- (NSInteger)printedPageCountForAttributedString:(NSAttributedString*)string {
 	//NSPrintInfo *info = printInfo;
 	
 	NSSize textSize = [self documentSizeInPage];
@@ -200,7 +200,7 @@ static float defaultTextPadding(void) {
 	//NSLog(@"text height: %g, page height: %g", containerHeight, pageHeight);
 	[textView release];
 	
-	return (int)ceil(containerHeight/pageHeight);	
+	return (NSInteger)ceil(containerHeight/pageHeight);
 }
 
 + (NSView *)printableViewWithNotes:(NSArray*)notes {
@@ -216,22 +216,22 @@ static float defaultTextPadding(void) {
 	
 	[clipView setDocumentView:pagesView];
 	[pagesView release]; // retained by the clip view
-	
+
 	[theScrollView setContentView:clipView];
 	[clipView release]; // retained by the scroll view
-	
+
 	[pagesView setPrintInfo:[NSPrintInfo sharedPrintInfo]];
-	
+
 	// set up the text object NSTextStorage->NSLayoutManager->((NSTextContainer->NSTextView) * numberOfPages)
 	//textStorage = [[NSTextStorage alloc] initWithAttributedString:[abstractView textStorage]];
 	NSLayoutManager *lm = [[NSLayoutManager alloc] init];
 	[pageStorage addLayoutManager:lm];
 	[lm release]; // owned by the text storage
-	
-	NSAttributedString *formfeed = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"%C", NSFormFeedCharacter] attributes:nil];
+
+	NSAttributedString *formfeed = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@"%C", (unichar)NSFormFeedCharacter] attributes:nil];
 	NSFont *bodyFont = [[GlobalPrefs defaultPrefs] noteBodyFont];
 	
-	unsigned i, totalPageCount = 0; //[tableView numberOfSelectedRows];
+	NSUInteger i, totalPageCount = 0; //[tableView numberOfSelectedRows];
 	for (i=0; i<[notes count]; i++) {
 		NSAttributedString *contentString = [[notes objectAtIndex:i] printableStringRelativeToBodyFont:bodyFont];
 		
@@ -239,7 +239,7 @@ static float defaultTextPadding(void) {
 		
 		if (i < [notes count] - 1) [pageStorage appendAttributedString:formfeed];
 		
-		unsigned int j, pageCount = [pagesView printedPageCountForAttributedString:contentString];
+		NSUInteger j, pageCount = [pagesView printedPageCountForAttributedString:contentString];
 		[pagesView setNumberOfPages:pageCount + totalPageCount];
 		
 		for (j=0; j<pageCount; j++) {
@@ -264,8 +264,8 @@ static float defaultTextPadding(void) {
 	[formfeed release];
 	
 	// force layout before printing
-	unsigned len;
-	unsigned loc = INT_MAX;
+	NSUInteger len;
+	NSUInteger loc = INT_MAX;
 	if (loc > 0 && (len = [pageStorage length]) > 0) {
 		NSRange glyphRange;
 		if (loc >= len) loc = len - 1;

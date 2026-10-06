@@ -55,9 +55,7 @@
 	[window close];
 	
 	if (![[GlobalPrefs defaultPrefs] triedToImportBlor])
-		NSRunAlertPanel(NSLocalizedString(@"Note Importing Cancelled", nil), 
-						NSLocalizedString(@"You can import your old notes at any time by choosing quotemarkImport...quotemark from the quotemarkNotequotemark menu and selecting your NotationalDatabase.blor file.",nil), 
-						NSLocalizedString(@"OK",nil), nil, nil);
+		NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"Note Importing Cancelled", nil), NSLocalizedString(@"You can import your old notes at any time by choosing quotemarkImport...quotemark from the quotemarkNotequotemark menu and selecting your NotationalDatabase.blor file.",nil), NSLocalizedString(@"OK",nil), nil, nil);
 }
 
 - (IBAction)importAction:(id)sender {
@@ -71,28 +69,21 @@
 		[window close];
 		
 	} else {
-		NSBeginAlertSheet(NSLocalizedString(@"Sorry, you entered an incorrect passphrase.",nil), NSLocalizedString(@"OK",nil), 
-						  nil, nil, window, nil, NULL, NULL, NULL, NSLocalizedString(@"Please try again.",nil));
+		NVBeginAlertSheet(NVMakeAlert(NSLocalizedString(@"Sorry, you entered an incorrect passphrase.",nil), NSLocalizedString(@"Please try again.",nil), NSLocalizedString(@"OK",nil), nil, nil), window, nil, NULL, NULL);
 	}	
 	
 }
 
-- (NSData*)keychainPasswordData {
-	
-	NSString *keychainAccountString = [[path stringByAbbreviatingWithTildeInPath] lowercaseString];
-    if ([keychainAccountString length] > 255) keychainAccountString = [keychainAccountString substringToIndex:255];
-	
-    const char *keychainAccountCString = [[keychainAccountString dataUsingEncoding:
-				[NSString defaultCStringEncoding] allowLossyConversion:YES] bytes];
-	
-	UInt32 len;
-	void *p = (void *)calloc(256, sizeof(char));
-	if (kcfindgenericpassword("NV", keychainAccountCString, 255, p, &len, NULL) != noErr) {
-		free(p);
-		return NULL;
-	}
-	
-	return [NSData dataWithBytesNoCopy:p length:len freeWhenDone:YES];
+- (NSData *)keychainPasswordData {
+    NSString *account = [[path stringByAbbreviatingWithTildeInPath] lowercaseString];
+    if ([account length] > 255) account = [account substringToIndex:255];
+    NSDictionary *query = @{(id)kSecClass: (id)kSecClassGenericPassword,
+                            (id)kSecAttrService: @"NV",
+                            (id)kSecAttrAccount: account,
+                            (id)kSecReturnData: @YES};
+    CFTypeRef data = NULL;
+    if (SecItemCopyMatching((CFDictionaryRef)query, &data) != errSecSuccess) return nil;
+    return [(NSData *)data autorelease];
 }
 
 - (NSData*)validPasswordHashData {
@@ -112,7 +103,7 @@
 	//run dialog and grab PW
 	
 	if (!window) {
-		if (![NSBundle loadNibNamed:@"BlorPasswordRetriever" owner:self])  {
+		if (!NVLoadNib(@"BlorPasswordRetriever", self))  {
 			NSLog(@"Failed to load BlorPasswordRetriever.nib");
 			NSBeep();
 			return NULL;
@@ -122,7 +113,7 @@
 	[helpStringField setStringValue:[NSString stringWithFormat:NSLocalizedString(@"Please enter the passphrase to import old notes at %@.",nil), 
 		[path stringByAbbreviatingWithTildeInPath]]];
 	
-	int result = [NSApp runModalForWindow:window];
+	NSModalResponse result = [NSApp runModalForWindow:window];
 	
 	NSString *passwordString = [passphraseField stringValue];
 	passwordData = [passwordString dataUsingEncoding:[NSString defaultCStringEncoding] allowLossyConversion:NO];
@@ -183,7 +174,7 @@
 			return nil;
 			
 		if ([blorData length] < 28) {
-			NSLog(@"read data is too small (%d) to hold any notes!", [blorData length]);
+			NSLog(@"read data is too small (%lu) to hold any notes!", (unsigned long)[blorData length]);
 			return nil;
 		}
 		
@@ -227,10 +218,11 @@
 
 
 #define ASSERT_CAN_READ_BYTE_COUNT(n) do { \
-	if (!((n) + currentByteOffset <= [blorData length])) { \
-		NSLog(@"Attempted to read %d bytes past the length of the blor!", ((n) + currentByteOffset) - [blorData length]);\
-		return nil;\
-	} \
+    NSUInteger byteCount = (NSUInteger)(n); \
+    if (currentByteOffset > [blorData length] || byteCount > [blorData length] - currentByteOffset) { \
+        NSLog(@"Cannot read %lu bytes at offset %lu in the blor", (unsigned long)byteCount, (unsigned long)currentByteOffset); \
+        return nil; \
+    } \
 } while (0)
 
 - (id)nextNote {
@@ -282,7 +274,7 @@
 	[titleString release];
 	
 	successfullyReadNoteCount++;
-	
+
 	return [note autorelease];
 }
 

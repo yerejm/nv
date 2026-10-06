@@ -39,8 +39,8 @@ typedef union VolumeUUID {
 
 @interface NotationController (NotationFileManager)
 
-OSStatus CreateTemporaryFile(FSRef *parentRef, FSRef *childTempRef);
-OSStatus CreateDirectoryIfNotPresent(FSRef *parentRef, CFStringRef subDirectoryName, FSRef *childRef);
+OSStatus CreateTemporaryFile(NVFileReference *parentRef, NVFileReference *childTempRef);
+OSStatus CreateDirectoryIfNotPresent(NVFileReference *parentRef, CFStringRef subDirectoryName, NVFileReference *childRef);
 CFUUIDRef CopyHFSVolumeUUIDForMount(const char *mntonname);
 long BlockSizeForNotation(NotationController *controller);
 UInt32 diskUUIDIndexForNotation(NotationController *controller);
@@ -50,30 +50,30 @@ UInt32 diskUUIDIndexForNotation(NotationController *controller);
 
 - (BOOL)notesDirectoryIsTrashed;
 
-- (BOOL)notesDirectoryContainsFile:(NSString*)filename returningFSRef:(FSRef*)childRef;
-- (OSStatus)refreshFileRefIfNecessary:(FSRef *)childRef withName:(NSString *)filename charsBuffer:(UniChar*)charsBuffer;
+- (BOOL)notesDirectoryContainsFile:(NSString*)filename returningFSRef:(NVFileReference*)childRef;
+- (OSStatus)refreshFileRefIfNecessary:(NVFileReference *)childRef withName:(NSString *)filename charsBuffer:(UniChar*)charsBuffer;
 
 - (OSStatus)renameAndForgetNoteDatabaseFile:(NSString*)newfilename;
 - (BOOL)removeSpuriousDatabaseFileNotes;
 
 - (void)relocateNotesDirectory;
 
-+ (OSStatus)getDefaultNotesDirectoryRef:(FSRef*)notesDir;
++ (OSStatus)getDefaultNotesDirectoryRef:(NVFileReference*)notesDir;
 
-- (NSMutableData*)dataFromFileInNotesDirectory:(FSRef*)childRef forFilename:(NSString*)filename;
-- (NSMutableData*)dataFromFileInNotesDirectory:(FSRef*)childRef forCatalogEntry:(NoteCatalogEntry*)catEntry;
-- (NSMutableData*)dataFromFileInNotesDirectory:(FSRef*)childRef forFilename:(NSString*)filename fileSize:(UInt64)givenFileSize;
-- (OSStatus)noteFileRenamed:(FSRef*)childRef fromName:(NSString*)oldName toName:(NSString*)newName;
+- (NSMutableData*)dataFromFileInNotesDirectory:(NVFileReference*)childRef forFilename:(NSString*)filename;
+- (NSMutableData*)dataFromFileInNotesDirectory:(NVFileReference*)childRef forCatalogEntry:(NoteCatalogEntry*)catEntry;
+- (NSMutableData*)dataFromFileInNotesDirectory:(NVFileReference*)childRef forFilename:(NSString*)filename fileSize:(UInt64)givenFileSize;
+- (OSStatus)noteFileRenamed:(NVFileReference*)childRef fromName:(NSString*)oldName toName:(NSString*)newName;
 - (NSString*)uniqueFilenameForTitle:(NSString*)title fromNote:(NoteObject*)note;
-- (OSStatus)fileInNotesDirectory:(FSRef*)childRef isOwnedByUs:(BOOL*)owned hasCatalogInfo:(FSCatalogInfo *)info;
-- (OSStatus)deleteFileInNotesDirectory:(FSRef*)childRef forFilename:(NSString*)filename;
-- (OSStatus)createFileIfNotPresentInNotesDirectory:(FSRef*)childRef forFilename:(NSString*)filename fileWasCreated:(BOOL*)created;
-- (OSStatus)storeDataAtomicallyInNotesDirectory:(NSData*)data withName:(NSString*)filename destinationRef:(FSRef*)destRef;
-- (OSStatus)storeDataAtomicallyInNotesDirectory:(NSData*)data withName:(NSString*)filename destinationRef:(FSRef*)destRef 
+- (OSStatus)fileInNotesDirectory:(NVFileReference*)childRef isOwnedByUs:(BOOL*)owned hasCatalogInfo:(FSCatalogInfo *)info;
+- (OSStatus)deleteFileInNotesDirectory:(NVFileReference*)childRef forFilename:(NSString*)filename;
+- (OSStatus)createFileIfNotPresentInNotesDirectory:(NVFileReference*)childRef forFilename:(NSString*)filename fileWasCreated:(BOOL*)created;
+- (OSStatus)storeDataAtomicallyInNotesDirectory:(NSData*)data withName:(NSString*)filename destinationRef:(NVFileReference*)destRef;
+- (OSStatus)storeDataAtomicallyInNotesDirectory:(NSData*)data withName:(NSString*)filename destinationRef:(NVFileReference*)destRef
 							 verifyWithSelector:(SEL)verifySel verificationDelegate:(id)verifyDelegate;
-+ (OSStatus)trashFolderRef:(FSRef*)trashRef forChild:(FSRef*)childRef;
-- (OSStatus)moveFileToTrash:(FSRef *)childRef forFilename:(NSString*)filename;
-- (void)notifyOfChangedTrash;
++ (OSStatus)trashFolderRef:(NVFileReference*)trashRef forChild:(NVFileReference*)childRef;
+- (OSStatus)moveFileToTrash:(NVFileReference *)childRef forFilename:(NSString*)filename;
+
 @end
 
 @interface NSObject (NotationFileManagerDelegate)

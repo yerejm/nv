@@ -1,3 +1,4 @@
+#import "NotesTableView.h"
 /*Copyright (c) 2010, Zachary Schneirov. All rights reserved.
     This file is part of Notational Velocity.
 
@@ -15,7 +16,7 @@
     along with Notational Velocity.  If not, see <http://www.gnu.org/licenses/>. */
 
 
-#import "HeaderViewWIthMenu.h"
+#import "HeaderViewWithMenu.h"
 #import "NoteAttributeColumn.h"
 
 @implementation HeaderViewWithMenu
@@ -34,10 +35,10 @@
 	int i;
 	//change all user-resizable-only columns
 	for (i=0; i<[[self tableView] numberOfColumns]; i++) {
-		NoteAttributeColumn *col = [[[self tableView] tableColumns] objectAtIndex:i];
+		NoteAttributeColumn *col = (NoteAttributeColumn *)[[[self tableView] tableColumns] objectAtIndex:i];
 		if ((originalResizingMask = [col resizingMask]) == NSTableColumnUserResizingMask) {
 			[col setResizingMask: NSTableColumnAutoresizingMask | NSTableColumnUserResizingMask];
-			[col performSelector:@selector(setResizingMaskNumber:) withObject:[NSNumber numberWithUnsignedInt:originalResizingMask] afterDelay:0];
+			[col performSelector:@selector(setResizingMaskNumber:) withObject:[NSNumber numberWithUnsignedInteger:originalResizingMask] afterDelay:0];
 		}
 	}
 	
@@ -58,7 +59,7 @@
     
     if ([[self tableView] respondsToSelector:@selector(menuForColumnConfiguration:)]) {
 	NSPoint theClickPoint = [self convertPoint:[theEvent locationInWindow] fromView:NULL];
-	int theColumn = [self columnAtPoint:theClickPoint];
+	NSInteger theColumn = [self columnAtPoint:theClickPoint];
 	NSTableColumn *theTableColumn = nil;
 	if (theColumn > -1)
 	    theTableColumn = [[[self tableView] tableColumns] objectAtIndex:theColumn];

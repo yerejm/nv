@@ -217,14 +217,14 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	case SingleDatabaseFormat:
 	    return [NSMutableArray arrayWithCapacity:0];
 	case PlainTextFormat: 
-	    return [NSMutableArray arrayWithObjects:[(id)UTCreateStringForOSType(TEXT_TYPE_ID) autorelease], 
-			[(id)UTCreateStringForOSType(UTXT_TYPE_ID) autorelease], nil];
+	    return [NSMutableArray arrayWithObjects:[(id)NVStringFromOSType(TEXT_TYPE_ID) autorelease],
+			[(id)NVStringFromOSType(UTXT_TYPE_ID) autorelease], nil];
 	case RTFTextFormat: 
-	    return [NSMutableArray arrayWithObjects:[(id)UTCreateStringForOSType(RTF_TYPE_ID) autorelease], nil];
+	    return [NSMutableArray arrayWithObjects:[(id)NVStringFromOSType(RTF_TYPE_ID) autorelease], nil];
 	case HTMLFormat:
-	    return [NSMutableArray arrayWithObjects:[(id)UTCreateStringForOSType(HTML_TYPE_ID) autorelease], nil];
+	    return [NSMutableArray arrayWithObjects:[(id)NVStringFromOSType(HTML_TYPE_ID) autorelease], nil];
 	case WordDocFormat:
-		return [NSMutableArray arrayWithObjects:[(id)UTCreateStringForOSType(WORD_DOC_TYPE_ID) autorelease], nil];
+		return [NSMutableArray arrayWithObjects:[(id)NVStringFromOSType(WORD_DOC_TYPE_ID) autorelease], nil];
 	default:
 	    NSLog(@"Unknown format ID: %d", formatID);
     }
@@ -360,84 +360,43 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	return [keychainDatabaseIdentifier UTF8String];
 }
 
+- (NSDictionary *)keychainQuery {
+    return @{(id)kSecClass: (id)kSecClassGenericPassword,
+             (id)kSecAttrService: @KEYCHAIN_SERVICENAME,
+             (id)kSecAttrAccount: [NSString stringWithUTF8String:[self setKeychainIdentifier]]};
+}
+
 - (SecKeychainItemRef)currentKeychainItem {
-	SecKeychainItemRef returnedItem = NULL;
-	
-	const char *accountName = [self setKeychainIdentifier];
-	
-	OSStatus err = SecKeychainFindGenericPassword(NULL, strlen(KEYCHAIN_SERVICENAME), KEYCHAIN_SERVICENAME,
-											 strlen(accountName), accountName, NULL, NULL, &returnedItem);
-	if (err != noErr)
-		return NULL;
-	
-	return returnedItem;
+    NSMutableDictionary *query = [[[self keychainQuery] mutableCopy] autorelease];
+    [query setObject:@YES forKey:(id)kSecReturnRef];
+    CFTypeRef item = NULL;
+    return SecItemCopyMatching((CFDictionaryRef)query, &item) == errSecSuccess ? (SecKeychainItemRef)item : NULL;
 }
 
 - (void)removeKeychainData {
-	SecKeychainItemRef itemRef = [self currentKeychainItem];
-	if (itemRef) {
-		OSStatus err = SecKeychainItemDelete(itemRef);
-		if (err != noErr)
-			NSLog(@"Error deleting keychain item: %d", err);
-		CFRelease(itemRef);
-	}
+    OSStatus status = SecItemDelete((CFDictionaryRef)[self keychainQuery]);
+    if (status != errSecSuccess && status != errSecItemNotFound) NSLog(@"Error deleting keychain item: %d", (int)status);
 }
 
-- (NSData*)passwordDataFromKeychain {
-	void *passwordData = NULL;
-	UInt32 passwordLength = 0;
-	const char *accountName = [self setKeychainIdentifier];
-	SecKeychainItemRef returnedItem = NULL;	
-	
-	OSStatus err = SecKeychainFindGenericPassword(NULL,
-												  strlen(KEYCHAIN_SERVICENAME), KEYCHAIN_SERVICENAME,
-												  strlen(accountName), accountName,
-												  &passwordLength, &passwordData,
-												  &returnedItem);
-	if (err != noErr) {
-		NSLog(@"Error finding keychain password for account %s: %d\n", accountName, err);
-		return nil;
-	}
-	NSData *data = [NSData dataWithBytes:passwordData length:passwordLength];
-	
-	bzero(passwordData, passwordLength);
-	
-	SecKeychainItemFreeContent(NULL, passwordData);
-	
-	return data;
+- (NSData *)passwordDataFromKeychain {
+    NSMutableDictionary *query = [[[self keychainQuery] mutableCopy] autorelease];
+    [query setObject:@YES forKey:(id)kSecReturnData];
+    CFTypeRef data = NULL;
+    OSStatus status = SecItemCopyMatching((CFDictionaryRef)query, &data);
+    if (status != errSecSuccess) return nil;
+    return [(NSData *)data autorelease];
 }
 
-- (void)setKeychainData:(NSData*)data {
-	
-	OSStatus status = noErr;
-	
-	SecKeychainItemRef itemRef = [self currentKeychainItem];
-	if (itemRef) {
-		//modify existing data; item already exists
-		
-		const char *accountName = [self setKeychainIdentifier];
-		
-		SecKeychainAttribute attrs[] = {
-		{ kSecAccountItemAttr, strlen(accountName), (char*)accountName },
-		{ kSecServiceItemAttr, strlen(KEYCHAIN_SERVICENAME), (char*)KEYCHAIN_SERVICENAME } };
-		
-		const SecKeychainAttributeList attributes = { sizeof(attrs) / sizeof(attrs[0]), attrs };
-		
-		if (noErr != (status = SecKeychainItemModifyAttributesAndData(itemRef, &attributes, [data length], [data bytes]))) {
-			NSLog(@"Error modifying keychain data with new passphrase-data: %d", status);
-		}
-		
-		CFRelease(itemRef);
-		
-	} else {
-		const char *accountName = [self setKeychainIdentifier];
-		
-		//add new data; item does not exist
-		if (noErr != (status = SecKeychainAddGenericPassword(NULL, strlen(KEYCHAIN_SERVICENAME), KEYCHAIN_SERVICENAME,
-															 strlen(accountName), accountName, [data length], [data bytes], NULL))) {
-			NSLog(@"Error adding new passphrase item to keychain: %d", status);
-		}
-	}
+- (void)setKeychainData:(NSData *)data {
+    NSDictionary *query = [self keychainQuery];
+    NSDictionary *attributes = @{(id)kSecValueData: data};
+    OSStatus status = SecItemUpdate((CFDictionaryRef)query, (CFDictionaryRef)attributes);
+    if (status == errSecItemNotFound) {
+        NSMutableDictionary *item = [[query mutableCopy] autorelease];
+        [item addEntriesFromDictionary:attributes];
+        status = SecItemAdd((CFDictionaryRef)item, NULL);
+    }
+    if (status != errSecSuccess) NSLog(@"Error storing passphrase in keychain: %d", (int)status);
 }
 
 - (void)setStoresPasswordInKeychain:(BOOL)value {
@@ -564,7 +523,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	return (proposedFormat == SingleDatabaseFormat && notesStorageFormat != SingleDatabaseFormat && notesExist);
 }
 
-- (void)noteFilesCleanupSheetDidEnd:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo {
+- (void)noteFilesCleanupSheetDidEnd:(NSWindow *)sheet returnCode:(NSModalResponse)returnCode contextInfo:(void *)contextInfo {
 	
 	NSAssert(contextInfo, @"No contextInfo passed to noteFilesCleanupSheetDidEnd");
 	NSAssert([(id)contextInfo respondsToSelector:@selector(notesStorageFormatInProgress)],
@@ -572,11 +531,11 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 
 	int newNoteStorageFormat = [(NotationPrefsViewController*)contextInfo notesStorageFormatInProgress];
 	
-	if (returnCode != NSAlertAlternateReturn)
+	if (returnCode != NSAlertSecondButtonReturn)
 		//didn't cancel
 		[self setNotesStorageFormat:newNoteStorageFormat];
 	
-	if (returnCode == NSAlertOtherReturn)
+	if (returnCode == NSAlertThirdButtonReturn)
 		//tell delegate to delete all its notes' files
 		[delegate trashRemainingNoteFilesInDirectory];
 	//but what if the files remain after switching to a single-db format--and then the user deletes a bunch of the files themselves?
@@ -585,7 +544,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	if ([(id)contextInfo respondsToSelector:@selector(notesStorageFormatDidChange)])
 		[(NotationPrefsViewController*)contextInfo notesStorageFormatDidChange];
 	
-	if (returnCode != NSAlertAlternateReturn) {
+	if (returnCode != NSAlertSecondButtonReturn) {
 		//run queued method
 		NSAssert([(id)contextInfo respondsToSelector:@selector(runQueuedStorageFormatChangeInvocation)],
 				 @"can't get runQueuedStorageFormatChangeInvocation method for changing");
@@ -689,24 +648,24 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 }
 
 //for our nstableview data source
-- (int)typeStringsCount {
+- (NSInteger)typeStringsCount {
 	if (typeStrings[notesStorageFormat])
 		return [typeStrings[notesStorageFormat] count];
 	
 	return 0;
 }
-- (int)pathExtensionsCount {
+- (NSInteger)pathExtensionsCount {
 	if (pathExtensions[notesStorageFormat])
 	    return [pathExtensions[notesStorageFormat] count];
 	
 	return 0;
 }
 
-- (NSString*)typeStringAtIndex:(int)typeIndex {
+- (NSString*)typeStringAtIndex:(NSInteger)typeIndex {
 
     return [typeStrings[notesStorageFormat] objectAtIndex:typeIndex];
 }
-- (NSString*)pathExtensionAtIndex:(int)pathIndex {
+- (NSString*)pathExtensionAtIndex:(NSInteger)pathIndex {
     return [pathExtensions[notesStorageFormat] objectAtIndex:pathIndex];
 }
 - (unsigned int)indexOfChosenPathExtension {
@@ -723,11 +682,11 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
     if (!typeStrings[notesStorageFormat])
 	return;
     
-    unsigned int i, newSize = sizeof(OSType) * [typeStrings[notesStorageFormat] count];
+    NSUInteger i, newSize = sizeof(OSType) * [typeStrings[notesStorageFormat] count];
     allowedTypes = (OSType*)realloc(allowedTypes, newSize);
 	
     for (i=0; i<[typeStrings[notesStorageFormat] count]; i++)
-		allowedTypes[i] = UTGetOSTypeFromString((CFStringRef)[typeStrings[notesStorageFormat] objectAtIndex:i]);
+		allowedTypes[i] = NVOSTypeFromString((CFStringRef)[typeStrings[notesStorageFormat] objectAtIndex:i]);
 }
 
 - (void)addAllowedPathExtension:(NSString*)extension {
@@ -738,7 +697,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	preferencesChanged = YES;
 }
 
-- (BOOL)removeAllowedPathExtensionAtIndex:(unsigned int)extensionIndex {
+- (BOOL)removeAllowedPathExtensionAtIndex:(NSUInteger)extensionIndex {
 
 	if ([pathExtensions[notesStorageFormat] count] > 1 && extensionIndex < [pathExtensions[notesStorageFormat] count]) {
 		[pathExtensions[notesStorageFormat] removeObjectAtIndex:extensionIndex];
@@ -751,10 +710,11 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	}
 	return NO;
 }
-- (BOOL)setChosenPathExtensionAtIndex:(unsigned int)extensionIndex {
+- (BOOL)setChosenPathExtensionAtIndex:(NSUInteger)extensionIndex {
 	if ([pathExtensions[notesStorageFormat] count] > extensionIndex &&
 		[[pathExtensions[notesStorageFormat] objectAtIndex:extensionIndex] length]) {
-		chosenExtIndices[notesStorageFormat] = extensionIndex;
+		if (extensionIndex > UINT_MAX) return NO;
+        chosenExtIndices[notesStorageFormat] = (unsigned int)extensionIndex;
 		
 		preferencesChanged = YES;
 		return YES;
@@ -774,7 +734,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	return NO;
 }
 
-- (void)removeAllowedTypeAtIndex:(unsigned int)typeIndex {
+- (void)removeAllowedTypeAtIndex:(NSUInteger)typeIndex {
 	[typeStrings[notesStorageFormat] removeObjectAtIndex:typeIndex];
 	[self updateOSTypesArray];
 	
@@ -809,7 +769,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 				
 			return YES;
 		}
-		if (!UTGetOSTypeFromString((CFStringRef)[typeStrings[notesStorageFormat] objectAtIndex:oldIndex])) {
+		if (!NVOSTypeFromString((CFStringRef)[typeStrings[notesStorageFormat] objectAtIndex:oldIndex])) {
 			return NO;
 		}
     }

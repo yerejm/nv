@@ -34,7 +34,6 @@ NSString * const ODBEditorIsEditingString	= @"ODBEditorIsEditingString";
 
 @interface ODBEditor(Private)
 
-- (BOOL)_launchExternalEditor:(ExternalEditor*)ed;
 - (NSString*)_nonexistingTemporaryPathForFilename:(NSString*)filename;
 - (NSString *)_tempFilePathForEditingString:(NSString *)string;
 - (BOOL)_editFile:(NSString *)path inEditor:(ExternalEditor*)ed isEditingString:(BOOL)editingStringFlag options:(NSDictionary *)options forClient:(id)client context:(NSDictionary *)context;
@@ -156,7 +155,9 @@ static ODBEditor	*_sharedODBEditor;
 	if ([ed canEditNoteDirectly:aNote]) {
 		NSString *path = [aNote noteFilePath];
 		
-		[[NSWorkspace sharedWorkspace] openURLs:[NSArray arrayWithObject:[NSURL fileURLWithPath:path]] withAppBundleIdentifier:[ed bundleIdentifier] options:NSWorkspaceLaunchDefault additionalEventParamDescriptor:nil launchIdentifiers:NULL];
+		[[NSWorkspace sharedWorkspace] openURLs:@[[NSURL fileURLWithPath:path]] withApplicationAtURL:[ed resolvedURL] configuration:[NSWorkspaceOpenConfiguration configuration] completionHandler:^(NSRunningApplication *application, NSError *error) {
+            if (error) dispatch_async(dispatch_get_main_queue(), ^{ NSLog(@"Could not open note in external editor: %@", error); NSBeep(); });
+        }];
 		return YES;
 	}
 
@@ -205,34 +206,6 @@ beepReturn:
 
 @implementation ODBEditor(Private)
 
-- (BOOL)_launchExternalEditor:(ExternalEditor*)ed {
-	BOOL success = NO;
-	BOOL running = NO;
-	NSWorkspace	*workspace = [NSWorkspace sharedWorkspace];
-	NSArray	*runningApplications = [workspace launchedApplications];
-	NSEnumerator *enumerator = [runningApplications objectEnumerator];
-	NSDictionary *applicationInfo;
-	
-	NSString *editorBundleIdentifier = [ed bundleIdentifier];
-	
-	while (nil != (applicationInfo = [enumerator nextObject])) {
-		NSString *bundleIdentifier = [applicationInfo objectForKey: @"NSApplicationBundleIdentifier"];
-		
-		if ([bundleIdentifier isEqualToString: editorBundleIdentifier]) {
-			running = YES;
-			// bring the app forward
-			success = [workspace launchApplication: [applicationInfo objectForKey: @"NSApplicationPath"]];
-			break;
-		}
-	}
-	
-	if (running == NO) {
-		success = [workspace launchAppWithBundleIdentifier: editorBundleIdentifier options:NSWorkspaceLaunchDefault additionalEventParamDescriptor: nil launchIdentifier:NULL];
-	}
-	
-	return success;
-}
-
 - (NSString*)_nonexistingTemporaryPathForFilename:(NSString*)filename {
 	unsigned int sTempFileSequence = 0;
 	NSString *path = nil;
@@ -255,67 +228,42 @@ beepReturn:
 	
 	NSError *error = nil;
 	if (NO == [string writeToFile:path atomically:NO encoding:NSUTF8StringEncoding error:&error]) {
-		NSLog([error description], nil);
+		NSLog(@"%@", error);
 		path = nil;
 	}
 
 	return path;
 }
 
-- (BOOL)_editFile:(NSString *)path inEditor:(ExternalEditor*)ed isEditingString:(BOOL)editingStringFlag options:(NSDictionary *)options forClient:(id)client context:(NSDictionary *)context {
-    // 10.2 fix- akm Nov 30 2004
-    path = [path stringByResolvingSymlinksInPath];
-    
-	BOOL success = NO;
-	OSStatus status = noErr;
-	if (!ed) ed = [[ExternalEditorListController sharedInstance] defaultExternalEditor];
-	NSData *targetBundleID = [[ed bundleIdentifier] dataUsingEncoding: NSUTF8StringEncoding];
-	NSAppleEventDescriptor *targetDescriptor = [NSAppleEventDescriptor descriptorWithDescriptorType: typeApplicationBundleID data: targetBundleID];
-	NSAppleEventDescriptor *appleEvent = [NSAppleEventDescriptor appleEventWithEventClass: kCoreEventClass
-																				   eventID: kAEOpenDocuments
-																		  targetDescriptor: targetDescriptor
-																				  returnID: kAutoGenerateReturnID
-																		     transactionID: kAnyTransactionID];
-	NSAppleEventDescriptor  *replyDescriptor = nil;
-	NSAppleEventDescriptor  *errorDescriptor = nil;
-	AEDesc reply = {typeNull, NULL};														
-	NSString *customPath = [options objectForKey: ODBEditorCustomPathKey];
-	
-	[self _launchExternalEditor:ed];
-	
-	[appleEvent setParamDescriptor: [NSAppleEventDescriptor descriptorWithFilePath: path] forKeyword: keyDirectObject];
-	[appleEvent setParamDescriptor: [NSAppleEventDescriptor descriptorWithTypeCode: _signature] forKeyword: keyFileSender];
-	if (customPath != nil)
-		[appleEvent setParamDescriptor: [NSAppleEventDescriptor descriptorWithString: customPath] forKeyword: keyFileCustomPath];
-	
-	AESendMessage([appleEvent aeDesc], &reply, kAEWaitReply, kAEDefaultTimeout);
-	
-	if (status == noErr) {
-		replyDescriptor = [[[NSAppleEventDescriptor alloc] initWithAEDescNoCopy: &reply] autorelease];
-		errorDescriptor = [replyDescriptor paramDescriptorForKeyword: keyErrorNumber];
-		
-		if (errorDescriptor != nil) {
-			status = [errorDescriptor int32Value];
-		}
-		
-		if (status == noErr) {
-			// save off some information that we'll need when we get called back
-			
-			NSMutableDictionary *dictionary = [NSMutableDictionary dictionary];
-			
-			[dictionary setObject: [NSValue valueWithNonretainedObject: client] forKey: ODBEditorNonRetainedClient];
-			if (context != NULL)
-				[dictionary setObject: context forKey: ODBEditorClientContext];
-			[dictionary setObject: path forKey: ODBEditorFileName];
-			[dictionary setObject: [NSNumber numberWithBool: editingStringFlag] forKey: ODBEditorIsEditingString];
-			
-			[_filePathsBeingEdited setObject: dictionary forKey: path];
-		}
-	}
-	
-	success = (status == noErr);
-	
-	return success;
+- (BOOL)_editFile:(NSString *)path inEditor:(ExternalEditor *)editor isEditingString:(BOOL)editingString options:(NSDictionary *)options forClient:(id)client context:(NSDictionary *)context {
+    if (!editor) editor = [[ExternalEditorListController sharedInstance] defaultExternalEditor];
+    NSURL *applicationURL = [editor resolvedURL];
+    if (!applicationURL || !path || !client) return NO;
+    NSData *identifier = [[editor bundleIdentifier] dataUsingEncoding:NSUTF8StringEncoding];
+    NSAppleEventDescriptor *target = [NSAppleEventDescriptor descriptorWithDescriptorType:typeApplicationBundleID data:identifier];
+    NSAppleEventDescriptor *event = [NSAppleEventDescriptor appleEventWithEventClass:kCoreEventClass eventID:kAEOpenDocuments targetDescriptor:target returnID:kAutoGenerateReturnID transactionID:kAnyTransactionID];
+    [event setParamDescriptor:[NSAppleEventDescriptor descriptorWithFilePath:path] forKeyword:keyDirectObject];
+    [event setParamDescriptor:[NSAppleEventDescriptor descriptorWithTypeCode:_signature] forKeyword:keyFileSender];
+    NSString *customPath = [options objectForKey:ODBEditorCustomPathKey];
+    if (customPath) [event setParamDescriptor:[NSAppleEventDescriptor descriptorWithString:customPath] forKeyword:keyFileCustomPath];
+
+    NSMutableDictionary *record = [NSMutableDictionary dictionaryWithObjectsAndKeys:
+        [NSValue valueWithNonretainedObject:client], ODBEditorNonRetainedClient,
+        path, ODBEditorFileName, @(editingString), ODBEditorIsEditingString, nil];
+    if (context) [record setObject:context forKey:ODBEditorClientContext];
+    [_filePathsBeingEdited setObject:record forKey:path];
+    NSWorkspaceOpenConfiguration *configuration = [NSWorkspaceOpenConfiguration configuration];
+    [configuration setAppleEvent:event];
+    [[NSWorkspace sharedWorkspace] openApplicationAtURL:applicationURL configuration:configuration completionHandler:^(NSRunningApplication *application, NSError *error) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            if (error && [_filePathsBeingEdited objectForKey:path] == record) {
+                [_filePathsBeingEdited removeObjectForKey:path];
+                NSLog(@"Could not open external editing session: %@", error);
+                NSBeep();
+            }
+        });
+    }];
+    return YES;
 }
 
 - (void)handleModifiedFileEvent:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
@@ -341,7 +289,7 @@ beepReturn:
 			if (stringContents) {
 				[client odbEditor: self didModifyFileForString: stringContents context: context];
 			} else {
-				NSLog([error description], nil);
+				NSLog(@"%@", error);
 			}
 		} else {
 			[client odbEditor:self didModifyFile:path newFileLocation:newPath context:context];
@@ -380,7 +328,7 @@ beepReturn:
 			if (stringContents) {
 				[client odbEditor: self didCloseFileForString: stringContents context: context];
 			} else {
-				NSLog([error description], nil);
+				NSLog(@"%@", error);
 			}
 		} else {
 			[client odbEditor:self didClosefile:fileName context:context];

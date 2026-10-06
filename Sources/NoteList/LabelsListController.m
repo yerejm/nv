@@ -133,7 +133,7 @@ static CGRect NSRectToCGRect(NSRect nsrect) {
 		img = [[NSImage alloc] initWithSize:wordRect.size];
 		[img lockFocus];
 
-		CGContextRef context = (CGContextRef)([[NSGraphicsContext currentContext] graphicsPort]);
+		CGContextRef context = (CGContextRef)([[NSGraphicsContext currentContext] CGContext]);
 		CGContextBeginTransparencyLayer(context, NULL);
 
 		CGContextClipToRect(context, NSRectToCGRect(wordRect));
@@ -142,7 +142,7 @@ static CGRect NSRectToCGRect(NSRect nsrect) {
 		[(isHighlighted ? [NSColor whiteColor] : [NSColor colorWithCalibratedWhite:0.55 alpha:1.0]) setFill];
 		[backgroundPath fill];
 		
-		[[NSGraphicsContext currentContext] setCompositingOperation:NSCompositeSourceOut];
+		[[NSGraphicsContext currentContext] setCompositingOperation:NSCompositingOperationSourceOut];
 		[aWord drawWithRect:(NSRect){{2.0, 3.0}, wordRect.size} options:NSStringDrawingUsesFontLeading attributes:attrs];
 		
 		CGContextEndTransparencyLayer(context);
@@ -171,7 +171,7 @@ static CGRect NSRectToCGRect(NSRect nsrect) {
     NSMutableSet *notesOfLabels = [[NSMutableSet alloc] init];
 
     for (i=0; i<numLabels; i++) {
-	int labelIndex = labelsBuffer[i];
+	NSInteger labelIndex = labelsBuffer[i];
 	[notesOfLabels unionSet:[objects[labelIndex] noteSet]];
     }
     

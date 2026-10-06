@@ -74,12 +74,13 @@ char *replaceString(char *oldString, const char *newString) {
 }
 
 
-void _ResizeBuffer(void ***buffer, unsigned int objCount, unsigned int *bufObjCount, unsigned int elemSize) {
+void _ResizeBuffer(void ***buffer, size_t objCount, unsigned int *bufObjCount, size_t elemSize) {
 	assert(buffer && bufObjCount);
+    if (objCount > UINT_MAX || objCount > SIZE_MAX / elemSize) abort();
 	
 	if (*bufObjCount < objCount || !*buffer) {
 		*buffer = (void **)realloc(*buffer, elemSize * objCount);
-		*bufObjCount = objCount;
+		*bufObjCount = (unsigned int)objCount;
 	}
 	
 }
@@ -96,12 +97,12 @@ int IsZeros(const void *s1, size_t n) {
 	return (1);
 }
 
-void modp_tolower_copy(char* dest, const char* str, int len) {
-	int i;
+void modp_tolower_copy(char* dest, const char* str, size_t len) {
+	size_t i;
 	NSUInteger eax, ebx;
 	const uint8_t* ustr = (const uint8_t*) str;
-	const int leftover = len % sizeof(NSUInteger);
-	const int imax = len / sizeof(NSUInteger);
+	const size_t leftover = len % sizeof(NSUInteger);
+	const size_t imax = len / sizeof(NSUInteger);
 	const NSUInteger* s = (const NSUInteger*) str;
 	NSUInteger* d = (NSUInteger*) dest;
 	for (i = 0; i != imax; ++i) {
@@ -312,7 +313,7 @@ void RemovePerDiskInfoWithTableIndex(UInt32 diskIndex, PerDiskInfo **perDiskGrou
 	//if an entry exists, push everything below it upward and resize the buffer (or just copy to a new buffer)
 	//otherwise do nothing
 	
-	NSUInteger i = 0, count = *groupCount;
+	unsigned int i = 0, count = *groupCount;
 	
 	PerDiskInfo *groups = *perDiskGroups;
 	for (i=0; i<count; i++) {
@@ -335,7 +336,7 @@ unsigned int SetPerDiskInfoWithTableIndex(UTCDateTime *dateTime, UInt32 *nodeID,
 	
 	assert(nodeID || dateTime);
 	
-	NSUInteger i = 0, count = *groupCount;
+	unsigned int i = 0, count = *groupCount;
 	
 	PerDiskInfo *groups = *perDiskGroups;
 	for (i=0; i<count; i++) {
@@ -396,27 +397,16 @@ void CopyPerDiskInfoGroupsToOrder(PerDiskInfo **flippedGroups, unsigned int *exi
 	}
 }
 
-CFStringRef CreateRandomizedFileName() {
-    static int sequence = 0;
-    
-    sequence++;
-    
-    ProcessSerialNumber psn;
-    OSStatus err = noErr;
-    if ((err = GetCurrentProcess(&psn)) != noErr) {
-	printf("error getting process serial number: %d\n", (int)err);
-	
-	//just use the location of our memory
-	psn.lowLongOfPSN = (unsigned long)&psn;
-    }
-    
-    CFStringRef name = CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR(".%lu%lu-%d-%d"), 
-						psn.highLongOfPSN, (NSUInteger)psn.lowLongOfPSN, (int)CFAbsoluteTimeGetCurrent(), sequence);
-    
+CFStringRef CreateRandomizedFileName(void) {
+    CFUUIDRef uuid = CFUUIDCreate(NULL);
+    CFStringRef string = CFUUIDCreateString(NULL, uuid);
+    CFStringRef name = CFStringCreateWithFormat(NULL, NULL, CFSTR(".%@"), string);
+    CFRelease(string);
+    CFRelease(uuid);
     return name;
 }
 
-OSStatus FSCreateFileIfNotPresentInDirectory(FSRef *directoryRef, FSRef *childRef, CFStringRef filename, Boolean *created) {
+OSStatus FSCreateFileIfNotPresentInDirectory(NVFileReference *directoryRef, NVFileReference *childRef, CFStringRef filename, Boolean *created) {
 	UniChar chars[256];
     OSStatus result = noErr;
 	
@@ -426,7 +416,7 @@ OSStatus FSCreateFileIfNotPresentInDirectory(FSRef *directoryRef, FSRef *childRe
 		if (result == fnfErr) {
 			if (created) *created = true;
 			
-			result = FSCreateFileUnicode(directoryRef, CFStringGetLength(filename), chars, kFSCatInfoNone, NULL, childRef, NULL);
+			result = NVCreateFileUnicode(directoryRef, CFStringGetLength(filename), chars, kFSCatInfoNone, NULL, childRef, NULL);
 		}
 		return result;
     }
@@ -434,7 +424,7 @@ OSStatus FSCreateFileIfNotPresentInDirectory(FSRef *directoryRef, FSRef *childRe
     return noErr;	
 }
 
-OSStatus FSRefMakeInDirectoryWithString(FSRef *directoryRef, FSRef *childRef, CFStringRef filename, UniChar* charsBuffer) {
+OSStatus FSRefMakeInDirectoryWithString(NVFileReference *directoryRef, NVFileReference *childRef, CFStringRef filename, UniChar* charsBuffer) {
     CFRange range;
     range.location = 0;
     range.length = CFStringGetLength(filename);
@@ -443,103 +433,13 @@ OSStatus FSRefMakeInDirectoryWithString(FSRef *directoryRef, FSRef *childRef, CF
 	
     CFStringGetCharacters(filename, range, charsBuffer);
 
-    return FSMakeFSRefUnicode(directoryRef, range.length, charsBuffer, kTextEncodingDefaultFormat, childRef);
+    return NVMakeReferenceUnicode(directoryRef, range.length, charsBuffer, kTextEncodingDefaultFormat, childRef);
 }
 
-//use BlockSizeForNotation((NotationController *)delegate) for maximum read size
-//use noCacheMask for options if not expecting to read again
-OSStatus FSRefReadData(FSRef *fsRef, size_t maximumReadSize, UInt64 *bufferSize, void** newBuffer, UInt16 modeOptions) {
-    OSStatus err = noErr;
-	HFSUniStr255 dfName; //this is just NULL / 0, anyway
-    FSIORefNum refNum;
-    SInt64 forkSize;
-    ByteCount readActualCount = 0, totalReadBytes = 0;
-	
-	if (!bufferSize || !newBuffer || !fsRef) {
-		printf("FSRefReadData: NULL buffers or fsRef\n");
-		return paramErr;
-	}
-    
-    if ((err = FSGetDataForkName(&dfName)) != noErr) {
-		printf("FSGetDataForkName: error %d\n", (int)err);
-		return err;
-    }
-    
-	//FSOpenFork
-    //get vrefnum or whatever
-    //get fork size
-	//read data
-    if ((err = FSOpenFork(fsRef, dfName.length, dfName.unicode, fsRdPerm, &refNum)) != noErr) {
-		printf("FSRefReadData: FSOpenFork: error %d\n", (int)err);
-		return err;
-    }
-    if ((forkSize = *bufferSize) < 1) {
-		if ((err = FSGetForkSize(refNum, &forkSize)) != noErr) {
-			printf("FSGetForkSize: error %d\n", (int)err);
-			return err;
-		}
-    }
-    
-	size_t copyBufferSize = MIN(maximumReadSize, (size_t)forkSize);
-    void *fullSizeBuffer = (void*)valloc(forkSize);
-    
-    while (noErr == err && totalReadBytes < (ByteCount)forkSize) {
-		err = FSReadFork(refNum, fsAtMark + modeOptions, 0, copyBufferSize, fullSizeBuffer + totalReadBytes, &readActualCount);
-		totalReadBytes += readActualCount;
-    }
-    OSErr lastReadErr = err;
-	
-	if ((err = FSCloseFork(refNum)) != noErr)
-		printf("FSCloseFork: error %d\n", (int)err);
-    
-    *newBuffer = fullSizeBuffer;
-	//in case we read less than the expected size or the size was not initially known
-	*bufferSize = totalReadBytes;
-    
-    return (eofErr == lastReadErr ? noErr : lastReadErr);
+OSStatus FSRefReadData(NVFileReference *ref, size_t chunkSize, UInt64 *size, void **buffer, UInt16 options) {
+    return NVReadFile(ref, chunkSize, size, buffer, options);
 }
 
-OSStatus FSRefWriteData(FSRef *fsRef, size_t maximumWriteSize, UInt64 bufferSize, const void* buffer, UInt16 modeOptions, Boolean truncateFile) {
-	OSStatus err = noErr;
-	HFSUniStr255 dfName; //this is just NULL / 0, anyway
-    FSIORefNum refNum;
-    ByteCount writeActualCount = 0, totalWrittenBytes = 0;
-	
-	if (!buffer || !fsRef) {
-		printf("FSRefWriteData: NULL buffers or fsRef\n");
-		return paramErr;
-	}
-    
-    if ((err = FSGetDataForkName(&dfName)) != noErr) {
-		printf("FSGetDataForkName: error %d\n", (int)err);
-		return err;
-    }
-    
-	//FSOpenFork
-    //get vrefnum or whatever
-    if ((err = FSOpenFork(fsRef, dfName.length, dfName.unicode, fsWrPerm, &refNum)) != noErr) {
-		printf("FSRefWriteData: FSOpenFork: error %d\n", (int)err);
-		return err;
-    }
-    
-	ByteCount writeBufferSize = MIN(maximumWriteSize, bufferSize);
-    
-    while (noErr == err && totalWrittenBytes < bufferSize) {
-
-	err = FSWriteFork(refNum, fsAtMark + modeOptions, 0, 
-			  MIN(writeBufferSize, bufferSize - totalWrittenBytes),
-			  buffer + totalWrittenBytes, &writeActualCount);
-	totalWrittenBytes += writeActualCount;
-    }
-    OSErr writeError = err;
-	
-	if (truncateFile && (err = FSSetForkSize(refNum, fsFromStart, bufferSize))) {
-		printf("FSOpenFork: FSSetForkSize %d\n", (int)err);
-		return err;
-	}
-    
-	if ((err = FSCloseFork(refNum)) != noErr)
-		printf("FSCloseFork: error %d\n", (int)err);
-	
-    return writeError;
+OSStatus FSRefWriteData(NVFileReference *ref, size_t chunkSize, UInt64 size, const void *buffer, UInt16 options, Boolean truncate) {
+    return NVWriteFile(ref, chunkSize, size, buffer, options, truncate);
 }

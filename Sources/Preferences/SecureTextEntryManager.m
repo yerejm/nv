@@ -79,7 +79,7 @@ static SecureTextEntryManager *sharedInstance = nil;
 		//could also assert -[NSThread isMainThread] here
 		
 		_calledSecureEventInput = YES;
-		//NSLog(@"%s: enabled secure input", _cmd);
+		//NSLog(@"%s: enabled secure input", sel_getName(_cmd));
 		
 		EnableSecureEventInput();
 	}
@@ -90,11 +90,11 @@ static SecureTextEntryManager *sharedInstance = nil;
 		
 		DisableSecureEventInput();
 		
-		//NSLog(@"%s: disabled secure input", _cmd);
+		//NSLog(@"%s: disabled secure input", sel_getName(_cmd));
 		_calledSecureEventInput = NO;
 		
 		if (IsSecureEventInputEnabled())
-			NSLog(@"%s: WARNING: secure input is still enabled, possibly by another app", _cmd);
+			NSLog(@"%s: WARNING: secure input is still enabled, possibly by another app", sel_getName(_cmd));
 	}
 }
 
@@ -127,40 +127,19 @@ static SecureTextEntryManager *sharedInstance = nil;
 }
 
 - (void)checkForIncompatibleApps {
-	
-	if (!secureTextEntry || [[NSUserDefaults standardUserDefaults] boolForKey:ShouldHideSecureTextEntryWarningKey])
-		return;
-	
-	NSSet *identifiers = [self _bundleIdentifiersOfIncompatibleApps];
-
-	ProcessSerialNumber PSN = { 0, kNoProcess };
-	
-	//walk through processes using the carbon process manager, because this is what NSWorkspace's launchedApplications method does, anyway, and we get hidden processes as well
-	while (GetNextProcess(&PSN) == noErr) {
-		CFDictionaryRef infoDict = ProcessInformationCopyDictionary(&PSN, kProcessDictionaryIncludeAllInformationMask);
-		if (infoDict != NULL) {
-			
-			CFTypeRef identifier = CFDictionaryGetValue(infoDict, kCFBundleIdentifierKey);
-			if ((identifier != NULL) && [identifiers containsObject:(id)identifier]) {
-				
-				CFStringRef offendingAppName = CFDictionaryGetValue(infoDict, kCFBundleNameKey);
-				NSAlert *alert = [NSAlert alertWithMessageText:
-								  [NSString stringWithFormat:NSLocalizedString(@"Secure Text Entry will prevent %@, which is currently installed on this computer, from working in Notational Velocity.", 
-																			   @"for warning about incompatibility with TextExpander, Typinator, etc."), offendingAppName] 
-												 defaultButton:NSLocalizedString(@"OK", nil) alternateButton:nil otherButton:nil informativeTextWithFormat:@""];
-				if (IsLeopardOrLater) {
-					[alert setShowsSuppressionButton:YES];
-				}
-				[alert runModal];
-				if (IsLeopardOrLater && [[alert suppressionButton] state] == NSOnState) {
-					[[NSUserDefaults standardUserDefaults] setBool:YES forKey:ShouldHideSecureTextEntryWarningKey];
-				}
-				CFRelease(infoDict);
-				break;
-			}
-			CFRelease(infoDict);
-		}
-	}
+    if (!secureTextEntry || [[NSUserDefaults standardUserDefaults] boolForKey:ShouldHideSecureTextEntryWarningKey]) return;
+    NSSet *identifiers = [self _bundleIdentifiersOfIncompatibleApps];
+    for (NSRunningApplication *application in [[NSWorkspace sharedWorkspace] runningApplications]) {
+        if (![identifiers containsObject:[application bundleIdentifier]]) continue;
+        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        [alert setMessageText:[NSString stringWithFormat:NSLocalizedString(@"Secure Text Entry will prevent %@, which is currently installed on this computer, from working in Notational Velocity.", @"for warning about incompatibility with TextExpander, Typinator, etc."), [application localizedName]]];
+        [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
+        [alert setShowsSuppressionButton:YES];
+        [alert runModal];
+        if ([[alert suppressionButton] state] == NSControlStateValueOn)
+            [[NSUserDefaults standardUserDefaults] setBool:YES forKey:ShouldHideSecureTextEntryWarningKey];
+        break;
+    }
 }
 
 - (id)copyWithZone:(NSZone *)zone {
@@ -175,7 +154,7 @@ static SecureTextEntryManager *sharedInstance = nil;
     return UINT_MAX;  // denotes an object that cannot be released
 }
 
-- (void)release {
+- (oneway void)release {
     //do nothing
 }
 

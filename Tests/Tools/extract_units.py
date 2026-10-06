@@ -22,7 +22,10 @@ methods = [method(source, prefix) for prefix in [
     '- (void)registerWithTarget:', '- (void)registerForSettingChange:',
     '- (void)unregisterForNotificationsFromSelector:', '- (void)notifyCallbacksForSelector:',
     '- (void)setConfirmNoteDeletion:', '- (BOOL)confirmNoteDeletion']]
-(OUTPUT / 'GlobalPrefsCallbacks.m').write_text('''#import "GlobalPrefs.h"
+header = (ROOT / 'Sources/Application/GlobalPrefs.h').read_text()
+declaration = header[:header.index('+ (GlobalPrefs *)defaultPrefs;')]
+declaration += '\n'.join(item[:item.index('{')].strip() + ';' for item in methods) + '\n@end\n'
+(OUTPUT / 'GlobalPrefsCallbacks.m').write_text(declaration + '''
 #define SEND_CALLBACKS() sendCallbacksForGlobalPrefs(self, _cmd, sender)
 static NSString *ConfirmNoteDeletionKey = @"ConfirmNoteDeletion";
 @implementation GlobalPrefs
@@ -63,7 +66,7 @@ imports = '#import <AutoHyperlinks/AutoHyperlinks.h>\n' if '#import <AutoHyperli
 source = (ROOT / 'Sources/Notes/Storage/NotationFileManager.m').read_text()
 start = source.index('static void uuid_create_md5_from_name(')
 end = source.index('\n\nCFUUIDRef CopyHFSVolumeUUIDForMount', start)
-imports = '#include <CommonCrypto/CommonDigest.h>\n' if 'CommonCrypto/CommonDigest.h' in source else ''
+imports = '#include "NVMD5.h"\n'
 (OUTPUT / 'VolumeIdentity.m').write_text('#import <Foundation/Foundation.h>\n' + imports
     + source[start:end] + '''
 NSData *NVVolumeUUIDForName(NSData *name) {
@@ -82,5 +85,9 @@ unit = '\n'.join(method(source, prefix) for prefix in [
 for prefix in ['- (NSCursor *)editorCursor', '- (void)resetCursorRects']:
     if prefix in source:
         unit += '\n' + method(source, prefix)
-(OUTPUT / 'EditorCursor.m').write_text('#import "LinkingEditor.h"\n#import <objc/runtime.h>\n'
+header = (ROOT / 'Sources/Editor/LinkingEditor.h').read_text()
+declaration = header[:header.index('- (NSColor*)_insertionPointColor')]
+declaration += '\n'.join(line[:line.index('{')].strip() + ';'
+                          for line in unit.splitlines() if line.startswith('- (')) + '\n@end\n'
+(OUTPUT / 'EditorCursor.m').write_text(declaration + '#import <objc/runtime.h>\n'
     + source[category_start:category_end] + '@implementation LinkingEditor\n' + unit + '\n@end\n')

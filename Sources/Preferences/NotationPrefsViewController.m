@@ -46,7 +46,7 @@
 
 - (NSView*)view {
     if (!view) {
-		if (![NSBundle loadNibNamed:@"NotationPrefsView" owner:self])  {
+		if (!NVLoadNib(@"NotationPrefsView", self))  {
 			NSLog(@"Failed to load NotationPrefsView.nib");
 			return nil;
 		}
@@ -291,12 +291,10 @@
 }
 
 - (IBAction)changedFileStorageFormat:(id)sender {
-    int storageTag = [storageFormatPopupButton selectedTag];
+    int storageTag = (int)[storageFormatPopupButton selectedTag];
 	
 	if (storageTag != SingleDatabaseFormat && [notationPrefs doesEncryption]) {
-		if (NSRunAlertPanel(NSLocalizedString(@"Encryption is currently on, but storing notes individually requires it to be off. Disable encryption?",nil),
-							NSLocalizedString(@"Warning: Your notes will be written to disk in clear text.",nil), NSLocalizedString(@"Disable Encryption",nil), 
-							NSLocalizedString(@"Cancel",nil), NULL) == NSAlertDefaultReturn) {
+		if (NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"Encryption is currently on, but storing notes individually requires it to be off. Disable encryption?",nil), NSLocalizedString(@"Warning: Your notes will be written to disk in clear text.",nil), NSLocalizedString(@"Disable Encryption",nil), NSLocalizedString(@"Cancel",nil), NULL) == NSAlertFirstButtonReturn) {
 			
 			//disable encryption
 			[self disableEncryptionWithWarning:NO];
@@ -312,13 +310,9 @@
 	//if we're changing to a database format from a non-database-format, ask to trash existing files
     if ([notationPrefs shouldDisplaySheetForProposedFormat:notesStorageFormatInProgress]) {
 		
-		NSAlert *alert = [NSAlert alertWithMessageText:NSLocalizedString(@"Individual files remain in the notes directory. Leave them alone or move them to the Trash?",nil) 
-										 defaultButton:NSLocalizedString(@"Keep Files", @"button title for not discarding note files") 
-									   alternateButton:NSLocalizedString(@"Cancel",nil) otherButton:NSLocalizedString(@"Move to Trash", @"button title for trashing notes")
-							 informativeTextWithFormat:NSLocalizedString(@"When notes are stored in a single database individual files become redundant.",nil)];
+		NSAlert *alert = NVMakeAlert(NSLocalizedString(@"Individual files remain in the notes directory. Leave them alone or move them to the Trash?",nil), NSLocalizedString(@"When notes are stored in a single database individual files become redundant.",nil), NSLocalizedString(@"Keep Files", @"button title for not discarding note files"), NSLocalizedString(@"Cancel",nil), NSLocalizedString(@"Move to Trash", @"button title for trashing notes"));
 		
-		[alert beginSheetModalForWindow:[view window] modalDelegate:notationPrefs 
-						 didEndSelector:@selector(noteFilesCleanupSheetDidEnd:returnCode:contextInfo:) contextInfo:self];
+		NVBeginAlertSheet(alert, [view window], notationPrefs, @selector(noteFilesCleanupSheetDidEnd:returnCode:contextInfo:), self);
 		//will ultimately call -notesStorageFormatDidChange
 	} else {
 		//just call setNotesStorageFormat straight-out
@@ -345,7 +339,7 @@
 - (IBAction)makeDefaultExtension:(id)sender {
 	[[allowedExtensionsTable window] makeFirstResponder:allowedExtensionsTable];
 	
-	int selectedRow = [allowedExtensionsTable selectedRow];
+	NSInteger selectedRow = [allowedExtensionsTable selectedRow];
 	if (selectedRow > -1)
 		[notationPrefs setChosenPathExtensionAtIndex:selectedRow];
 	
@@ -355,7 +349,7 @@
 - (IBAction)removedExtension:(id)sender {
 	[allowedExtensionsTable abortEditing];
 	
-	int selectedRow = [allowedExtensionsTable selectedRow];
+	NSInteger selectedRow = [allowedExtensionsTable selectedRow];
 	if (selectedRow > -1)
 		if (![notationPrefs removeAllowedPathExtensionAtIndex:selectedRow]) NSBeep();
 	
@@ -365,7 +359,7 @@
 - (IBAction)removedType:(id)sender {
 	[allowedTypesTable abortEditing];
 	
-	int selectedRow = [allowedTypesTable selectedRow];
+	NSInteger selectedRow = [allowedTypesTable selectedRow];
 	if (selectedRow > -1)
 		[notationPrefs removeAllowedTypeAtIndex:selectedRow];
 	
@@ -379,8 +373,8 @@
 	[self updateRemoveKeychainItemStatus];
 }
 
-- (void)encryptionFormatMismatchSheetDidEnd:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo {
-	if (returnCode == NSAlertDefaultReturn) {
+- (void)encryptionFormatMismatchSheetDidEnd:(NSWindow *)sheet returnCode:(NSModalResponse)returnCode contextInfo:(void *)contextInfo {
+	if (returnCode == NSAlertFirstButtonReturn) {
 		//switching to single DB
 		[storageFormatPopupButton selectItemWithTag:SingleDatabaseFormat];
 		
@@ -409,17 +403,14 @@
 	} else {
 		NSString *formatStrings[] = { NSLocalizedString(@"(WHAT??)",@"user shouldn't see this"), 
 			NSLocalizedString(@"plain text",nil), NSLocalizedString(@"rich text",nil), NSLocalizedString(@"HTML",nil) };
-		NSAlert *alert = [NSAlert alertWithMessageText:[NSString stringWithFormat:NSLocalizedString(@"Your notes are currently stored as %@ files on disk, but encryption requires a single database. Switch to a database format?",nil), formatStrings[format]]
-										 defaultButton:NSLocalizedString(@"Use a single database file",nil) alternateButton:NSLocalizedString(@"Cancel",nil) otherButton:nil
-							 informativeTextWithFormat:NSLocalizedString(@"Notational Velocity supports encryption only for notes stored in a database file.",nil)];
+		NSAlert *alert = NVMakeAlert([NSString stringWithFormat:NSLocalizedString(@"Your notes are currently stored as %@ files on disk, but encryption requires a single database. Switch to a database format?",nil), formatStrings[format]], NSLocalizedString(@"Notational Velocity supports encryption only for notes stored in a database file.",nil), NSLocalizedString(@"Use a single database file",nil), NSLocalizedString(@"Cancel",nil), nil);
 		
-		[alert beginSheetModalForWindow:[view window] modalDelegate:self 
-						 didEndSelector:@selector(encryptionFormatMismatchSheetDidEnd:returnCode:contextInfo:) contextInfo:NULL];
+		NVBeginAlertSheet(alert, [view window], self, @selector(encryptionFormatMismatchSheetDidEnd:returnCode:contextInfo:), NULL);
 	}
 }
 
-- (void)disableEncryptionWarningSheetDidEnd:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo {
-	if (returnCode == NSAlertDefaultReturn) {
+- (void)disableEncryptionWarningSheetDidEnd:(NSWindow *)sheet returnCode:(NSModalResponse)returnCode contextInfo:(void *)contextInfo {
+	if (returnCode == NSAlertFirstButtonReturn) {
 		[self _disableEncryption];
 	}
 }
@@ -435,13 +426,9 @@
 - (void)disableEncryptionWithWarning:(BOOL)warning {
 	if ([notationPrefs doesEncryption]) {
 		if (warning) {
-			NSAlert *alert = [NSAlert alertWithMessageText:NSLocalizedString(@"Disable note encryption now?",nil)
-											 defaultButton:NSLocalizedString(@"Disable Encryption",@"button title for disabling note encryption") 
-										   alternateButton:NSLocalizedString(@"Cancel",nil) otherButton:nil
-								 informativeTextWithFormat:NSLocalizedString(@"Warning: Your notes will be written to disk in clear text.",nil)];
+			NSAlert *alert = NVMakeAlert(NSLocalizedString(@"Disable note encryption now?",nil), NSLocalizedString(@"Warning: Your notes will be written to disk in clear text.",nil), NSLocalizedString(@"Disable Encryption",@"button title for disabling note encryption"), NSLocalizedString(@"Cancel",nil), nil);
 			
-			[alert beginSheetModalForWindow:[view window] modalDelegate:self 
-							 didEndSelector:@selector(disableEncryptionWarningSheetDidEnd:returnCode:contextInfo:) contextInfo:NULL];
+			NVBeginAlertSheet(alert, [view window], self, @selector(disableEncryptionWarningSheetDidEnd:returnCode:contextInfo:), NULL);
 			
 		} else {
 			[self _disableEncryption];

@@ -42,15 +42,15 @@
 	NSEnumerator *enumerator = [[self selectedRanges] objectEnumerator];
 	
 	id item;
-	int sumOfAllCharactersRemoved = 0;
-	int updatedLocation;
+	NSInteger sumOfAllCharactersRemoved = 0;
+	NSInteger updatedLocation;
 	NSMutableArray *updatedSelectionsArray = [[NSMutableArray alloc] init];
 	while ((item = [enumerator nextObject])) {
 		selectedRange = NSMakeRange([item rangeValue].location - sumOfAllCharactersRemoved, [item rangeValue].length);
-		unsigned int temporaryLocation = selectedRange.location;
-		unsigned int maxSelectedRange = NSMaxRange(selectedRange);
-		int numberOfLines = 0;
-		int locationOfFirstLine = [completeString lineRangeForRange:NSMakeRange(temporaryLocation, 0)].location;
+		NSUInteger temporaryLocation = selectedRange.location;
+		NSUInteger maxSelectedRange = NSMaxRange(selectedRange);
+		NSInteger numberOfLines = 0;
+		NSInteger locationOfFirstLine = [completeString lineRangeForRange:NSMakeRange(temporaryLocation, 0)].location;
 		
 		do {
 			temporaryLocation = NSMaxRange([completeString lineRangeForRange:NSMakeRange(temporaryLocation, 0)]);
@@ -58,22 +58,22 @@
 		} while (temporaryLocation < maxSelectedRange);
 		
 		temporaryLocation = selectedRange.location;
-		int charIndex;
-		int charactersRemoved = 0;
-		int charactersRemovedInSelection = 0;
+		NSInteger charIndex;
+		NSInteger charactersRemoved = 0;
+		NSInteger charactersRemovedInSelection = 0;
 		NSRange rangeOfLine;
 		unichar characterToTest;
-		int numberOfSpacesPerTab = [[GlobalPrefs defaultPrefs] numberOfSpacesInTab];
+		NSInteger numberOfSpacesPerTab = [[GlobalPrefs defaultPrefs] numberOfSpacesInTab];
 		
-		int numberOfSpacesToDeleteOnFirstLine = -1;
+		NSInteger numberOfSpacesToDeleteOnFirstLine = -1;
 		for (charIndex = 0; charIndex < numberOfLines; charIndex++) {
 			rangeOfLine = [completeString lineRangeForRange:NSMakeRange(temporaryLocation, 0)];
 			if ([[GlobalPrefs defaultPrefs] softTabs]) {
-				unsigned int startOfLine = rangeOfLine.location;
+				NSUInteger startOfLine = rangeOfLine.location;
 				while (startOfLine < NSMaxRange(rangeOfLine) && [completeString characterAtIndex:startOfLine] == ' ' && rangeOfLine.length > 0) {
 					startOfLine++;
 				}
-				int numberOfSpacesToDelete = numberOfSpacesPerTab;
+				NSInteger numberOfSpacesToDelete = numberOfSpacesPerTab;
 				if (numberOfSpacesPerTab != 0) {
 					numberOfSpacesToDelete = (startOfLine - rangeOfLine.location) % numberOfSpacesPerTab;
 					if (numberOfSpacesToDelete == 0) {
@@ -115,8 +115,8 @@
 		}
 		
 		if (selectedRange.length > 0 && charactersRemoved > 0) {
-			int selectedRangeLocation = selectedRange.location; // Make the location into an int because otherwise the value gets all screwed up when subtracting from it
-			int charactersToCountBackwards = 1;
+			NSInteger selectedRangeLocation = selectedRange.location;
+			NSInteger charactersToCountBackwards = 1;
 			if (numberOfSpacesToDeleteOnFirstLine != -1) {
 				charactersToCountBackwards = numberOfSpacesToDeleteOnFirstLine;
 			}
@@ -150,11 +150,11 @@
 	NSMutableString *replacementString;
 	if ([[GlobalPrefs defaultPrefs] softTabs]) {
 		replacementString = [[NSMutableString alloc] init];
-		int numberOfSpacesPerTab = [[GlobalPrefs defaultPrefs] numberOfSpacesInTab];
+		NSInteger numberOfSpacesPerTab = [[GlobalPrefs defaultPrefs] numberOfSpacesInTab];
 		
-		int locationOnLine = [textView selectedRange].location - [[textView string] lineRangeForRange:NSMakeRange([textView selectedRange].location, 0)].location;
+		NSInteger locationOnLine = [textView selectedRange].location - [[textView string] lineRangeForRange:NSMakeRange([textView selectedRange].location, 0)].location;
 		if (numberOfSpacesPerTab != 0) {
-			int numberOfSpacesLess = locationOnLine % numberOfSpacesPerTab;
+			NSInteger numberOfSpacesLess = locationOnLine % numberOfSpacesPerTab;
 			numberOfSpacesPerTab = numberOfSpacesPerTab - numberOfSpacesLess;
 		}
 		
@@ -164,46 +164,46 @@
 	} else {
 		replacementString = [[NSMutableString alloc] initWithString:@"\t"];
 	}
-	int replacementStringLength = [replacementString length];
+	NSInteger replacementStringLength = [replacementString length];
 	
 	NSEnumerator *enumerator = [[self selectedRanges] objectEnumerator];
 	
 	id item;
-	int sumOfAllCharactersInserted = 0;
-	int updatedLocation;
+	NSInteger sumOfAllCharactersInserted = 0;
+	NSInteger updatedLocation;
 	NSMutableArray *updatedSelectionsArray = [[NSMutableArray alloc] init];
 	while ((item = [enumerator nextObject])) {
 		selectedRange = NSMakeRange([item rangeValue].location + sumOfAllCharactersInserted, [item rangeValue].length);
-		unsigned int temporaryLocation = selectedRange.location;
-		unsigned int maxSelectedRange = NSMaxRange(selectedRange);
-		int numberOfLines = 0;
-		int locationOfFirstLine = [completeString lineRangeForRange:NSMakeRange(temporaryLocation, 0)].location;
-		
+		NSUInteger temporaryLocation = selectedRange.location;
+		NSUInteger maxSelectedRange = NSMaxRange(selectedRange);
+		NSInteger numberOfLines = 0;
+		NSInteger locationOfFirstLine = [completeString lineRangeForRange:NSMakeRange(temporaryLocation, 0)].location;
+
 		do {
 			temporaryLocation = NSMaxRange([completeString lineRangeForRange:NSMakeRange(temporaryLocation, 0)]);
 			numberOfLines++;
 		} while (temporaryLocation < maxSelectedRange);
-		
+
 		temporaryLocation = selectedRange.location;
-		int charIndex;
-		int charactersInserted = 0;
-		int charactersInsertedInSelection = 0;
+		NSInteger charIndex;
+		NSInteger charactersInserted = 0;
+		NSInteger charactersInsertedInSelection = 0;
 		NSRange rangeOfLine;
 		for (charIndex = 0; charIndex < numberOfLines; charIndex++) {
 			rangeOfLine = [completeString lineRangeForRange:NSMakeRange(temporaryLocation, 0)];
 			if ([textView shouldChangeTextInRange:NSMakeRange(rangeOfLine.location, 0) replacementString:replacementString]) { // Do it this way to mark it as an Undo
 				[textView replaceCharactersInRange:NSMakeRange(rangeOfLine.location, 0) withString:replacementString];
 				[textView didChangeText];
-			}			
+			}
 			charactersInserted = charactersInserted + replacementStringLength;
 			if (rangeOfLine.location >= selectedRange.location && rangeOfLine.location < maxSelectedRange + charactersInserted) {
 				charactersInsertedInSelection = charactersInsertedInSelection + replacementStringLength;
 			}
 			if (temporaryLocation < [[textView string] length]) {
 				temporaryLocation = NSMaxRange([completeString lineRangeForRange:NSMakeRange(temporaryLocation, 0)]);
-			}	
+			}
 		}
-		
+
 		if (selectedRange.length > 0) {
 			if (selectedRange.location + replacementStringLength >= [[textView string] length]) {
 				updatedLocation = locationOfFirstLine;

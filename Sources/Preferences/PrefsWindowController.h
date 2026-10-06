@@ -24,7 +24,7 @@
 
 @interface PrefsWindowController : NSObject 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-<NSWindowDelegate, NSToolbarDelegate>
+<NSFontChanging, NSWindowDelegate, NSToolbarDelegate>
 #endif
 {
     IBOutlet NSPopUpButton *folderLocationsMenuButton;
@@ -83,7 +83,7 @@
 
 - (NSMenu*)directorySelectionMenu;
 - (void)changeDefaultDirectory;
-- (BOOL)getNewNotesRefFromOpenPanel:(FSRef*)notesDirectoryRef returnedPath:(NSString**)path;
+- (BOOL)getNewNotesRefFromOpenPanel:(NVFileReference*)notesDirectoryRef returnedPath:(NSString**)path;
 
 - (NotationPrefsViewController*)notationPrefsViewController;
 - (NSView*)databaseView;

@@ -59,9 +59,10 @@
 	if ([super init]) {
 
 		notesData = [[NSMutableData alloc] init];
-		NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initForWritingWithMutableData:notesData];
+		NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initRequiringSecureCoding:NO];
 		[archiver encodeObject:notes forKey:@"notes"];
         [archiver finishEncoding];
+        [notesData setData:[archiver encodedData]];
 		[archiver release];
 		
 		prefs = [somePrefs retain];
@@ -85,7 +86,7 @@
 		}
 		
 		if (![notesData length]) {
-			NSLog(@"%s: empty notesData; returning nil", _cmd);
+			NSLog(@"%s: empty notesData; returning nil", sel_getName(_cmd));
 			return nil;
 		}
 	}
@@ -110,7 +111,7 @@
 	if (!frozenNotation)
 		return nil;
 	
-	NSData *encodedNotationData = [NSKeyedArchiver archivedDataWithRootObject:frozenNotation];
+	NSData *encodedNotationData = NVArchiveObject(frozenNotation);
 	[frozenNotation autorelease];
 	
 	return encodedNotationData;
@@ -140,7 +141,7 @@
 			NSLog(@"Error decompressing data");
 			return nil;
 		}
-		NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingWithData:notesData];
+		NSKeyedUnarchiver *unarchiver = NVUnarchiverForData(notesData);
 		allNotes = [[unarchiver decodeObjectForKey:@"notes"] retain];
 		[unarchiver autorelease];
 		
@@ -171,7 +172,7 @@
 						//reset keychain identifier in case database file was duplicated and password was changed, and this is the old DB
 						[prefs forgetKeychainIdentifier];
 					}
-					int result = [[PassphraseRetriever retrieverWithNotationPrefs:prefs] loadedUserPassphraseData];
+					NSModalResponse result = [[PassphraseRetriever retrieverWithNotationPrefs:prefs] loadedUserPassphraseData];
 					
 					if (!result) {
 						//must have clicked cancel or equivalent
@@ -200,7 +201,7 @@
 			}
             BOOL keyedArchiveFailed = NO;
             @try {
-                NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingWithData:notesData];
+                NSKeyedUnarchiver *unarchiver = NVUnarchiverForData(notesData);
                 allNotes = [[unarchiver decodeObjectForKey:@"notes"] retain];
                 [unarchiver autorelease];
             } @catch (NSException *e) {
@@ -208,7 +209,7 @@
             }
             
             if (keyedArchiveFailed)
-                allNotes = [[NSUnarchiver unarchiveObjectWithData:notesData] retain];
+                allNotes = [NVUnarchiveLegacyObject(notesData) retain];
 		} @catch (NSException *e) {
 			*err = kCoderErr;
 			NSLog(@"Error unarchiving notes from data (%@, %@)", [e name], [e reason]);

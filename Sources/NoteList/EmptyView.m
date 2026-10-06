@@ -37,12 +37,12 @@
 	[[NSApp delegate] performSelector:@selector(_expandToolbar)];
 }
 
-- (void)setLabelStatus:(int)notesNumber {
+- (void)setLabelStatus:(NSInteger)notesNumber {
 	if (notesNumber != lastNotesNumber) {
 		
 		NSString *statusString = nil;
 		if (notesNumber > 1) {
-			statusString = [NSString stringWithFormat:NSLocalizedString(@"%d Notes Selected",nil), notesNumber];
+			statusString = NVFormatCount(NSLocalizedString(@"%d Notes Selected",nil), notesNumber);
 		} else {
 			statusString = NSLocalizedString(@"No Note Selected",nil); //\nPress return to create one.";
 		}

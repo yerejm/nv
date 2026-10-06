@@ -65,7 +65,7 @@ typedef struct _NoteCatalogEntry {
     
     NSUInteger selectedNoteIndex;
     char *currentFilterStr, *manglingString;
-    int lastWordInFilterStr;
+    ptrdiff_t lastWordInFilterStr;
     
 	BOOL directoryChangesFound;
     
@@ -93,8 +93,8 @@ typedef struct _NoteCatalogEntry {
 	struct statfs *statfsInfo;
 	unsigned int diskUUIDIndex;
 	CFUUIDRef diskUUID;
-    FSRef noteDirectoryRef, noteDatabaseRef;
-    AliasHandle aliasHandle;
+    NVFileReference noteDirectoryRef, noteDatabaseRef;
+    NSData *directoryBookmark;
     BOOL aliasNeedsUpdating;
     OSStatus lastWriteError;
     
@@ -108,7 +108,7 @@ typedef struct _NoteCatalogEntry {
 - (id)init;
 - (id)initWithAliasData:(NSData*)data error:(OSStatus*)err;
 - (id)initWithDefaultDirectoryReturningError:(OSStatus*)err;
-- (id)initWithDirectoryRef:(FSRef*)directoryRef error:(OSStatus*)err;
+- (id)initWithDirectoryRef:(NVFileReference*)directoryRef error:(OSStatus*)err;
 - (void)setAliasNeedsUpdating:(BOOL)needsUpdate;
 - (BOOL)aliasNeedsUpdating;
 - (NSData*)aliasDataForNoteDirectory;
@@ -168,7 +168,8 @@ typedef struct _NoteCatalogEntry {
 - (BOOL)filterNotesFromUTF8String:(const char*)searchString forceUncached:(BOOL)forceUncached;
 - (NSUInteger)preferredSelectedNoteIndex;
 - (NSArray*)noteTitlesPrefixedByString:(NSString*)prefixString indexOfSelectedItem:(NSInteger *)anIndex;
-- (NoteObject*)noteObjectAtFilteredIndex:(int)noteIndex;
+- (NoteObject*)noteForUUIDBytes:(CFUUIDBytes*)bytes;
+- (NoteObject*)noteObjectAtFilteredIndex:(NSInteger)noteIndex;
 - (NSArray*)notesAtIndexes:(NSIndexSet*)indexSet;
 - (NSIndexSet*)indexesOfNotes:(NSArray*)noteSet;
 - (NSUInteger)indexInFilteredListForNoteIdenticalTo:(NoteObject*)note;

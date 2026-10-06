@@ -38,6 +38,7 @@
 #import "NotationDirectoryManager.h"
 #import "BookmarksController.h"
 #import "DeletionManager.h"
+#import "NSData_transformations.h"
 
 @implementation NotationController
 
@@ -68,8 +69,8 @@
 		subscriptionCallback = NewFNSubscriptionUPP(NotesDirFNSubscriptionProc);
 		bzero(&noteDirSubscription, sizeof(FNSubscriptionRef));
 #endif
-		bzero(&noteDatabaseRef, sizeof(FSRef));
-		bzero(&noteDirectoryRef, sizeof(FSRef));
+		bzero(&noteDatabaseRef, sizeof(NVFileReference));
+		bzero(&noteDirectoryRef, sizeof(NVFileReference));
 		volumeSupportsExchangeObjects = -1;
 		
 		lastLayoutStyleGenerated = -1;
@@ -83,31 +84,14 @@
 }
 
 
-- (id)initWithAliasData:(NSData*)data error:(OSStatus*)err {
-    OSStatus anErr = noErr;
-    
-    if (data && (anErr = PtrToHand([data bytes], (Handle*)&aliasHandle, [data length])) == noErr) {
-	
-	FSRef targetRef;
-	Boolean changed;
-	
-	if ((anErr = FSResolveAliasWithMountFlags(NULL, aliasHandle, &targetRef, &changed, 0)) == noErr) {
-	    if ([self initWithDirectoryRef:&targetRef error:&anErr]) {
-		aliasNeedsUpdating = changed;
-		*err = noErr;
-		
-		return self;
-	    }
-	}
-    }
-    
-    *err = anErr;
-    
-    return nil;
+- (id)initWithAliasData:(NSData *)data error:(OSStatus *)err {
+    NVFileReference target;
+    if (![data fsRefAsAlias:&target]) { *err = fnfErr; return nil; }
+    return [self initWithDirectoryRef:&target error:err];
 }
 
 - (id)initWithDefaultDirectoryReturningError:(OSStatus*)err {
-    FSRef targetRef;
+    NVFileReference targetRef;
     
     OSStatus anErr = noErr;
     if ((anErr = [NotationController getDefaultNotesDirectoryRef:&targetRef]) == noErr) {
@@ -123,7 +107,7 @@
     return nil;
 }
 
-- (id)initWithDirectoryRef:(FSRef*)directoryRef error:(OSStatus*)err {
+- (id)initWithDirectoryRef:(NVFileReference*)directoryRef error:(OSStatus*)err {
     
     *err = noErr;
     
@@ -203,9 +187,7 @@
 			notesChanged = YES;
 			[self flushEverything];
 		} else if ([notationPrefs epochIteration] > EPOC_ITERATION) {
-			if (NSRunCriticalAlertPanel(NSLocalizedString(@"Warning: this database was created by a newer version of Notational Velocity. Continue anyway?", nil), 
-										NSLocalizedString(@"If you make changes, some settings and metadata will be lost.", nil), 
-										NSLocalizedString(@"Quit", nil), NSLocalizedString(@"Continue", nil), nil) == NSAlertDefaultReturn)
+			if (NVRunAlert(NSAlertStyleCritical, NSLocalizedString(@"Warning: this database was created by a newer version of Notational Velocity. Continue anyway?", nil), NSLocalizedString(@"If you make changes, some settings and metadata will be lost.", nil), NSLocalizedString(@"Quit", nil), NSLocalizedString(@"Continue", nil), nil) == NSAlertFirstButtonReturn)
 			exit(0);
 		}
 	}	
@@ -219,7 +201,7 @@
 	
 	NSAssert([filename isEqualToString:NotesDatabaseFileName], @"attempting to verify something other than the database");
 	
-	FSRef *notesFileRef = [fsRefValue pointerValue];
+	NVFileReference *notesFileRef = [fsRefValue pointerValue];
 	UInt64 fileSize = 0;
 	char *notesData = NULL;
 	OSStatus err = noErr, result = noErr;
@@ -233,7 +215,7 @@
 	}
 	NSData *archivedNotation = [[[NSData alloc] initWithBytesNoCopy:notesData length:fileSize freeWhenDone:NO] autorelease];
 	@try {
-		frozenNotation = [NSKeyedUnarchiver unarchiveObjectWithData:archivedNotation];
+		frozenNotation = NVUnarchiveObject(archivedNotation);
 	} @catch (NSException *e) {
 		NSLog(@"(VERIFY) Error unarchiving notes and preferences from data (%@, %@)", [e name], [e reason]);
 		result = kCoderErr;
@@ -283,7 +265,7 @@ returnResult:
 	if (fileSize > 0) {
 		NSData *archivedNotation = [[NSData alloc] initWithBytesNoCopy:notesData length:fileSize freeWhenDone:NO];
 		@try {
-			frozenNotation = [NSKeyedUnarchiver unarchiveObjectWithData:archivedNotation];
+			frozenNotation = NVUnarchiveObject(archivedNotation);
 		} @catch (NSException *e) {
 			NSLog(@"Error unarchiving notes and preferences from data (%@, %@)", [e name], [e reason]);
 			
@@ -344,7 +326,7 @@ returnResult:
     OSStatus err = noErr;
 	NSData *walSessionKey = [notationPrefs WALSessionKey];
 	
-    if ((err = FSRefMakePath(&noteDirectoryRef, convertedPath, maxPathSize)) == noErr) {
+    if ((err = NVReferenceMakePath(&noteDirectoryRef, convertedPath, maxPathSize)) == noErr) {
 		//initialize the journal if necessary
 		if (!(walWriter = [[WALStorageController alloc] initWithParentFSRep:(char*)convertedPath encryptionKey:walSessionKey])) {
 			//journal file probably already exists, so try to recover it
@@ -403,7 +385,7 @@ returnResult:
 		
 		return YES;
     } else {
-		NSLog(@"FSRefMakePath error: %d", err);
+		NSLog(@"NVReferenceMakePath error: %d", err);
 		goto bail;
     }
     
@@ -414,9 +396,9 @@ bail:
 
 //stick the newest unique recovered notes into allNotes
 - (void)processRecoveredNotes:(NSDictionary*)dict {
-    const unsigned int vListBufCount = 16;
+    enum { vListBufCount = 16 };
     void* keysBuffer[vListBufCount], *valuesBuffer[vListBufCount];
-    unsigned int i, count = [dict count];
+    NSUInteger i, count = [dict count];
     
     void **keys = (count <= vListBufCount) ? keysBuffer : (void **)malloc(sizeof(void*) * count);
     void **values = (count <= vListBufCount) ? valuesBuffer : (void **)malloc(sizeof(void*) * count);
@@ -561,8 +543,7 @@ bail:
 	
 	[self flushAllNoteChanges];
 	
-	NSRunAlertPanel(NSLocalizedString(@"Unable to create or access the Interim Note-Changes file. Is another copy of Notational Velocity currently running?",nil), 
-			NSLocalizedString(@"Open Console in /Applications/Utilities/ for more information.",nil), NSLocalizedString(@"Quit",nil), NULL, NULL);
+	NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"Unable to create or access the Interim Note-Changes file. Is another copy of Notational Velocity currently running?",nil), NSLocalizedString(@"Open Console in /Applications/Utilities/ for more information.",nil), NSLocalizedString(@"Quit",nil), NULL, NULL);
 	
 	
 	exit(1);
@@ -625,7 +606,7 @@ bail:
     [unwrittenNotes addObject:note];
     
     if (error != lastWriteError) {
-		NSRunAlertPanel([NSString stringWithFormat:NSLocalizedString(@"Changed notes could not be saved because %@.",
+		NVRunAlert(NSAlertStyleWarning, [NSString stringWithFormat:NSLocalizedString(@"Changed notes could not be saved because %@.",
 																	 @"alert title appearing when notes couldn't be written"), 
 			[NSString reasonStringFromCarbonFSError:error]], @"", NSLocalizedString(@"OK",nil), NULL, NULL);
 		
@@ -643,7 +624,7 @@ bail:
 			[[[unwrittenNotes copy] autorelease] makeObjectsPerformSelector:@selector(writeUsingCurrentFileFormatIfNecessary)];
 			
 			//this always seems to call ourselves
-			FNNotify(&noteDirectoryRef, kFNDirectoryModifiedMessage, kFNNoImplicitAllSubscription);
+			[self performSelector:@selector(synchronizeNotesFromDirectory) withObject:nil afterDelay:0];
 		}
 		if (walWriter) {
 			//append unwrittenNotes to journal, if one exists
@@ -665,34 +646,15 @@ bail:
     }
 }
 
-- (NSData*)aliasDataForNoteDirectory {
-    NSData* theData = nil;
-    
-    FSRef userHomeFoundRef, *relativeRef = &userHomeFoundRef;
-    
-    if (aliasNeedsUpdating) {
-		OSErr err = FSFindFolder(kUserDomain, kCurrentUserFolderType, kCreateFolder, &userHomeFoundRef);
-		if (err != noErr) {
-			relativeRef = NULL;
-			NSLog(@"FSFindFolder error: %d", err);
-		}
+- (NSData *)aliasDataForNoteDirectory {
+    if (aliasNeedsUpdating || !directoryBookmark) {
+        NSData *data = [NSData aliasDataForFSRef:&noteDirectoryRef];
+        if (!data) return nil;
+        [directoryBookmark release];
+        directoryBookmark = [data retain];
+        aliasNeedsUpdating = NO;
     }
-	
-    //re-fill handle from fsref if necessary, storing path relative to user directory
-    if (aliasNeedsUpdating && FSNewAlias(relativeRef, &noteDirectoryRef, &aliasHandle ) != noErr)
-		return nil;
-	
-    if (aliasHandle != NULL) {
-		aliasNeedsUpdating = NO;
-		
-		HLock((Handle)aliasHandle);
-		theData = [NSData dataWithBytes:*aliasHandle length:GetHandleSize((Handle) aliasHandle)];
-		HUnlock((Handle)aliasHandle);
-	    
-		return theData;
-    }
-    
-    return nil;
+    return directoryBookmark;
 }
 
 - (void)setAliasNeedsUpdating:(BOOL)needsUpdate {
@@ -706,7 +668,7 @@ bail:
 - (void)closeAllResources {
 	[allNotes makeObjectsPerformSelector:@selector(abortEditingInExternalEditor)];
 	
-	[deletionManager cancelPanelReturningCode:NSRunStoppedResponse];
+	[deletionManager cancelPanelReturningCode:NSModalResponseStop];
 	[self stopFileNotifications];
 	if ([self flushAllNoteChanges])
 		[self closeJournal];
@@ -718,10 +680,8 @@ bail:
 		
 		NSString *trashLocation = [[[NSFileManager defaultManager] pathWithFSRef:&noteDirectoryRef] stringByAbbreviatingWithTildeInPath];
 		if (!trashLocation) trashLocation = @"unknown";
-		int result = NSRunCriticalAlertPanel([NSString stringWithFormat:NSLocalizedString(@"Your notes directory (%@) appears to be in the Trash.",nil), trashLocation], 
-											 NSLocalizedString(@"If you empty the Trash now, you could lose your notes. Relocate the notes to a less volatile folder?",nil),
-											 NSLocalizedString(@"Relocate Notes",nil), NSLocalizedString(@"Quit",nil), NULL);
-		if (result == NSAlertDefaultReturn)
+		NSModalResponse result = NVRunAlert(NSAlertStyleCritical, [NSString stringWithFormat:NSLocalizedString(@"Your notes directory (%@) appears to be in the Trash.",nil), trashLocation], NSLocalizedString(@"If you empty the Trash now, you could lose your notes. Relocate the notes to a less volatile folder?",nil), NSLocalizedString(@"Relocate Notes",nil), NSLocalizedString(@"Quit",nil), NULL);
+		if (result == NSAlertFirstButtonReturn)
 			[self relocateNotesDirectory];
 		else [NSApp terminate:nil];
 	}
@@ -730,7 +690,7 @@ bail:
 - (void)trashRemainingNoteFilesInDirectory {
 	NSAssert([notationPrefs notesStorageFormat] == SingleDatabaseFormat, @"We shouldn't be removing files if the storage is not single-database");	
 	[allNotes makeObjectsPerformSelector:@selector(moveFileToTrash)];
-	[self notifyOfChangedTrash];
+
 }
 
 - (void)updateLinksToNote:(NoteObject*)aNoteObject fromOldName:(NSString*)oldname {
@@ -742,14 +702,14 @@ bail:
 	//to prevent auto-completing "Chicago Brauhaus" before "Chicago" when search string is "Chi", for example.
 	//builds a tree-overlay in the list of notes, to find, for any given note, 
 	//all other notes whose complete titles are a prefix of it
-	
+
 	//***
 	//*** this method must run after any note is added, deleted, or retitled **
 	//***
-	
+
 	if (![prefsController autoCompleteSearches] || ![allNotes count])
 		return;
-	
+
 	//sort alphabetically to find shorter prefixes first
 	NSMutableArray *allNotesAlpha = [allNotes mutableCopy];
 	[allNotesAlpha sortStableUsingFunction:compareTitleString usingBuffer:&allNotesBuffer ofSize:&allNotesBufferSize];
@@ -774,18 +734,18 @@ bail:
 
 - (void)addNewNote:(NoteObject*)note {
     [self _addNote:note];
-	
-    
+
+
 	[note makeNoteDirtyUpdateTime:YES updateFile:YES];
-	
+
 	[self updateTitlePrefixConnections];
-	
+
 	//force immediate update
 	[self synchronizeNoteChanges:nil];
-	
+
 	if ([[self undoManager] isUndoing]) {
 		//prohibit undoing of creation--only redoing of deletion
-		//NSLog(@"registering %s", _cmd);
+		//NSLog(@"registering %s", sel_getName(_cmd));
 		[undoManager registerUndoWithTarget:self selector:@selector(removeNote:) object:note];
 		if (! [[self undoManager] isUndoing] && ! [[self undoManager] isRedoing])
 			[undoManager setActionName:[NSString stringWithFormat:NSLocalizedString(@"Create Note quotemark%@quotemark",@"undo action name for creating a single note"), titleOfNote(note)]];
@@ -831,10 +791,10 @@ bail:
 	
 	if ([[self undoManager] isUndoing]) {
 		//prohibit undoing of creation--only redoing of deletion
-		//NSLog(@"registering %s", _cmd);
+		//NSLog(@"registering %s", sel_getName(_cmd));
 		[undoManager registerUndoWithTarget:self selector:@selector(removeNotes:) object:noteArray];		
 		if (! [[self undoManager] isUndoing] && ! [[self undoManager] isRedoing])
-			[undoManager setActionName:[NSString stringWithFormat:NSLocalizedString(@"Add %d Notes", @"undo action name for creating multiple notes"), [noteArray count]]];	
+			[undoManager setActionName:NVFormatCount(NSLocalizedString(@"Add %d Notes", @"undo action name for creating multiple notes"), [noteArray count])];
 	}
 	[self resortAllNotes];
 	[self refilterNotes];
@@ -994,7 +954,7 @@ bail:
 	}
 	[undoManager endUndoGrouping];
 	if (! [[self undoManager] isUndoing] && ! [[self undoManager] isRedoing])
-		[undoManager setActionName:[NSString stringWithFormat:NSLocalizedString(@"Delete %d Notes",@"undo action name for deleting notes"), [noteArray count]]];
+		[undoManager setActionName:NVFormatCount(NSLocalizedString(@"Delete %d Notes",@"undo action name for deleting notes"), [noteArray count])];
 	
 }
 
@@ -1238,7 +1198,7 @@ bail:
     
 	//PHASE 3: reset found pointers in case have been cleared
 	NSUInteger filteredNoteCount = [notesListDataSource count];
-	NoteObject **notesBuffer = [notesListDataSource immutableObjects];
+	NoteObject *const *notesBuffer = (NoteObject *const *)[notesListDataSource immutableObjects];
 	
     if (didFilterNotes) {
 		
@@ -1319,8 +1279,8 @@ bail:
 	return objs;
 }
 
-- (NoteObject*)noteObjectAtFilteredIndex:(int)noteIndex {
-	unsigned int theIndex = (unsigned int)noteIndex;
+- (NoteObject*)noteObjectAtFilteredIndex:(NSInteger)noteIndex {
+	NSUInteger theIndex = (NSUInteger)noteIndex;
 	
 	if (theIndex < [notesListDataSource count])
 		return [notesListDataSource immutableObjects][theIndex];
@@ -1340,7 +1300,7 @@ bail:
 	NSUInteger i, noteCount = [noteArray count];
 	
 	id *notes = (id*)malloc(noteCount * sizeof(id));
-	[noteArray getObjects:notes];
+	[noteArray getObjects:notes range:NSMakeRange(0, [noteArray count])];
 	
 	for (i=0; i<noteCount; i++) {
 		NSUInteger noteIndex = [notesListDataSource indexOfObjectIdenticalTo:notes[i]];
@@ -1427,7 +1387,7 @@ bail:
 
 - (void)regeneratePreviewsForColumn:(NSTableColumn*)col visibleFilteredRows:(NSRange)rows forceUpdate:(BOOL)force {
 	
-	float width = [col width] - [NSScroller scrollerWidthForControlSize:NSRegularControlSize];
+	float width = [col width] - [NSScroller scrollerWidthForControlSize:NSControlSizeRegular scrollerStyle:[NSScroller preferredScrollerStyle]];
 	
 	if (force || roundf(width) != roundf(titleColumnWidth)) {
 		titleColumnWidth = width;
@@ -1480,6 +1440,7 @@ bail:
     if (allNotesBuffer)
 		free(allNotesBuffer);
 	
+    [directoryBookmark release];
     [undoManager release];
     [notesListDataSource release];
     [labelsListController release];
@@ -1493,4 +1454,3 @@ bail:
 }
 
 @end
-

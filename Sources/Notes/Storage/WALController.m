@@ -37,7 +37,7 @@
  */
 #define ELF_STEP(B) T1 = (H << 4) + B; T2 = T1 & 0xF0000000; if (T2) T1 ^= (T2 >> 24); T1 &= (~T2); H = T1;
 
-CFHashCode CFHashBytes(uint8_t *bytes, CFIndex length) {
+CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
     /* The ELF hash algorithm, used in the ELF object file format */
     UInt32 H = 0, T1, T2;
     SInt32 rem = (SInt32)length;
@@ -199,9 +199,10 @@ CFHashCode CFHashBytes(uint8_t *bytes, CFIndex length) {
 - (BOOL)writeNoteObject:(id<SynchronizedNote>)aNoteObject {
 	//this method serializes a note object, encrypts it, and writes it to the log
     NSMutableData *noteData = [NSMutableData data];
-	NSKeyedArchiver *archiver = [[[NSKeyedArchiver alloc] initForWritingWithMutableData:noteData] autorelease];
+	NSKeyedArchiver *archiver = [[[NSKeyedArchiver alloc] initRequiringSecureCoding:NO] autorelease];
 	[archiver encodeObject:aNoteObject forKey:@"aNote"];
 	[archiver finishEncoding];
+        [noteData setData:[archiver encodedData]];
 	
     if ([noteData length])
 		return [self _encryptAndWriteData:noteData];
@@ -257,16 +258,19 @@ CFHashCode CFHashBytes(uint8_t *bytes, CFIndex length) {
 - (BOOL)_encryptAndWriteData:(NSMutableData*)data {
     WALRecordHeader record = {{0}};
 	
-	record.originalDataLength = CFSwapInt32HostToBig([data length]);
+	if ([data length] > UINT32_MAX - 32) return NO;
+    record.originalDataLength = CFSwapInt32HostToBig((uint32_t)[data length]);
 	
 	size_t compressedDataBufferSize = [data length] + (( [data length] + 99 ) / 100 ) + 12;
-	Bytef *compressedDataBuffer = (Bytef *)malloc(compressedDataBufferSize);
+	if (compressedDataBufferSize > UINT_MAX) return NO;
+    Bytef *compressedDataBuffer = (Bytef *)malloc(compressedDataBufferSize);
+    if (!compressedDataBuffer) return NO;
 	
     //adapt nsdata to compression stream
 	compressionStream.next_in = (Bytef*)[data bytes];
-	compressionStream.avail_in = [data length];
+	compressionStream.avail_in = (uInt)[data length];
 	compressionStream.next_out = compressedDataBuffer;
-	compressionStream.avail_out = compressedDataBufferSize;
+	compressionStream.avail_out = (uInt)compressedDataBufferSize;
 	compressionStream.data_type = Z_BINARY;
 	
 	uLong previousOut = compressionStream.total_out;
@@ -300,8 +304,9 @@ CFHashCode CFHashBytes(uint8_t *bytes, CFIndex length) {
 	//write length, checksum of data, record salt, then data itself
     //assert(sizeof(record) == sizeof(record.recordBuffer));
     
-    record.dataLength = CFSwapInt32HostToBig([data length]);
-    record.checksum = CFSwapInt32HostToBig([data CRC32]);
+    if ([data length] > UINT32_MAX) return NO;
+    record.dataLength = CFSwapInt32HostToBig((uint32_t)[data length]);
+    record.checksum = CFSwapInt32HostToBig((uint32_t)[data CRC32]);
 	memcpy(record.saltBuffer, [recordSalt bytes], RECORD_SALT_LEN);
     
     //pack all the data to avoid multiple writes
@@ -450,7 +455,7 @@ CFHashCode CFHashBytes(uint8_t *bytes, CFIndex length) {
     readBytes = read(logFD, presumablySerializedBytes, record.dataLength);
     totalBytesRead += MAX(0, readBytes);
     
-    if (readBytes < (int)record.dataLength) {
+    if (readBytes < (ssize_t)record.dataLength) {
 		NSLog(@"recoverNextObject can't read all serialized bytes: %s", strerror(errno));
 		free(presumablySerializedBytes);
 		return nil;
@@ -476,7 +481,7 @@ CFHashCode CFHashBytes(uint8_t *bytes, CFIndex length) {
 	//decompress here
 	Bytef *uncompressedDataBuffer = (Bytef *)malloc(record.originalDataLength);
 	
-	compressionStream.avail_in = [presumablySerializedData length];
+	compressionStream.avail_in = (uInt)[presumablySerializedData length];
 	compressionStream.next_in = (Bytef*)[presumablySerializedData bytes];
 	compressionStream.avail_out = record.originalDataLength;
 	compressionStream.next_out = uncompressedDataBuffer;
@@ -505,7 +510,7 @@ CFHashCode CFHashBytes(uint8_t *bytes, CFIndex length) {
     
     id <SynchronizedNote> object = nil;
 	@try {
-		NSKeyedUnarchiver *unarchiver = [[NSKeyedUnarchiver alloc] initForReadingWithData:presumablySerializedData];
+		NSKeyedUnarchiver *unarchiver = NVUnarchiverForData(presumablySerializedData);
 		object = [unarchiver decodeObjectForKey:@"aNote"];
 		[unarchiver release];	
     } @catch (NSException *e) {

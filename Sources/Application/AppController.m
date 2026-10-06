@@ -71,14 +71,15 @@
 - (void)awakeFromNib {
 	prefsController = [GlobalPrefs defaultPrefs];
 	
-	[NSColor setIgnoresAlpha:NO];
+
 	
 	NSView *dualSV = [field superview];
 	dualFieldItem = [[NSToolbarItem alloc] initWithItemIdentifier:@"DualField"];
 	//[[dualSV superview] setFrameSize:NSMakeSize([[dualSV superview] frame].size.width, [[dualSV superview] frame].size.height -1)];
 	[dualFieldItem setView:dualSV];
-	[dualFieldItem setMaxSize:NSMakeSize(FLT_MAX, [dualSV frame].size.height)];
-	[dualFieldItem setMinSize:NSMakeSize(50.0f, [dualSV frame].size.height)];
+	[dualSV setTranslatesAutoresizingMaskIntoConstraints:NO];
+    [[dualSV.widthAnchor constraintGreaterThanOrEqualToConstant:50] setActive:YES];
+
     [dualFieldItem setLabel:NSLocalizedString(@"Search or Create", @"placeholder text in search/create field")];
 	
 	toolbar = [[NSToolbar alloc] initWithIdentifier:@"NVToolbar"];
@@ -86,7 +87,7 @@
 	[toolbar setAutosavesConfiguration:NO];
 	[toolbar setDisplayMode:NSToolbarDisplayModeIconOnly];
 //	[toolbar setSizeMode:NSToolbarSizeModeRegular];
-	[toolbar setShowsBaselineSeparator:YES];
+
 	[toolbar setVisible:![[NSUserDefaults standardUserDefaults] boolForKey:@"ToolbarHidden"]];
 	[toolbar setDelegate:self];
 	[window setToolbar:toolbar];
@@ -107,7 +108,7 @@
 	//set up temporary FastListDataSource containing false visible notes
 		
 	//this will not make a difference
-	[window useOptimizedDrawing:YES];
+
 	
 
 	//[window makeKeyAndOrderFront:self];
@@ -190,7 +191,7 @@ void outletObjectAwoke(id sender) {
 	NSString *subMessage = @"";
 	
 	//if the option key is depressed, go straight to picking a new notes folder location
-	if (kCGEventFlagMaskAlternate == (CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) & NSDeviceIndependentModifierFlagsMask)) {
+	if (kCGEventFlagMaskAlternate == (CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) & (CGEventFlags)NSEventModifierFlagDeviceIndependentFlagsMask)) {
 		goto showOpenPanel;
 	}
 	
@@ -207,9 +208,9 @@ void outletObjectAwoke(id sender) {
 	
 	NSString *location = (aliasData ? [[NSFileManager defaultManager] pathCopiedFromAliasData:aliasData] : NSLocalizedString(@"your Application Support directory",nil));
 	if (!location) { //fscopyaliasinfo sucks
-		FSRef locationRef;
-		if ([aliasData fsRefAsAlias:&locationRef] && LSCopyDisplayNameForRef(&locationRef, (CFStringRef*)&location) == noErr) {
-			[location autorelease];
+		NVFileReference locationRef;
+		if ([aliasData fsRefAsAlias:&locationRef] && (location = [[NSFileManager defaultManager] displayNameAtPath:[[NSFileManager defaultManager] pathWithFSRef:&locationRef]]) != nil) {
+
 		} else {
 			location = NSLocalizedString(@"its current location",nil);
 		}
@@ -219,13 +220,12 @@ void outletObjectAwoke(id sender) {
 	    location = [location stringByAbbreviatingWithTildeInPath];
 	    NSString *reason = [NSString reasonStringFromCarbonFSError:err];
 		
-	    if (NSRunAlertPanel([NSString stringWithFormat:NSLocalizedString(@"Unable to initialize notes database in \n%@ because %@.",nil), location, reason], 
-							subMessage, NSLocalizedString(@"Choose another folder",nil),NSLocalizedString(@"Quit",nil),NULL) == NSAlertDefaultReturn) {
+	    if (NVRunAlert(NSAlertStyleWarning, [NSString stringWithFormat:NSLocalizedString(@"Unable to initialize notes database in \n%@ because %@.",nil), location, reason], subMessage, NSLocalizedString(@"Choose another folder",nil), NSLocalizedString(@"Quit",nil), NULL) == NSAlertFirstButtonReturn) {
 			//show nsopenpanel, defaulting to current default notes dir
-			FSRef notesDirectoryRef;
+			NVFileReference notesDirectoryRef;
 		showOpenPanel:
 			if (![prefsWindowController getNewNotesRefFromOpenPanel:&notesDirectoryRef returnedPath:&location]) {
-				//they cancelled the open panel, or it was unable to get the path/FSRef of the file
+				//they cancelled the open panel, or it was unable to get the path/NVFileReference of the file
 				goto terminateApp;
 			} else if ((newNotation = [[NotationController alloc] initWithDirectoryRef:&notesDirectoryRef error:&err])) {
 				//have to make sure alias data is saved from setNotationController
@@ -363,7 +363,7 @@ terminateApp:
 
 - (BOOL)validateMenuItem:(NSMenuItem*)menuItem {
 	SEL selector = [menuItem action];
-	int numberSelected = [notesTableView numberOfSelectedRows];
+	NSInteger numberSelected = [notesTableView numberOfSelectedRows];
 	
 	if (selector == @selector(printNote:) || 
 		selector == @selector(deleteNote:) ||
@@ -396,7 +396,7 @@ terminateApp:
 - (void)updateNoteMenus {
 	NSMenu *notesMenu = [[[NSApp mainMenu] itemWithTag:NOTES_MENU_ID] submenu];
 	
-	int menuIndex = [notesMenu indexOfItemWithTarget:self andAction:@selector(deleteNote:)];
+	NSInteger menuIndex = [notesMenu indexOfItemWithTarget:self andAction:@selector(deleteNote:)];
 	NSMenuItem *deleteItem = nil;
 	if (menuIndex > -1 && (deleteItem = [notesMenu itemAtIndex:menuIndex]))	{
 		NSString *trailingQualifier = [prefsController confirmNoteDeletion] ? NSLocalizedString(@"...", @"ellipsis character") : @"";
@@ -482,7 +482,7 @@ terminateApp:
 
 	id retainedDeleteObj = (id)contextInfo;
 	
-	if (returnCode == NSAlertDefaultReturn) {
+	if (returnCode == NSAlertFirstButtonReturn) {
 		//delete! nil-msgsnd-checking
 		
 		//ensure that there are no pending edits in the tableview, 
@@ -496,7 +496,7 @@ terminateApp:
 			[notationController removeNote:retainedDeleteObj];
 		}
 		
-		if (IsLeopardOrLater && [[alert suppressionButton] state] == NSOnState) {
+		if (IsLeopardOrLater && [[alert suppressionButton] state] == NSControlStateValueOn) {
 			[prefsController setConfirmNoteDeletion:NO sender:self];
 		}
 	}
@@ -517,12 +517,10 @@ terminateApp:
 			NSString *warnString = currentNote ? [NSString stringWithFormat:warningSingleFormatString, titleOfNote(currentNote)] : 
 			[NSString stringWithFormat:warningMultipleFormatString, [indexes count]];
 			
-			NSAlert *alert = [NSAlert alertWithMessageText:warnString defaultButton:NSLocalizedString(@"Delete", @"name of delete button")
-										   alternateButton:NSLocalizedString(@"Cancel", @"name of cancel button") otherButton:nil 
-								 informativeTextWithFormat:NSLocalizedString(@"Press Command-Z to undo this action later.", @"informational delete-this-note? text")];
+			NSAlert *alert = NVMakeAlert(warnString, NSLocalizedString(@"Press Command-Z to undo this action later.", @"informational delete-this-note? text"), NSLocalizedString(@"Delete", @"name of delete button"), NSLocalizedString(@"Cancel", @"name of cancel button"), nil);
 			if (IsLeopardOrLater) [alert setShowsSuppressionButton:YES];
 			
-			[alert beginSheetModalForWindow:window modalDelegate:self didEndSelector:@selector(deleteAlertDidEnd:returnCode:contextInfo:) contextInfo:(void*)deleteObj];
+			NVBeginAlertSheet(alert, window, self, @selector(deleteAlertDidEnd:returnCode:contextInfo:), (void*)deleteObj);
 		} else {
 			//just delete the notes outright			
 			[notationController performSelector:[indexes count] > 1 ? @selector(removeNotes:) : @selector(removeNote:) withObject:deleteObj];
@@ -564,7 +562,7 @@ terminateApp:
 	if ([ed isKindOfClass:[ExternalEditor class]]) {
 		NSIndexSet *indexes = [notesTableView selectedRowIndexes];
 
-		if (kCGEventFlagMaskAlternate == (CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) & NSDeviceIndependentModifierFlagsMask)) {
+		if (kCGEventFlagMaskAlternate == (CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) & (CGEventFlags)NSEventModifierFlagDeviceIndependentFlagsMask)) {
 			//allow changing the default editor directly from Notes menu
 			[[ExternalEditorListController sharedInstance] setDefaultEditor:ed];
 		}
@@ -629,9 +627,7 @@ terminateApp:
 				NSString *location = [[[NSFileManager defaultManager] pathCopiedFromAliasData:newData] stringByAbbreviatingWithTildeInPath];
 				NSString *oldLocation = [[[NSFileManager defaultManager] pathCopiedFromAliasData:oldData] stringByAbbreviatingWithTildeInPath]; 
 				NSString *reason = [NSString reasonStringFromCarbonFSError:err];
-				NSRunAlertPanel([NSString stringWithFormat:NSLocalizedString(@"Unable to initialize notes database in \n%@ because %@.",nil), location, reason], 
-								[NSString stringWithFormat:NSLocalizedString(@"Reverting to current location of %@.",nil), oldLocation], 
-								NSLocalizedString(@"OK",nil), NULL, NULL);
+				NVRunAlert(NSAlertStyleWarning, [NSString stringWithFormat:NSLocalizedString(@"Unable to initialize notes database in \n%@ because %@.",nil), location, reason], [NSString stringWithFormat:NSLocalizedString(@"Reverting to current location of %@.",nil), oldLocation], NSLocalizedString(@"OK",nil), NULL, NULL);
 			}
 		}
     } else if ([selectorString isEqualToString:SEL_STR(setSortedTableColumnKey:reversed:sender:)]) {
@@ -705,8 +701,7 @@ terminateApp:
 			path = [[NSBundle mainBundle] pathForResource:NSLocalizedString(@"Excruciatingly Useful Shortcuts", nil) ofType:@"nvhelp" inDirectory:nil];
 		case 2:		//acknowledgments
 			if (!path) path = [[NSBundle mainBundle] pathForResource:@"Acknowledgments" ofType:@"txt" inDirectory:nil];
-			[[NSWorkspace sharedWorkspace] openURLs:[NSArray arrayWithObject:[NSURL fileURLWithPath:path]] withAppBundleIdentifier:@"com.apple.TextEdit" 
-											options:NSWorkspaceLaunchDefault additionalEventParamDescriptor:nil launchIdentifiers:NULL];
+			[[NSWorkspace sharedWorkspace] openURLs:@[[NSURL fileURLWithPath:path]] withApplicationAtURL:[[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:@"com.apple.TextEdit"] configuration:[NSWorkspaceOpenConfiguration configuration] completionHandler:nil];
 			break;
 		case 3:		//product site
 			[[NSWorkspace sharedWorkspace] openURL:[NSURL URLWithString:NSLocalizedString(@"SiteURL", nil)]];
@@ -799,7 +794,7 @@ terminateApp:
 			BOOL singleSelection = ([notesTableView numberOfRows] == 1 && [notesTableView numberOfSelectedRows] == 1);
 			[notesTableView keyDown:[window currentEvent]];
 			
-			unsigned int strLen = [[aTextView string] length];
+			NSUInteger strLen = [[aTextView string] length];
 			if (!singleSelection && [aTextView selectedRange].length != strLen) {
 				[aTextView setSelectedRange:NSMakeRange(0, strLen)];
 			}
@@ -863,10 +858,10 @@ terminateApp:
 			[aTextView deleteWordBackward:nil];
 			return YES;
 		}
-		if (command == @selector(noop:)) {
+		if (command == NSSelectorFromString(@"noop:")) {
 			//control-U is not set to anything by default, so we have to check the event itself for noops
 			NSEvent *event = [window currentEvent];
-			if ([event modifierFlags] & NSControlKeyMask) {
+			if ([event modifierFlags] & NSEventModifierFlagControl) {
 				if ([event firstCharacterIgnoringModifiers] == 'u') {
 					//in 1.1.1 this deleted the entire line, like tcsh. this is more in-line with bash
 					[aTextView deleteToBeginningOfLine:nil];
@@ -1004,9 +999,9 @@ terminateApp:
     
 	NSEventType type = [event type];
 	//do not allow drag-selections unless a modifier is pressed
-	if (type == NSLeftMouseDragged || type == NSLeftMouseDown) {
-		unsigned flags = [event modifierFlags];
-		if ((flags & NSShiftKeyMask) || (flags & NSCommandKeyMask)) {
+	if (type == NSEventTypeLeftMouseDragged || type == NSEventTypeLeftMouseDown) {
+		NSEventModifierFlags flags = [event modifierFlags];
+		if ((flags & NSEventModifierFlagShift) || (flags & NSEventModifierFlagCommand)) {
 			allowMultipleSelection = YES;
 		}
 	}
@@ -1037,7 +1032,7 @@ terminateApp:
 
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
 	NSEventType type = [[window currentEvent] type];
-	if (type != NSKeyDown && type != NSKeyUp) {
+	if (type != NSEventTypeKeyDown && type != NSEventTypeKeyUp) {
 		[self performSelector:@selector(setTableAllowsMultipleSelection) withObject:nil afterDelay:0];
 	}
 	
@@ -1045,8 +1040,8 @@ terminateApp:
 }
 
 - (void)processChangedSelectionForTable:(NSTableView*)table {
-	int selectedRow = [table selectedRow];
-	int numberSelected = [table numberOfSelectedRows];
+	NSInteger selectedRow = [table selectedRow];
+	NSInteger numberSelected = [table numberOfSelectedRows];
 	
 	NSTextView *fieldEditor = (NSTextView*)[field currentEditor];
 	
@@ -1073,7 +1068,7 @@ terminateApp:
 						if (fieldEditor) {
 							//the field editor has focus--select text, too
 							[fieldEditor setString:titleOfNote(currentNote)];
-							unsigned int strLen = [titleOfNote(currentNote) length];
+							NSUInteger strLen = [titleOfNote(currentNote) length];
 							if (strLen != [fieldEditor selectedRange].length)
 								[fieldEditor setSelectedRange:NSMakeRange(0, strLen)];
 						} else {
@@ -1141,7 +1136,7 @@ terminateApp:
 - (void)setEmptyViewState:(BOOL)state {
     //return;
     
-	//int numberSelected = [notesTableView numberOfSelectedRows];
+	//NSInteger numberSelected = [notesTableView numberOfSelectedRows];
 	BOOL enable = /*numberSelected != 1;*/ state;
 	[textView clearFindPanel];
 	[textView setHidden:enable];
@@ -1152,7 +1147,7 @@ terminateApp:
 	}
 }
 
-- (BOOL)displayContentsForNoteAtIndex:(int)noteIndex {
+- (BOOL)displayContentsForNoteAtIndex:(NSInteger)noteIndex {
 	NoteObject *note = [notationController noteObjectAtFilteredIndex:noteIndex];
 	if (note != currentNote) {
 		[self setEmptyViewState:NO];
@@ -1238,7 +1233,7 @@ terminateApp:
 
 - (NSMenu *)textView:(NSTextView *)view menu:(NSMenu *)menu forEvent:(NSEvent *)event atIndex:(NSUInteger)charIndex {
 	NSInteger idx;
-	if ((idx = [menu indexOfItemWithTarget:nil andAction:@selector(_removeLinkFromMenu:)]) > -1)
+	if ((idx = [menu indexOfItemWithTarget:nil andAction:NSSelectorFromString(@"_removeLinkFromMenu:")]) > -1)
 		[menu removeItemAtIndex:idx];
 	if ((idx = [menu indexOfItemWithTarget:nil andAction:@selector(orderFrontLinkPanel:)]) > -1)
 		[menu removeItemAtIndex:idx];
@@ -1669,7 +1664,7 @@ terminateApp:
 	
 	if ([NSApp isActive] && [window isMainWindow]) {
 		if (!activatedFromAnotherSpace || [previousActiveApplication isTerminated] ||
-			![previousActiveApplication activateWithOptions:NSApplicationActivateIgnoringOtherApps]) {
+			![previousActiveApplication activateWithOptions:0]) {
 			[NSApp hide:sender];
 		}
 		[previousActiveApplication release];

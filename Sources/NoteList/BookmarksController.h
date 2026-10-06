@@ -69,7 +69,7 @@
 
 @interface BookmarksController : NSObject 
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-<NSWindowDelegate, NSTableViewDelegate, NSTableViewDataSource> 
+<NSMenuItemValidation, NSWindowDelegate, NSTableViewDelegate, NSTableViewDataSource>
 #endif
 {
 	//model

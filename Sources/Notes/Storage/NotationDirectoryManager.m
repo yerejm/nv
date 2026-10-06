@@ -134,7 +134,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 	noteDirEventStreamRef = FSEventStreamCreate(NULL, &FSEventsCallback, &context, (CFArrayRef)[NSArray arrayWithObject:path], kFSEventStreamEventIdSinceNow, 
 												1.0, kFSEventStreamCreateFlagWatchRoot | 0x00000008 /*kFSEventStreamCreateFlagIgnoreSelf*/);
 	
-	FSEventStreamScheduleWithRunLoop(noteDirEventStreamRef, CFRunLoopGetCurrent(), kCFRunLoopDefaultMode);
+	FSEventStreamSetDispatchQueue(noteDirEventStreamRef, dispatch_get_main_queue());
 	if (!FSEventStreamStart(noteDirEventStreamRef)) {
 		NSLog(@"could not start the FSEvents stream!");
 	}
@@ -213,7 +213,7 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 
 - (BOOL)synchronizeNotesFromDirectory {
     if ([self currentNoteStorageFormat] == SingleDatabaseFormat) {
-		//NSLog(@"%s: called when storage format is singledatabase", _cmd);
+		//NSLog(@"%s: called when storage format is singledatabase", sel_getName(_cmd));
 		return NO;
 	}
 	
@@ -225,7 +225,7 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 		if (catEntriesCount && [allNotes count]) {
 			[self makeNotesMatchCatalogEntries:sortedCatalogEntries ofSize:catEntriesCount];
 		} else {
-			unsigned int i;
+			NSUInteger i;
 			
 			if (![allNotes count]) {
 				//no notes exist, so every file must be new
@@ -259,20 +259,20 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 - (BOOL)_readFilesInDirectory {
     
     OSStatus status = noErr;
-    FSIterator dirIterator;
+    NVDirectoryIterator dirIterator;
     ItemCount totalObjects = 0, dirObjectCount = 0;
-    unsigned int i = 0, catIndex = 0;
+    NSUInteger i = 0, catIndex = 0;
     
     //something like 16 VM pages used here?
     if (!fsCatInfoArray) fsCatInfoArray = (FSCatalogInfo *)calloc(kMaxFileIteratorCount, sizeof(FSCatalogInfo));
     if (!HFSUniNameArray) HFSUniNameArray = (HFSUniStr255 *)calloc(kMaxFileIteratorCount, sizeof(HFSUniStr255));
 	
-    if ((status = FSOpenIterator(&noteDirectoryRef, kFSIterateFlat, &dirIterator)) == noErr) {
+    if ((status = NVOpenIterator(&noteDirectoryRef, kFSIterateFlat, &dirIterator)) == noErr) {
 		//catEntriesCount = 0;
 		
         do {
             // Grab a batch of source files to process from the source directory
-            status = FSGetCatalogInfoBulk(dirIterator, kMaxFileIteratorCount, &dirObjectCount, NULL,
+            status = NVGetCatalogInfoBulk(dirIterator, kMaxFileIteratorCount, &dirObjectCount, NULL,
 										  kFSCatInfoNodeFlags | kFSCatInfoFinderInfo | kFSCatInfoContentMod | 
 										  kFSCatInfoAttrMod | kFSCatInfoDataSizes | kFSCatInfoNodeID,
 										  fsCatInfoArray, NULL, NULL, HFSUniNameArray);
@@ -282,7 +282,7 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 				
 				totalObjects += dirObjectCount;
 				if (totalObjects > totalCatEntriesCount) {
-					unsigned int oldCatEntriesCount = totalCatEntriesCount;
+					NSUInteger oldCatEntriesCount = totalCatEntriesCount;
 					
 					totalCatEntriesCount = totalObjects;
 					catalogEntries = (NoteCatalogEntry *)realloc(catalogEntries, totalObjects * sizeof(NoteCatalogEntry));
@@ -329,7 +329,7 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
             
         } while (status == noErr);
 		
-		FSCloseIterator(dirIterator);
+		NVCloseIterator(dirIterator);
 		
 		for (i=0; i<catEntriesCount; i++) {
 			sortedCatalogEntries[i] = &catalogEntries[i];
@@ -338,7 +338,7 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 		return YES;
     }
     
-    NSLog(@"Error opening FSIterator: %d", status);
+    NSLog(@"Error opening NVDirectoryIterator: %d", status);
     
     return NO;
 }
@@ -393,15 +393,15 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 
 - (void)makeNotesMatchCatalogEntries:(NoteCatalogEntry**)catEntriesPtrs ofSize:(size_t)catCount {
     
-    unsigned int aSize = [allNotes count];
-    unsigned int bSize = catCount;
+    NSUInteger aSize = [allNotes count];
+    NSUInteger bSize = catCount;
     
 	ResizeArray(&allNotesBuffer, aSize, &allNotesBufferSize);
 	
 	NSAssert(allNotesBuffer != NULL, @"sorting buffer not initialized");
 	
     NoteObject **currentNotes = allNotesBuffer;
-    [allNotes getObjects:(id*)currentNotes];
+    [allNotes getObjects:(id*)currentNotes range:NSMakeRange(0, [allNotes count])];
 	
 	mergesort((void *)allNotesBuffer, (size_t)aSize, sizeof(id), (int (*)(const void *, const void *))compareFilename);
 	mergesort((void *)catEntriesPtrs, (size_t)bSize, sizeof(NoteCatalogEntry*), (int (*)(const void *, const void *))compareCatalogEntryName);
@@ -412,7 +412,7 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
     //oldItems(a,i) = currentNotes
     //newItems(b,j) = catEntries;
     
-    unsigned int i, j, lastInserted = 0;
+    NSUInteger i, j, lastInserted = 0;
     
     for (i=0; i<aSize; i++) {
 		
@@ -485,7 +485,7 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 
 //find renamed notes through unique file IDs
 - (void)processNotesAddedByCNID:(NSMutableArray*)addedEntries removed:(NSMutableArray*)removedEntries {
-	unsigned int aSize = [removedEntries count], bSize = [addedEntries count];
+	NSUInteger aSize = [removedEntries count], bSize = [addedEntries count];
     
     //sort on nodeID here
 	[addedEntries sortUnstableUsingFunction:compareCatalogValueNodeID];
@@ -497,7 +497,7 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
     //oldItems(a,i) = currentNotes
     //newItems(b,j) = catEntries;
     
-    unsigned int i, j, lastInserted = 0;
+    NSUInteger i, j, lastInserted = 0;
     
     for (i=0; i<aSize; i++) {
 		NoteObject *currentNote = [removedEntries objectAtIndex:i];
@@ -567,7 +567,7 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 		//NSLog(@"hfsAddedEntries: %@, hfsRemovedEntries: %@", hfsAddedEntries, hfsRemovedEntries);
 		if (![hfsRemovedEntries count]) {
 			for (i=0; i<[hfsAddedEntries count]; i++) {
-				NSLog(@"File _actually_ added: %@ (%s)", ((NoteCatalogEntry*)[[hfsAddedEntries objectAtIndex:i] pointerValue])->filename, _cmd);
+				NSLog(@"File _actually_ added: %@ (%s)", ((NoteCatalogEntry*)[[hfsAddedEntries objectAtIndex:i] pointerValue])->filename, sel_getName(_cmd));
 				[self addNoteFromCatalogEntry:(NoteCatalogEntry*)[[hfsAddedEntries objectAtIndex:i] pointerValue]];
 			}
 		}
@@ -656,7 +656,7 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 	
 	for (i=0; i<[addedEntries count]; i++) {
 		NoteCatalogEntry *appendedCatEntry = (NoteCatalogEntry *)[[addedEntries objectAtIndex:i] pointerValue];
-		NSLog(@"File _actually_ added: %@ (%s)", appendedCatEntry->filename, _cmd);
+		NSLog(@"File _actually_ added: %@ (%s)", appendedCatEntry->filename, sel_getName(_cmd));
 		[self addNoteFromCatalogEntry:appendedCatEntry];
     }	
 }

@@ -37,6 +37,6 @@
 - (BOOL)setTextEncodingAttribute:(NSStringEncoding)encoding atFSPath:(const char*)path;
 - (NSStringEncoding)textEncodingAttributeOfFSPath:(const char*)path;
 - (NSString*)pathFromFSPath:(char*)path;
-- (NSString*)pathWithFSRef:(FSRef*)fsRef;
+- (NSString*)pathWithFSRef:(NVFileReference*)fsRef;
 
 @end

@@ -49,7 +49,7 @@ sourcephase = add(dict(isa='PBXSourcesBuildPhase', buildActionMask=2147483647,
                        files=builds, runOnlyForDeploymentPostprocessing=0))
 frameworkphase = add(dict(isa='PBXFrameworksBuildPhase', buildActionMask=2147483647,
                           files=[], runOnlyForDeploymentPostprocessing=0))
-frameworks = ['XCTest', 'Cocoa', 'Carbon', 'CoreServices', 'SecurityInterface',
+frameworks = ['XCTest', 'Cocoa', 'UniformTypeIdentifiers', 'Carbon', 'CoreServices', 'SecurityInterface',
               'Security', 'WebKit', 'ApplicationServices', 'SystemConfiguration', 'IOKit', 'PDFKit']
 settings = dict(
     ARCHS='arm64', SDKROOT='macosx', MACOSX_DEPLOYMENT_TARGET='15.0',

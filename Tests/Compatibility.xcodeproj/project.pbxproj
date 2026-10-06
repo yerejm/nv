@@ -19,7 +19,7 @@
 				<string>000000000000000000000002</string>
 				<string>000000000000000000000011</string>
 				<string>000000000000000000000016</string>
-				<string>000000000000000000000025</string>
+				<string>000000000000000000000027</string>
 			</array>
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
@@ -34,7 +34,7 @@
 				<string>000000000000000000000009</string>
 				<string>00000000000000000000000B</string>
 				<string>00000000000000000000000E</string>
-				<string>000000000000000000000023</string>
+				<string>000000000000000000000025</string>
 			</array>
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
@@ -315,6 +315,7 @@
 			<key>children</key>
 			<array>
 				<string>000000000000000000000019</string>
+				<string>000000000000000000000020</string>
 			</array>
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
@@ -329,8 +330,9 @@
 			<array>
 				<string>00000000000000000000001A</string>
 				<string>00000000000000000000001F</string>
-				<string>000000000000000000000020</string>
 				<string>000000000000000000000021</string>
+				<string>000000000000000000000022</string>
+				<string>000000000000000000000023</string>
 			</array>
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
@@ -410,7 +412,7 @@
 			<key>isa</key>
 			<string>PBXFileReference</string>
 			<key>path</key>
-			<string>hmacsha1.c</string>
+			<string>NVFileReference.c</string>
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
 			<key>lastKnownFileType</key>
@@ -419,22 +421,20 @@
 		<key>000000000000000000000021</key>
 		<dict>
 			<key>isa</key>
-			<string>PBXGroup</string>
-			<key>children</key>
-			<array>
-				<string>000000000000000000000022</string>
-			</array>
+			<string>PBXFileReference</string>
+			<key>path</key>
+			<string>NVMD5.c</string>
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
-			<key>path</key>
-			<string>Legacy</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.c</string>
 		</dict>
 		<key>000000000000000000000022</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXFileReference</string>
 			<key>path</key>
-			<string>broken_md5.c</string>
+			<string>hmacsha1.c</string>
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
 			<key>lastKnownFileType</key>
@@ -451,9 +451,33 @@
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
 			<key>path</key>
-			<string>Support</string>
+			<string>Legacy</string>
 		</dict>
 		<key>000000000000000000000024</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXFileReference</string>
+			<key>path</key>
+			<string>broken_md5.c</string>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+			<key>lastKnownFileType</key>
+			<string>sourcecode.c.c</string>
+		</dict>
+		<key>000000000000000000000025</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXGroup</string>
+			<key>children</key>
+			<array>
+				<string>000000000000000000000026</string>
+			</array>
+			<key>sourceTree</key>
+			<string>&lt;group&gt;</string>
+			<key>path</key>
+			<string>Support</string>
+		</dict>
+		<key>000000000000000000000026</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXFileReference</string>
@@ -464,7 +488,7 @@
 			<key>lastKnownFileType</key>
 			<string>sourcecode.c.h</string>
 		</dict>
-		<key>000000000000000000000025</key>
+		<key>000000000000000000000027</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXFileReference</string>
@@ -475,126 +499,140 @@
 			<key>explicitFileType</key>
 			<string>wrapper.cfbundle</string>
 		</dict>
-		<key>000000000000000000000026</key>
+		<key>000000000000000000000028</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000005</string>
 		</dict>
-		<key>000000000000000000000027</key>
+		<key>000000000000000000000029</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000008</string>
 		</dict>
-		<key>000000000000000000000028</key>
+		<key>00000000000000000000002A</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>00000000000000000000000A</string>
 		</dict>
-		<key>000000000000000000000029</key>
+		<key>00000000000000000000002B</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>00000000000000000000000C</string>
 		</dict>
-		<key>00000000000000000000002A</key>
+		<key>00000000000000000000002C</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>00000000000000000000000D</string>
 		</dict>
-		<key>00000000000000000000002B</key>
+		<key>00000000000000000000002D</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>00000000000000000000000F</string>
 		</dict>
-		<key>00000000000000000000002C</key>
+		<key>00000000000000000000002E</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000010</string>
 		</dict>
-		<key>00000000000000000000002D</key>
+		<key>00000000000000000000002F</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000013</string>
 		</dict>
-		<key>00000000000000000000002E</key>
+		<key>000000000000000000000030</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000014</string>
 		</dict>
-		<key>00000000000000000000002F</key>
+		<key>000000000000000000000031</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000015</string>
 		</dict>
-		<key>000000000000000000000030</key>
+		<key>000000000000000000000032</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>00000000000000000000001A</string>
 		</dict>
-		<key>000000000000000000000031</key>
+		<key>000000000000000000000033</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>00000000000000000000001B</string>
 		</dict>
-		<key>000000000000000000000032</key>
+		<key>000000000000000000000034</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>00000000000000000000001C</string>
 		</dict>
-		<key>000000000000000000000033</key>
+		<key>000000000000000000000035</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>00000000000000000000001E</string>
 		</dict>
-		<key>000000000000000000000034</key>
+		<key>000000000000000000000036</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>00000000000000000000001F</string>
 		</dict>
-		<key>000000000000000000000035</key>
+		<key>000000000000000000000037</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000020</string>
 		</dict>
-		<key>000000000000000000000036</key>
+		<key>000000000000000000000038</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>000000000000000000000021</string>
+		</dict>
+		<key>000000000000000000000039</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000022</string>
 		</dict>
-		<key>000000000000000000000037</key>
+		<key>00000000000000000000003A</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXBuildFile</string>
+			<key>fileRef</key>
+			<string>000000000000000000000024</string>
+		</dict>
+		<key>00000000000000000000003B</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXSourcesBuildPhase</string>
@@ -602,8 +640,6 @@
 			<integer>2147483647</integer>
 			<key>files</key>
 			<array>
-				<string>000000000000000000000026</string>
-				<string>000000000000000000000027</string>
 				<string>000000000000000000000028</string>
 				<string>000000000000000000000029</string>
 				<string>00000000000000000000002A</string>
@@ -619,11 +655,15 @@
 				<string>000000000000000000000034</string>
 				<string>000000000000000000000035</string>
 				<string>000000000000000000000036</string>
+				<string>000000000000000000000037</string>
+				<string>000000000000000000000038</string>
+				<string>000000000000000000000039</string>
+				<string>00000000000000000000003A</string>
 			</array>
 			<key>runOnlyForDeploymentPostprocessing</key>
 			<integer>0</integer>
 		</dict>
-		<key>000000000000000000000038</key>
+		<key>00000000000000000000003C</key>
 		<dict>
 			<key>isa</key>
 			<string>PBXFrameworksBuildPhase</string>
@@ -633,174 +673,6 @@
 			<array/>
 			<key>runOnlyForDeploymentPostprocessing</key>
 			<integer>0</integer>
-		</dict>
-		<key>000000000000000000000039</key>
-		<dict>
-			<key>isa</key>
-			<string>XCBuildConfiguration</string>
-			<key>name</key>
-			<string>Debug</string>
-			<key>buildSettings</key>
-			<dict>
-				<key>ARCHS</key>
-				<string>arm64</string>
-				<key>SDKROOT</key>
-				<string>macosx</string>
-				<key>MACOSX_DEPLOYMENT_TARGET</key>
-				<string>15.0</string>
-				<key>CLANG_ENABLE_OBJC_ARC</key>
-				<string>NO</string>
-				<key>GCC_PREFIX_HEADER</key>
-				<string>$(SRCROOT)/../Configuration/Notation_Prefix.pch</string>
-				<key>HEADER_SEARCH_PATHS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>$(SRCROOT)/../Vendor</string>
-					<string>$(SRCROOT)/../Sources/Application</string>
-					<string>$(SRCROOT)/../Sources/Notes/Model</string>
-					<string>$(SRCROOT)/../Sources/Notes/Storage</string>
-					<string>$(SRCROOT)/../Sources/Notes/Storage/Crypto</string>
-					<string>$(SRCROOT)/../Sources/Notes/Storage/Crypto/Legacy</string>
-					<string>$(SRCROOT)/../Sources/Editor</string>
-					<string>$(SRCROOT)/../Sources/NoteList</string>
-					<string>$(SRCROOT)/../Sources/Preferences</string>
-					<string>$(SRCROOT)/../Sources/Interchange</string>
-					<string>$(SRCROOT)/../Sources/Integrations</string>
-					<string>$(SRCROOT)/../Sources/Support</string>
-					<string>$(SRCROOT)/../Vendor/PTHotKeys</string>
-					<string>$(SRCROOT)/../Vendor/ODBEditor</string>
-					<string>$(SRCROOT)/../Vendor/RBSplitView</string>
-					<string>$(SRCROOT)/Support</string>
-				</array>
-				<key>GENERATE_INFOPLIST_FILE</key>
-				<string>YES</string>
-				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
-				<string>net.notational.velocity.tests</string>
-				<key>PRODUCT_NAME</key>
-				<string>CompatibilityTests</string>
-				<key>FRAMEWORK_SEARCH_PATHS</key>
-				<array>
-					<string>$(PLATFORM_DIR)/Developer/Library/Frameworks</string>
-					<string>$(SRCROOT)/..</string>
-				</array>
-				<key>OTHER_LDFLAGS</key>
-				<array>
-					<string>-framework</string>
-					<string>XCTest</string>
-					<string>-framework</string>
-					<string>Cocoa</string>
-					<string>-framework</string>
-					<string>Carbon</string>
-					<string>-framework</string>
-					<string>WebKit</string>
-					<string>-lz</string>
-				</array>
-				<key>ALWAYS_SEARCH_USER_PATHS</key>
-				<string>NO</string>
-			</dict>
-		</dict>
-		<key>00000000000000000000003A</key>
-		<dict>
-			<key>isa</key>
-			<string>XCBuildConfiguration</string>
-			<key>name</key>
-			<string>Release</string>
-			<key>buildSettings</key>
-			<dict>
-				<key>ARCHS</key>
-				<string>arm64</string>
-				<key>SDKROOT</key>
-				<string>macosx</string>
-				<key>MACOSX_DEPLOYMENT_TARGET</key>
-				<string>15.0</string>
-				<key>CLANG_ENABLE_OBJC_ARC</key>
-				<string>NO</string>
-				<key>GCC_PREFIX_HEADER</key>
-				<string>$(SRCROOT)/../Configuration/Notation_Prefix.pch</string>
-				<key>HEADER_SEARCH_PATHS</key>
-				<array>
-					<string>$(inherited)</string>
-					<string>$(SRCROOT)/../Vendor</string>
-					<string>$(SRCROOT)/../Sources/Application</string>
-					<string>$(SRCROOT)/../Sources/Notes/Model</string>
-					<string>$(SRCROOT)/../Sources/Notes/Storage</string>
-					<string>$(SRCROOT)/../Sources/Notes/Storage/Crypto</string>
-					<string>$(SRCROOT)/../Sources/Notes/Storage/Crypto/Legacy</string>
-					<string>$(SRCROOT)/../Sources/Editor</string>
-					<string>$(SRCROOT)/../Sources/NoteList</string>
-					<string>$(SRCROOT)/../Sources/Preferences</string>
-					<string>$(SRCROOT)/../Sources/Interchange</string>
-					<string>$(SRCROOT)/../Sources/Integrations</string>
-					<string>$(SRCROOT)/../Sources/Support</string>
-					<string>$(SRCROOT)/../Vendor/PTHotKeys</string>
-					<string>$(SRCROOT)/../Vendor/ODBEditor</string>
-					<string>$(SRCROOT)/../Vendor/RBSplitView</string>
-					<string>$(SRCROOT)/Support</string>
-				</array>
-				<key>GENERATE_INFOPLIST_FILE</key>
-				<string>YES</string>
-				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
-				<string>net.notational.velocity.tests</string>
-				<key>PRODUCT_NAME</key>
-				<string>CompatibilityTests</string>
-				<key>FRAMEWORK_SEARCH_PATHS</key>
-				<array>
-					<string>$(PLATFORM_DIR)/Developer/Library/Frameworks</string>
-					<string>$(SRCROOT)/..</string>
-				</array>
-				<key>OTHER_LDFLAGS</key>
-				<array>
-					<string>-framework</string>
-					<string>XCTest</string>
-					<string>-framework</string>
-					<string>Cocoa</string>
-					<string>-framework</string>
-					<string>Carbon</string>
-					<string>-framework</string>
-					<string>WebKit</string>
-					<string>-lz</string>
-				</array>
-				<key>ALWAYS_SEARCH_USER_PATHS</key>
-				<string>NO</string>
-			</dict>
-		</dict>
-		<key>00000000000000000000003B</key>
-		<dict>
-			<key>isa</key>
-			<string>XCConfigurationList</string>
-			<key>buildConfigurations</key>
-			<array>
-				<string>000000000000000000000039</string>
-				<string>00000000000000000000003A</string>
-			</array>
-			<key>defaultConfigurationIsVisible</key>
-			<integer>0</integer>
-			<key>defaultConfigurationName</key>
-			<string>Debug</string>
-		</dict>
-		<key>00000000000000000000003C</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXNativeTarget</string>
-			<key>buildConfigurationList</key>
-			<string>00000000000000000000003B</string>
-			<key>buildPhases</key>
-			<array>
-				<string>000000000000000000000037</string>
-				<string>000000000000000000000038</string>
-			</array>
-			<key>buildRules</key>
-			<array/>
-			<key>dependencies</key>
-			<array/>
-			<key>name</key>
-			<string>CompatibilityTests</string>
-			<key>productName</key>
-			<string>CompatibilityTests</string>
-			<key>productReference</key>
-			<string>000000000000000000000025</string>
-			<key>productType</key>
-			<string>com.apple.product-type.bundle.unit-test</string>
 		</dict>
 		<key>00000000000000000000003D</key>
 		<dict>
@@ -816,6 +688,57 @@
 				<string>macosx</string>
 				<key>MACOSX_DEPLOYMENT_TARGET</key>
 				<string>15.0</string>
+				<key>CLANG_ENABLE_OBJC_ARC</key>
+				<string>NO</string>
+				<key>GCC_PREFIX_HEADER</key>
+				<string>$(SRCROOT)/../Configuration/Notation_Prefix.pch</string>
+				<key>HEADER_SEARCH_PATHS</key>
+				<array>
+					<string>$(inherited)</string>
+					<string>$(SRCROOT)/../Vendor</string>
+					<string>$(SRCROOT)/../Sources/Application</string>
+					<string>$(SRCROOT)/../Sources/Notes/Model</string>
+					<string>$(SRCROOT)/../Sources/Notes/Storage</string>
+					<string>$(SRCROOT)/../Sources/Notes/Storage/Crypto</string>
+					<string>$(SRCROOT)/../Sources/Notes/Storage/Crypto/Legacy</string>
+					<string>$(SRCROOT)/../Sources/Editor</string>
+					<string>$(SRCROOT)/../Sources/NoteList</string>
+					<string>$(SRCROOT)/../Sources/Preferences</string>
+					<string>$(SRCROOT)/../Sources/Interchange</string>
+					<string>$(SRCROOT)/../Sources/Integrations</string>
+					<string>$(SRCROOT)/../Sources/Support</string>
+					<string>$(SRCROOT)/../Vendor/PTHotKeys</string>
+					<string>$(SRCROOT)/../Vendor/ODBEditor</string>
+					<string>$(SRCROOT)/../Vendor/RBSplitView</string>
+					<string>$(SRCROOT)/Support</string>
+				</array>
+				<key>GENERATE_INFOPLIST_FILE</key>
+				<string>YES</string>
+				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
+				<string>net.notational.velocity.tests</string>
+				<key>PRODUCT_NAME</key>
+				<string>CompatibilityTests</string>
+				<key>FRAMEWORK_SEARCH_PATHS</key>
+				<array>
+					<string>$(PLATFORM_DIR)/Developer/Library/Frameworks</string>
+					<string>$(SRCROOT)/..</string>
+				</array>
+				<key>OTHER_LDFLAGS</key>
+				<array>
+					<string>-framework</string>
+					<string>XCTest</string>
+					<string>-framework</string>
+					<string>Cocoa</string>
+					<string>-framework</string>
+					<string>UniformTypeIdentifiers</string>
+					<string>-framework</string>
+					<string>Carbon</string>
+					<string>-framework</string>
+					<string>WebKit</string>
+					<string>-lz</string>
+				</array>
+				<key>ALWAYS_SEARCH_USER_PATHS</key>
+				<string>NO</string>
 			</dict>
 		</dict>
 		<key>00000000000000000000003E</key>
@@ -832,6 +755,57 @@
 				<string>macosx</string>
 				<key>MACOSX_DEPLOYMENT_TARGET</key>
 				<string>15.0</string>
+				<key>CLANG_ENABLE_OBJC_ARC</key>
+				<string>NO</string>
+				<key>GCC_PREFIX_HEADER</key>
+				<string>$(SRCROOT)/../Configuration/Notation_Prefix.pch</string>
+				<key>HEADER_SEARCH_PATHS</key>
+				<array>
+					<string>$(inherited)</string>
+					<string>$(SRCROOT)/../Vendor</string>
+					<string>$(SRCROOT)/../Sources/Application</string>
+					<string>$(SRCROOT)/../Sources/Notes/Model</string>
+					<string>$(SRCROOT)/../Sources/Notes/Storage</string>
+					<string>$(SRCROOT)/../Sources/Notes/Storage/Crypto</string>
+					<string>$(SRCROOT)/../Sources/Notes/Storage/Crypto/Legacy</string>
+					<string>$(SRCROOT)/../Sources/Editor</string>
+					<string>$(SRCROOT)/../Sources/NoteList</string>
+					<string>$(SRCROOT)/../Sources/Preferences</string>
+					<string>$(SRCROOT)/../Sources/Interchange</string>
+					<string>$(SRCROOT)/../Sources/Integrations</string>
+					<string>$(SRCROOT)/../Sources/Support</string>
+					<string>$(SRCROOT)/../Vendor/PTHotKeys</string>
+					<string>$(SRCROOT)/../Vendor/ODBEditor</string>
+					<string>$(SRCROOT)/../Vendor/RBSplitView</string>
+					<string>$(SRCROOT)/Support</string>
+				</array>
+				<key>GENERATE_INFOPLIST_FILE</key>
+				<string>YES</string>
+				<key>PRODUCT_BUNDLE_IDENTIFIER</key>
+				<string>net.notational.velocity.tests</string>
+				<key>PRODUCT_NAME</key>
+				<string>CompatibilityTests</string>
+				<key>FRAMEWORK_SEARCH_PATHS</key>
+				<array>
+					<string>$(PLATFORM_DIR)/Developer/Library/Frameworks</string>
+					<string>$(SRCROOT)/..</string>
+				</array>
+				<key>OTHER_LDFLAGS</key>
+				<array>
+					<string>-framework</string>
+					<string>XCTest</string>
+					<string>-framework</string>
+					<string>Cocoa</string>
+					<string>-framework</string>
+					<string>UniformTypeIdentifiers</string>
+					<string>-framework</string>
+					<string>Carbon</string>
+					<string>-framework</string>
+					<string>WebKit</string>
+					<string>-lz</string>
+				</array>
+				<key>ALWAYS_SEARCH_USER_PATHS</key>
+				<string>NO</string>
 			</dict>
 		</dict>
 		<key>00000000000000000000003F</key>
@@ -851,9 +825,79 @@
 		<key>000000000000000000000040</key>
 		<dict>
 			<key>isa</key>
-			<string>PBXProject</string>
+			<string>PBXNativeTarget</string>
 			<key>buildConfigurationList</key>
 			<string>00000000000000000000003F</string>
+			<key>buildPhases</key>
+			<array>
+				<string>00000000000000000000003B</string>
+				<string>00000000000000000000003C</string>
+			</array>
+			<key>buildRules</key>
+			<array/>
+			<key>dependencies</key>
+			<array/>
+			<key>name</key>
+			<string>CompatibilityTests</string>
+			<key>productName</key>
+			<string>CompatibilityTests</string>
+			<key>productReference</key>
+			<string>000000000000000000000027</string>
+			<key>productType</key>
+			<string>com.apple.product-type.bundle.unit-test</string>
+		</dict>
+		<key>000000000000000000000041</key>
+		<dict>
+			<key>isa</key>
+			<string>XCBuildConfiguration</string>
+			<key>name</key>
+			<string>Debug</string>
+			<key>buildSettings</key>
+			<dict>
+				<key>ARCHS</key>
+				<string>arm64</string>
+				<key>SDKROOT</key>
+				<string>macosx</string>
+				<key>MACOSX_DEPLOYMENT_TARGET</key>
+				<string>15.0</string>
+			</dict>
+		</dict>
+		<key>000000000000000000000042</key>
+		<dict>
+			<key>isa</key>
+			<string>XCBuildConfiguration</string>
+			<key>name</key>
+			<string>Release</string>
+			<key>buildSettings</key>
+			<dict>
+				<key>ARCHS</key>
+				<string>arm64</string>
+				<key>SDKROOT</key>
+				<string>macosx</string>
+				<key>MACOSX_DEPLOYMENT_TARGET</key>
+				<string>15.0</string>
+			</dict>
+		</dict>
+		<key>000000000000000000000043</key>
+		<dict>
+			<key>isa</key>
+			<string>XCConfigurationList</string>
+			<key>buildConfigurations</key>
+			<array>
+				<string>000000000000000000000041</string>
+				<string>000000000000000000000042</string>
+			</array>
+			<key>defaultConfigurationIsVisible</key>
+			<integer>0</integer>
+			<key>defaultConfigurationName</key>
+			<string>Debug</string>
+		</dict>
+		<key>000000000000000000000044</key>
+		<dict>
+			<key>isa</key>
+			<string>PBXProject</string>
+			<key>buildConfigurationList</key>
+			<string>000000000000000000000043</string>
 			<key>compatibilityVersion</key>
 			<string>Xcode 14.0</string>
 			<key>developmentRegion</key>
@@ -870,11 +914,11 @@
 			<string></string>
 			<key>targets</key>
 			<array>
-				<string>00000000000000000000003C</string>
+				<string>000000000000000000000040</string>
 			</array>
 		</dict>
 	</dict>
 	<key>rootObject</key>
-	<string>000000000000000000000040</string>
+	<string>000000000000000000000044</string>
 </dict>
 </plist>

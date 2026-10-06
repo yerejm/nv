@@ -1,3 +1,5 @@
+#import "AppController_Importing.h"
+#import "AppController.h"
 /*Copyright (c) 2010, Zachary Schneirov. All rights reserved.
     This file is part of Notational Velocity.
 
@@ -46,7 +48,7 @@
 
 - (void)showWindow:(id)sender {
 	if (!window) {
-		if (![NSBundle loadNibNamed:@"Preferences" owner:self])  {
+		if (!NVLoadNib(@"Preferences", self))  {
 			NSLog(@"Failed to load Preferences.nib");
 			return;
 		}
@@ -88,7 +90,7 @@
 	
 	[appShortcutField setStringValue:[[prefsController appActivationKeyCombo] description]];
 		
-	if (![prefsController registerAppActivationKeystrokeWithTarget:[NSApp delegate] selector:@selector(toggleNVActivation:)]) {
+	if (![prefsController registerAppActivationKeystrokeWithTarget:(AppController *)[NSApp delegate] selector:@selector(toggleNVActivation:)]) {
 		[prefsController setAppActivationKeyCombo:oldKeyCombo sender:self];
 		NSLog(@"reverting to old (hopefully working key combo");
 	}
@@ -120,7 +122,7 @@
 	}
 }
 
-- (NSUInteger)validModesForFontPanel:(NSFontPanel *)fontPanel {
+- (NSFontPanelModeMask)validModesForFontPanel:(NSFontPanel *)fontPanel {
 	
 	return NSFontPanelSizeModeMask | NSFontPanelCollectionModeMask;
 }
@@ -129,7 +131,7 @@
 
 	if (!centerStyle) {
 		centerStyle = [[NSMutableParagraphStyle alloc] init];
-		[centerStyle setAlignment:NSCenterTextAlignment];
+		[centerStyle setAlignment:NSTextAlignmentCenter];
 	}
 
 	NSFont *font = [prefsController noteBodyFont];
@@ -252,13 +254,13 @@
 - (NSMenu*)directorySelectionMenu {
     NSMenu *theMenu = [[[NSMenu alloc] initWithTitle:@"Note Directory Menu"] autorelease];
     
-    FSRef targetRef = {{0}};
+    NVFileReference targetRef = {{0}};
     NSString *name = [prefsController displayNameForDefaultDirectoryWithFSRef:&targetRef];
     if (!name)
 		name = NSLocalizedString(@"<Directory unknown>", nil);
 	
 	NSImage *iconImage = nil;
-	if (!IsZeros(&targetRef, sizeof(FSRef)) || [[prefsController aliasDataForDefaultDirectory] fsRefAsAlias:&targetRef])
+	if (!IsZeros(&targetRef, sizeof(NVFileReference)) || [[prefsController aliasDataForDefaultDirectory] fsRefAsAlias:&targetRef])
 		iconImage = [NSImage smallIconForFSRef:&targetRef];
 	
     NSMenuItem *theMenuItem = [[[NSMenuItem alloc] initWithTitle:name action:nil keyEquivalent:@""] autorelease];
@@ -279,7 +281,7 @@
 }
 
 - (void)changeDefaultDirectory {
-	FSRef notesDirectoryRef;
+	NVFileReference notesDirectoryRef;
 	NSData *aliasData = nil;
 	NSString *directoryPath = nil;
 
@@ -287,9 +289,9 @@
 		
 		//make sure we're not choosing the same folder as what we started with, because:
 		//-[NotationController initWithAliasData:] might attempt to initialize journaling, which will already be in use
-		FSRef currentNotesDirectoryRef;
+		NVFileReference currentNotesDirectoryRef;
 		[[prefsController aliasDataForDefaultDirectory] fsRefAsAlias:&currentNotesDirectoryRef];
-		if (FSCompareFSRefs(&notesDirectoryRef, &currentNotesDirectoryRef) != noErr) {
+		if (NVCompareReferences(&notesDirectoryRef, &currentNotesDirectoryRef) != noErr) {
 			
 			if ((aliasData = [NSData aliasDataForFSRef:&notesDirectoryRef])) {
 				[prefsController setAliasDataForDefaultDirectory:aliasData sender:self];
@@ -307,7 +309,7 @@
 		[folderLocationsMenuButton selectItemAtIndex:0];
 }
 
-- (BOOL)getNewNotesRefFromOpenPanel:(FSRef*)notesDirectoryRef returnedPath:(NSString**)path {
+- (BOOL)getNewNotesRefFromOpenPanel:(NVFileReference*)notesDirectoryRef returnedPath:(NSString**)path {
     NSString *startingDirectory = nil;
 	
     if (!notesDirectoryRef) {
@@ -315,7 +317,7 @@
 		return NO;
     }
     
-    FSRef currentNotesDirectoryRef;
+    NVFileReference currentNotesDirectoryRef;
     //resolve alias to fsref; get path from fsref
     if ([[prefsController aliasDataForDefaultDirectory] fsRefAsAlias:&currentNotesDirectoryRef]) {
 		NSString *resolvedPath = [[NSFileManager defaultManager] pathWithFSRef:&currentNotesDirectoryRef];
@@ -333,18 +335,18 @@
     [openPanel setPrompt:NSLocalizedString(@"Select", @"title of open panel button to select a folder")];
     [openPanel setMessage:NSLocalizedString(@"Select the folder that Notational Velocity should use for reading and storing notes.",nil)];
     
-    if ([openPanel runModalForDirectory:startingDirectory file:@"Notational Data" types:nil] == NSOKButton) {
-		CFStringRef filename = (CFStringRef)[openPanel filename];
+    if (NVRunOpenPanel(openPanel, startingDirectory, @"Notational Data", nil) == NSModalResponseOK) {
+		CFStringRef filename = (CFStringRef)[[openPanel URL] path];
 		if (!filename)
 			return NO;
 		
 		if (path)
-			*path = [[[openPanel filename] copy] autorelease];
+			*path = [[[[openPanel URL] path] copy] autorelease];
 		
 		//yes, I know that navigation services uses uses FSRefs, but NSSavePanel saves us much more work
 		CFURLRef url = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, filename, kCFURLPOSIXPathStyle, true);
 		[(id)url autorelease];
-		if (!url || !CFURLGetFSRef(url, notesDirectoryRef))
+		if (!url || !NVURLGetFileReference(url, notesDirectoryRef))
 			return NO;
 		
 		return YES;
@@ -493,7 +495,7 @@
 	
 	//fix this math to convert between window and view coordinates for resolution independence
 	
-	float userSpaceScaleFactor = [window userSpaceScaleFactor];
+	float userSpaceScaleFactor = 1.0;
 	
     //to stop flicker, we make a temp blank view.
 	
@@ -508,7 +510,7 @@
     newFrame.size.width = viewFrameForWindow.size.width;
     newFrame.origin.y += (windowContentFrame.size.height - viewFrameForWindow.size.height);
     	
-    [window setShowsResizeIndicator:YES];
+
     [window setFrame:newFrame display:YES animate:YES];
 
     [window setContentView:prefsView];

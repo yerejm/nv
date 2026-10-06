@@ -3,12 +3,17 @@
 //
 
 #include <AvailabilityMacros.h>
+#include "NVFileReference.h"
 #ifndef MAC_OS_X_VERSION_10_6
 #define MAC_OS_X_VERSION_10_6 1060
 #endif
 
 #if __OBJC__
 #import <Cocoa/Cocoa.h>
+#import "NVArchive.h"
+#import "NVAppKit.h"
+#define NVFilenamesPasteboardType @"NSFilenamesPboardType"
+#define NVWebArchivePasteboardType @"Apple Web Archive pasteboard type"
 #endif
 
 #ifndef NSFoundationVersionNumber10_6
@@ -78,4 +83,3 @@ typedef char _COMPILE_ASSERT_SYMBOL(__LINE__, msg) [ ((test) ? 1 : -1) ]
 
 #define NOTES_MENU_ID 89
 #define VIEW_MENU_ID 99
-

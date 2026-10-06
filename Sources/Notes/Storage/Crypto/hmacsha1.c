@@ -104,7 +104,7 @@ IMPORTANT: On some systems it is required that RESBUF is correctly
 aligned for a 32 bits value.  */
 void *sha1_finish_ctx(sha1_ctx_nv *ctx, void *resbuf) {
 	/* Take yet unprocessed bytes into account.  */
-	uint32_t bytes = ctx->buflen;
+	uint32_t bytes = (uint32_t)ctx->buflen;
 	size_t pad;
 	
 	/* Now count remaining bytes.  */
@@ -187,7 +187,7 @@ void sha1_process_bytes (const void *buffer, size_t len, sha1_ctx_nv *ctx) {
 				left_over -= 64;
 				memcpy (ctx->buffer, &ctx->buffer[64], left_over);
 			}
-			ctx->buflen = left_over;
+			ctx->buflen = (uint32_t)left_over;
 		}
 }
 

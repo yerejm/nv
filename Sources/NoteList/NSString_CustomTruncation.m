@@ -26,9 +26,9 @@
 
 @implementation NSString (CustomTruncation)
 
-static NSMutableParagraphStyle *LineBreakingStyle();
-static NSDictionary *GrayTextAttributes();
-static NSDictionary *LineTruncAttributes();
+static NSMutableParagraphStyle *LineBreakingStyle(void);
+static NSDictionary *GrayTextAttributes(void);
+static NSDictionary *LineTruncAttributes(void);
 static size_t EstimatedCharCountForWidth(float upToWidth);
 
 
@@ -60,7 +60,7 @@ static size_t EstimatedCharCountForWidth(float upToWidth);
 			}
 			if (!CFStringGetBytes((CFStringRef)self, CFRangeMake(0, bodyCharCount), bodyPreviewEncoding, ' ', FALSE, 
 								  (UInt8 *)bodyPreviewBuffer, bodyCharCount + 1, &usedBufLen)) {
-				NSLog(@"can't get utf8 string from '%@' (charcount: %u)", self, bodyCharCount);
+				NSLog(@"can't get utf8 string from '%@' (charcount: %lu)", self, (unsigned long)bodyCharCount);
 				free(bodyPreviewBuffer);
 				return nil;
 			}
@@ -78,7 +78,7 @@ replace:
 																 encoding:CFStringConvertEncodingToNSStringEncoding(bodyPreviewEncoding) freeWhenDone:YES];
 	if (!truncatedBodyString) {
 		free(bodyPreviewBuffer);
-		NSLog(@"can't create cfstring from '%@' (cstr lens: %u/%d) with encoding %u (fastest = %u)", self, bodyCharCount, usedBufLen, bodyPreviewEncoding, CFStringGetFastestEncoding((CFStringRef)self)); 
+		NSLog(@"can't create cfstring from '%@' (cstr lens: %lu/%ld) with encoding %u (fastest = %u)", self, (unsigned long)bodyCharCount, (long)usedBufLen, bodyPreviewEncoding, CFStringGetFastestEncoding((CFStringRef)self));
 		return nil;
 	}
 	return [truncatedBodyString autorelease];
@@ -86,12 +86,12 @@ replace:
 
 static NSMutableDictionary *titleTruncAttrs = nil;
 
-void ResetFontRelatedTableAttributes() {
+void ResetFontRelatedTableAttributes(void) {
 	[titleTruncAttrs release];
 	titleTruncAttrs = nil;
 }
 
-static NSMutableParagraphStyle *LineBreakingStyle() {
+static NSMutableParagraphStyle *LineBreakingStyle(void) {
 	static NSMutableParagraphStyle *lineBreaksStyle = nil;
 	if (!lineBreaksStyle) {
 		lineBreaksStyle = [[NSMutableParagraphStyle alloc] init];
@@ -101,19 +101,19 @@ static NSMutableParagraphStyle *LineBreakingStyle() {
 	return lineBreaksStyle;
 }
 
-static NSDictionary *GrayTextAttributes() {
+static NSDictionary *GrayTextAttributes(void) {
 	static NSDictionary *grayTextAttributes = nil;
 	if (!grayTextAttributes) grayTextAttributes = [[NSDictionary dictionaryWithObjectsAndKeys:[NSColor grayColor], NSForegroundColorAttributeName, nil] retain];
 	return grayTextAttributes;
 }
 
-static NSDictionary *LineTruncAttributes() {
+static NSDictionary *LineTruncAttributes(void) {
 	static NSDictionary *lineTruncAttributes = nil;
 	if (!lineTruncAttributes) lineTruncAttributes = [[NSDictionary dictionaryWithObjectsAndKeys:LineBreakingStyle(), NSParagraphStyleAttributeName, nil] retain];
 	return lineTruncAttributes;
 }
 
-NSDictionary *LineTruncAttributesForTitle() {
+NSDictionary *LineTruncAttributesForTitle(void) {
 	if (!titleTruncAttrs) {
 		GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
 		unsigned int bitmap = [prefs tableColumnsBitmap];
@@ -121,7 +121,7 @@ NSDictionary *LineTruncAttributesForTitle() {
 		BOOL usesBold = ColumnIsSet(NoteLabelsColumn, bitmap) || ColumnIsSet(NoteDateCreatedColumn, bitmap) ||
 		ColumnIsSet(NoteDateModifiedColumn, bitmap) || [prefs tableColumnsShowPreview];
 		
-		titleTruncAttrs = [[NSDictionary dictionaryWithObjectsAndKeys:[[LineBreakingStyle() mutableCopy] autorelease], NSParagraphStyleAttributeName, 
+		titleTruncAttrs = [[NSMutableDictionary dictionaryWithObjectsAndKeys:[[LineBreakingStyle() mutableCopy] autorelease], NSParagraphStyleAttributeName,
 							(usesBold ? [NSFont boldSystemFontOfSize:fontSize] : [NSFont systemFontOfSize:fontSize]), NSFontAttributeName, nil] retain];
 		
 		if (ColumnIsSet(NoteDateCreatedColumn, bitmap) || ColumnIsSet(NoteDateModifiedColumn, bitmap)) {

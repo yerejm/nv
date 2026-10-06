@@ -6,16 +6,48 @@
 #import "PrefsWindowController.h"
 #import "NSData_transformations.h"
 
+@interface CompletionAlert : NSAlert
+@end
+@implementation CompletionAlert
+- (void)beginSheetModalForWindow:(NSWindow *)window completionHandler:(void (^)(NSModalResponse))handler {
+    handler(NSAlertSecondButtonReturn);
+}
+@end
+
+@interface CompletionRecorder : NSObject
+@property(nonatomic, assign) NSAlert *alert;
+@property(nonatomic, assign) NSModalResponse response;
+@property(nonatomic, assign) void *context;
+- (void)alertDidEnd:(NSAlert *)alert returnCode:(NSModalResponse)response contextInfo:(void *)context;
+@end
+@implementation CompletionRecorder
+- (void)alertDidEnd:(NSAlert *)alert returnCode:(NSModalResponse)response contextInfo:(void *)context {
+    self.alert = alert;
+    self.response = response;
+    self.context = context;
+}
+@end
+
 @interface NativeResourceTests : XCTestCase
 @end
 @implementation NativeResourceTests
+- (void)testAlertCompletionPreservesAlertResponseAndContext {
+    [NSApplication sharedApplication];
+    CompletionAlert *alert = [[[CompletionAlert alloc] init] autorelease];
+    CompletionRecorder *recorder = [[[CompletionRecorder alloc] init] autorelease];
+    NSWindow *window = [[[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 100, 100) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO] autorelease];
+    NVBeginAlertSheet(alert, window, recorder, @selector(alertDidEnd:returnCode:contextInfo:), recorder);
+    XCTAssertEqual(recorder.alert, alert);
+    XCTAssertEqual(recorder.response, NSAlertSecondButtonReturn);
+    XCTAssertEqual(recorder.context, recorder);
+}
 - (void)testLoadsAllLocalizedCompiledResources {
     [NSApplication sharedApplication];
     NSString *root = NVResourcesDirectory();
     NSString *directory = [NSTemporaryDirectory() stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]];
     XCTAssertTrue([[NSFileManager defaultManager] createDirectoryAtPath:directory withIntermediateDirectories:YES attributes:nil error:NULL]);
-    FSRef reference;
-    XCTAssertEqual(FSPathMakeRef((const UInt8 *)directory.fileSystemRepresentation, &reference, NULL), noErr);
+    NVFileReference reference;
+    XCTAssertEqual(NVPathMakeReference((const UInt8 *)directory.fileSystemRepresentation, &reference, NULL), noErr);
     GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
     [prefs setAliasDataForDefaultDirectory:[NSData aliasDataForFSRef:&reference] sender:prefs];
     [prefs setNotationPrefs:[[[NotationPrefs alloc] init] autorelease] sender:prefs];

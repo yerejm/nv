@@ -44,7 +44,7 @@ unsigned int hoursFromAbsoluteTime(CFAbsoluteTime absTime) {
 }
 
 //should be called after midnight, and then all the notes should have their date-strings recomputed
-void resetCurrentDayTime() {
+void resetCurrentDayTime(void) {
     CFAbsoluteTime current = CFAbsoluteTimeGetCurrent();
     
     CFTimeZoneRef timeZone = CFTimeZoneCopyDefault();
@@ -211,7 +211,7 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 	return [self stringByTrimmingCharactersInSet:[NSCharacterSet characterSetWithCharactersInString:@"./*: \t\n\r"]];
 }
 
-- (NSString*)filenameExpectingAdditionalCharCount:(int)charCount {
+- (NSString*)filenameExpectingAdditionalCharCount:(NSInteger)charCount {
 	NSString *newfilename = self;
 	if ([self length] + charCount > 255)
 		newfilename = [self substringToIndex: 255 - charCount];
@@ -228,7 +228,7 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 
 #if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_5
 - (NSString*)stringByReplacingOccurrencesOfString:(NSString*)stringToReplace withString:(NSString*)replacementString {
-	//NSLog(@"NSString_NV: %s", _cmd);
+	//NSLog(@"NSString_NV: %s", sel_getName(_cmd));
 	NSMutableString *sanitizedName = [[self mutableCopy] autorelease];
 	[sanitizedName replaceOccurrencesOfString:stringToReplace withString:replacementString options:NSLiteralSearch range:NSMakeRange(0, [sanitizedName length])];
 
@@ -239,8 +239,8 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 - (NSString*)fourCharTypeString {
 	if ([[self dataUsingEncoding:NSMacOSRomanStringEncoding allowLossyConversion:YES] length] >= 4) {
 		//only truncate; don't return a string containing null characters for the last few bytes
-		OSType type = UTGetOSTypeFromString((CFStringRef)self);
-		return [(id)UTCreateStringForOSType(type) autorelease];
+		OSType type = NVOSTypeFromString((CFStringRef)self);
+		return [(id)NVStringFromOSType(type) autorelease];
 	}
 	return self;
 }
@@ -256,9 +256,9 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 - (void)copyItemToPasteboard:(id)sender {
 	
 	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-	[pasteboard declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
+	[pasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
 	[pasteboard setString:[sender isKindOfClass:[NSMenuItem class]] ? [sender representedObject] : self
-				  forType:NSStringPboardType];
+				  forType:NSPasteboardTypeString];
 }
 
 
@@ -273,7 +273,7 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 	//find the first line, whitespace or no whitespace
 	
 	NSCharacterSet *titleDelimiters = [NSCharacterSet characterSetWithCharactersInString:
-											  [NSString stringWithFormat:@"\n\r\t%C%C", NSLineSeparatorCharacter, NSParagraphSeparatorCharacter]];
+											  [NSString stringWithFormat:@"\n\r\t%C%C", (unichar)NSLineSeparatorCharacter, (unichar)NSParagraphSeparatorCharacter]];
 	
 	NSScanner *scanner = [NSScanner scannerWithString:self];
 	[scanner setCharactersToBeSkipped:[[[NSMutableCharacterSet alloc] init] autorelease]];
@@ -328,13 +328,13 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 }
 
 //the following three methods + function come courtesy of Mike Ferris' TextExtras
-+ (NSString *)tabbifiedStringWithNumberOfSpaces:(unsigned)origNumSpaces tabWidth:(unsigned)tabWidth usesTabs:(BOOL)usesTabs {
++ (NSString *)tabbifiedStringWithNumberOfSpaces:(NSUInteger)origNumSpaces tabWidth:(NSUInteger)tabWidth usesTabs:(BOOL)usesTabs {
 	static NSMutableString *sharedString = nil;
-	static unsigned numTabs = 0;
-    static unsigned numSpaces = 0;
+	static NSUInteger numTabs = 0;
+    static NSUInteger numSpaces = 0;
 	
-    int diffInTabs;
-    int diffInSpaces;
+    NSInteger diffInTabs;
+    NSInteger diffInSpaces;
 	
     // TabWidth of 0 means don't use tabs!
     if (!usesTabs || (tabWidth == 0)) {
@@ -352,7 +352,7 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
     if (diffInTabs < 0) {
         [sharedString deleteCharactersInRange:NSMakeRange(0, -diffInTabs)];
     } else {
-        unsigned numToInsert = diffInTabs;
+        NSUInteger numToInsert = diffInTabs;
         while (numToInsert > 0) {
             [sharedString replaceCharactersInRange:NSMakeRange(0, 0) withString:@"\t"];
             numToInsert--;
@@ -363,7 +363,7 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
     if (diffInSpaces < 0) {
         [sharedString deleteCharactersInRange:NSMakeRange(numTabs, -diffInSpaces)];
     } else {
-        unsigned numToInsert = diffInSpaces;
+        NSUInteger numToInsert = diffInSpaces;
         while (numToInsert > 0) {
             [sharedString replaceCharactersInRange:NSMakeRange(numTabs, 0) withString:@" "];
             numToInsert--;
@@ -375,14 +375,14 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
     return sharedString;
 }
 
-- (unsigned)numberOfLeadingSpacesFromRange:(NSRange*)range tabWidth:(unsigned)tabWidth {
+- (NSUInteger)numberOfLeadingSpacesFromRange:(NSRange*)range tabWidth:(NSUInteger)tabWidth {
     // Returns number of spaces, accounting for expanding tabs.
     NSRange searchRange = (range ? *range : NSMakeRange(0, [self length]));
     unichar buff[100];
     unsigned i = 0;
-    unsigned spaceCount = 0;
+    NSUInteger spaceCount = 0;
     BOOL done = NO;
-    unsigned tabW = tabWidth;
+    NSUInteger tabW = tabWidth;
     NSUInteger endOfWhiteSpaceIndex = NSNotFound;
 	
     if (!range || range->length == 0) {
@@ -481,7 +481,9 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 }
 
 - (NSString*)stringWithPercentEscapes {
-	return [(NSString *) CFURLCreateStringByAddingPercentEscapes(NULL, (CFStringRef)[[self mutableCopy] autorelease], NULL, CFSTR("=,!$&'()*+;@?\n\"<>#\t :/"),kCFStringEncodingUTF8) autorelease];
+    NSMutableCharacterSet *allowed = [[[NSCharacterSet URLQueryAllowedCharacterSet] mutableCopy] autorelease];
+    [allowed removeCharactersInString:@"=,!$&'()*+;@?\n\"<>#\t :/"];
+    return [self stringByAddingPercentEncodingWithAllowedCharacters:allowed];
 }
 
 + (NSString*)reasonStringFromCarbonFSError:(OSStatus)err {
@@ -497,20 +499,10 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 	return reason;
 }
 
-- (BOOL)UTIOfFileConformsToType:(NSString*)type {
-	
-	CFStringRef fileUTI = NULL;
-	FSRef fileRef;
-	if (FSPathMakeRef((const UInt8 *)[self fileSystemRepresentation], &fileRef, NULL) == noErr) {
-		if (LSCopyItemAttribute(&fileRef, kLSRolesAll, kLSItemContentType, (CFTypeRef*)&fileUTI) == noErr) {
-			if (fileUTI) {
-				BOOL conforms = UTTypeConformsTo(fileUTI, (CFStringRef)type);
-				CFRelease(fileUTI);
-				return conforms;
-			}
-		}
-	}
-	return NO;
+- (BOOL)UTIOfFileConformsToType:(NSString *)identifier {
+    UTType *type = nil;
+    [[NSURL fileURLWithPath:self] getResourceValue:&type forKey:NSURLContentTypeKey error:NULL];
+    return [type conformsToType:[UTType typeWithIdentifier:identifier]];
 }
 
 - (CFUUIDBytes)uuidBytes {
@@ -560,7 +552,7 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 		while ((tabRange = [self rangeOfString:@"\t" options:NSLiteralSearch range:nextRange]).location != NSNotFound) {
 			
 			int numberOfSpacesPerTab = tabWidth;
-			int locationOnLine = tabRange.location - [self lineRangeForRange:tabRange].location;
+			NSInteger locationOnLine = tabRange.location - [self lineRangeForRange:tabRange].location;
 			if (numberOfSpacesPerTab != 0) {
 				int numberOfSpacesLess = locationOnLine % numberOfSpacesPerTab;
 				numberOfSpacesPerTab = numberOfSpacesPerTab - numberOfSpacesLess;
@@ -579,7 +571,7 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 			nextRange = NSMakeRange(rangeLoc, [self length] - rangeLoc);
 		}
 	} @catch (NSException *e) {
-		NSLog(@"%s got an exception: %@", _cmd, [e reason]);
+		NSLog(@"%s got an exception: %@", sel_getName(_cmd), [e reason]);
 	}
 }
 
@@ -590,7 +582,7 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 						   ofGuessedEncoding:&anEncoding withPath:[filename fileSystemRepresentation] orWithFSRef:NULL];
 }
 
-+ (NSMutableString*)newShortLivedStringFromData:(NSMutableData*)data ofGuessedEncoding:(NSStringEncoding*)encoding withPath:(const char*)aPath orWithFSRef:(const FSRef*)fsRef{
++ (NSMutableString*)newShortLivedStringFromData:(NSMutableData*)data ofGuessedEncoding:(NSStringEncoding*)encoding withPath:(const char*)aPath orWithFSRef:(const NVFileReference*)fsRef{
 	//this will fail if data lacks a BOM, but try it first as it's the fastest check
 	NSMutableString* stringFromData = [data newStringUsingBOMReturningEncoding:encoding];
 	if (stringFromData) {
@@ -614,9 +606,9 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 	if (hasHighASCII) {
 		//check the file on disk for extended attributes only if absolutely necessary
 		NSStringEncoding extendedAttrsEncoding = 0;
-		if (!aPath && fsRef && !IsZeros(fsRef, sizeof(FSRef))) {
+		if (!aPath && fsRef && !IsZeros(fsRef, sizeof(NVFileReference))) {
 			NSMutableData *pathData = [NSMutableData dataWithLength:4 * 1024];
-			if (FSRefMakePath(fsRef, [pathData mutableBytes], [pathData length]) == noErr)
+			if (NVReferenceMakePath(fsRef, [pathData mutableBytes], [pathData length]) == noErr)
 				extendedAttrsEncoding = [[NSFileManager defaultManager] textEncodingAttributeOfFSPath:[pathData bytes]];
 		} else if (aPath) {
 			extendedAttrsEncoding = [[NSFileManager defaultManager] textEncodingAttributeOfFSPath:aPath];

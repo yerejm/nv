@@ -52,11 +52,11 @@
 	
 	// ok, we have some data 
 	NSPropertyListFormat formatFound;
-	NSString* errorString = nil;
-	id outObject = [NSPropertyListSerialization propertyListFromData:nsData mutabilityOption:kCFPropertyListImmutable format:&formatFound errorDescription:&errorString];
+	NSError* errorString = nil;
+	id outObject = [NSPropertyListSerialization propertyListWithData:nsData options:NSPropertyListImmutable format:&formatFound error:&errorString];
 	if (errorString) {
-		NSLog(@"%s: error deserializing labels: %@", _cmd, errorString);
-		[errorString autorelease];
+		NSLog(@"%s: error deserializing labels: %@", sel_getName(_cmd), errorString);
+
 		return nil;
 	}
 	
@@ -77,11 +77,11 @@
 	// always set data as binary plist.
 	NSData* dataToSendNS = nil;
 	if (plistObject) {
-		NSString *errorString = nil;
-		dataToSendNS = [NSPropertyListSerialization dataFromPropertyList:plistObject format:kCFPropertyListBinaryFormat_v1_0 errorDescription:&errorString];
+		NSError *errorString = nil;
+		dataToSendNS = [NSPropertyListSerialization dataWithPropertyList:plistObject format:NSPropertyListBinaryFormat_v1_0 options:0 error:&errorString];
 		if (errorString) {
-			NSLog(@"%s: error serializing labels: %@", _cmd, errorString);
-			[errorString autorelease];
+			NSLog(@"%s: error serializing labels: %@", sel_getName(_cmd), errorString);
+
 			return NO;
 		}
 	}
@@ -96,7 +96,7 @@
 	}
 	
 	if (returnVal < 0) {
-		if (errno != ENOATTR) NSLog(@"%s: couldn't set/remove attribute: %d (value '%@')", _cmd, errno, dataToSendNS);
+		if (errno != ENOATTR) NSLog(@"%s: couldn't set/remove attribute: %d (value '%@')", sel_getName(_cmd), errno, dataToSendNS);
 		return NO;
 	}
 
@@ -111,7 +111,7 @@
 	
 	CFStringEncoding cfStringEncoding = CFStringConvertNSStringEncodingToEncoding(encoding);
 	if (cfStringEncoding == kCFStringEncodingInvalidId) {
-		NSLog(@"%s: encoding %lu is invalid!", _cmd, encoding);
+		NSLog(@"%s: encoding %lu is invalid!", sel_getName(_cmd), encoding);
 		return NO;
 	}
 	NSString *textEncStr = [(NSString *)CFStringConvertEncodingToIANACharSetName(cfStringEncoding) stringByAppendingFormat:@";%@", 
@@ -158,18 +158,17 @@ errorReturn:
 	return 0;
 }
 
-- (NSString*)pathCopiedFromAliasData:(NSData*)aliasData {
-    AliasHandle inAlias;
-    CFStringRef path = NULL;
-	FSAliasInfoBitmap whichInfo = kFSAliasInfoNone;
-	FSAliasInfo info;
-    if (aliasData && PtrToHand([aliasData bytes], (Handle*)&inAlias, [aliasData length]) == noErr && 
-		FSCopyAliasInfo(inAlias, NULL, NULL, &path, &whichInfo, &info) == noErr) {
-		//this method doesn't always seem to work	
-		return [(NSString*)path autorelease];
+- (NSString *)pathCopiedFromAliasData:(NSData *)data {
+    if (!data) return nil;
+    NSDictionary *values = [NSURL resourceValuesForKeys:@[NSURLPathKey] fromBookmarkData:data];
+    if (![values objectForKey:NSURLPathKey]) {
+        CFDataRef bookmark = NVBookmarkFromLegacyAlias((CFDataRef)data);
+        if (bookmark) {
+            values = [NSURL resourceValuesForKeys:@[NSURLPathKey] fromBookmarkData:(NSData *)bookmark];
+            CFRelease(bookmark);
+        }
     }
-    
-    return nil;
+    return [values objectForKey:NSURLPathKey];
 }
 
 - (NSString*)pathFromFSPath:(char*)path {
@@ -177,12 +176,12 @@ errorReturn:
 	return [self stringWithFileSystemRepresentation:path length:strlen(path)];
 }
 
-- (NSString*)pathWithFSRef:(FSRef*)fsRef {
+- (NSString*)pathWithFSRef:(NVFileReference*)fsRef {
 	NSString *path = nil;
 	
 	const UInt32 maxPathSize = 4 * 1024;
 	UInt8 *convertedPath = (UInt8*)malloc(maxPathSize * sizeof(UInt8));
-	if (FSRefMakePath(fsRef, convertedPath, maxPathSize) == noErr) {
+	if (NVReferenceMakePath(fsRef, convertedPath, maxPathSize) == noErr) {
 		path = [self stringWithFileSystemRepresentation:(char*)convertedPath length:strlen((char*)convertedPath)];
 	}
 	free(convertedPath);

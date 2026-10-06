@@ -65,12 +65,12 @@ static id _sharedKeyComboPanel = nil;
      
 }
 
-- (void)chooseHotKeyDidEnd:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void  *)contextInfo {
+- (void)chooseHotKeyDidEnd:(NSWindow *)sheet returnCode:(NSModalResponse)returnCode contextInfo:(void  *)contextInfo {
 	PTHotKey *hotKey = (PTHotKey *)contextInfo;
 	
 	[[self window] close];
 	
-	if (hotKey && returnCode == NSOKButton) {
+	if (hotKey && returnCode == NSModalResponseOK) {
         [hotKey setKeyCombo: [self keyCombo]];
 		[[PTHotKeyCenter sharedCenter] updateHotKey: hotKey];
 		if ([currentModalDelegate respondsToSelector:@selector(keyComboPanelEnded:)])
@@ -92,12 +92,11 @@ static id _sharedKeyComboPanel = nil;
 	currentModalDelegate = [target retain];
 	[hotKey retain];
 
-	[NSApp beginSheet:[self window] modalForWindow:mainWindow modalDelegate:self 
-	   didEndSelector:@selector(chooseHotKeyDidEnd:returnCode:contextInfo:) contextInfo:hotKey];
+	NVBeginSheet([self window], mainWindow, self, @selector(chooseHotKeyDidEnd:returnCode:contextInfo:), hotKey);
 }
 
 - (void)runModalForHotKey: (PTHotKey*)hotKey {
-	int resultCode;
+	NSModalResponse resultCode;
     
     [self setKeyCombo: [hotKey keyCombo]];
 	[self setKeyBindingName: [hotKey name]];
@@ -105,7 +104,7 @@ static id _sharedKeyComboPanel = nil;
     resultCode = [NSApp runModalForWindow: [self window]];
 	[[self window] orderOut:self];
     
-	if (resultCode == NSOKButton) {
+	if (resultCode == NSModalResponseOK) {
         [hotKey setKeyCombo: [self keyCombo]];
 		[[PTHotKeyCenter sharedCenter] updateHotKey: hotKey];
 	}
@@ -147,24 +146,24 @@ static id _sharedKeyComboPanel = nil;
 
 - (IBAction)ok: (id)sender {
 	if ([[self window] isModalPanel])
-		[NSApp stopModalWithCode:NSOKButton];
+		[NSApp stopModalWithCode:NSModalResponseOK];
 	else
-		[NSApp endSheet:[self window] returnCode:NSOKButton];
+		[NSApp endSheet:[self window] returnCode:NSModalResponseOK];
 		
 }
 
 - (IBAction)cancel: (id)sender {
 	if ([[self window] isModalPanel])
-		[NSApp stopModalWithCode:NSCancelButton];
+		[NSApp stopModalWithCode:NSModalResponseCancel];
 	else
-		[NSApp endSheet:[self window] returnCode:NSCancelButton];
+		[NSApp endSheet:[self window] returnCode:NSModalResponseCancel];
 }
 
 - (IBAction)clear: (id)sender
 {
     [self setKeyCombo: [PTKeyCombo clearKeyCombo]];
 	if ([[self window] isModalPanel])
-		[NSApp stopModalWithCode:NSOKButton];
+		[NSApp stopModalWithCode:NSModalResponseOK];
 }
 
 - (void)noteKeyBroadcast: (NSNotification*)note

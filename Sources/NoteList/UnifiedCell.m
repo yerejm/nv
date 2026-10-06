@@ -135,7 +135,7 @@
 	return color;
 }
 
-static NSShadow* ShadowForSnowLeopard() {
+static NSShadow* ShadowForSnowLeopard(void) {
 	static NSShadow *sh = nil;
 	if (!sh) {
 		sh = [[NSShadow alloc] init];
@@ -165,7 +165,7 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 	static NSMutableParagraphStyle *alignStyle = nil;
 	if (!alignStyle) {
 		alignStyle = [[NSMutableParagraphStyle alloc] init];
-		[alignStyle setAlignment:NSRightTextAlignment];
+		[alignStyle setAlignment:NSTextAlignmentRight];
 	}
 	return [NSMutableDictionary dictionaryWithObjectsAndKeys:alignStyle, NSParagraphStyleAttributeName, [self font], NSFontAttributeName, nil];
 }
@@ -179,12 +179,12 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 	//draw note date and tags
 
 	NSMutableDictionary *baseAttrs = [self baseTextAttributes];
-	BOOL isActive = (IsLeopardOrLater && [tv selectionHighlightStyle] == NSTableViewSelectionHighlightStyleSourceList) ? YES : [tv isActiveStyle];
+	BOOL isActive = (IsLeopardOrLater && [tv style] == NSTableViewStyleSourceList) ? YES : [tv isActiveStyle];
 	
 	NSColor *textColor = ([self isHighlighted] && isActive) ? [NSColor whiteColor] : (![self isHighlighted] ? [[self class] dateColorForTint]/*[NSColor grayColor]*/ : nil);
 	if (textColor)
 		[baseAttrs setObject:textColor forKey:NSForegroundColorAttributeName];
-	if (IsSnowLeopardOrLater && [self isHighlighted] && ([tv selectionHighlightStyle] == NSTableViewSelectionHighlightStyleSourceList)) {
+	if (IsSnowLeopardOrLater && [self isHighlighted] && ([tv style] == NSTableViewStyleSourceList)) {
 		[baseAttrs setObject:ShadowForSnowLeopard() forKey:NSShadowAttributeName];
 	}
 	

@@ -6,6 +6,6 @@
 
 #include <Carbon/Carbon.h>
 
-OSErr FSExchangeObjectsEmulate(const FSRef *sourceRef, const FSRef *destRef, FSRef *newSourceRef, FSRef *newDestRef);
-Boolean VolumeOfFSRefSupportsExchangeObjects(const FSRef *fsRef);
+OSErr FSExchangeObjectsEmulate(const NVFileReference *sourceRef, const NVFileReference *destRef, NVFileReference *newSourceRef, NVFileReference *newDestRef);
+Boolean VolumeOfFSRefSupportsExchangeObjects(const NVFileReference *fsRef);
 u_int32_t volumeCapabilities(const char *path);

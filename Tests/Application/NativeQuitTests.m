@@ -47,7 +47,7 @@
     QuitPreferences *prefs = [[[QuitPreferences alloc] init] autorelease];
     prefs.events = events;
     QuitController *controller = [[[QuitController alloc] initWithStorage:storage preferences:prefs] autorelease];
-    [controller applicationWillTerminate:nil];
+    [controller applicationWillTerminate:[NSNotification notificationWithName:NSApplicationWillTerminateNotification object:NSApp]];
     NSArray *expected = success ? @[@"save selection", @"save bookmarks", @"stop monitoring", @"flush notes", @"close journal", @"save preferences"]
                                : @[@"save selection", @"save bookmarks", @"stop monitoring", @"flush notes", @"save preferences"];
     XCTAssertEqualObjects(events, expected);

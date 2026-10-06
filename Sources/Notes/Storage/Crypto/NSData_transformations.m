@@ -17,7 +17,7 @@
 #include <unistd.h>
 #include <zlib.h>
 #include <CommonCrypto/CommonCryptor.h>
-#include <CommonCrypto/CommonDigest.h>
+#include "NVMD5.h"
 
 #import <WebKit/WebKit.h>
 
@@ -36,6 +36,7 @@
  * size at the end of the compressed data
  */
 - (NSMutableData *)compressedDataAtLevel:(int)level {
+    if ([self length] > UINT32_MAX) return nil;
 	
 	NSMutableData *newData;
 	unsigned long bufferLength;
@@ -53,7 +54,7 @@
 		if (zlibError == Z_OK) {
 			// Add original size to the end of the buffer, written big-endian
 			*( (unsigned *) ([newData mutableBytes] + bufferLength) ) =
-            NSSwapHostIntToBig( [self length] );
+            NSSwapHostIntToBig((unsigned int)[self length]);
 			[newData setLength:bufferLength + sizeof(unsigned)];
 		} else {
 			NSLog(@"error compressing: %s", zError(zlibError));
@@ -157,7 +158,7 @@
 	return randomData;
 }
 
-- (NSMutableData*)derivedKeyOfLength:(int)len salt:(NSData*)salt iterations:(int)count {
+- (NSMutableData*)derivedKeyOfLength:(NSUInteger)len salt:(NSData*)salt iterations:(int)count {
 	
 	NSMutableData *derivedKey = [NSMutableData dataWithLength:len];
 	
@@ -169,7 +170,15 @@
 
 - (unsigned long)CRC32 {
 	uLong crc = crc32(0L, Z_NULL, 0);
-    return crc32(crc, [self bytes], [self length]);
+    const Bytef *bytes = [self bytes];
+    NSUInteger remaining = [self length];
+    while (remaining) {
+        uInt length = (uInt)MIN(remaining, (NSUInteger)UINT_MAX);
+        crc = crc32(crc, bytes, length);
+        bytes += length;
+        remaining -= length;
+    }
+    return crc;
 }
 
 - (NSData*)SHA1Digest {
@@ -189,53 +198,58 @@
 	NSMutableData *digest = [NSMutableData dataWithLength:16];
     
     BrokenMD5Init(&context);
-    BrokenMD5Update(&context, [self bytes], [self length]);
+    const unsigned char *bytes = [self bytes];
+    NSUInteger remaining = [self length];
+    while (remaining) {
+        unsigned length = (unsigned)MIN(remaining, (NSUInteger)UINT_MAX);
+        BrokenMD5Update(&context, bytes, length);
+        bytes += length;
+        remaining -= length;
+    }
     BrokenMD5Final([digest mutableBytes], &context);
 	
 	return digest;
 }
 
 - (NSData*)MD5Digest {
-    CC_MD5_CTX context;
-    CC_MD5_Init(&context);
+    NVMD5_CTX context;
+    NVMD5Init(&context);
     const unsigned char *bytes = [self bytes];
     NSUInteger remaining = [self length];
     while (remaining) {
-        CC_LONG length = (CC_LONG)MIN(remaining, (NSUInteger)UINT32_MAX);
-        CC_MD5_Update(&context, bytes, length);
+        unsigned length = (unsigned)MIN(remaining, (NSUInteger)UINT32_MAX);
+        NVMD5Update(&context, bytes, length);
         bytes += length;
         remaining -= length;
     }
-    unsigned char digest[CC_MD5_DIGEST_LENGTH];
-    CC_MD5_Final(digest, &context);
+    unsigned char digest[16];
+    NVMD5Final(digest, &context);
     return [NSData dataWithBytes:digest length:sizeof(digest)];
 }
 
 
-- (NSString*)pathURLFromWebArchive {
-
-	WebResource *resource = [[[[WebArchive alloc] initWithData:self] autorelease] mainResource];
-	NSURL *url = [resource URL];
-	
-	//it's not any kind of URL we want to keep
-	//this is probably text from another app's internal WebKit view
-	if ([[url scheme] isEqualToString:@"applewebdata"] || [[url scheme] isEqualToString:@"x-msg"])
-		return nil;
-	
-	return [url absoluteString];
+- (NSString *)pathURLFromWebArchive {
+    id archive = [NSPropertyListSerialization propertyListWithData:self options:NSPropertyListImmutable format:NULL error:NULL];
+    if (![archive isKindOfClass:[NSDictionary class]]) return nil;
+    id resource = [archive objectForKey:@"WebMainResource"];
+    if (![resource isKindOfClass:[NSDictionary class]]) return nil;
+    id string = [resource objectForKey:@"WebResourceURL"];
+    if (![string isKindOfClass:[NSString class]]) return nil;
+    NSURL *url = [NSURL URLWithString:string];
+    if ([[url scheme] isEqualToString:@"applewebdata"] || [[url scheme] isEqualToString:@"x-msg"]) return nil;
+    return [url absoluteString];
 }
 
-- (BOOL)fsRefAsAlias:(FSRef*)fsRef {
-    AliasHandle aliasHandle;
-    Boolean changedThrownAway;
-    
-    if (self && PtrToHand([self bytes], (Handle*)&aliasHandle, [self length]) == noErr) {
-		
-		if (FSResolveAliasWithMountFlags(NULL, aliasHandle, fsRef, &changedThrownAway, kResolveAliasFileNoUI) == noErr)
-			return YES;
+- (BOOL)fsRefAsAlias:(NVFileReference *)ref {
+    NSURL *url = [NSURL URLByResolvingBookmarkData:self options:NSURLBookmarkResolutionWithoutUI | NSURLBookmarkResolutionWithoutMounting relativeToURL:nil bookmarkDataIsStale:NULL error:NULL];
+    if (!url) {
+        CFDataRef bookmark = NVBookmarkFromLegacyAlias((CFDataRef)self);
+        if (bookmark) {
+            url = [NSURL URLByResolvingBookmarkData:(NSData *)bookmark options:NSURLBookmarkResolutionWithoutUI | NSURLBookmarkResolutionWithoutMounting relativeToURL:nil bookmarkDataIsStale:NULL error:NULL];
+            CFRelease(bookmark);
+        }
     }
-	
-    return NO;
+    return NVURLGetFileReference((CFURLRef)url, ref);
 }
 
 + (NSData*)uncachedDataFromFile:(NSString*)filename {
@@ -243,35 +257,15 @@
 	return [NSData dataWithContentsOfFile:filename options:NSUncachedRead error:NULL];
 }
 
-+ (NSData*)aliasDataForFSRef:(FSRef*)fsRef {
-    
-    FSRef userHomeFoundRef, *relativeRef = &userHomeFoundRef;
-    
-    OSErr err = FSFindFolder(kUserDomain, kCurrentUserFolderType, kCreateFolder, &userHomeFoundRef);
-    if (err != noErr) {
-		relativeRef = NULL;
-		NSLog(@"FSFindFolder error: %d", err);
-    }
-    
-    AliasHandle aliasHandle;
-    NSData *theData = nil;
-    
-    //fill handle from fsref, storing path relative to user directory
-    if (FSNewAlias(relativeRef, fsRef, &aliasHandle) == noErr && aliasHandle != NULL) {
-		HLock((Handle)aliasHandle);
-		theData = [NSData dataWithBytes:*aliasHandle length:GetHandleSize((Handle) aliasHandle)];
-		HUnlock((Handle)aliasHandle);
-    }
-    
-    return theData;
++ (NSData *)aliasDataForFSRef:(NVFileReference *)ref {
+    char path[PATH_MAX];
+    if (NVReferenceMakePath(ref, (UInt8 *)path, sizeof(path))) return nil;
+    NSURL *url = [NSURL fileURLWithFileSystemRepresentation:path isDirectory:NO relativeToURL:nil];
+    return [url bookmarkDataWithOptions:NSURLBookmarkCreationSuitableForBookmarkFile includingResourceValuesForKeys:nil relativeToURL:nil error:NULL];
 }
 
-//yes, to do the same encoding detection we could use something like initWithContentsOfFile: or 
-//initWithContentsOfFile:(NSString *)path usedEncoding:(NSStringEncoding *)enc error:(NSError **)error
-//but those 1) require file paths and 2) the non-deprecated version is available only on 10.4
-
 - (NSMutableString*)newStringUsingBOMReturningEncoding:(NSStringEncoding*)encoding {
-	unsigned len = [self length];
+	NSUInteger len = [self length];
 	NSMutableString *string = nil;
 	
 	if (len % 2 != 0 || !len) {
@@ -310,7 +304,7 @@
 	if (foundBOM) {
 		unsigned char *u = (unsigned char*)malloc(len);
 		if (swapped) {
-			unsigned i;
+			NSUInteger i;
 			
 			for (i = 0; i < len; i += 2) {
 				u[i] = b[i + 1];
@@ -352,9 +346,9 @@
 @implementation NSMutableData (NVCryptoRelated)
 
 - (void)reverseBytes {
-	int head, tail;
+	NSUInteger head, tail;
 	unsigned char temp, *str = [self mutableBytes];
-	if (!str) return;
+	if (!str || ![self length]) return;
 	tail = [self length] - 1;
 	
 	for (head = 0; head < tail; ++head, --tail) {
@@ -366,16 +360,19 @@
 
 //extends nsmutabledata if necessary
 - (void)alignForBlockSize:(int)alignedBlockSize {
-	int dataBlockSize = [self length];
-	int paddedDataBlockSize = 0;
+	if (alignedBlockSize <= 0) return;
+    NSUInteger dataBlockSize = [self length];
+    if (dataBlockSize > NSUIntegerMax - (NSUInteger)alignedBlockSize)
+        [NSException raise:NSRangeException format:@"Data is too large to align"];
+	NSUInteger paddedDataBlockSize = 0;
 	
-	if (dataBlockSize <= alignedBlockSize)
+	if (dataBlockSize <= (NSUInteger)alignedBlockSize)
 		paddedDataBlockSize = alignedBlockSize;
 	else
 		paddedDataBlockSize = alignedBlockSize * ((dataBlockSize + (alignedBlockSize-1)) / alignedBlockSize);
 
 	//if malloc was used on conventional architectures, nsdata should be smart enough not to have to allocate a new block
-	int difference = paddedDataBlockSize - dataBlockSize;
+	NSUInteger difference = paddedDataBlockSize - dataBlockSize;
 	if (difference > 0)
 		[self increaseLengthBy:difference];	
 }

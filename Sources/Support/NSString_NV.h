@@ -26,13 +26,13 @@
 @interface NSString (NV)
 
 unsigned int hoursFromAbsoluteTime(CFAbsoluteTime absTime);
-void resetCurrentDayTime();
+void resetCurrentDayTime(void);
 + (NSString*)relativeTimeStringWithDate:(CFDateRef)date relativeDay:(int)day;
 + (NSString*)relativeDateStringWithAbsoluteTime:(CFAbsoluteTime)absTime;
 - (CFArrayRef)copyRangesOfWordsInString:(NSString*)findString inRange:(NSRange)limitRange;
 + (NSString*)customPasteboardTypeOfCode:(int)code;
 - (NSString*)stringAsSafePathExtension;
-- (NSString*)filenameExpectingAdditionalCharCount:(int)charCount;
+- (NSString*)filenameExpectingAdditionalCharCount:(NSInteger)charCount;
 #if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_5
 - (NSString*)stringByReplacingOccurrencesOfString:(NSString*)stringToReplace withString:(NSString*)replacementString;
 #endif
@@ -43,8 +43,8 @@ void resetCurrentDayTime();
 - (NSString*)syntheticTitleAndSeparatorWithContext:(NSString**)sepStr bodyLoc:(NSUInteger*)bodyLoc 
 										  oldTitle:(NSString*)oldTitle maxTitleLen:(NSUInteger)maxTitleLen;
 - (NSString*)syntheticTitleAndTrimmedBody:(NSString**)newBody;
-+ (NSString *)tabbifiedStringWithNumberOfSpaces:(unsigned)origNumSpaces tabWidth:(unsigned)tabWidth usesTabs:(BOOL)usesTabs;
-- (unsigned)numberOfLeadingSpacesFromRange:(NSRange*)range tabWidth:(unsigned)tabWidth;
++ (NSString *)tabbifiedStringWithNumberOfSpaces:(NSUInteger)origNumSpaces tabWidth:(NSUInteger)tabWidth usesTabs:(BOOL)usesTabs;
+- (NSUInteger)numberOfLeadingSpacesFromRange:(NSRange*)range tabWidth:(NSUInteger)tabWidth;
 
 	BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex);
 
@@ -73,7 +73,7 @@ void resetCurrentDayTime();
 - (void)replaceTabsWithSpacesOfWidth:(int)tabWidth;
 + (NSMutableString*)newShortLivedStringFromFile:(NSString*)filename;
 + (NSMutableString*)newShortLivedStringFromData:(NSMutableData*)data ofGuessedEncoding:(NSStringEncoding*)encoding 
-									   withPath:(const char*)aPath orWithFSRef:(const FSRef*)fsRef;
+									   withPath:(const char*)aPath orWithFSRef:(const NVFileReference*)fsRef;
 @end
 
 @interface NSScanner (NV)

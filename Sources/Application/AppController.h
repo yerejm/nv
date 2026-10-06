@@ -32,9 +32,9 @@
 @class RBSplitSubview;
 @class LinearDividerShader;
 
-@interface AppController : NSObject 
+@interface AppController : NSObject
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
-<NSToolbarDelegate, NSTableViewDelegate, NSWindowDelegate, NSTextFieldDelegate, NSTextViewDelegate>
+<NSMenuItemValidation, NSApplicationDelegate, NSToolbarDelegate, NSTableViewDelegate, NSWindowDelegate, NSTextFieldDelegate, NSTextViewDelegate>
 #endif
 {
     IBOutlet DualField *field;
@@ -51,7 +51,7 @@
 	NSImage *verticalDividerImg;
 	LinearDividerShader *dividerShader;
 	
-	NSString *URLToInterpretOnLaunch;
+	NSURL *URLToInterpretOnLaunch;
 	NSMutableArray *pathsToOpenOnLaunch;
 	
     NSUndoManager *windowUndoManager;
@@ -95,7 +95,7 @@ void outletObjectAwoke(id sender);
 - (NoteObject*)createNoteIfNecessary;
 - (void)searchForString:(NSString*)string;
 - (NSUInteger)revealNote:(NoteObject*)note options:(NSUInteger)opts;
-- (BOOL)displayContentsForNoteAtIndex:(int)noteIndex;
+- (BOOL)displayContentsForNoteAtIndex:(NSInteger)noteIndex;
 - (void)processChangedSelectionForTable:(NSTableView*)table;
 - (void)setEmptyViewState:(BOOL)state;
 - (void)cancelOperation:(id)sender;

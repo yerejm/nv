@@ -22,14 +22,14 @@
     XCTAssertNil([note originalNote]);
 }
 - (void)testLegacyKeyedDeletionArchive {
-    [self assertDeletion:[NSKeyedUnarchiver unarchiveObjectWithData:[self fixture:@"deleted-keyed.archive"]]];
+    [self assertDeletion:NVUnarchiveObject([self fixture:@"deleted-keyed.archive"])];
 }
 - (void)testLegacyPositionalDeletionArchive {
-    [self assertDeletion:[NSUnarchiver unarchiveObjectWithData:[self fixture:@"deleted-positional.archive"]]];
+    [self assertDeletion:NVUnarchiveLegacyObject([self fixture:@"deleted-positional.archive"])];
 }
 - (void)testDeletionIdentityHashAndJournalSequence {
-    DeletedNoteObject *first = [NSKeyedUnarchiver unarchiveObjectWithData:[self fixture:@"deleted-keyed.archive"]];
-    DeletedNoteObject *second = [NSUnarchiver unarchiveObjectWithData:[self fixture:@"deleted-positional.archive"]];
+    DeletedNoteObject *first = NVUnarchiveObject([self fixture:@"deleted-keyed.archive"]);
+    DeletedNoteObject *second = NVUnarchiveLegacyObject([self fixture:@"deleted-positional.archive"]);
     XCTAssertEqualObjects(first, second);
     XCTAssertEqual(first.hash, second.hash);
     XCTAssertEqual(([NSSet setWithObjects:first, second, nil].count), 1U);

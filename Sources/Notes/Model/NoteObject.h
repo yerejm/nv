@@ -69,7 +69,7 @@ typedef struct _NoteFilterContext {
 	unsigned int logSequenceNumber;
 	
 	//not determined until it's time to read to or write from a text file
-	FSRef *noteFileRef;
+	NVFileReference *noteFileRef;
 
 	CFUUIDBytes uniqueNoteIDBytes;
 	
@@ -168,7 +168,7 @@ NSInteger compareFileSize(id *a, id *b);
 - (void)removeAllSyncMDForService:(NSString*)serviceName;
 //- (void)removeKey:(NSString*)aKey forService:(NSString*)serviceName;
 
-- (OSStatus)writeCurrentFileEncodingToFSRef:(FSRef*)fsRef;
+- (OSStatus)writeCurrentFileEncodingToFSRef:(NVFileReference*)fsRef;
 - (void)_setFileEncoding:(NSStringEncoding)encoding;
 - (BOOL)setFileEncodingAndReinterpret:(NSStringEncoding)encoding;
 - (BOOL)upgradeToUTF8IfUsingSystemEncoding;
@@ -194,7 +194,7 @@ NSInteger compareFileSize(id *a, id *b);
 - (void)removeFileFromDirectory;
 - (BOOL)removeUsingJournal:(WALStorageController*)wal;
 
-- (OSStatus)exportToDirectoryRef:(FSRef*)directoryRef withFilename:(NSString*)userFilename usingFormat:(int)storageFormat overwrite:(BOOL)overwrite;
+- (OSStatus)exportToDirectoryRef:(NVFileReference*)directoryRef withFilename:(NSString*)userFilename usingFormat:(int)storageFormat overwrite:(BOOL)overwrite;
 - (NSRange)nextRangeForWords:(NSArray*)words options:(unsigned)opts range:(NSRange)inRange;
 - (void)editExternallyUsingEditor:(ExternalEditor*)ed;
 - (void)abortEditingInExternalEditor;

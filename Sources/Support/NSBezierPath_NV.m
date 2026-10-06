@@ -40,12 +40,12 @@
 
 + (NSBezierPath *)bezierPathWithLayoutManager:(NSLayoutManager*)layoutManager characterRange:(NSRange)charRange atPoint:(NSPoint)point {
 	NSRange range = [layoutManager glyphRangeForCharacterRange:charRange actualCharacterRange:NULL];
-	NSGlyph *glyphs = (NSGlyph *)malloc(sizeof(NSGlyph) * range.length * 2);
-	[layoutManager getGlyphs:glyphs range:range];
+	CGGlyph *glyphs = (CGGlyph *)malloc(sizeof(CGGlyph) * range.length);
+	[layoutManager getGlyphsInRange:range glyphs:glyphs properties:NULL characterIndexes:NULL bidiLevels:NULL];
 		
 	NSBezierPath *path = [NSBezierPath bezierPath];
 	[path moveToPoint:point];
-	[path appendBezierPathWithGlyphs:glyphs count:range.length inFont:[[layoutManager textStorage] font]];
+	[path appendBezierPathWithCGGlyphs:glyphs count:range.length inFont:[[layoutManager textStorage] font]];
 	
 	free(glyphs);
 	
@@ -58,30 +58,13 @@
 
 @implementation NSImage (NV)
 
-+ (NSImage*)smallIconForFSRef:(FSRef*)fsRef {
-    OSStatus err = noErr;
-    
-    if (!fsRef)
-		return nil;
-    
-    IconRef iconRef;
-    if ((err = GetIconRefFromFileInfo(fsRef, 0, NULL, 0, NULL, kIconServicesNormalUsageFlag, &iconRef, NULL)) == noErr) {
-		
-		NSImage *image = [[[NSImage alloc] initWithSize:NSMakeSize(16.0f, 16.0f)] autorelease];
-		NSRect frame = NSMakeRect(0.0f,0.0f,16.0f,16.0f);
-		
-		[image lockFocus];
-		err = PlotIconRefInContext([[NSGraphicsContext currentContext] graphicsPort], (CGRect *)&frame, 0, 0, nil, 0, iconRef);
-		[image unlockFocus];
-		
-		if (err == noErr)
-			return image;
-    }
-    
-    NSLog(@"smallIconForFSRef error: %d", err);
-    
-    return nil;
++ (NSImage *)smallIconForFSRef:(NVFileReference *)ref {
+    char path[PATH_MAX];
+    if (NVReferenceMakePath(ref, (UInt8 *)path, sizeof(path))) return nil;
+    NSString *string = [[NSFileManager defaultManager] stringWithFileSystemRepresentation:path length:strlen(path)];
+    NSImage *image = [[[NSWorkspace sharedWorkspace] iconForFile:string] copy];
+    [image setSize:NSMakeSize(16, 16)];
+    return [image autorelease];
 }
-
 
 @end

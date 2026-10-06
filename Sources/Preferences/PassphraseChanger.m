@@ -44,16 +44,14 @@
 			[changePassphraseWindow close];
 			
 		} else {
-			NSRunAlertPanel(NSLocalizedString(@"Your entered new passphrase does not match your verification passphrase.",nil),
-							NSLocalizedString(@"Please try again.",nil), NSLocalizedString(@"OK",nil), nil, nil);
+			NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"Your entered new passphrase does not match your verification passphrase.",nil), NSLocalizedString(@"Please try again.",nil), NSLocalizedString(@"OK",nil), nil, nil);
 			[verifyChangedPasswordField setStringValue:@""];
 			[verifyChangedPasswordField performSelector:@selector(selectText:) withObject:nil afterDelay:0.0];
 			[self textDidChange:nil];
 		}
 	} else {
 		
-		NSRunAlertPanel(NSLocalizedString(@"Your entered current passphrase is incorrect.",nil), 
-						NSLocalizedString(@"Please try again.",nil), NSLocalizedString(@"OK",nil), nil, nil);
+		NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"Your entered current passphrase is incorrect.",nil), NSLocalizedString(@"Please try again.",nil), NSLocalizedString(@"OK",nil), nil, nil);
 		[currentPasswordField setStringValue:@""];
 		[currentPasswordField performSelector:@selector(selectText:) withObject:nil afterDelay:0.0];
 	}
@@ -108,7 +106,7 @@
 
 - (void)showAroundWindow:(NSWindow*)window {
 	if (!changePassphraseWindow) {
-		if (![NSBundle loadNibNamed:@"PassphraseChanger" owner:self])  {
+		if (!NVLoadNib(@"PassphraseChanger", self))  {
 			NSLog(@"Failed to load PassphraseChanger.nib");
 			NSBeep();
 			return;
@@ -129,11 +127,10 @@
 	
 	[okChangeButton setEnabled:NO];
 		
-	[NSApp beginSheet:changePassphraseWindow modalForWindow:window modalDelegate:self 
-	   didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:) contextInfo:NULL];
+	NVBeginSheet(changePassphraseWindow, window, self, @selector(sheetDidEnd:returnCode:contextInfo:), NULL);
 }
 
-- (void)sheetDidEnd:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo {
+- (void)sheetDidEnd:(NSWindow *)sheet returnCode:(NSModalResponse)returnCode contextInfo:(void *)contextInfo {
 	[newPasswordField setStringValue:@""];
 	[verifyChangedPasswordField setStringValue:@""];
 	[currentPasswordField setStringValue:@""];

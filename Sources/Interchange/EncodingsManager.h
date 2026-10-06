@@ -32,7 +32,7 @@
 	NSStringEncoding currentEncoding;
 	NoteObject *note;
 	NSData *noteData;
-	FSRef fsRef;
+	NVFileReference fsRef;
 }
 
 + (EncodingsManager *)sharedManager;

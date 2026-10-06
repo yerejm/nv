@@ -107,7 +107,7 @@ NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serv
 
 - (void)setNotesStorageFormat:(int)formatID;
 - (BOOL)shouldDisplaySheetForProposedFormat:(int)proposedFormat;
-- (void)noteFilesCleanupSheetDidEnd:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo;
+- (void)noteFilesCleanupSheetDidEnd:(NSWindow *)sheet returnCode:(NSModalResponse)returnCode contextInfo:(void *)contextInfo;
 - (void)setConfirmsFileDeletion:(BOOL)value;
 - (void)setDoesEncryption:(BOOL)value;
 - (void)setSecureTextEntry:(BOOL)value;
@@ -118,19 +118,19 @@ NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serv
 + (NSString*)pathExtensionForFormat:(int)format;
 
 //used to view tableviews
-- (NSString*)typeStringAtIndex:(int)typeIndex;
-- (NSString*)pathExtensionAtIndex:(int)pathIndex;
+- (NSString*)typeStringAtIndex:(NSInteger)typeIndex;
+- (NSString*)pathExtensionAtIndex:(NSInteger)pathIndex;
 - (unsigned int)indexOfChosenPathExtension;
 - (NSString*)chosenPathExtensionForFormat:(int)format;
-- (int)typeStringsCount;
-- (int)pathExtensionsCount;
+- (NSInteger)typeStringsCount;
+- (NSInteger)pathExtensionsCount;
 
 //used to edit tableviews
 - (void)addAllowedPathExtension:(NSString*)extension;
-- (BOOL)removeAllowedPathExtensionAtIndex:(unsigned int)extensionIndex;
-- (BOOL)setChosenPathExtensionAtIndex:(unsigned int)extensionIndex;
+- (BOOL)removeAllowedPathExtensionAtIndex:(NSUInteger)extensionIndex;
+- (BOOL)setChosenPathExtensionAtIndex:(NSUInteger)extensionIndex;
 - (BOOL)addAllowedType:(NSString*)type;
-- (void)removeAllowedTypeAtIndex:(unsigned int)index;
+- (void)removeAllowedTypeAtIndex:(NSUInteger)index;
 - (BOOL)setExtension:(NSString*)newExtension atIndex:(unsigned int)oldIndex;
 - (BOOL)setType:(NSString*)newType atIndex:(unsigned int)oldIndex;
 

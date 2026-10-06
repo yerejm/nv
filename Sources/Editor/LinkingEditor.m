@@ -119,27 +119,27 @@ CGFloat _perceptualDarkness(NSColor*a);
 		[self setTypingAttributes:[prefsController noteBodyAttributes]];
 		//[textView setFont:[prefsController noteBodyFont]];
 	} else if ([selectorString isEqualToString:SEL_STR(setMakeURLsClickable:sender:)]) {
-		
+
 		[self setLinkTextAttributes:[self preferredLinkAttributes]];
-		
+
 	} else if ([selectorString isEqualToString:SEL_STR(setBackgroundTextColor:sender:)]) {
-		
+
 		//link-color is derived both from foreground and background colors
 		[self setBackgroundColor:[prefsController backgroundTextColor]];
 		[self updateTextColors];
-		
+
 	} else if ([selectorString isEqualToString:SEL_STR(setForegroundTextColor:sender:)]) {
-		
+
 		[self updateTextColors];
 		[self setTypingAttributes:[prefsController noteBodyAttributes]];
-		
-	} else if ([selectorString isEqualToString:SEL_STR(setSearchTermHighlightColor:sender:)] || 
+
+	} else if ([selectorString isEqualToString:SEL_STR(setSearchTermHighlightColor:sender:)] ||
 			   [selectorString isEqualToString:SEL_STR(setShouldHighlightSearchTerms:sender:)]) {
-		
+
 		if (![prefsController highlightSearchTerms]) {
 			[self removeHighlightedTerms];
 		} else {
-			NSString *typedString = [[NSApp delegate] typedString];
+			NSString *typedString = [(AppController *)[NSApp delegate] typedString];
 			if (typedString)
 				[self highlightTermsTemporarilyReturningFirstRange:typedString avoidHighlight:NO];
 		}
@@ -149,7 +149,7 @@ CGFloat _perceptualDarkness(NSColor*a);
 - (BOOL)becomeFirstResponder {
 	[notesTableView setShouldUseSecondaryHighlightColor:YES];
 
-	if ([[[self window] currentEvent] type] == NSKeyDown && [[[self window] currentEvent] firstCharacter] == '\t') {
+	if ([[[self window] currentEvent] type] == NSEventTypeKeyDown && [[[self window] currentEvent] firstCharacter] == '\t') {
 		//"indicate" the current cursor/selection when moving focus to this field, but only if the user did not click here
 		NSRange range = [self selectedRange];
 		if (range.length) {
@@ -157,11 +157,11 @@ CGFloat _perceptualDarkness(NSColor*a);
 			[self performSelector:@selector(indicateRange:) withObject:[NSValue valueWithRange:range] afterDelay:0];
 		}
 	}
-	
+
 	[self setTypingAttributes:[prefsController noteBodyAttributes]];
-	
+
 	[self performSelector:@selector(_fixCursorForBackgroundUpdatingMouseInside:) withObject:[NSNumber numberWithBool:YES] afterDelay:0.0];
-	
+
 	return [super becomeFirstResponder];
 }
 
@@ -173,9 +173,9 @@ CGFloat _perceptualDarkness(NSColor*a);
 
 - (BOOL)resignFirstResponder {
 	[notesTableView setShouldUseSecondaryHighlightColor:NO];
-	
+
 	[self performSelector:@selector(_fixCursorForBackgroundUpdatingMouseInside:) withObject:[NSNumber numberWithBool:YES] afterDelay:0.0];
-	
+
 	return [super resignFirstResponder];
 }
 
@@ -185,7 +185,7 @@ CGFloat _perceptualDarkness(NSColor*a);
 }
 
 - (void)setBackgroundColor:(NSColor*)aColor {
-	backgroundIsDark = (_perceptualDarkness([aColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace]) > 0.5);
+	backgroundIsDark = (_perceptualDarkness([aColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]]) > 0.5);
 	[super setBackgroundColor:aColor];
 }
 
@@ -221,8 +221,8 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 - (NSColor*)_linkColorForForegroundColor:(NSColor*)fgColor backgroundColor:(NSColor*)bgColor {
 	//if fgColor is black, choose blue; otherwise, rotate hue (keeping the same sat.) until color is different enough
 	
-	fgColor = [fgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-	bgColor = [bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+	fgColor = [fgColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+	bgColor = [bgColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
 	
 	CGFloat hue, brightness, saturation, alpha, diffInc = 0.5;
 	NSUInteger rotationsLeft = 25;
@@ -254,11 +254,11 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 }
 
 - (NSColor*)_selectionColorForForegroundColor:(NSColor*)fgColor backgroundColor:(NSColor*)bgColor {
-	fgColor = [fgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-	bgColor = [bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+	fgColor = [fgColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+	bgColor = [bgColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
 
 	NSColor *proposedBlend = [fgColor blendedColorWithFraction:0.5 ofColor:bgColor];
-	NSColor *defaultColor = [[NSColor selectedTextBackgroundColor] colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+	NSColor *defaultColor = [[NSColor selectedTextBackgroundColor] colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
 	
 	float fgDiff = _perceptualColorDifference(proposedBlend, fgColor);
 	float fgSelDiff = _perceptualColorDifference(defaultColor, fgColor);
@@ -279,8 +279,8 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 
 
 - (NSColor*)_insertionPointColorForForegroundColor:(NSColor*)fgColor backgroundColor:(NSColor*)bgColor {
-	fgColor = [fgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
-	bgColor = [bgColor colorUsingColorSpaceName:NSCalibratedRGBColorSpace];
+	fgColor = [fgColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+	bgColor = [bgColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
 
 	CGFloat hue, brightness, saturation;
 	[fgColor getHue:&hue saturation:&saturation brightness:&brightness alpha:NULL];
@@ -344,9 +344,9 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 - (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard type:(NSString *)type {
 	//NSLog(@"readSelectionFromPasteboard: %@ (total %@)", type, [[pboard types] description]);
 	
-	if ([type isEqualToString:NSFilenamesPboardType]) {
+	if ([type isEqualToString:NVFilenamesPasteboardType]) {
 		//paste as a file:// URL, so that it can be linked
-		NSString *allURLsString = [[NSApp delegate] stringWithNoteURLsOnPasteboard:pboard];
+		NSString *allURLsString = [(AppController *)[NSApp delegate] stringWithNoteURLsOnPasteboard:pboard];
 		
 		if ([allURLsString length]) {
 			NSRange selectedRange = [self rangeForUserTextChange];
@@ -359,10 +359,10 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 		}
 	}
 	
-	if ([type isEqualToString:NSRTFPboardType] || [type isEqualToString:NVPTFPboardType] || [type isEqualToString:NSHTMLPboardType]) {
+	if ([type isEqualToString:NSPasteboardTypeRTF] || [type isEqualToString:NVPTFPboardType] || [type isEqualToString:NSPasteboardTypeHTML]) {
 		//strip formatting if RTF and stick it into a new pboard
 		
-		NSMutableAttributedString *newString = [[[NSMutableAttributedString alloc] performSelector:[type isEqualToString:NSHTMLPboardType] ? 
+		NSMutableAttributedString *newString = [[[NSMutableAttributedString alloc] performSelector:[type isEqualToString:NSPasteboardTypeHTML] ?
 												 @selector(initWithHTML:documentAttributes:) : @selector(initWithRTF:documentAttributes:) 
 																						withObject:[pboard dataForType:type] withObject:nil] autorelease];
 		if ([newString length]) {
@@ -378,7 +378,7 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 			if ([self shouldChangeTextInRange:selectedRange replacementString:[newString string]]) {
 				
 				[self replaceCharactersInRange:selectedRange withRTF:[newString RTFFromRange:
-																	  NSMakeRange(0, [newString length]) documentAttributes:nil]];
+																	  NSMakeRange(0, [newString length]) documentAttributes:@{}]];
 			
 				//paragraph styles will ALWAYS be added _after_ replaceCharactersInRange, it seems
 				//[[self textStorage] removeAttribute:NSParagraphStyleAttributeName range:NSMakeRange(0, [[self string] length])];
@@ -398,11 +398,11 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 }
 
 - (NSArray *)readablePasteboardTypes {
-	NSMutableArray *types = [NSMutableArray arrayWithObjects:NSFilenamesPboardType, NVPTFPboardType, NSStringPboardType, nil];
+	NSMutableArray *types = [NSMutableArray arrayWithObjects:NVFilenamesPasteboardType, NVPTFPboardType, NSPasteboardTypeString, nil];
 	
 	if ([prefsController pastePreservesStyle]) {
-		[types insertObject:NSRTFPboardType atIndex:2];
-		[types insertObject:NSHTMLPboardType atIndex:3];
+		[types insertObject:NSPasteboardTypeRTF atIndex:2];
+		[types insertObject:NSPasteboardTypeHTML atIndex:3];
 	}
 	
 	return types;
@@ -410,7 +410,7 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 
 - (BOOL)writeSelectionToPasteboard:(NSPasteboard *)pboard type:(NSString *)type {
 	
-	if ([type isEqualToString:NVPTFPboardType] || [type isEqualToString:NSRTFPboardType]) {
+	if ([type isEqualToString:NVPTFPboardType] || [type isEqualToString:NSPasteboardTypeRTF]) {
 		//always preserve RTF to allow pasting into ourselves; prejudice against external sources
 		
 		NSMutableAttributedString *newString = [[[self textStorage] attributedSubstringFromRange:[self selectedRange]] mutableCopy];
@@ -418,7 +418,7 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 		if (![type isEqualToString:NVPTFPboardType])
 			[newString removeAttribute:NSForegroundColorAttributeName range:NSMakeRange(0, [newString length])];
 
-		NSData *rtfData = [newString RTFFromRange:NSMakeRange(0, [newString length]) documentAttributes:nil];;
+		NSData *rtfData = [newString RTFFromRange:NSMakeRange(0, [newString length]) documentAttributes:@{}];;
 		if (rtfData) [pboard setData:rtfData forType:type];
 		[newString release];
 		return YES;
@@ -430,7 +430,7 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 #define COPY_PASTE_DEBUG 0
 
 - (NSArray *)writablePasteboardTypes {
-	NSMutableArray *types = [NSMutableArray arrayWithObjects:NVPTFPboardType, NSStringPboardType, nil];
+	NSMutableArray *types = [NSMutableArray arrayWithObjects:NVPTFPboardType, NSPasteboardTypeString, nil];
 	
 	NSRange selectedRange = [self selectedRange];
 	if (selectedRange.length) {
@@ -442,7 +442,7 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 			
 			NSAttributedString *newString = [[self textStorage] attributedSubstringFromRange:selectedRange];
 			NSRange effectiveRange = NSMakeRange(0,0);
-			unsigned int stringLength = [newString length];
+			NSUInteger stringLength = [newString length];
 			
 			//iterate over all styles; if any are acceptable, copy as RTF
 			while (NSMaxRange(effectiveRange) < stringLength) {
@@ -473,7 +473,7 @@ copyRTFType:
 			NSLog(@"copying RTF due to multiple attributes");
 			[[self layoutManager] addTemporaryAttributes:[prefsController searchTermHighlightAttributes] forCharacterRange:effectiveRange];
 #endif
-			[types insertObject:NSRTFPboardType atIndex:1];
+			[types insertObject:NSPasteboardTypeRTF atIndex:1];
 		}
 	}
 	
@@ -559,7 +559,7 @@ copyRTFType:
 //use with rangesOfWordsInString:(NSString*)findString earliestRange:(NSRange*)aRange inRange:
 - (void)highlightRangesTemporarily:(CFArrayRef)ranges {
 	CFIndex rangeIndex;
-	int bodyLength = [[self string] length];
+	NSInteger bodyLength = [[self string] length];
 	NSDictionary *highlightDict = [prefsController searchTermHighlightAttributes];
 	
 	for (rangeIndex = 0; rangeIndex < CFArrayGetCount(ranges); rangeIndex++) {
@@ -625,13 +625,13 @@ copyRTFType:
 		return [super selectionRangeForProposedRange:proposedSelRange granularity:granularity];
 	}
 	
-	unsigned int location = [super selectionRangeForProposedRange:proposedSelRange granularity:NSSelectByCharacter].location;
-	int originalLocation = location;
+	NSUInteger location = [super selectionRangeForProposedRange:proposedSelRange granularity:NSSelectByCharacter].location;
+	NSInteger originalLocation = location;
 	
 	NSString *completeString = [self string];
 	unichar characterToCheck = [completeString characterAtIndex:location];
 	unsigned short skipMatchingBrace = 0;
-	unsigned int lengthOfString = [completeString length];
+	NSUInteger lengthOfString = [completeString length];
 	if (lengthOfString == proposedSelRange.location) { // To avoid crash if a double-click occurs after any text
 		return [super selectionRangeForProposedRange:proposedSelRange granularity:granularity];
 	}
@@ -640,7 +640,7 @@ copyRTFType:
 	
 	char *rightGroupings = ")}]>";
 	char *leftGroupings = "({[<";
-	int groupingIndex = 0;
+	NSInteger groupingIndex = 0;
 	
 	char *rightChar = strchr(rightGroupings, (char)characterToCheck);
 	if (rightChar) {
@@ -705,11 +705,11 @@ copyRTFType:
 }
 
 - (IBAction)performFindPanelAction:(id)sender {
-	id controller = [NSApp delegate];
+	id controller = (AppController *)[NSApp delegate];
     
-    int rowNumber = -1;
-    int totalNotes = [notesTableView numberOfRows];
-    int tag = [sender tag];
+    NSInteger rowNumber = -1;
+    NSInteger totalNotes = [notesTableView numberOfRows];
+    NSInteger tag = [sender tag];
     
     if (![controller selectedNoteObject]) {
 		rowNumber = (tag == NSFindPanelActionPrevious ? totalNotes - 1 : 0);
@@ -740,12 +740,12 @@ copyRTFType:
 
 - (BOOL)performKeyEquivalent:(NSEvent *)anEvent {
 	
-	if ([anEvent modifierFlags] & NSCommandKeyMask) {
+	if ([anEvent modifierFlags] & NSEventModifierFlagCommand) {
 		
 		unichar keyChar = [anEvent firstCharacterIgnoringModifiers];
 		if (keyChar == NSCarriageReturnCharacter || keyChar == NSNewlineCharacter || keyChar == NSEnterCharacter) {
 			
-			unsigned charIndex = [self selectedRange].location;
+			NSUInteger charIndex = [self selectedRange].location;
 			
 			id aLink = [self highlightLinkAtIndex:charIndex];
 			if ([aLink isKindOfClass:[NSURL class]]) {
@@ -777,9 +777,9 @@ copyRTFType:
 
 - (BOOL)jumpToRenaming {
 	NSEvent *event = [[self window] currentEvent];
-	if ([event type] == NSKeyDown && ![event isARepeat] && NSEqualRanges([self selectedRange], NSMakeRange(0, 0))) {
+	if ([event type] == NSEventTypeKeyDown && ![event isARepeat] && NSEqualRanges([self selectedRange], NSMakeRange(0, 0))) {
 		//command-left at the beginning of the note--jump to editing the title!
-		[[NSApp delegate] renameNote:nil];
+		[(AppController *)[NSApp delegate] renameNote:nil];
 		NSText *editor = [notesTableView currentEditor];
 		NSRange endRange = NSMakeRange([[editor string] length], 0);
 		[editor setSelectedRange:endRange];
@@ -835,11 +835,11 @@ copyRTFType:
 		
 	} else if ([prefsController softTabs]) {
 		
-		int numberOfSpacesPerTab = [prefsController numberOfSpacesInTab];
+		NSInteger numberOfSpacesPerTab = [prefsController numberOfSpacesInTab];
 
-		int locationOnLine = range.location - [[self string] lineRangeForRange:range].location;
+		NSInteger locationOnLine = range.location - [[self string] lineRangeForRange:range].location;
 		if (numberOfSpacesPerTab != 0) {
-			int numberOfSpacesLess = locationOnLine % numberOfSpacesPerTab;
+			NSInteger numberOfSpacesLess = locationOnLine % numberOfSpacesPerTab;
 			numberOfSpacesPerTab = numberOfSpacesPerTab - numberOfSpacesLess;
 		}
 		NSMutableString *spacesString = [[NSMutableString alloc] initWithCapacity:numberOfSpacesPerTab];
@@ -847,10 +847,10 @@ copyRTFType:
 			[spacesString appendString:@" "];
 		}
 		
-		[self insertText:spacesString];
+		[self insertText:spacesString replacementRange:[self selectedRange]];
 		[spacesString release];
 	} else {
-		[self insertText:@"\t"];
+		[self insertText:@"\t" replacementRange:[self selectedRange]];
 	}
 }
 
@@ -872,11 +872,11 @@ copyRTFType:
 					// At beginning of line.  Delete normally.
 					[super deleteBackward:sender];
 				} else {
-					unsigned tabWidth = [prefsController numberOfSpacesInTab];
-					unsigned indentWidth = 4;
+					NSUInteger tabWidth = [prefsController numberOfSpacesInTab];
+					NSUInteger indentWidth = 4;
 					BOOL usesTabs = ![prefsController softTabs];
 					NSRange leadingSpaceRange = paraRange;
-					unsigned leadingSpaces = [string numberOfLeadingSpacesFromRange:&leadingSpaceRange tabWidth:tabWidth];
+					NSUInteger leadingSpaces = [string numberOfLeadingSpacesFromRange:&leadingSpaceRange tabWidth:tabWidth];
 					
 					if (charRange.location > NSMaxRange(leadingSpaceRange)) {
 						// Not in leading whitespace.  Delete normally.
@@ -892,7 +892,7 @@ copyRTFType:
 						}
 						
 						NSTextStorage *text = [self textStorage];
-						unsigned leadingIndents = leadingSpaces / indentWidth;
+						NSUInteger leadingIndents = leadingSpaces / indentWidth;
 						NSString *replaceString;
 						
 						// If we were indented to an fractional level just go back to the last even multiple of indentWidth, if we were exactly on, go back a full level.
@@ -937,15 +937,15 @@ copyRTFType:
 				charRange.location--;
 			}
 			if ((charRange.location > 0) && !IsHardLineBreakUnichar([string characterAtIndex:(charRange.location - 1)], string, charRange.location - 1)) {
-				unsigned tabWidth = [prefsController numberOfSpacesInTab];
+				NSUInteger tabWidth = [prefsController numberOfSpacesInTab];
 				NSRange paraRange = [string lineRangeForRange:NSMakeRange(charRange.location - 1, 1)];
-				unsigned leadingSpaces = [string numberOfLeadingSpacesFromRange:&paraRange tabWidth:tabWidth];
+				NSUInteger leadingSpaces = [string numberOfLeadingSpacesFromRange:&paraRange tabWidth:tabWidth];
 
 				insertString = [insertString stringByAppendingString:[NSString tabbifiedStringWithNumberOfSpaces:leadingSpaces tabWidth:tabWidth 
 																										usesTabs:![prefsController softTabs]]];
 			}
 		}
-		[self insertText:insertString];
+		[self insertText:insertString replacementRange:[self selectedRange]];
 	}	
 }*/
 
@@ -1066,9 +1066,9 @@ copyRTFType:
 	[[self undoManager] setActionName:NSLocalizedString(@"Plain Text Style",nil)];
 }
 
-- (id)highlightLinkAtIndex:(unsigned)givenIndex {
-	unsigned totalLength = [[self string] length];
-	unsigned charIndex = givenIndex;
+- (id)highlightLinkAtIndex:(NSUInteger)givenIndex {
+	NSUInteger totalLength = [[self string] length];
+	NSUInteger charIndex = givenIndex;
 	if (charIndex >= totalLength)
 		charIndex = totalLength - 1;
 
@@ -1083,7 +1083,7 @@ copyRTFType:
 - (void)clickedOnLink:(id)aLink atIndex:(NSUInteger)charIndex {
 	NSEvent *currentEvent = [[self window] currentEvent];
 	
-	if (![prefsController URLsAreClickable] && [currentEvent modifierFlags] & NSCommandKeyMask) {
+	if (![prefsController URLsAreClickable] && [currentEvent modifierFlags] & NSEventModifierFlagCommand) {
 		
 		[self highlightLinkAtIndex:charIndex];
 		
@@ -1094,7 +1094,7 @@ copyRTFType:
 	}
 	
 	if ([aLink isKindOfClass:[NSURL class]] && [[aLink scheme] isEqualToString:@"nv"]) {
-		[[NSApp delegate] interpretNVURL:aLink];
+		[(AppController *)[NSApp delegate] interpretNVURL:aLink];
 	} else {
 		[super clickedOnLink:aLink atIndex:charIndex];
 	}
@@ -1356,7 +1356,7 @@ static long (*GetGetScriptManagerVariablePointer())(short) {
 				//so instead of inserting the extra space, delete both that previously-carried-bullet and the newline added by -super up there
 				[[self textStorage] deleteCharactersInRange:NSMakeRange(realBulletRange.location, realBulletRange.length + 1)];
 			} else {
-				[self insertText:previousLineWhitespaceString];
+				[self insertText:previousLineWhitespaceString replacementRange:[self selectedRange]];
 				if (carriedBulletRange.length) {
 					[[self layoutManager] addTemporaryAttributes:[NSDictionary dictionaryWithObject:[NSNull null] forKey:NVHiddenBulletIndentAttributeName] 
 											   forCharacterRange:carriedBulletRange];
@@ -1433,7 +1433,7 @@ static long (*GetGetScriptManagerVariablePointer())(short) {
 #if PASSWORD_SUGGESTIONS
         theMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"New Password...", "new password command in the edit menu")
 												 action:@selector(showGeneratedPasswords:) keyEquivalent:@"\\"];
-        [theMenuItem setKeyEquivalentModifierMask:NSCommandKeyMask];
+        [theMenuItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
         [theMenuItem setTarget:nil]; // First Responder being the current Link Editor
         [editMenu addItem:theMenuItem];
         [theMenuItem release];
@@ -1444,7 +1444,7 @@ static long (*GetGetScriptManagerVariablePointer())(short) {
 #if PASSWORD_SUGGESTIONS
         [theMenuItem setAlternate:YES];
 #endif
-        [theMenuItem setKeyEquivalentModifierMask:NSCommandKeyMask|NSAlternateKeyMask];
+        [theMenuItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand|NSEventModifierFlagOption];
         [theMenuItem setTarget:nil]; // First Responder being the current Link Editor
         [editMenu addItem:theMenuItem];
         [theMenuItem release];
@@ -1454,7 +1454,7 @@ static long (*GetGetScriptManagerVariablePointer())(short) {
 
 - (void)insertPassword:(NSString*)password
 {
-    [self insertText:password];
+    [self insertText:password replacementRange:[self selectedRange]];
     @try {
     NSPasteboard *pb = [NSPasteboard generalPasteboard];
     #if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_6
@@ -1462,8 +1462,8 @@ static long (*GetGetScriptManagerVariablePointer())(short) {
     [pbitem setData:[password dataUsingEncoding:NSUTF8StringEncoding] forType:@"public.plain-text"];
     [pb writeObjects:[NSArray arrayWithObject:pbitem]];
     #else
-    [pb declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:nil];
-    [pb setString:password forType:NSStringPboardType];
+    [pb declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+    [pb setString:password forType:NSPasteboardTypeString];
     #endif
     } @catch (NSException *e) {}
 }

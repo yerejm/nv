@@ -19,9 +19,8 @@
 
 #import <Cocoa/Cocoa.h>
 
-@protocol NSURLDownloadDelegate;
 
-@interface URLGetter : NSObject <NSURLDownloadDelegate>
+@interface URLGetter : NSObject <NSURLSessionDownloadDelegate>
 {
     IBOutlet NSButton *cancelButton;
     IBOutlet NSTextField *objectURLStatus;
@@ -30,7 +29,10 @@
     IBOutlet NSPanel *window;
 	
 	NSURL *url;
-	NSURLDownload *downloader;
+	NSURLSession *session;
+    NSURLSessionDownloadTask *downloader;
+    NSError *downloadError;
+    BOOL finished;
 	NSString *downloadPath, *tempDirectory;
 	
 	id userData;

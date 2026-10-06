@@ -8,7 +8,7 @@
 - (BOOL) isCompressedFormat;
 
 + (NSMutableData *)randomDataOfLength:(int)len;
-- (NSMutableData*)derivedKeyOfLength:(int)len salt:(NSData*)salt iterations:(int)count;
+- (NSMutableData*)derivedKeyOfLength:(NSUInteger)len salt:(NSData*)salt iterations:(int)count;
 - (unsigned long)CRC32;
 - (NSData*)SHA1Digest;
 - (NSData*)MD5Digest;
@@ -16,8 +16,8 @@
 
 - (NSString*)pathURLFromWebArchive;
 
-- (BOOL)fsRefAsAlias:(FSRef*)fsRef;
-+ (NSData*)aliasDataForFSRef:(FSRef*)fsRef;
+- (BOOL)fsRefAsAlias:(NVFileReference*)fsRef;
++ (NSData*)aliasDataForFSRef:(NVFileReference*)fsRef;
 - (NSMutableString*)newStringUsingBOMReturningEncoding:(NSStringEncoding*)encoding;
 + (NSData*)uncachedDataFromFile:(NSString*)filename;
 

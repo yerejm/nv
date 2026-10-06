@@ -148,7 +148,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 - (void)setSoftTabs:(BOOL)value sender:(id)sender;
 - (BOOL)softTabs;
 
-- (int)numberOfSpacesInTab;
+- (NSInteger)numberOfSpacesInTab;
 
 - (float)tableFontSize;
 - (void)setTableFontSize:(float)fontSize sender:(id)sender;
@@ -157,6 +157,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 - (BOOL)horizontalLayout;
 
 - (BOOL)autoCompleteSearches;
+- (BOOL)autoFormatsMarkdownHeadings;
 - (void)setAutoCompleteSearches:(BOOL)value sender:(id)sender;
 
 - (NSString*)lastSelectedPreferencesPane;
@@ -173,7 +174,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 - (void)setAliasDataForDefaultDirectory:(NSData*)alias sender:(id)sender;
 - (NSData*)aliasDataForDefaultDirectory;
 
-- (NSString*)displayNameForDefaultDirectoryWithFSRef:(FSRef*)fsRef;
+- (NSString*)displayNameForDefaultDirectoryWithFSRef:(NVFileReference*)fsRef;
 - (NSString*)humanViewablePathForDefaultDirectory;
 
 - (void)setBlorImportAttempted:(BOOL)value;

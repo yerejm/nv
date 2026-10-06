@@ -30,7 +30,9 @@
 		url = [aUrl retain];
 		userData = [someObj retain];
 		
-		downloader = [[NSURLDownload alloc] initWithRequest:[NSURLRequest requestWithURL:url] delegate:self];
+		session = [[NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration ephemeralSessionConfiguration] delegate:self delegateQueue:[NSOperationQueue mainQueue]] retain];
+        downloader = [[session downloadTaskWithURL:url] retain];
+        [downloader resume];
 		
 		[self startProgressIndication:self];
 	}
@@ -40,6 +42,8 @@
 
 - (void)dealloc {
 	[downloader release];
+    [session release];
+    [downloadError release];
 	[downloadPath release];
 	[url release];
 	[userData release];
@@ -70,7 +74,7 @@
 
 - (void)startProgressIndication:(id)sender {
 	if (!window) {
-		if (![NSBundle loadNibNamed:@"URLGetter" owner:self])  {
+		if (!NVLoadNib(@"URLGetter", self))  {
 			NSLog(@"Failed to load URLGetter.nib");
 			NSBeep();
 			return;
@@ -108,53 +112,42 @@
 	}
 }
 
-- (void)download:(NSURLDownload *)download didReceiveResponse:(NSURLResponse *)response {
-	maxExpectedByteCount = [response expectedContentLength];
-	//NSLog(@"max KB: %lld", maxExpectedByteCount/1024);
-	
-	[self updateProgress];
+- (void)URLSession:(NSURLSession *)aSession downloadTask:(NSURLSessionDownloadTask *)task didWriteData:(int64_t)bytesWritten totalBytesWritten:(int64_t)total totalBytesExpectedToWrite:(int64_t)expected {
+    totalReceivedByteCount = total;
+    maxExpectedByteCount = MAX(expected, 0);
+    [self updateProgress];
 }
 
-- (void)download:(NSURLDownload *)download didReceiveDataOfLength:(NSUInteger)length {
-	totalReceivedByteCount += length;
-	
-	[self updateProgress];
+- (void)URLSession:(NSURLSession *)aSession downloadTask:(NSURLSessionDownloadTask *)task didFinishDownloadingToURL:(NSURL *)location {
+    if (finished) return;
+    tempDirectory = [[NSTemporaryDirectory() stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]] retain];
+    NSError *error = nil;
+    NSFileManager *manager = [NSFileManager defaultManager];
+    NSString *name = [[[task response] suggestedFilename] lastPathComponent];
+    if (![name length] || [name isEqualToString:@"."] || [name isEqualToString:@".."]) name = @"download";
+    downloadPath = [[tempDirectory stringByAppendingPathComponent:name] retain];
+    if (![manager createDirectoryAtPath:tempDirectory withIntermediateDirectories:NO attributes:nil error:&error] ||
+        ![manager moveItemAtURL:location toURL:[NSURL fileURLWithPath:downloadPath] error:&error]) {
+        downloadError = [error retain];
+    }
 }
 
-- (void)download:(NSURLDownload *)download decideDestinationWithSuggestedFilename:(NSString *)name {
-	
-	[tempDirectory autorelease];
-	tempDirectory = [[NSTemporaryDirectory() stringByAppendingPathComponent:[[NSProcessInfo processInfo] globallyUniqueString]] retain];
-	if (![[NSFileManager defaultManager] createDirectoryAtPath:tempDirectory attributes:nil]) {
-		NSLog(@"URLGetter: Couldn't create temporary directory!");
-		[download cancel];
-		NSBeep();
-	}
-	
-	[downloadPath autorelease];
-	downloadPath = [[tempDirectory stringByAppendingPathComponent:name] retain];
-	[download setDestination:downloadPath allowOverwrite:YES];
-	
-	//need to delete this stuff eventually
-}
-
-- (void)download:(NSURLDownload *)download didFailWithError:(NSError *)error {
-	
-	NSString *reason = [error localizedDescription];
-	if (!reason) reason = NSLocalizedString(@"unknown error.", @"error description of last resort for why a URL couldn't be accessed");
-	NSRunAlertPanel([NSString stringWithFormat:NSLocalizedString(@"The URL quotemark%@quotemark could not be accessed: %@.", nil), 
-		[url absoluteString], reason], @"", NSLocalizedString(@"OK",nil), nil, nil);
-	
-	
-	[self endDownloadWithPath:nil];
-}
-
-- (void)downloadDidFinish:(NSURLDownload *)download {
-	
-	[self endDownloadWithPath:downloadPath];
+- (void)URLSession:(NSURLSession *)aSession task:(NSURLSessionTask *)task didCompleteWithError:(NSError *)error {
+    if (finished) return;
+    error = error ?: downloadError;
+    if (error) {
+        if ([error code] != NSURLErrorCancelled)
+            NVRunAlert(NSAlertStyleWarning, [NSString stringWithFormat:NSLocalizedString(@"The URL quotemark%@quotemark could not be accessed: %@.", nil), [url absoluteString], [error localizedDescription]], @"", NSLocalizedString(@"OK", nil), nil, nil);
+        [self endDownloadWithPath:nil];
+    } else {
+        [self endDownloadWithPath:downloadPath];
+    }
 }
 
 - (void)endDownloadWithPath:(NSString*)path {
+    if (finished) return;
+    finished = YES;
+    [session finishTasksAndInvalidate];
 	isImporting = YES;
 	[self updateProgress];
 	
@@ -164,15 +157,15 @@
 	//clean up after ourselves
 	NSFileManager *fileMan = [NSFileManager defaultManager];
 	if (downloadPath) {
-		[fileMan removeFileAtPath:downloadPath handler:NULL];
+		[fileMan removeItemAtPath:downloadPath error:NULL];
 		[downloadPath release];
 		downloadPath = nil;
 	}
 	
 	if (tempDirectory) {
 		//only remove temporary directory if there's nothing in it
-		if (![[fileMan directoryContentsAtPath:tempDirectory] count])
-			[fileMan removeFileAtPath:tempDirectory handler:NULL];
+		if (![[fileMan contentsOfDirectoryAtPath:tempDirectory error:NULL] count])
+			[fileMan removeItemAtPath:tempDirectory error:NULL];
 		else
 			NSLog(@"note removing %@ because it still contains files!", tempDirectory);
 		[tempDirectory release];

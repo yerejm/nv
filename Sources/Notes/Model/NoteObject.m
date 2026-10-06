@@ -52,7 +52,7 @@ typedef NSRange NSRange32;
 
 @implementation NoteObject
 
-static FSRef *noteFileRefInit(NoteObject* obj);
+static NVFileReference *noteFileRefInit(NoteObject* obj);
 static void setAttrModifiedDate(NoteObject *note, UTCDateTime *dateTime);
 static void setCatalogNodeID(NoteObject *note, UInt32 cnid);
 
@@ -117,9 +117,9 @@ static void setCatalogNodeID(NoteObject *note, UInt32 cnid);
 	}
 }
 
-static FSRef *noteFileRefInit(NoteObject* obj) {
+static NVFileReference *noteFileRefInit(NoteObject* obj) {
 	if (!(obj->noteFileRef)) {
-		obj->noteFileRef = (FSRef*)calloc(1, sizeof(FSRef));
+		obj->noteFileRef = (NVFileReference*)calloc(1, sizeof(NVFileReference));
 	}
 	return obj->noteFileRef;
 }
@@ -453,7 +453,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		free(flippedPerDiskInfoGroups);
 		
 		[coder encodeInt64:*(int64_t*)&fileModifiedDate forKey:VAR_STR(fileModifiedDate)];
-		[coder encodeInt32:fileEncoding forKey:VAR_STR(fileEncoding)];
+		[coder encodeInt32:(int32_t)fileEncoding forKey:VAR_STR(fileEncoding)];
 		
 		[coder encodeBytes:(const uint8_t *)&uniqueNoteIDBytes length:sizeof(CFUUIDBytes) forKey:VAR_STR(uniqueNoteIDBytes)];
 		[coder encodeObject:syncServicesMD forKey:VAR_STR(syncServicesMD)];
@@ -531,15 +531,15 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		CFUUIDRef uuidRef = CFUUIDCreate(kCFAllocatorDefault);
 		uniqueNoteIDBytes = CFUUIDGetUUIDBytes(uuidRef);
 		CFRelease(uuidRef);
-		
+
 		createdDate = modifiedDate = CFAbsoluteTimeGetCurrent();
 		dateCreatedString = [dateModifiedString = [[NSString relativeDateStringWithAbsoluteTime:modifiedDate] retain] retain];
 		UCConvertCFAbsoluteTimeToUTCDateTime(modifiedDate, &fileModifiedDate);
-		
+
 		if (delegate)
 			[self updateTablePreviewString];
     }
-    
+
     return self;
 }
 
@@ -555,7 +555,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		setAttrModifiedDate(self, &(entry->lastAttrModified));
 		setCatalogNodeID(self, entry->nodeID);
 		logicalSize = entry->logicalSize;
-		
+
 		CFUUIDRef uuidRef = CFUUIDCreate(kCFAllocatorDefault);
 		uniqueNoteIDBytes = CFUUIDGetUUIDBytes(uuidRef);
 		CFRelease(uuidRef);
@@ -612,7 +612,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		cContentsFoundPtr = cContents = replaceString(cContents, [[contentString string] lowercaseUTF8String]);
 		contentCacheNeedsUpdate = NO;
 		
-		int len = strlen(cContents);
+		size_t len = strlen(cContents);
 		contentsWere7Bit = !(ContainsHighAscii(cContents, len));
 		
 		//could cache dumbwordcount here for faster launch, but string creation takes more time, anyway
@@ -1043,7 +1043,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 				if (onRight) {
 					[images addObject:img];
 				} else {
-					[img compositeToPoint:nextBoxPoint operation:NSCompositeSourceOver];
+					[img drawAtPoint:nextBoxPoint fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0];
 					nextBoxPoint.x += [img size].width + 4.0;
 				}
 			} else {
@@ -1059,7 +1059,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 			for (i = [images count] - 1; i>=0; i--) {
 				NSImage *img = [images objectAtIndex:i];
 				nextBoxPoint.x -= [img size].width + 4.0;
-				[img compositeToPoint:nextBoxPoint operation:NSCompositeSourceOver];
+				[img drawAtPoint:nextBoxPoint fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0];
 			}
 		}
 	} else {
@@ -1086,7 +1086,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 }
 
 - (void)invalidateFSRef {
-	//bzero(&noteFileRef, sizeof(FSRef));
+	//bzero(&noteFileRef, sizeof(NVFileReference));
 	if (noteFileRef)
 		free(noteFileRef);
 	noteFileRef = NULL;
@@ -1176,7 +1176,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		case RTFTextFormat:
 			contentMinusColor = [contentString mutableCopy];
 			[contentMinusColor removeAttribute:NSForegroundColorAttributeName range:NSMakeRange(0, [contentMinusColor length])];
-			formattedData = [contentMinusColor RTFFromRange:NSMakeRange(0, [contentMinusColor length]) documentAttributes:nil];
+			formattedData = [contentMinusColor RTFFromRange:NSMakeRange(0, [contentMinusColor length]) documentAttributes:@{}];
 			[contentMinusColor release];
 			
 			break;
@@ -1222,7 +1222,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		[fileMan setOpenMetaTags:[self orderedLabelTitles] atFSPath:[[fileMan pathWithFSRef:noteFileRefInit(self)] fileSystemRepresentation]];
 		
 		//always hide the file extension for all types
-		LSSetExtensionHiddenForRef(noteFileRefInit(self), TRUE);
+		[[NSURL fileURLWithPath:[[NSFileManager defaultManager] pathWithFSRef:noteFileRefInit(self)]] setResourceValue:@YES forKey:NSURLHasHiddenExtensionKey error:NULL];
 		
 		if (!resetFilename) {
 			//NSLog(@"resetting the file name just because.");
@@ -1259,10 +1259,10 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	// for now, it is not called in any situations where the fsref might accidentally point to a moved file
 	OSStatus err = noErr;
 	do {
-		if (noErr != err || IsZeros(noteFileRefInit(self), sizeof(FSRef))) {
+		if (noErr != err || IsZeros(noteFileRefInit(self), sizeof(NVFileReference))) {
 			if (![delegate notesDirectoryContainsFile:filename returningFSRef:noteFileRefInit(self)]) return fnfErr;
 		}
-		err = FSSetCatalogInfo(noteFileRefInit(self), kFSCatInfoCreateDate | kFSCatInfoContentMod, &catInfo);
+		err = NVSetCatalogInfo(noteFileRefInit(self), kFSCatInfoCreateDate | kFSCatInfoContentMod, &catInfo);
 	} while (fnfErr == err);
 
 	if (noErr != err) {
@@ -1270,7 +1270,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		return err;
 	}
 	
-	//regardless of whether FSSetCatalogInfo was successful, the file mod date could still have changed
+	//regardless of whether NVSetCatalogInfo was successful, the file mod date could still have changed
 	
 	if ((err = [delegate fileInNotesDirectory:noteFileRefInit(self) isOwnedByUs:NULL hasCatalogInfo:&catInfo]) != noErr) {
 		NSLog(@"Unable to get new modification date of file %@: %d", filename, err);
@@ -1284,16 +1284,16 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	return noErr;
 }
 
-- (OSStatus)writeCurrentFileEncodingToFSRef:(FSRef*)fsRef {
-	NSAssert(fsRef, @"cannot write file encoding to a NULL FSRef");
+- (OSStatus)writeCurrentFileEncodingToFSRef:(NVFileReference*)fsRef {
+	NSAssert(fsRef, @"cannot write file encoding to a NULL NVFileReference");
 	//this is not the note's own fsRef; it could be anywhere
 	
 	NSMutableData *pathData = [NSMutableData dataWithLength:4 * 1024];
 	OSStatus err = noErr;
-	if ((err = FSRefMakePath(fsRef, [pathData mutableBytes], [pathData length])) == noErr) {
+	if ((err = NVReferenceMakePath(fsRef, [pathData mutableBytes], [pathData length])) == noErr) {
 		[[NSFileManager defaultManager] setTextEncodingAttribute:fileEncoding atFSPath:[pathData bytes]];
 	} else {
-		NSLog(@"%s: error getting path from FSRef: %d (IsZeros: %d)", _cmd, err, IsZeros(fsRef, sizeof(fsRef)));
+		NSLog(@"%s: error getting path from NVFileReference: %d (IsZeros: %d)", sel_getName(_cmd), err, IsZeros(fsRef, sizeof(fsRef)));
 	}
 	return err;
 }
@@ -1325,7 +1325,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 				//a side effect is that if the user switches to an RTF or HTML format,
 				//this note will be written immediately instead of lazily upon the next modification
 				if (UCConvertCFAbsoluteTimeToUTCDateTime(CFAbsoluteTimeGetCurrent(), &fileModifiedDate) != noErr)
-					NSLog(@"%s: can't set file modification date from current date", _cmd);
+					NSLog(@"%s: can't set file modification date from current date", sel_getName(_cmd));
 			}
 		}
 		//make note dirty to ensure these changes are saved
@@ -1407,7 +1407,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	logicalSize = catEntry->logicalSize;
 	
 	NSMutableData *pathData = [NSMutableData dataWithLength:4 * 1024];
-	if (FSRefMakePath(noteFileRefInit(self), [pathData mutableBytes], [pathData length]) == noErr) {
+	if (NVReferenceMakePath(noteFileRefInit(self), [pathData mutableBytes], [pathData length]) == noErr) {
 		
 		NSArray *openMetaTags = [[NSFileManager defaultManager] getOpenMetaTagsAtFSPath:[pathData bytes]];
 		if (openMetaTags) {
@@ -1498,7 +1498,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	[contentString release];
 	contentString = [attributedStringFromData retain];
 	[contentString santizeForeignStylesForImporting];
-	//NSLog(@"%s(%@): %@", _cmd, [self noteFilePath], [contentString string]);
+	//NSLog(@"%s(%@): %@", sel_getName(_cmd), [self noteFilePath], [contentString string]);
 	
 	//[contentString setAttributedString:attributedStringFromData];
 	contentCacheNeedsUpdate = YES;
@@ -1572,7 +1572,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	//so expect the delegate to know to schedule the same update itself
 }
 
-- (OSStatus)exportToDirectoryRef:(FSRef*)directoryRef withFilename:(NSString*)userFilename usingFormat:(int)storageFormat overwrite:(BOOL)overwrite {
+- (OSStatus)exportToDirectoryRef:(NVFileReference*)directoryRef withFilename:(NSString*)userFilename usingFormat:(int)storageFormat overwrite:(BOOL)overwrite {
 	
 	NSData *formattedData = nil;
 	NSError *error = nil;
@@ -1592,7 +1592,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 			}
 			break;
 		case RTFTextFormat:
-			formattedData = [contentMinusColor RTFFromRange:NSMakeRange(0, [contentMinusColor length]) documentAttributes:nil];
+			formattedData = [contentMinusColor RTFFromRange:NSMakeRange(0, [contentMinusColor length]) documentAttributes:@{}];
 			break;
 		case HTMLFormat:
 			formattedData = [contentMinusColor dataFromRange:NSMakeRange(0, [contentMinusColor length]) 
@@ -1600,7 +1600,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 																					 forKey:NSDocumentTypeDocumentAttribute] error:&error];
 			break;
 		case WordDocFormat:
-			formattedData = [contentMinusColor docFormatFromRange:NSMakeRange(0, [contentMinusColor length]) documentAttributes:nil];
+			formattedData = [contentMinusColor docFormatFromRange:NSMakeRange(0, [contentMinusColor length]) documentAttributes:@{}];
 			break;
 		case WordXMLFormat:
 			formattedData = [contentMinusColor dataFromRange:NSMakeRange(0, [contentMinusColor length]) 
@@ -1623,7 +1623,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	
 	BOOL fileWasCreated = NO;
 	
-	FSRef fileRef;
+	NVFileReference fileRef;
 	OSStatus err = FSCreateFileIfNotPresentInDirectory(directoryRef, &fileRef, (CFStringRef)newfilename, (Boolean*)&fileWasCreated);
 	if (err != noErr) {
 		NSLog(@"FSCreateFileIfNotPresentInDirectory: %d", err);
@@ -1648,7 +1648,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	FSCatalogInfo catInfo;
 	UCConvertCFAbsoluteTimeToUTCDateTime(createdDate, &catInfo.createDate);
 	UCConvertCFAbsoluteTimeToUTCDateTime(modifiedDate, &catInfo.contentModDate);
-	FSSetCatalogInfo(&fileRef, kFSCatInfoCreateDate | kFSCatInfoContentMod, &catInfo);
+	NVSetCatalogInfo(&fileRef, kFSCatInfoCreateDate | kFSCatInfoContentMod, &catInfo);
 			
 	return noErr;
 }
@@ -1682,7 +1682,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 #if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5
 	[[NSFileManager defaultManager] removeItemAtPath:path error:NULL];
 #else
-	[[NSFileManager defaultManager] removeFileAtPath:path handler:nil];
+	[[NSFileManager defaultManager] removeItemAtPath:path error:NULL];
 #endif
 }
 

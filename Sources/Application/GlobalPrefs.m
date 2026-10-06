@@ -1,3 +1,4 @@
+#import "NSFileManager_NV.h"
 //
 //  GlobalPrefs.m
 //  Notation
@@ -89,19 +90,19 @@ NSString *HotKeyAppToFrontName = @"bring Notational Velocity to the foreground";
 @implementation GlobalPrefs
 
 static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id originalSender) {
-	
+
 	if (originalSender != self) {
-		self->runCallbacksIMP(self, @selector(notifyCallbacksForSelector:excludingSender:), 
+		self->runCallbacksIMP(self, @selector(notifyCallbacksForSelector:excludingSender:),
 							 selector, originalSender);
 	}
 }
 
 - (id)init {
 	if ([super init]) {
-	
+
 		runCallbacksIMP = (void (*)(GlobalPrefs*, SEL, SEL, id))[self methodForSelector:@selector(notifyCallbacksForSelector:excludingSender:)];
 		selectorObservers = [[NSMutableDictionary alloc] init];
-		
+
 		defaults = [NSUserDefaults standardUserDefaults];
 		
 		tableColumns = nil;
@@ -129,14 +130,14 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 			[NSNumber numberWithDouble:0.0], LastScrollOffsetKey,
 			@"General", LastSelectedPreferencesPaneKey, 
 			
-			[NSArchiver archivedDataWithRootObject:
-			 [NSFont fontWithName:@"Helvetica" size:12.0f]], NoteBodyFontKey,
+			NVArchiveObject(
+			 [NSFont fontWithName:@"Helvetica" size:12.0f]), NoteBodyFontKey,
 			
-			[NSArchiver archivedDataWithRootObject:[NSColor textColor]], ForegroundTextColorKey,
-			[NSArchiver archivedDataWithRootObject:[NSColor textBackgroundColor]], BackgroundTextColorKey,
+			NVArchiveObject([NSColor textColor]), ForegroundTextColorKey,
+			NVArchiveObject([NSColor textBackgroundColor]), BackgroundTextColorKey,
 			
-			[NSArchiver archivedDataWithRootObject:
-			 [NSColor colorWithCalibratedRed:0.945 green:0.702 blue:0.702 alpha:1.0f]], SearchTermHighlightColorKey,
+			NVArchiveObject(
+			 [NSColor colorWithCalibratedRed:0.945 green:0.702 blue:0.702 alpha:1.0f]), SearchTermHighlightColorKey,
 			
 			[NSNumber numberWithFloat:[NSFont smallSystemFontSize]], TableFontSizeKey, 
 			[NSArray arrayWithObjects:NoteTitleColumnString, NoteDateModifiedColumnString, nil], NoteAttributesVisibleKey,
@@ -182,7 +183,7 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 		va_end(argList);
 		
 	} else {
-		NSLog(@"%s: target %@ does not respond to callback selector!", _cmd, [sender description]);
+		NSLog(@"%s: target %@ does not respond to callback selector!", sel_getName(_cmd), [sender description]);
 	}
 }
 
@@ -408,7 +409,7 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 		[searchTermHighlightAttributes release];
 		searchTermHighlightAttributes = nil;
 		
-		[defaults setObject:[NSArchiver archivedDataWithRootObject:color] forKey:SearchTermHighlightColorKey];
+		[defaults setObject:NVArchiveObject(color) forKey:SearchTermHighlightColorKey];
 		
 		SEND_CALLBACKS();
 	}
@@ -418,11 +419,11 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 	
 	NSData *theData = [defaults dataForKey:SearchTermHighlightColorKey];
 	if (theData) {
-		NSColor *color = (NSColor *)[NSUnarchiver unarchiveObjectWithData:theData];
+		NSColor *color = (NSColor *)NVUnarchivePreference(theData);
 		if (isRaw) return color;
 		if (color) {
 			//nslayoutmanager temporary attributes don't seem to like alpha components, so synthesize translucency using the bg color
-			NSColor *fauxAlphaSTHC = [[color colorUsingColorSpaceName:NSCalibratedRGBColorSpace] colorWithAlphaComponent:1.0];
+			NSColor *fauxAlphaSTHC = [[color colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]] colorWithAlphaComponent:1.0];
 			return [fauxAlphaSTHC blendedColorWithFraction:(1.0 - [color alphaComponent]) ofColor:[self backgroundTextColor]];
 		}
 	}
@@ -450,7 +451,7 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 	return [defaults boolForKey:UseSoftTabsKey];
 }
 
-- (int)numberOfSpacesInTab {
+- (NSInteger)numberOfSpacesInTab {
 	return [defaults integerForKey:NumberOfSpacesInTabKey];
 }
 
@@ -458,8 +459,8 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 	//sometimes floating point numbers really don't like to be compared to each other
 
 	CGFloat pRed, pGreen, pBlue, gRed, gGreen, gBlue, pAlpha, gAlpha;
-	[[c1 colorUsingColorSpaceName:NSCalibratedRGBColorSpace] getRed:&pRed green:&pGreen blue:&pBlue alpha:&pAlpha];
-	[[c2 colorUsingColorSpaceName:NSCalibratedRGBColorSpace] getRed:&gRed green:&gGreen blue:&gBlue alpha:&gAlpha];
+	[[c1 colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]] getRed:&pRed green:&pGreen blue:&pBlue alpha:&pAlpha];
+	[[c2 colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]] getRed:&gRed green:&gGreen blue:&gBlue alpha:&gAlpha];
 	
 #define SCR(__ch) ((int)roundf(((__ch) * 255.0)))
 	
@@ -493,15 +494,15 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 	[noteBodyAttributes release];
 	noteBodyAttributes = nil; //cause method to re-update
 	
-	[defaults setObject:[NSArchiver archivedDataWithRootObject:noteBodyFont] forKey:NoteBodyFontKey]; 
+	[defaults setObject:NVArchiveObject(noteBodyFont) forKey:NoteBodyFontKey];
 	
 	//restyle any PTF data on the clipboard to the new font
 	NSData *ptfData = [[NSPasteboard generalPasteboard] dataForType:NVPTFPboardType];
-	NSMutableAttributedString *newString = [[[NSMutableAttributedString alloc] initWithRTF:ptfData documentAttributes:nil] autorelease];
+	NSMutableAttributedString *newString = [[[NSMutableAttributedString alloc] initWithRTF:ptfData documentAttributes:NULL] autorelease];
 	
 	[newString restyleTextToFont:noteBodyFont usingBaseFont:oldFont];
 	
-	if ((ptfData = [newString RTFFromRange:NSMakeRange(0, [newString length]) documentAttributes:nil])) {
+	if ((ptfData = [newString RTFFromRange:NSMakeRange(0, [newString length]) documentAttributes:@{}])) {
 		[[NSPasteboard generalPasteboard] setData:ptfData forType:NVPTFPboardType];
 	}
 	[oldFont release];
@@ -522,7 +523,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 	if (!noteBodyFont) {
 		retry:
 		@try {
-			noteBodyFont = [[NSUnarchiver unarchiveObjectWithData:[defaults objectForKey:NoteBodyFontKey]] retain];
+			noteBodyFont = [NVUnarchivePreference([defaults objectForKey:NoteBodyFontKey]) retain];
 		} @catch (NSException *e) {
 			NSLog(@"Error trying to unarchive default note body font (%@, %@)", [e name], [e reason]);
 		}
@@ -572,7 +573,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 	NSFont *bodyFont = [self noteBodyFont];
 
 	if (!noteBodyParagraphStyle && bodyFont) {
-		int numberOfSpaces = [self numberOfSpacesInTab];
+		NSInteger numberOfSpaces = [self numberOfSpacesInTab];
 		NSMutableString *sizeString = [[NSMutableString alloc] initWithCapacity:numberOfSpaces];
 		while (numberOfSpaces--) {
 			[sizeString appendString:@" "];
@@ -602,7 +603,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 		[noteBodyAttributes release];
 		noteBodyAttributes = nil;
 		
-		[defaults setObject:[NSArchiver archivedDataWithRootObject:aColor] forKey:ForegroundTextColorKey];
+		[defaults setObject:NVArchiveObject(aColor) forKey:ForegroundTextColorKey];
 		
 		SEND_CALLBACKS();
 	}	
@@ -610,7 +611,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 
 - (NSColor*)foregroundTextColor {
 	NSData *theData = [defaults dataForKey:ForegroundTextColorKey];
-	if (theData) return (NSColor *)[NSUnarchiver unarchiveObjectWithData:theData];
+	if (theData) return (NSColor *)NVUnarchivePreference(theData);
 	return nil;
 }
 
@@ -623,7 +624,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 		[searchTermHighlightAttributes release];
 		searchTermHighlightAttributes = nil;
 
-		[defaults setObject:[NSArchiver archivedDataWithRootObject:aColor] forKey:BackgroundTextColorKey];
+		[defaults setObject:NVArchiveObject(aColor) forKey:BackgroundTextColorKey];
 	
 		SEND_CALLBACKS();
 	}
@@ -633,7 +634,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 	//don't need to cache the unarchived color, as it's not used in a random-access pattern
 	
 	NSData *theData = [defaults dataForKey:BackgroundTextColorKey];
-	if (theData) return (NSColor *)[NSUnarchiver unarchiveObjectWithData:theData];
+	if (theData) return (NSColor *)NVUnarchivePreference(theData);
 
 	return nil;	
 }
@@ -803,56 +804,23 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
     return [defaults dataForKey:DirectoryAliasKey];
 }
 
-- (NSString*)displayNameForDefaultDirectoryWithFSRef:(FSRef*)fsRef {
-
-    if (!fsRef)
-	return nil;
-    
-    if (IsZeros(fsRef, sizeof(FSRef))) {
-	if (![[self aliasDataForDefaultDirectory] fsRefAsAlias:fsRef])
-	    return nil;
-    }
-    CFStringRef displayName = NULL;
-    if (LSCopyDisplayNameForRef(fsRef, &displayName) == noErr) {
-	return [(NSString*)displayName autorelease];
-    }
-    return nil;
+- (NSString *)displayNameForDefaultDirectoryWithFSRef:(NVFileReference *)ref {
+    if (!ref) return nil;
+    if (IsZeros(ref, sizeof(*ref)) && ![[self aliasDataForDefaultDirectory] fsRefAsAlias:ref]) return nil;
+    NSString *path = [[NSFileManager defaultManager] pathWithFSRef:ref];
+    return path ? [[NSFileManager defaultManager] displayNameAtPath:path] : nil;
 }
 
-- (NSString*)humanViewablePathForDefaultDirectory {
-    //resolve alias to fsref
-    FSRef targetRef;
-    if ([[self aliasDataForDefaultDirectory] fsRefAsAlias:&targetRef]) {	    
-	//follow the parent fsrefs up the tree, calling LSCopyDisplayNameForRef, hoping that the root is a drive name
-	
-	NSMutableArray *directoryNames = [NSMutableArray arrayWithCapacity:4];
-	FSRef parentRef, *currentRef = &targetRef;
-	
-	OSStatus err = noErr;
-	
-	do {
-	    
-	    if ((err = FSGetCatalogInfo(currentRef, kFSCatInfoNone, NULL, NULL, NULL, &parentRef)) == noErr) {
-		
-		CFStringRef displayName = NULL;
-		if ((err = LSCopyDisplayNameForRef(currentRef, &displayName)) == noErr) {
-		    
-		    if (displayName) {
-			[directoryNames insertObject:(id)displayName atIndex:0];
-			CFRelease(displayName);
-		    }
-		}
-		
-		currentRef = &parentRef;
-	    }
-	} while (err == noErr);
-	
-	//build new string delimited by triangles like pages in its recent items menu
-	return [directoryNames componentsJoinedByString:@" : "];
-	
+- (NSString *)humanViewablePathForDefaultDirectory {
+    NVFileReference ref;
+    if (![[self aliasDataForDefaultDirectory] fsRefAsAlias:&ref]) return nil;
+    NSString *path = [[NSFileManager defaultManager] pathWithFSRef:&ref];
+    NSMutableArray *names = [NSMutableArray array];
+    while ([path length] > 1) {
+        [names insertObject:[[NSFileManager defaultManager] displayNameAtPath:path] atIndex:0];
+        path = [path stringByDeletingLastPathComponent];
     }
-    
-    return nil;
+    return [names componentsJoinedByString:@" : "];
 }
 
 - (void)setBlorImportAttempted:(BOOL)value {

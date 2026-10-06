@@ -45,7 +45,7 @@
 @interface MultiplePageView : NSView {
 	NSTextStorage *textStorage;
     NSPrintInfo *printInfo;
-    unsigned numPages;
+    NSUInteger numPages;
 }
 
 - (void)setPrintInfo:(NSPrintInfo *)anObject;
@@ -53,12 +53,12 @@
 - (NSTextStorage*)textStorage;
 - (float)pageSeparatorHeight;
 - (NSSize)documentSizeInPage;	/* Returns the area where the document can draw */
-- (NSRect)documentRectForPageNumber:(unsigned)pageNumber;	/* First page is page 0 */
-- (NSRect)pageRectForPageNumber:(unsigned)pageNumber;	/* First page is page 0 */
-- (void)setNumberOfPages:(unsigned)num;
-- (unsigned)numberOfPages;
+- (NSRect)documentRectForPageNumber:(NSUInteger)pageNumber;	/* First page is page 0 */
+- (NSRect)pageRectForPageNumber:(NSUInteger)pageNumber;	/* First page is page 0 */
+- (void)setNumberOfPages:(NSUInteger)num;
+- (NSUInteger)numberOfPages;
 
-- (int)printedPageCountForAttributedString:(NSAttributedString*)string;
+- (NSInteger)printedPageCountForAttributedString:(NSAttributedString*)string;
 + (NSView *)printableViewWithNotes:(NSArray*)notes;
 + (void)printNotes:(NSArray*)notes forWindow:(NSWindow*)window;
 

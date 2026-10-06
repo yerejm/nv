@@ -5,6 +5,9 @@
 #import "FrozenNotation.h"
 #import "NotationPrefs.h"
 #import "NotationFileManager.h"
+#import "NotationDirectoryManager.h"
+#include <sys/stat.h>
+#include <sys/xattr.h>
 #import "NSData_transformations.h"
 #import "NSString_NV.h"
 #import "GlobalPrefs.h"
@@ -41,9 +44,97 @@
     [note setSyncObjectAndKeyMD:@{ @"key": @"sanitized-retired-id", @"version": @7 } forService:@"Simplenote"];
     return note;
 }
+- (void)testFileReferenceTracksRenameAndRejectsReplacement {
+    NSString *path = [self.temporaryDirectory stringByAppendingPathComponent:@"original.txt"];
+    NSString *renamed = [self.temporaryDirectory stringByAppendingPathComponent:@"renamed.txt"];
+    XCTAssertTrue([@"original" writeToFile:path atomically:NO encoding:NSUTF8StringEncoding error:NULL]);
+    NVFileReference reference;
+    XCTAssertEqual(NVPathMakeReference((const UInt8 *)path.fileSystemRepresentation, &reference, NULL), noErr);
+    XCTAssertTrue([[NSFileManager defaultManager] moveItemAtPath:path toPath:renamed error:NULL]);
+    XCTAssertTrue([@"replacement" writeToFile:path atomically:NO encoding:NSUTF8StringEncoding error:NULL]);
+    UInt8 resolved[PATH_MAX];
+    XCTAssertEqual(NVReferenceMakePath(&reference, resolved, sizeof(resolved)), noErr);
+    char expected[PATH_MAX];
+    XCTAssertNotEqual(realpath(renamed.fileSystemRepresentation, expected), NULL);
+    XCTAssertEqual(strcmp((const char *)resolved, expected), 0);
+    XCTAssertTrue([[NSFileManager defaultManager] removeItemAtPath:renamed error:NULL]);
+    XCTAssertEqual(NVReferenceMakePath(&reference, resolved, sizeof(resolved)), fnfErr);
+}
+- (void)testUnicodeFilenameAndEmptyFileIO {
+    NVFileReference directory, file;
+    XCTAssertEqual(NVPathMakeReference((const UInt8 *)self.temporaryDirectory.fileSystemRepresentation, &directory, NULL), noErr);
+    NSString *name = @"café 日本語 / test.txt";
+    UniChar characters[255];
+    [name getCharacters:characters range:NSMakeRange(0, name.length)];
+    XCTAssertEqual(NVCreateFileUnicode(&directory, name.length, characters, 0, NULL, &file, NULL), noErr);
+    HFSUniStr255 catalogName;
+    XCTAssertEqual(NVGetCatalogInfo(&file, 0, NULL, &catalogName, NULL, NULL), noErr);
+    XCTAssertEqualObjects([NSString stringWithCharacters:catalogName.unicode length:catalogName.length], name);
+    UInt64 length = 0;
+    void *bytes = NULL;
+    XCTAssertEqual(NVReadFile(&file, 4096, &length, &bytes, 0), noErr);
+    XCTAssertEqual(length, 0ULL);
+    free(bytes);
+    NSData *content = [@"short" dataUsingEncoding:NSUTF8StringEncoding];
+    XCTAssertEqual(NVWriteFile(&file, 2, content.length, content.bytes, 0, true), noErr);
+    XCTAssertEqual(NVWriteFile(&file, 2, 0, NULL, 0, true), noErr);
+    XCTAssertEqual(NVReadFile(&file, 4096, &length, &bytes, 0), noErr);
+    XCTAssertEqual(length, 0ULL);
+    free(bytes);
+}
+- (void)testBookmarkResolvesAfterDirectoryRename {
+    NSString *path = [self.temporaryDirectory stringByAppendingPathComponent:@"notes"];
+    NSString *renamed = [self.temporaryDirectory stringByAppendingPathComponent:@"renamed notes"];
+    XCTAssertTrue([[NSFileManager defaultManager] createDirectoryAtPath:path withIntermediateDirectories:NO attributes:nil error:NULL]);
+    NVFileReference directory, resolved;
+    XCTAssertEqual(NVPathMakeReference((const UInt8 *)path.fileSystemRepresentation, &directory, NULL), noErr);
+    NSData *bookmark = [NSData aliasDataForFSRef:&directory];
+    XCTAssertNotNil(bookmark);
+    XCTAssertTrue([[NSFileManager defaultManager] moveItemAtPath:path toPath:renamed error:NULL]);
+    XCTAssertTrue([bookmark fsRefAsAlias:&resolved]);
+    XCTAssertEqual(NVCompareReferences(&directory, &resolved), noErr);
+}
+- (void)testAtomicExchangePreservesDestinationMetadata {
+    NSString *sourcePath = [self.temporaryDirectory stringByAppendingPathComponent:@"temporary"];
+    NSString *destinationPath = [self.temporaryDirectory stringByAppendingPathComponent:@"note.txt"];
+    XCTAssertTrue([@"new contents" writeToFile:sourcePath atomically:NO encoding:NSUTF8StringEncoding error:NULL]);
+    XCTAssertTrue([@"old contents" writeToFile:destinationPath atomically:NO encoding:NSUTF8StringEncoding error:NULL]);
+    XCTAssertEqual(chmod(destinationPath.fileSystemRepresentation, 0640), 0);
+    const char metadata[] = "retained metadata";
+    XCTAssertEqual(setxattr(destinationPath.fileSystemRepresentation, "com.notational.velocity.test", metadata, sizeof(metadata), 0, 0), 0);
+    NVFileReference source, destination, newSource, newDestination;
+    XCTAssertEqual(NVPathMakeReference((const UInt8 *)sourcePath.fileSystemRepresentation, &source, NULL), noErr);
+    XCTAssertEqual(NVPathMakeReference((const UInt8 *)destinationPath.fileSystemRepresentation, &destination, NULL), noErr);
+    XCTAssertEqual(NVExchangeFiles(&source, &destination, &newSource, &newDestination), noErr);
+    XCTAssertEqualObjects([NSString stringWithContentsOfFile:destinationPath encoding:NSUTF8StringEncoding error:NULL], @"new contents");
+    XCTAssertEqualObjects([NSString stringWithContentsOfFile:sourcePath encoding:NSUTF8StringEncoding error:NULL], @"old contents");
+    struct stat attributes;
+    XCTAssertEqual(stat(destinationPath.fileSystemRepresentation, &attributes), 0);
+    XCTAssertEqual(attributes.st_mode & 0777, 0640);
+    char actualMetadata[sizeof(metadata)];
+    XCTAssertEqual(getxattr(destinationPath.fileSystemRepresentation, "com.notational.velocity.test", actualMetadata, sizeof(actualMetadata), 0, 0), (ssize_t)sizeof(metadata));
+    XCTAssertEqual(memcmp(metadata, actualMetadata, sizeof(metadata)), 0);
+    XCTAssertEqual(NVDeleteObject(&newSource), noErr);
+    XCTAssertEqual(NVExchangeFiles(&newSource, &newDestination, NULL, NULL), fnfErr);
+    XCTAssertEqualObjects([NSString stringWithContentsOfFile:destinationPath encoding:NSUTF8StringEncoding error:NULL], @"new contents");
+}
+- (void)testExchangeFallbackPreservesBothFiles {
+    NSString *sourcePath = [self.temporaryDirectory stringByAppendingPathComponent:@"temporary"];
+    NSString *destinationPath = [self.temporaryDirectory stringByAppendingPathComponent:@"note.txt"];
+    XCTAssertTrue([@"new contents" writeToFile:sourcePath atomically:NO encoding:NSUTF8StringEncoding error:NULL]);
+    XCTAssertTrue([@"old contents" writeToFile:destinationPath atomically:NO encoding:NSUTF8StringEncoding error:NULL]);
+    NVFileReference source, destination, newSource, newDestination;
+    XCTAssertEqual(NVPathMakeReference((const UInt8 *)sourcePath.fileSystemRepresentation, &source, NULL), noErr);
+    XCTAssertEqual(NVPathMakeReference((const UInt8 *)destinationPath.fileSystemRepresentation, &destination, NULL), noErr);
+    XCTAssertEqual(NVExchangeFilesByRenaming(&source, &destination, &newSource, &newDestination), noErr);
+    XCTAssertEqualObjects([NSString stringWithContentsOfFile:destinationPath encoding:NSUTF8StringEncoding error:NULL], @"new contents");
+    XCTAssertEqualObjects([NSString stringWithContentsOfFile:sourcePath encoding:NSUTF8StringEncoding error:NULL], @"old contents");
+    XCTAssertEqual(NVCompareReferences(&source, &newDestination), noErr);
+    XCTAssertEqual(NVCompareReferences(&destination, &newSource), noErr);
+}
 - (NotationController *)controller {
-    FSRef directory;
-    OSStatus error = FSPathMakeRef((const UInt8 *)self.temporaryDirectory.fileSystemRepresentation, &directory, NULL);
+    NVFileReference directory;
+    OSStatus error = NVPathMakeReference((const UInt8 *)self.temporaryDirectory.fileSystemRepresentation, &directory, NULL);
     XCTAssertEqual(error, noErr);
     NotationController *controller = [[[NotationController alloc] initWithDirectoryRef:&directory error:&error] autorelease];
     XCTAssertEqual(error, noErr);
@@ -106,7 +197,7 @@
     XCTAssertFalse([prefs canLoadPassphrase:@"wrong password"]);
     [prefs setDoesEncryption:YES];
     NSData *archive = [FrozenNotation frozenDataWithExistingNotes:[NSMutableArray arrayWithObject:[self sampleNote]] deletedNotes:[NSMutableSet set] prefs:prefs];
-    FrozenNotation *frozen = [NSKeyedUnarchiver unarchiveObjectWithData:archive];
+    FrozenNotation *frozen = NVUnarchiveObject(archive);
     XCTAssertTrue([[frozen notationPrefs] canLoadPassphrase:@"sanitized fixture password"]);
     OSStatus error;
     NSArray *notes = [frozen unpackedNotesWithPrefs:[frozen notationPrefs] returningError:&error];
@@ -183,7 +274,7 @@
     return data;
 }
 - (void)checkLegacyDatabase:(NSString *)name encrypted:(BOOL)encrypted {
-    FrozenNotation *frozen = [NSKeyedUnarchiver unarchiveObjectWithData:[self fixture:name]];
+    FrozenNotation *frozen = NVUnarchiveObject([self fixture:name]);
     NotationPrefs *prefs = [frozen notationPrefs];
     XCTAssertEqual([prefs doesEncryption], encrypted);
     if (encrypted) {
@@ -212,7 +303,7 @@
     [self checkLegacyDatabase:@"legacy-encrypted.database" encrypted:YES];
 }
 - (void)testRetiredMetadataSurvivesArchiveAndLocalIdentityLinks {
-    FrozenNotation *frozen = [NSKeyedUnarchiver unarchiveObjectWithData:[self fixture:@"legacy-plain.database"]];
+    FrozenNotation *frozen = NVUnarchiveObject([self fixture:@"legacy-plain.database"]);
     NotationPrefs *prefs = [frozen notationPrefs];
     NSDictionary *accounts = [[prefs.syncServiceAccounts copy] autorelease];
     XCTAssertTrue([accounts[@"Simplenote"][@"enabled"] boolValue]);
@@ -225,7 +316,7 @@
         if ([item.name isEqualToString:@"NV"]) identity = item.value;
     XCTAssertEqualObjects([identity decodeBase64WithNewlines:NO], [NSData dataWithBytes:note.uniqueNoteIDBytes length:16]);
     NSData *saved = [FrozenNotation frozenDataWithExistingNotes:notes deletedNotes:[frozen deletedNotes] prefs:prefs];
-    FrozenNotation *reloaded = [NSKeyedUnarchiver unarchiveObjectWithData:saved];
+    FrozenNotation *reloaded = NVUnarchiveObject(saved);
     NSArray *loaded = [reloaded unpackedNotesWithPrefs:[reloaded notationPrefs] returningError:&error];
     XCTAssertEqualObjects([[reloaded notationPrefs] syncServiceAccounts], accounts);
     XCTAssertEqualObjects([(NoteObject *)loaded.firstObject syncServicesMD], metadata);

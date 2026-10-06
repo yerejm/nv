@@ -1,3 +1,4 @@
+#import "AppController_Importing.h"
 /*Copyright (c) 2010, Zachary Schneirov. All rights reserved.
     This file is part of Notational Velocity.
 
@@ -146,7 +147,7 @@
 		[controlView setNeedsDisplay:YES];
 		
 		NSEventType type = [theEvent type];
-		if (type == NSLeftMouseUp || type == NSRightMouseUp) {
+		if (type == NSEventTypeLeftMouseUp || type == NSEventTypeRightMouseUp) {
 			if (BUTTON_PRESSED == snapbackButtonState) {
 				[controlView snapback:nil];
 			} else if (BUTTON_PRESSED == clearButtonState) {
@@ -154,7 +155,7 @@
 			}
 			break;
 		}
-		theEvent = [[controlView window] nextEventMatchingMask: NSLeftMouseUpMask | NSLeftMouseDraggedMask | NSRightMouseUpMask | NSRightMouseDraggedMask];
+		theEvent = [[controlView window] nextEventMatchingMask: NSEventMaskLeftMouseUp | NSEventMaskLeftMouseDragged | NSEventMaskRightMouseUp | NSEventMaskRightMouseDragged];
 	} while (1);
 	
 	return YES;
@@ -262,7 +263,7 @@
 	if ([theEvent trackingNumber] == docIconRectTag) {
 		[[self cell] setShowsSnapbackButton:[self showsDocumentIcon]];
 	} else {
-		NSLog(@"got mouse entered on a different tracking number: %d", [theEvent trackingNumber]);
+		NSLog(@"got mouse entered on a different tracking number: %ld", (long)[theEvent trackingNumber]);
 	}
 }
 - (void)mouseExited:(NSEvent *)theEvent {
@@ -321,8 +322,8 @@
 	NoteBookmark *aBookmark = [[followedLinks lastObject] retain];
 	[followedLinks removeLastObject];
 	 
-	[[NSApp delegate] searchForString:[aBookmark searchString]];
-	[[NSApp delegate] revealNote:[aBookmark noteObject] options:0];
+	[(AppController *)[NSApp delegate] searchForString:[aBookmark searchString]];
+	[(AppController *)[NSApp delegate] revealNote:[aBookmark noteObject] options:0];
 	[NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(clearFollowedLinks) object:nil];
 
 	return [aBookmark autorelease];
@@ -350,7 +351,7 @@
 }
 
 /*- (BOOL)becomeFirstResponder {
-	[[NSApp delegate] updateEmptyViewStatus];
+	[(AppController *)[NSApp delegate] updateEmptyViewStatus];
 	return [super becomeFirstResponder];
 }*/
 
@@ -377,7 +378,7 @@
 	return YES;
 }
 
-- (unsigned int)lastLengthReplaced {
+- (NSUInteger)lastLengthReplaced {
 	return lastLengthReplaced;
 }
 
@@ -410,19 +411,19 @@
 	
 	NSImage *image = [[NSImage alloc] initWithSize:wordRect.size];
 	[image lockFocus];
-	
+
 	NSBezierPath *backgroundPath = [NSBezierPath bezierPathWithRoundRectInRect:NSInsetRect(wordRect, 1.5, 1.5) radius:1.5f];
-	
+
 	static LinearDividerShader *snapbackShader = nil;
 	if (!snapbackShader) {
-		snapbackShader = [[LinearDividerShader alloc] initWithStartColor:[NSColor colorWithDeviceRed:0.8 green:0.386 blue:0.019 alpha:1.0] 
+		snapbackShader = [[LinearDividerShader alloc] initWithStartColor:[NSColor colorWithDeviceRed:0.8 green:0.386 blue:0.019 alpha:1.0]
 																endColor:[NSColor colorWithDeviceRed:1.0 green:0.486 blue:0.039 alpha:1.0]];
 	}
-	
-	
+
+
 	[[NSGraphicsContext currentContext] saveGraphicsState];
 	[backgroundPath addClip];
-	[snapbackShader drawDividerInRect:wordRect withDimpleRect:NSZeroRect blendVertically:YES];	
+	[snapbackShader drawDividerInRect:wordRect withDimpleRect:NSZeroRect blendVertically:YES];
 	[[NSGraphicsContext currentContext] restoreGraphicsState];
 	
 	[[NSColor colorWithDeviceRed:0.63 green:0.20 blue:0.0 alpha:1.0] set];
@@ -436,75 +437,12 @@
 }
 
 - (void)drawRect:(NSRect)rect {
-	[super drawRect:rect];
-	if(![self.cell snapbackButtonIsVisible]){
-		NSImage *docIcon = [NSImage imageNamed: showsDocumentIcon ? @"Pencil" : @"Search" ];
-		[docIcon setFlipped:YES];
-		NSRect docImageRect = NSMakeRect(BORDER_LEFT_OFFSET, BORDER_TOP_OFFSET, [docIcon size].width, [docIcon size].height);
-		[docIcon drawInRect:docImageRect fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
-	}
-	return;
-	
-	NSWindow *window = [self window];
-	BOOL isActiveWin = [window isMainWindow];
-	
-	[NSGraphicsContext saveGraphicsState];
-	[[NSGraphicsContext currentContext] setShouldAntialias:NO];
-	
-	NSRect tBounds = [self bounds];
-	
-	[[NSColor whiteColor] set];
-	NSRectFill(NSInsetRect(tBounds, 5, 1));
-	
-	NSImage *leftCap = [NSImage imageNamed: isActiveWin ? @"DFCapLeftRounded" : @"DFCapLeftRoundedInactive"];
-	[leftCap setFlipped:YES];
-	NSRect leftImageRect = NSMakeRect(0, 0, [leftCap size].width, [leftCap size].height);
-	[leftCap drawInRect:leftImageRect fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
-	
-	NSImage *rightCap = [NSImage imageNamed: isActiveWin ? @"DFCapRight" : @"DFCapRightInactive"];
-	[rightCap setFlipped:YES];
-	NSRect rightImageRect = NSMakeRect(tBounds.size.width - [rightCap size].width, 0, [rightCap size].width, [rightCap size].height);
-	[rightCap drawInRect:rightImageRect fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
-
-	[[NSColor colorWithDeviceWhite: isActiveWin ? 0.31f : 0.62f alpha:1.0f] set];
-	[NSBezierPath strokeLineFromPoint:NSMakePoint(tBounds.origin.x + [leftCap size].width, tBounds.origin.y + .5) 
-							  toPoint:NSMakePoint(tBounds.size.width - [rightCap size].width, tBounds.origin.y + .5)];
-	[[NSColor colorWithDeviceWhite: isActiveWin ? 0.882f : 0.886f alpha:1.0f] set];
-	[NSBezierPath strokeLineFromPoint:NSMakePoint(tBounds.origin.x + [leftCap size].width, tBounds.origin.y + 1.5) 
-							  toPoint:NSMakePoint(tBounds.size.width - [rightCap size].width, tBounds.origin.y + 1.5)];
-	
-	
-	[[NSColor colorWithDeviceWhite: isActiveWin ? 0.447f : 0.627f alpha:1.0f] set];
-	[NSBezierPath strokeLineFromPoint:NSMakePoint(tBounds.origin.x + [leftCap size].width, tBounds.origin.y + tBounds.size.height - 1.5) 
-							  toPoint:NSMakePoint(tBounds.size.width - [rightCap size].width, tBounds.origin.y + tBounds.size.height - 1.5)];
-	[[NSColor colorWithDeviceWhite: 1.0 alpha:0.39f] set];
-	[NSBezierPath strokeLineFromPoint:NSMakePoint(tBounds.origin.x + [leftCap size].width, tBounds.origin.y + tBounds.size.height ) 
-							  toPoint:NSMakePoint(tBounds.size.width - [rightCap size].width, tBounds.origin.y + tBounds.size.height )];
-	
-	NSImage *docIcon = [NSImage imageNamed: showsDocumentIcon ? @"Pencil" : @"Search" ];
-	[docIcon setFlipped:YES];
-	NSRect docImageRect = NSMakeRect(BORDER_LEFT_OFFSET, BORDER_TOP_OFFSET, [docIcon size].width, [docIcon size].height);
-	[docIcon drawInRect:docImageRect fromRect:NSZeroRect operation:NSCompositeSourceOver fraction:1.0];
-	
-	[NSGraphicsContext restoreGraphicsState];
-	
-	//drawWithFrame: would make sense to override, but this works, too
-	[[self cell] drawWithFrame:NSMakeRect(0, 0, NSWidth(tBounds), NSHeight(tBounds)) inView:self];
-	
-	if (IsLeopardOrLater) {
-		//ALERT: TEMPORARY WORK-AROUND FOR TIGER FOCUS RING BUILDUP: DO NOT DRAW FOCUS RING ON TIGER
-		if ([self currentEditor] && isActiveWin) {
-			//draw focus ring
-			[NSGraphicsContext saveGraphicsState];
-			NSSetFocusRingStyle(NSFocusRingOnly);
-			NSRect focusRect = NSInsetRect(tBounds, 0.0f, 0.5f);
-			focusRect.origin.y -= 0.5f;
-			//drawing could be sped up by a measurable amount if this were cached in a (partially transparent) image
-			[[NSBezierPath bezierPathWithRoundRectInRect:focusRect radius:1.0f] fill];
-			[NSGraphicsContext restoreGraphicsState];
-		}
-	}
-	
+    [super drawRect:rect];
+    if (![self.cell snapbackButtonIsVisible]) {
+        NSImage *icon = [NSImage imageNamed:showsDocumentIcon ? @"Pencil" : @"Search"];
+        NSRect frame = NSMakeRect(BORDER_LEFT_OFFSET, BORDER_TOP_OFFSET, [icon size].width, [icon size].height);
+        [icon drawInRect:frame fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0 respectFlipped:YES hints:nil];
+    }
 }
 
 @end

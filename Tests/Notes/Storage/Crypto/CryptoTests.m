@@ -55,6 +55,19 @@ NSData *NVVolumeUUIDForName(NSData *name);
     XCTAssertEqualObjects([input MD5Digest], [self bytesFromHex:@"900150983cd24fb0d6963f7d28e17f72"]);
     XCTAssertEqualObjects([input SHA1Digest], [self bytesFromHex:@"a9993e364706816aba3e25717850c26c9cd0d89d"]);
 }
+- (void)testMD5AcrossBlockBoundaries {
+    NSDictionary *vectors = @{
+        @"": @"d41d8cd98f00b204e9800998ecf8427e",
+        @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789": @"d174ab98d277d9f5a5611c2c9f419d9f",
+        @"12345678901234567890123456789012345678901234567890123456789012345678901234567890": @"57edf4a22be3c955ac49da2e2107b67a"
+    };
+    for (NSString *input in vectors) {
+        XCTAssertEqualObjects([[input dataUsingEncoding:NSUTF8StringEncoding] MD5Digest], [self bytesFromHex:vectors[input]]);
+    }
+    NSMutableData *millionAs = [NSMutableData dataWithLength:1000000];
+    memset(millionAs.mutableBytes, 'a', millionAs.length);
+    XCTAssertEqualObjects([millionAs MD5Digest], [self bytesFromHex:@"7707d6ae4e027c70eea2a935c2296f21"]);
+}
 - (void)testBase64LineWrappingAndUUID {
     NSData *input = [@"foo" dataUsingEncoding:NSUTF8StringEncoding];
     XCTAssertEqualObjects([input encodeBase64], @"Zm9v\n");

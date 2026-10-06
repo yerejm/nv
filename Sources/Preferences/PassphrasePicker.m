@@ -72,7 +72,7 @@
 
 - (void)showAroundWindow:(NSWindow*)mainWindow resultDelegate:(id)aDelegate {
 	if (!newPassphraseWindow) {
-		if (![NSBundle loadNibNamed:@"PassphrasePicker" owner:self])  {
+		if (!NVLoadNib(@"PassphrasePicker", self))  {
 			NSLog(@"Failed to load PassphrasePicker.nib");
 			NSBeep();
 			return;
@@ -94,11 +94,10 @@
 	
 	[okNewButton setEnabled:NO];
 	
-	[NSApp beginSheet:newPassphraseWindow modalForWindow:mainWindow modalDelegate:self 
-	   didEndSelector:@selector(sheetDidEnd:returnCode:contextInfo:) contextInfo:NULL];
+	NVBeginSheet(newPassphraseWindow, mainWindow, self, @selector(sheetDidEnd:returnCode:contextInfo:), NULL);
 }
 
-- (void)sheetDidEnd:(NSWindow *)sheet returnCode:(int)returnCode contextInfo:(void *)contextInfo {
+- (void)sheetDidEnd:(NSWindow *)sheet returnCode:(NSModalResponse)returnCode contextInfo:(void *)contextInfo {
 	[newPasswordField setStringValue:@""];
 	[verifyNewPasswordField setStringValue:@""];
 		
@@ -125,8 +124,7 @@
 		[newPassphraseWindow close];
 		
 	} else {
-		NSRunAlertPanel(NSLocalizedString(@"Your entered passphrase does not match your verify passphrase.",nil), 
-						NSLocalizedString(@"Please try again.",nil), NSLocalizedString(@"OK",nil), nil, nil);
+		NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"Your entered passphrase does not match your verify passphrase.",nil), NSLocalizedString(@"Please try again.",nil), NSLocalizedString(@"OK",nil), nil, nil);
 		[verifyNewPasswordField setStringValue:@""];
 		[verifyNewPasswordField performSelector:@selector(selectText:) withObject:nil afterDelay:0.0];
 	}
