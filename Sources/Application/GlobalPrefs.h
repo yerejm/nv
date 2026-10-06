@@ -159,6 +159,14 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 - (void)setManagesTextWidthInWindow:(BOOL)value sender:(id)sender;
 - (CGFloat)maxNoteBodyWidth;
 - (void)setMaxNoteBodyWidth:(CGFloat)value sender:(id)sender;
+- (NSInteger)colorScheme;
+- (void)setColorScheme:(NSInteger)value sender:(id)sender;
+- (BOOL)alternatingRows;
+- (void)setAlternatingRows:(BOOL)value sender:(id)sender;
+- (BOOL)showNoteListGrid;
+- (void)setShowNoteListGrid:(BOOL)value sender:(id)sender;
+- (NSColor *)interfaceSecondaryColor;
+- (NSColor *)interfaceSeparatorColor;
 
 - (BOOL)autoCompleteSearches;
 - (BOOL)autoFormatsMarkdownHeadings;

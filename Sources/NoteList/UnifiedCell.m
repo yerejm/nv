@@ -83,7 +83,7 @@
 	//fixed based on width of the cell
 
 	//height could justifiably vary based on wrapped height of title string
-	return NSMakeRect(aFrame.origin.x, aFrame.origin.y, aFrame.size.width, [self tableFontFrameHeight]);
+	return NSMakeRect(aFrame.origin.x, aFrame.origin.y, MAX(0, aFrame.size.width - [self dateWidthForFrame:aFrame] - 8), [self tableFontFrameHeight]);
 }
 
 - (NSRect)nv_tagsRectForFrame:(NSRect)frame {
@@ -135,17 +135,6 @@
 	return color;
 }
 
-static NSShadow* ShadowForSnowLeopard(void) {
-	static NSShadow *sh = nil;
-	if (!sh) {
-		sh = [[NSShadow alloc] init];
-		[sh setShadowOffset:NSMakeSize(0,-1)];
-		[sh setShadowColor:[NSColor colorWithCalibratedWhite:0.15 alpha:0.67]];
-		[sh setShadowBlurRadius:0.5];
-	}
-	return sh;
-}
-
 NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL withShadow) {
 	//used to modify the cell's attributed string before display when it is selected
 	
@@ -155,10 +144,22 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 	NSRange fullRange = NSMakeRange(0, [str length]);
 	NSMutableAttributedString *colorFreeStr = [str mutableCopy];
 	[colorFreeStr removeAttribute:NSForegroundColorAttributeName range:fullRange];
-	if (withShadow) {
-		[colorFreeStr addAttribute:NSShadowAttributeName value:ShadowForSnowLeopard() range:NSMakeRange(0, [str length])];
-	}
+	[colorFreeStr removeAttribute:NSShadowAttributeName range:fullRange];
 	return [colorFreeStr autorelease];
+}
+
+- (NSString *)dateString {
+    GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
+    unsigned int columns = [prefs tableColumnsBitmap];
+    if (!noteObject || (!ColumnIsSet(NoteDateCreatedColumn, columns) && !ColumnIsSet(NoteDateModifiedColumn, columns))) return @"";
+    BOOL created = ColumnIsSet(NoteDateCreatedColumn, columns) &&
+        (!ColumnIsSet(NoteDateModifiedColumn, columns) || [[prefs sortedTableColumnKey] isEqualToString:NoteDateCreatedColumnString]);
+    return (created ? dateCreatedStringOfNote : dateModifiedStringOfNote)((id)self.controlView, noteObject, NSNotFound);
+}
+
+- (CGFloat)dateWidthForFrame:(NSRect)frame {
+    NSString *date = [self dateString];
+    return date.length ? MIN(ceil([date sizeWithAttributes:[self baseTextAttributes]].width) + 4, frame.size.width * 0.6) : 0;
 }
 
 - (NSMutableDictionary*)baseTextAttributes {
@@ -166,6 +167,7 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 	if (!alignStyle) {
 		alignStyle = [[NSMutableParagraphStyle alloc] init];
 		[alignStyle setAlignment:NSTextAlignmentRight];
+        [alignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
 	}
 	return [NSMutableDictionary dictionaryWithObjectsAndKeys:alignStyle, NSParagraphStyleAttributeName, [self font], NSFontAttributeName, nil];
 }
@@ -174,6 +176,13 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 	
 	NotesTableView *tv = (NotesTableView *)controlView;
 	
+    NSMutableAttributedString *title = [[self.attributedStringValue mutableCopy] autorelease];
+    if (title.length) {
+        NSMutableParagraphStyle *style = [[([title attribute:NSParagraphStyleAttributeName atIndex:0 effectiveRange:NULL] ?: [NSParagraphStyle defaultParagraphStyle]) mutableCopy] autorelease];
+        style.tailIndent = -[self dateWidthForFrame:cellFrame] - 8;
+        [title addAttribute:NSParagraphStyleAttributeName value:style range:NSMakeRange(0, MIN(title.length, titleOfNote(noteObject).length))];
+        [self setAttributedStringValue:title];
+    }
 	[super drawWithFrame:cellFrame inView:controlView];	
 	
 	//draw note date and tags
@@ -181,29 +190,19 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 	NSMutableDictionary *baseAttrs = [self baseTextAttributes];
 	BOOL isActive = (IsLeopardOrLater && [tv style] == NSTableViewStyleSourceList) ? YES : [tv isActiveStyle];
 	
-	NSColor *textColor = ([self isHighlighted] && isActive) ? [NSColor whiteColor] : (![self isHighlighted] ? [[self class] dateColorForTint]/*[NSColor grayColor]*/ : nil);
+	NSColor *textColor = ([self isHighlighted] && isActive) ? [NSColor whiteColor] : (![self isHighlighted] ? [[GlobalPrefs defaultPrefs] interfaceSecondaryColor] : nil);
 	if (textColor)
 		[baseAttrs setObject:textColor forKey:NSForegroundColorAttributeName];
-	if (IsSnowLeopardOrLater && [self isHighlighted] && ([tv style] == NSTableViewStyleSourceList)) {
-		[baseAttrs setObject:ShadowForSnowLeopard() forKey:NSShadowAttributeName];
-	}
-	
+
 	float fontHeight = [tv tableFontHeight];
 	
 	//if the sort-order is date-created, then show the date on which this note was created; otherwise show date modified.
 	unsigned int columnsBitmap = [[GlobalPrefs defaultPrefs] tableColumnsBitmap];
 	
 	if (ColumnIsSet(NoteDateCreatedColumn, columnsBitmap) || ColumnIsSet(NoteDateModifiedColumn, columnsBitmap)) {
-		BOOL showDateCreated = NO;
-		
-		if (ColumnIsSet(NoteDateCreatedColumn, columnsBitmap) && ColumnIsSet(NoteDateModifiedColumn, columnsBitmap)) {
-			showDateCreated = [[[GlobalPrefs defaultPrefs] sortedTableColumnKey] isEqualToString:NoteDateCreatedColumnString];
-		} else if (ColumnIsSet(NoteDateCreatedColumn, columnsBitmap)) {
-			showDateCreated = YES;
-		}
-		
-		NSString *dateStr = (showDateCreated ? dateCreatedStringOfNote : dateModifiedStringOfNote)(tv, noteObject, NSNotFound);
-		[dateStr drawInRect:NSMakeRect(NSMaxX(cellFrame) - 70.0, NSMinY(cellFrame), 70.0, fontHeight) withAttributes:baseAttrs];
+        NSString *dateStr = [self dateString];
+        CGFloat width = [self dateWidthForFrame:cellFrame];
+        [dateStr drawInRect:NSMakeRect(NSMaxX(cellFrame) - width, NSMinY(cellFrame), width, fontHeight) withAttributes:baseAttrs];
 	}
 
 	if (ColumnIsSet(NoteLabelsColumn, columnsBitmap) && [labelsOfNote(noteObject) length]) {

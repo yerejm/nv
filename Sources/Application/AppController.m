@@ -163,6 +163,7 @@ void outletObjectAwoke(id sender) {
 }
 
 - (void)runDelayedUIActionsAfterLaunch {
+    [self updateInterfaceAppearance];
 	[[prefsController bookmarksController] setAppController:self];
 	[[prefsController bookmarksController] restoreWindowFromSave];
 	[[prefsController bookmarksController] updateBookmarksUI];
@@ -262,6 +263,7 @@ void outletObjectAwoke(id sender) {
 	 @selector(setSortedTableColumnKey:reversed:sender:),  //when sorting prefs changed
 	 @selector(setNoteBodyFont:sender:),  //when to tell notationcontroller to restyle its notes
 	 @selector(setForegroundTextColor:sender:),  //ditto
+     @selector(setBackgroundTextColor:sender:),
 	 @selector(setTableFontSize:sender:),  //when to tell notationcontroller to regenerate the (now potentially too-short) note-body previews
 	 @selector(addTableColumn:sender:),  //ditto
 	 @selector(removeTableColumn:sender:),  //ditto
@@ -440,6 +442,28 @@ terminateApp:
 - (void)_forceRegeneratePreviewsForTitleColumn {
 	[notationController regeneratePreviewsForColumn:[notesTableView noteAttributeColumnForIdentifier:NoteTitleColumnString]	
 								visibleFilteredRows:[notesTableView rowsInRect:[notesTableView visibleRect]] forceUpdate:YES];
+}
+
+- (void)updateInterfaceAppearance {
+    [window setAppearance:nil];
+    if ([prefsController colorScheme] != 0) {
+        NSColor *background = [[prefsController backgroundTextColor] colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+        CGFloat brightness = background.redComponent * 0.299 + background.greenComponent * 0.587 + background.blueComponent * 0.114;
+        [window setAppearance:[NSAppearance appearanceNamed:brightness < 0.5 ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua]];
+    }
+    [window setBackgroundColor:[prefsController backgroundTextColor]];
+    [splitView setBackground:[prefsController backgroundTextColor]];
+    [field setTextColor:[prefsController foregroundTextColor]];
+    [field setNeedsDisplay:YES];
+    ResetFontRelatedTableAttributes();
+    [notationController regenerateAllPreviews];
+    [notesTableView reloadDataIfNotEditing];
+    [splitView setNeedsDisplay:YES];
+}
+
+- (void)tableView:(NSTableView *)table willDisplayCell:(id)cell forTableColumn:(NSTableColumn *)column row:(NSInteger)row {
+    if ([cell respondsToSelector:@selector(setTextColor:)])
+        [cell setTextColor:[cell isHighlighted] && [notesTableView isActiveStyle] ? [NSColor selectedTextColor] : [prefsController foregroundTextColor]];
 }
 
 - (void)_configureDividerForCurrentLayout {
@@ -668,12 +692,15 @@ terminateApp:
 		if (currentNote) {
 			[self contentsUpdatedForNote:currentNote];
 		}
-	} else if ([selectorString isEqualToString:SEL_STR(setForegroundTextColor:sender:)]) {
+    } else if ([selectorString isEqualToString:SEL_STR(setForegroundTextColor:sender:)]) {
+        [self updateInterfaceAppearance];
 		
 		[notationController setForegroundTextColor:[prefsController foregroundTextColor]];
 		if (currentNote) {
 			[self contentsUpdatedForNote:currentNote];
 		} 
+    } else if ([selectorString isEqualToString:SEL_STR(setBackgroundTextColor:sender:)]) {
+        [self updateInterfaceAppearance];
 	} else if ([selectorString isEqualToString:SEL_STR(setTableFontSize:sender:)] || [selectorString isEqualToString:SEL_STR(setTableColumnsShowPreview:sender:)]) {
 		
 		ResetFontRelatedTableAttributes();
@@ -1473,7 +1500,7 @@ terminateApp:
 }
 
 - (void)windowDidFailToEnterFullScreen:(NSWindow *)failedWindow {
-    [self windowDidExitFullScreen:nil];
+    [self windowDidExitFullScreen:[NSNotification notificationWithName:NSWindowDidExitFullScreenNotification object:failedWindow]];
 }
 
 - (void)_expandToolbar {
@@ -1513,7 +1540,8 @@ terminateApp:
 - (NSRect)splitView:(RBSplitView*)sender willDrawDividerInRect:(NSRect)dividerRect betweenView:(RBSplitSubview*)leading 
 			andView:(RBSplitSubview*)trailing withProposedRect:(NSRect)imageRect {
 	
-	[dividerShader drawDividerInRect:dividerRect withDimpleRect:imageRect blendVertically:![prefsController horizontalLayout]];
+    [[prefsController interfaceSeparatorColor] setFill];
+    NSRectFill(dividerRect);
 	
 	return NSZeroRect;
 }

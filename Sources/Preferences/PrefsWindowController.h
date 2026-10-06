@@ -60,10 +60,14 @@
     NSButton *limitTextWidthButton;
     NSSlider *textWidthSlider;
     NSTextField *textWidthLabel;
+    NSPopUpButton *colorSchemeButton;
 }
 - (void)showWindow:(id)sender;
 - (IBAction)changedTextWidth:(id)sender;
 - (IBAction)changedTextWidthLimit:(id)sender;
+- (IBAction)changedColorScheme:(id)sender;
+- (IBAction)changedAlternatingRows:(id)sender;
+- (IBAction)changedNoteListGrid:(id)sender;
 
 - (IBAction)changedBackgroundTextColorWell:(id)sender;
 - (IBAction)changedForegroundTextColorWell:(id)sender;

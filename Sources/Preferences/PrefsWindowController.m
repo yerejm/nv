@@ -149,6 +149,8 @@
 }
 
 - (IBAction)changedBackgroundTextColorWell:(id)sender {
+	[prefsController setColorScheme:3 sender:self];
+    [colorSchemeButton selectItemAtIndex:3];
 	[prefsController setBackgroundTextColor:[backgroundColorWell color] sender:self];
 }
 
@@ -161,7 +163,19 @@
     [prefsController setManagesTextWidthInWindow:[sender state] == NSControlStateValueOn sender:self];
 }
 - (IBAction)changedForegroundTextColorWell:(id)sender {
+	[prefsController setColorScheme:3 sender:self];
+    [colorSchemeButton selectItemAtIndex:3];
 	[prefsController setForegroundTextColor:[foregroundColorWell color] sender:self];
+}
+
+- (IBAction)changedColorScheme:(id)sender {
+    [prefsController setColorScheme:[sender indexOfSelectedItem] sender:self];
+}
+- (IBAction)changedAlternatingRows:(id)sender {
+    [prefsController setAlternatingRows:[sender state] == NSControlStateValueOn sender:self];
+}
+- (IBAction)changedNoteListGrid:(id)sender {
+    [prefsController setShowNoteListGrid:[sender state] == NSControlStateValueOn sender:self];
 }
 - (IBAction)changedSearchHighlightColorWell:(id)sender {
 	[prefsController setSearchTermHighlightColor:[searchHighlightColorWell color] sender:self];
@@ -413,6 +427,24 @@
     [widthHint setTextColor:[NSColor secondaryLabelColor]];
     [displayView addSubview:widthHint];
     [self changedTextWidth:textWidthSlider];
+    NSTextField *schemeLabel = [NSTextField labelWithString:NSLocalizedString(@"Interface colors", nil)];
+    [schemeLabel setFrame:NSMakeRect(24, 154, 155, 22)];
+    [displayView addSubview:schemeLabel];
+    colorSchemeButton = [[[NSPopUpButton alloc] initWithFrame:NSMakeRect(190, 151, 294, 28) pullsDown:NO] autorelease];
+    for (NSString *title in @[@"System", @"Black & White", @"Low Contrast", @"Custom (Fonts & Colors)"])
+        [colorSchemeButton addItemWithTitle:NSLocalizedString(title, nil)];
+    [colorSchemeButton selectItemAtIndex:[prefsController colorScheme]];
+    [colorSchemeButton setTarget:self]; [colorSchemeButton setAction:@selector(changedColorScheme:)];
+    [colorSchemeButton setAccessibilityLabel:NSLocalizedString(@"Interface colors", nil)];
+    [displayView addSubview:colorSchemeButton];
+    NSButton *alternating = [NSButton checkboxWithTitle:NSLocalizedString(@"Alternate note row backgrounds", nil) target:self action:@selector(changedAlternatingRows:)];
+    [alternating setFrame:NSMakeRect(24, 115, 460, 24)];
+    [alternating setState:[prefsController alternatingRows]];
+    [displayView addSubview:alternating];
+    NSButton *grid = [NSButton checkboxWithTitle:NSLocalizedString(@"Show note separators", nil) target:self action:@selector(changedNoteListGrid:)];
+    [grid setFrame:NSMakeRect(24, 82, 460, 24)];
+    [grid setState:[prefsController showNoteListGrid]];
+    [displayView addSubview:grid];
 	
 	[window setDelegate:self];
 	

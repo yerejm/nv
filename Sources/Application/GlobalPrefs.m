@@ -68,6 +68,9 @@ static NSString *AppActivationModifiersKey = @"AppActivationModifiers";
 static NSString *HorizontalLayoutKey = @"HorizontalLayout";
 static NSString *KeepsMaxTextWidthKey = @"KeepsMaxTextWidth";
 static NSString *NoteBodyMaxWidthKey = @"NoteBodyMaxWidth";
+static NSString *ColorSchemeKey = @"InterfaceColorScheme";
+static NSString *AlternatingRowsKey = @"AlternatingRows";
+static NSString *ShowNoteListGridKey = @"ShowNoteListGrid";
 static NSString *BookmarksKey = @"Bookmarks";
 static NSString *LastScrollOffsetKey = @"LastScrollOffset";
 static NSString *LastSearchStringKey = @"LastSearchString";
@@ -128,6 +131,9 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 			[NSNumber numberWithBool:NO], HorizontalLayoutKey,
 			@NO, KeepsMaxTextWidthKey,
 			@660, NoteBodyMaxWidthKey,
+            @3, ColorSchemeKey,
+            @NO, AlternatingRowsKey,
+            @YES, ShowNoteListGridKey,
 			[NSNumber numberWithBool:YES], MakeURLsClickableKey,
 			[NSNumber numberWithBool:YES], HighlightSearchTermsKey, 
 			[NSNumber numberWithBool:YES], TableColumnsHaveBodyPreviewKey, 
@@ -614,6 +620,11 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 }
 
 - (NSColor*)foregroundTextColor {
+    switch ([self colorScheme]) {
+        case 0: return [NSColor textColor];
+        case 1: return [NSColor colorWithCalibratedWhite:0.02 alpha:1];
+        case 2: return [NSColor colorWithCalibratedWhite:0.243 alpha:1];
+    }
 	NSData *theData = [defaults dataForKey:ForegroundTextColorKey];
 	if (theData) return (NSColor *)NVUnarchivePreference(theData);
 	return nil;
@@ -635,6 +646,11 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 }
 
 - (NSColor*)backgroundTextColor {
+    switch ([self colorScheme]) {
+        case 0: return [NSColor textBackgroundColor];
+        case 1: return [NSColor colorWithCalibratedWhite:0.98 alpha:1];
+        case 2: return [NSColor colorWithCalibratedWhite:0.902 alpha:1];
+    }
 	//don't need to cache the unarchived color, as it's not used in a random-access pattern
 	
 	NSData *theData = [defaults dataForKey:BackgroundTextColorKey];
@@ -733,6 +749,32 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 }
 - (BOOL)horizontalLayout {
 	return [defaults boolForKey:HorizontalLayoutKey];
+}
+
+- (NSInteger)colorScheme { return [defaults integerForKey:ColorSchemeKey]; }
+- (void)setColorScheme:(NSInteger)value sender:(id)sender {
+    [defaults setInteger:MAX(0, MIN(3, value)) forKey:ColorSchemeKey];
+    [noteBodyAttributes release]; noteBodyAttributes = nil;
+    [searchTermHighlightAttributes release]; searchTermHighlightAttributes = nil;
+    SEND_CALLBACKS();
+    [self notifyCallbacksForSelector:@selector(setForegroundTextColor:sender:) excludingSender:nil];
+    [self notifyCallbacksForSelector:@selector(setBackgroundTextColor:sender:) excludingSender:nil];
+}
+- (BOOL)alternatingRows { return [defaults boolForKey:AlternatingRowsKey]; }
+- (void)setAlternatingRows:(BOOL)value sender:(id)sender {
+    [defaults setBool:value forKey:AlternatingRowsKey];
+    SEND_CALLBACKS();
+}
+- (BOOL)showNoteListGrid { return [defaults boolForKey:ShowNoteListGridKey]; }
+- (void)setShowNoteListGrid:(BOOL)value sender:(id)sender {
+    [defaults setBool:value forKey:ShowNoteListGridKey];
+    SEND_CALLBACKS();
+}
+- (NSColor *)interfaceSecondaryColor {
+    return [[self backgroundTextColor] blendedColorWithFraction:0.65 ofColor:[self foregroundTextColor]];
+}
+- (NSColor *)interfaceSeparatorColor {
+    return [[self backgroundTextColor] blendedColorWithFraction:0.18 ofColor:[self foregroundTextColor]];
 }
 
 - (BOOL)managesTextWidthInWindow { return [defaults boolForKey:KeepsMaxTextWidthKey]; }

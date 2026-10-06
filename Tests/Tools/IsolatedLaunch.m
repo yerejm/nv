@@ -18,6 +18,7 @@
 #import "PTHotKeyCenter.h"
 #import "PTHotKey.h"
 #import "PTKeyCombo.h"
+#import "DualField.h"
 #import "RBSplitView/RBSplitView.h"
 #import "TemporaryFileCachePreparer.h"
 #import "AcceptanceEditorSession.h"
@@ -357,6 +358,38 @@ static void RunAcceptance(void) {
         [app revealNote:note options:NVEditNoteToReveal | NVOrderFrontWindow];
         [window setFrame:NSMakeRect(window.frame.origin.x, window.frame.origin.y, 720, 520) display:YES];
         Check(@"window resizing", fabs(window.frame.size.width - 720) < 1);
+        GlobalPrefs *appearancePrefs = [GlobalPrefs defaultPrefs];
+        NotesTableView *noteTable = [app valueForKey:@"notesTableView"];
+        Check(@"expanded note list retains visible rows", noteTable.numberOfRows == 3 && !noteTable.isHiddenOrHasHiddenAncestor && noteTable.visibleRect.size.height > 60);
+        [appearancePrefs setColorScheme:2 sender:nil];
+        Check(@"low contrast colors apply to editor and note list", [editor.backgroundColor isEqual:[appearancePrefs backgroundTextColor]] && [noteTable.backgroundColor isEqual:editor.backgroundColor]);
+        [appearancePrefs setAlternatingRows:YES sender:nil];
+        [appearancePrefs setShowNoteListGrid:NO sender:nil];
+        Check(@"note row appearance options take effect", noteTable.usesAlternatingRowBackgroundColors && noteTable.gridStyleMask == NSTableViewGridNone);
+        NSMenu *sortMenu = [noteTable menuForColumnSorting];
+        BOOL directionShown = NO;
+        for (NSMenuItem *item in sortMenu.itemArray)
+            if (item.state == NSControlStateValueOn) directionShown = [item.title hasSuffix:@"↓"] || [item.title hasSuffix:@"↑"];
+        Check(@"sort menu exposes current direction", directionShown);
+        [appearancePrefs setColorScheme:3 sender:nil];
+        [appearancePrefs setForegroundTextColor:[NSColor whiteColor] sender:nil];
+        [appearancePrefs setBackgroundTextColor:[NSColor colorWithCalibratedWhite:0.12 alpha:1] sender:nil];
+        Snapshot(window, @"custom-dark.png");
+        NSBitmapImageRep *listBitmap = [noteTable bitmapImageRepForCachingDisplayInRect:noteTable.bounds];
+        [noteTable cacheDisplayInRect:noteTable.bounds toBitmapImageRep:listBitmap];
+        [[listBitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}] writeToFile:[acceptanceRoot stringByAppendingPathComponent:@"note-list.png"] atomically:YES];
+        [app renameNote:nil];
+        NSTextView *inlineEditor = (id)noteTable.currentEditor;
+        Check(@"native inline editor uses readable custom colors", inlineEditor && [inlineEditor.textColor isEqual:[appearancePrefs foregroundTextColor]] && [inlineEditor.backgroundColor isEqual:[appearancePrefs backgroundTextColor]]);
+        [noteTable abortEditing];
+        [app bringFocusToControlField:nil];
+        NSTextView *searchEditor = (id)[[app valueForKey:@"field"] currentEditor];
+        Check(@"search editing resets native field editor styling", searchEditor && !searchEditor.drawsBackground && [searchEditor.insertionPointColor isEqual:[appearancePrefs foregroundTextColor]]);
+        [appearancePrefs setForegroundTextColor:[NSColor textColor] sender:nil];
+        [appearancePrefs setBackgroundTextColor:[NSColor textBackgroundColor] sender:nil];
+        [appearancePrefs setColorScheme:0 sender:nil];
+        [appearancePrefs setShowNoteListGrid:YES sender:nil];
+        [window makeFirstResponder:editor];
         [window setAppearance:[NSAppearance appearanceNamed:NSAppearanceNameAqua]];
         Snapshot(window, @"light.png");
         [window setAppearance:[NSAppearance appearanceNamed:NSAppearanceNameDarkAqua]];

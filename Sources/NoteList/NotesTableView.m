@@ -162,7 +162,9 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 - (void)awakeFromNib {
 	[globalPrefs registerWithTarget:self forChangesInSettings:
 	 @selector(setTableFontSize:sender:),
-	 @selector(setHorizontalLayout:sender:), nil];
+	 @selector(setHorizontalLayout:sender:),
+     @selector(setForegroundTextColor:sender:), @selector(setBackgroundTextColor:sender:),
+     @selector(setAlternatingRows:sender:), @selector(setShowNoteListGrid:sender:), nil];
 	
 	[self registerForDraggedTypes:[NSArray arrayWithObjects:NVFilenamesPasteboardType, NSPasteboardTypeRTF, NSPasteboardTypeRTFD, NSPasteboardTypeString, nil]];
 	
@@ -265,7 +267,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 
 - (void)drawGridInClipRect:(NSRect)clipRect {
 	//draw lines manually to avoid interfering with title-focusrings and selection highlighting on leopard+
-	if (![self dataSource]) {
+	if (![self dataSource] || ![globalPrefs showNoteListGrid]) {
 		return;
 	}
 	[NSGraphicsContext saveGraphicsState];
@@ -293,12 +295,6 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 		}
 		rowRectOrigin += ySpacing;
 	}
-	//draw everything after the visible range of rows
-	while (rowRectOrigin < clipRect.size.height) {
-		rowRectOrigin += ySpacing;
-		[line moveToPoint:NSMakePoint(clipRect.origin.x, rowRectOrigin)];
-		[line lineToPoint:NSMakePoint(clipRect.origin.x + clipRect.size.width, rowRectOrigin)];
-	}
 	[line stroke];
 	[NSGraphicsContext restoreGraphicsState];
 }
@@ -319,7 +315,8 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	
 	if (IsLeopardOrLater)
 		[self setStyle:isOneRow ? NSTableViewStylePlain : NSTableViewStyleSourceList];
-	[self setBackgroundColor: [NSColor textBackgroundColor]];
+	[self setBackgroundColor:[globalPrefs backgroundTextColor]];
+    [self setUsesAlternatingRowBackgroundColors:[globalPrefs alternatingRows]];
 	
 	NSLayoutManager *lm = [[NSLayoutManager alloc] init];
 	tableFontHeight = [lm defaultLineHeightForFont:font];
@@ -330,11 +327,20 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	
 	[self setIntercellSpacing:NSMakeSize(12, 2)];
 	
-	[self setGridStyleMask:isOneRow ? NSTableViewGridNone : NSTableViewSolidHorizontalGridLineMask];
-	[self setGridColor:[NSColor colorWithCalibratedWhite:0.882 alpha:1.0]];
+	[self setGridStyleMask:[globalPrefs showNoteListGrid] ? NSTableViewSolidHorizontalGridLineMask : NSTableViewGridNone];
+	[self setGridColor:[globalPrefs interfaceSeparatorColor]];
 }
 
 - (void)settingChangedForSelectorString:(NSString*)selectorString {
+    if ([selectorString isEqualToString:SEL_STR(setForegroundTextColor:sender:)] ||
+        [selectorString isEqualToString:SEL_STR(setBackgroundTextColor:sender:)] ||
+        [selectorString isEqualToString:SEL_STR(setAlternatingRows:sender:)] ||
+        [selectorString isEqualToString:SEL_STR(setShowNoteListGrid:sender:)]) {
+        [self _configureAttributesForCurrentLayout];
+        [self setNeedsDisplay:YES];
+        [headerView setNeedsDisplay:YES];
+        return;
+    }
 
 	if ([selectorString isEqualToString:SEL_STR(setTableFontSize:sender:)]) {
 		
@@ -581,6 +587,8 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 		[theMenuItem setTarget:self];
 		[theMenuItem setRepresentedObject:theColumn];
 		[theMenuItem setState:[[theColumn identifier] isEqualToString:sortKey]];
+        if ([[theColumn identifier] isEqualToString:sortKey])
+            [theMenuItem setTitle:[NSString stringWithFormat:@"%@ %@", [theMenuItem title], [globalPrefs tableIsReverseSorted] ? @"↓" : @"↑"]];
 		
 		[theMenu addItem:theMenuItem];
     }
@@ -610,6 +618,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 }
 
 - (void)setStatusForSortedColumn:(id)sender {
+    viewMenusValid = NO;
 	NSTableColumn* tableColumn = (NSTableColumn*)sender;
 	NSString *lastColumnName = [globalPrefs sortedTableColumnKey];
 	BOOL sortDescending = [globalPrefs tableIsReverseSorted];
@@ -1115,6 +1124,12 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 	}
 	
 	[super editColumn:tagsInTitleColumn ? 0 : columnIndex row:rowIndex withEvent:event select:flag];
+    NSTextView *fieldEditor = (NSTextView *)[self currentEditor];
+    [fieldEditor setDrawsBackground:YES];
+    [fieldEditor setBackgroundColor:[globalPrefs backgroundTextColor]];
+    [fieldEditor setTextColor:[globalPrefs foregroundTextColor]];
+    [fieldEditor setInsertionPointColor:[globalPrefs foregroundTextColor]];
+    [fieldEditor setSelectedTextAttributes:@{NSBackgroundColorAttributeName:[NSColor selectedTextBackgroundColor], NSForegroundColorAttributeName:[NSColor selectedTextColor]}];
 	
 	//become/resignFirstResponder can't handle the field-editor case for row-highlighting style, so do it here:
 	[self updateTitleDereferencorState];
@@ -1233,6 +1248,17 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 		
 		if (didRotate) [NSGraphicsContext restoreGraphicsState];
 	}
+}
+
+- (void)drawBackgroundInClipRect:(NSRect)rect {
+    [[globalPrefs backgroundTextColor] setFill];
+    NSRectFill(rect);
+    if (![globalPrefs alternatingRows]) return;
+    NSRange rows = [self rowsInRect:rect];
+    NSColor *stripe = [[globalPrefs backgroundTextColor] blendedColorWithFraction:0.045 ofColor:[globalPrefs foregroundTextColor]];
+    [stripe setFill];
+    for (NSUInteger row = rows.location; row < NSMaxRange(rows) && row < (NSUInteger)self.numberOfRows; row++)
+        if (row % 2) NSRectFill(NSIntersectionRect([self rectOfRow:row], rect));
 }
 
 @end

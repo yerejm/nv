@@ -81,6 +81,7 @@ void outletObjectAwoke(id sender);
 - (void)setupViewsAfterAppAwakened;
 - (void)runDelayedUIActionsAfterLaunch;
 - (void)updateNoteMenus;
+- (void)updateInterfaceAppearance;
 
 - (IBAction)renameNote:(id)sender;
 - (IBAction)deleteNote:(id)sender;

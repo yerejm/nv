@@ -64,6 +64,9 @@
 - (NSText *)setUpFieldEditorAttributes:(NSText *)textObj {
 	NSTextView *textView = (NSTextView*)[super setUpFieldEditorAttributes:textObj];
 	[textView setDrawsBackground:NO];
+    [textView setTextColor:[[GlobalPrefs defaultPrefs] foregroundTextColor]];
+    [textView setInsertionPointColor:[[GlobalPrefs defaultPrefs] foregroundTextColor]];
+    [textView setSelectedTextAttributes:@{NSBackgroundColorAttributeName:[NSColor selectedTextBackgroundColor], NSForegroundColorAttributeName:[NSColor selectedTextColor]}];
 		
 	return textView;
 }
@@ -162,8 +165,14 @@
 }
 		
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
-	
-	[super drawWithFrame:cellFrame inView:controlView];
+    GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
+    NSBezierPath *border = [NSBezierPath bezierPathWithRoundedRect:NSInsetRect(cellFrame, 1, 1) xRadius:6 yRadius:6];
+    [[prefs backgroundTextColor] setFill];
+    [border fill];
+    [[prefs interfaceSeparatorColor] setStroke];
+    [border stroke];
+    [self setTextColor:[prefs foregroundTextColor]];
+    [self drawInteriorWithFrame:cellFrame inView:controlView];
 	
 	if (BUTTON_HIDDEN != clearButtonState) {
 		NSImage *clearImg = [NSImage imageNamed:(clearButtonState == BUTTON_NORMAL ? @"Clear" : @"ClearPressed") ];
@@ -205,7 +214,7 @@
 	
 	[self setDrawsBackground:YES];
 	[self setBordered:YES];
-	[self setBezeled:YES];
+	[self setBezeled:NO];
 	[self setFocusRingType:NSFocusRingTypeExterior];
 			
 	[myCell setAllowsUndo:NO];
@@ -439,9 +448,11 @@
 - (void)drawRect:(NSRect)rect {
     [super drawRect:rect];
     if (![self.cell snapbackButtonIsVisible]) {
-        NSImage *icon = [NSImage imageNamed:showsDocumentIcon ? @"Pencil" : @"Search"];
-        NSRect frame = NSMakeRect(BORDER_LEFT_OFFSET, BORDER_TOP_OFFSET, [icon size].width, [icon size].height);
-        [icon drawInRect:frame fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0 respectFlipped:YES hints:nil];
+        NSImage *icon = [NSImage imageWithSystemSymbolName:showsDocumentIcon ? @"pencil" : @"magnifyingglass" accessibilityDescription:nil];
+        icon = [icon imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPaletteColors:@[[[GlobalPrefs defaultPrefs] foregroundTextColor]]]];
+        CGFloat opacity = self.window.isMainWindow ? 0.8 : 0.45;
+        NSRect frame = NSMakeRect(BORDER_LEFT_OFFSET + 1, BORDER_TOP_OFFSET + 1, 14, 14);
+        [icon drawInRect:frame fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:opacity respectFlipped:YES hints:nil];
     }
 }
 

@@ -17,9 +17,20 @@
 
 #import "NoteAttributeColumn.h"
 #import "NotesTableView.h"
+#import "GlobalPrefs.h"
 
 
 @implementation NoteTableHeaderCell
+
+- (void)drawWithFrame:(NSRect)frame inView:(NSView *)view {
+    GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
+    [[[prefs backgroundTextColor] blendedColorWithFraction:self.isHighlighted ? 0.12 : 0.04 ofColor:[prefs foregroundTextColor]] setFill];
+    NSRectFill(frame);
+    [self setTextColor:[prefs foregroundTextColor]];
+    [self drawInteriorWithFrame:[self drawingRectForBounds:frame] inView:view];
+    [[prefs interfaceSeparatorColor] setFill];
+    NSRectFill(NSMakeRect(NSMinX(frame), NSMaxY(frame) - 1, NSWidth(frame), 1));
+}
 
 - (NSRect)drawingRectForBounds:(NSRect)theRect {
 	return NSInsetRect(theRect, 6.0f, 0.0);
