@@ -45,6 +45,7 @@ enum {LAST_FIND_UNKNOWN, LAST_FIND_NO, LAST_FIND_YES};
 	BOOL isAutocompleting, wasDeleting;
 	
 	BOOL backgroundIsDark, mouseInside;
+	BOOL updatingTextWidth;
 	
 };
 
@@ -53,6 +54,7 @@ enum {LAST_FIND_UNKNOWN, LAST_FIND_NO, LAST_FIND_YES};
 - (NSColor*)_selectionColorForForegroundColor:(NSColor*)fgColor backgroundColor:(NSColor*)bgColor;
 - (NSDictionary*)preferredLinkAttributes;
 - (void)updateTextColors;
+- (void)updateTextWidth;
 - (NSRange)selectedRangeWasAutomatic:(BOOL*)automatic;
 - (void)setAutomaticallySelectedRange:(NSRange)newRange;
 - (void)removeHighlightedTerms;

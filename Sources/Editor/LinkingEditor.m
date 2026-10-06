@@ -79,7 +79,9 @@ CGFloat _perceptualDarkness(NSColor*a);
 	 @selector(setSearchTermHighlightColor:sender:),
 	 @selector(setShouldHighlightSearchTerms:sender:),
 	 @selector(setBackgroundTextColor:sender:),
-	 @selector(setForegroundTextColor:sender:), nil];	
+	 @selector(setForegroundTextColor:sender:),
+     @selector(setManagesTextWidthInWindow:sender:),
+     @selector(setMaxNoteBodyWidth:sender:), nil];
 	
 	[self setTextContainerInset:NSMakeSize(3, 8)];
 	[self setSmartInsertDeleteEnabled:NO];
@@ -104,6 +106,11 @@ CGFloat _perceptualDarkness(NSColor*a);
 }
 
 - (void)settingChangedForSelectorString:(NSString*)selectorString {
+    if ([selectorString isEqualToString:SEL_STR(setManagesTextWidthInWindow:sender:)] ||
+        [selectorString isEqualToString:SEL_STR(setMaxNoteBodyWidth:sender:)]) {
+        [self updateTextWidth];
+        return;
+    }
     
     if ([selectorString isEqualToString:SEL_STR(setCheckSpellingAsYouType:sender:)]) {
 	
@@ -163,6 +170,23 @@ CGFloat _perceptualDarkness(NSColor*a);
 	[self performSelector:@selector(_fixCursorForBackgroundUpdatingMouseInside:) withObject:[NSNumber numberWithBool:YES] afterDelay:0.0];
 
 	return [super becomeFirstResponder];
+}
+
+- (void)updateTextWidth {
+    if (updatingTextWidth) return;
+    updatingTextWidth = YES;
+    GlobalPrefs *prefs = prefsController ?: [GlobalPrefs defaultPrefs];
+    BOOL limited = [prefs managesTextWidthInWindow] || ([self.window styleMask] & NSWindowStyleMaskFullScreen);
+    CGFloat padding = self.textContainer.lineFragmentPadding;
+    CGFloat inset = limited ? MAX(8, (self.frame.size.width - [prefs maxNoteBodyWidth] - 2 * padding) / 2) : 3;
+    if (self.textContainerInset.width != inset)
+        [self setTextContainerInset:NSMakeSize(inset, 8)];
+    updatingTextWidth = NO;
+}
+
+- (void)setFrameSize:(NSSize)size {
+    [super setFrameSize:size];
+    [self updateTextWidth];
 }
 
 - (void)indicateRange:(NSValue*)rangeValue {

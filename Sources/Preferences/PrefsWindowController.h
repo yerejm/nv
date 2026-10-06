@@ -56,8 +56,14 @@
 	IBOutlet NSView *editingView, *generalView, *fontsColorsView, *databaseView, *notationPrefsView;
 	
 	GlobalPrefs *prefsController;
+    NSView *displayView;
+    NSButton *limitTextWidthButton;
+    NSSlider *textWidthSlider;
+    NSTextField *textWidthLabel;
 }
 - (void)showWindow:(id)sender;
+- (IBAction)changedTextWidth:(id)sender;
+- (IBAction)changedTextWidthLimit:(id)sender;
 
 - (IBAction)changedBackgroundTextColorWell:(id)sender;
 - (IBAction)changedForegroundTextColorWell:(id)sender;

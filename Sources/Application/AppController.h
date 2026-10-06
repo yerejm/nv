@@ -63,6 +63,7 @@
 	BOOL activatedFromAnotherSpace;
 	BOOL activationRequested;
 	BOOL changingViewLayout;
+	BOOL fullScreenOriginalLayout, fullScreenSearchVisible, fullScreenEditorFocused;
 	ViewLocationContext listUpdateViewCtx;
 	BOOL isFilteringFromTyping, typedStringIsCached;
 	BOOL isCreatingANote;

@@ -151,6 +151,15 @@
 - (IBAction)changedBackgroundTextColorWell:(id)sender {
 	[prefsController setBackgroundTextColor:[backgroundColorWell color] sender:self];
 }
+
+- (IBAction)changedTextWidth:(id)sender {
+    [prefsController setMaxNoteBodyWidth:round([textWidthSlider doubleValue]) sender:self];
+    [textWidthLabel setStringValue:[NSString stringWithFormat:NSLocalizedString(@"Maximum text width: %.0f pt", nil), [prefsController maxNoteBodyWidth]]];
+}
+
+- (IBAction)changedTextWidthLimit:(id)sender {
+    [prefsController setManagesTextWidthInWindow:[sender state] == NSControlStateValueOn sender:self];
+}
 - (IBAction)changedForegroundTextColorWell:(id)sender {
 	[prefsController setForegroundTextColor:[foregroundColorWell color] sender:self];
 }
@@ -377,6 +386,8 @@
     [item setLabel:localizedTitle];
     //[item setToolTip:@"General settings: appearance and behavior"];
     [item setImage:[[[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:name ofType:@"tiff"]] autorelease]];
+    if ([name isEqualToString:@"Display"])
+        [item setImage:[NSImage imageWithSystemSymbolName:@"rectangle.split.2x1" accessibilityDescription:localizedTitle]];
     [item setTarget:self];
     [item setAction:@selector(switchViews:)];
     [items setObject:item forKey:name];
@@ -384,6 +395,24 @@
 }
 
 - (void)awakeFromNib {
+    displayView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 520, 340)];
+    limitTextWidthButton = [NSButton checkboxWithTitle:NSLocalizedString(@"Limit text width in windows", nil) target:self action:@selector(changedTextWidthLimit:)];
+    [limitTextWidthButton setFrame:NSMakeRect(24, 292, 460, 24)];
+    [limitTextWidthButton setState:[prefsController managesTextWidthInWindow]];
+    [displayView addSubview:limitTextWidthButton];
+    textWidthLabel = [NSTextField labelWithString:@""];
+    [textWidthLabel setFrame:NSMakeRect(24, 263, 460, 22)];
+    [displayView addSubview:textWidthLabel];
+    textWidthSlider = [NSSlider sliderWithValue:[prefsController maxNoteBodyWidth] minValue:240 maxValue:1200 target:self action:@selector(changedTextWidth:)];
+    [textWidthSlider setFrame:NSMakeRect(24, 232, 460, 24)];
+    [textWidthSlider setContinuous:YES];
+    [textWidthSlider setAccessibilityLabel:NSLocalizedString(@"Maximum text width", nil)];
+    [displayView addSubview:textWidthSlider];
+    NSTextField *widthHint = [NSTextField labelWithString:NSLocalizedString(@"Full screen always centers text within this width.", nil)];
+    [widthHint setFrame:NSMakeRect(24, 201, 460, 22)];
+    [widthHint setTextColor:[NSColor secondaryLabelColor]];
+    [displayView addSubview:widthHint];
+    [self changedTextWidth:textWidthSlider];
 	
 	[window setDelegate:self];
 	
@@ -427,6 +456,7 @@
     [self addToolbarItemWithName:@"Notes"];	
     [self addToolbarItemWithName:@"Editing"];
 	[self addToolbarItemWithName:@"Fonts & Colors"];
+    [self addToolbarItemWithName:@"Display"];
 		
     toolbar = [[NSToolbar alloc] initWithIdentifier:@"preferencePanes"];
     [toolbar setDelegate:self];
@@ -451,7 +481,7 @@
 }
 
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar*)theToolbar {
-    return [NSArray arrayWithObjects:@"General", @"Notes", @"Editing", @"Fonts & Colors", nil];
+    return [NSArray arrayWithObjects:@"General", @"Notes", @"Editing", @"Fonts & Colors", @"Display", nil];
 }
 
 - (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar {
@@ -482,6 +512,8 @@
         prefsView = editingView;
     } else if([sender isEqualToString:@"Fonts & Colors"]) {
         prefsView = fontsColorsView;
+    } else if ([sender isEqualToString:@"Display"]) {
+        prefsView = displayView;
 	} else {
 		NSLog(@"unknown sender: %@", sender);
 	}

@@ -1451,6 +1451,31 @@ terminateApp:
 	return proposedFrameSize;
 }
 
+- (void)windowWillEnterFullScreen:(NSNotification *)notification {
+    fullScreenOriginalLayout = [prefsController horizontalLayout];
+    fullScreenSearchVisible = [toolbar isVisible];
+    fullScreenEditorFocused = [window firstResponder] == textView;
+    if (!fullScreenOriginalLayout) [self switchViewLayout:self];
+}
+
+- (void)windowDidEnterFullScreen:(NSNotification *)notification {
+    [toolbar setVisible:fullScreenSearchVisible];
+    [textView updateTextWidth];
+    if (fullScreenEditorFocused) [window makeFirstResponder:textView];
+}
+
+- (void)windowDidExitFullScreen:(NSNotification *)notification {
+    if ([prefsController horizontalLayout] != fullScreenOriginalLayout)
+        [self switchViewLayout:self];
+    [toolbar setVisible:fullScreenSearchVisible];
+    [textView updateTextWidth];
+    if (fullScreenEditorFocused) [window makeFirstResponder:textView];
+}
+
+- (void)windowDidFailToEnterFullScreen:(NSWindow *)failedWindow {
+    [self windowDidExitFullScreen:nil];
+}
+
 - (void)_expandToolbar {
     if ([[splitView subviewAtPosition:0] isCollapsed])
         [[splitView subviewAtPosition:0] expand];

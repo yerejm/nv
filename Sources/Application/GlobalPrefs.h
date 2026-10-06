@@ -155,6 +155,10 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 
 - (void)setHorizontalLayout:(BOOL)value sender:(id)sender;
 - (BOOL)horizontalLayout;
+- (BOOL)managesTextWidthInWindow;
+- (void)setManagesTextWidthInWindow:(BOOL)value sender:(id)sender;
+- (CGFloat)maxNoteBodyWidth;
+- (void)setMaxNoteBodyWidth:(CGFloat)value sender:(id)sender;
 
 - (BOOL)autoCompleteSearches;
 - (BOOL)autoFormatsMarkdownHeadings;
@@ -187,4 +191,3 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 @interface NSObject (GlobalPrefsDelegate)
 	- (void)settingChangedForSelectorString:(NSString*)selectorString;
 @end
-

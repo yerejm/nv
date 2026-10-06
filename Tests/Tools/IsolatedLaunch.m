@@ -10,6 +10,7 @@
 #import "NoteObject.h"
 #import "FastListDataSource.h"
 #import "GlobalPrefs.h"
+#import "PrefsWindowController.h"
 #import "LinkingEditor.h"
 #import "AttributedPlainText.h"
 #import "ExternalEditorListController.h"
@@ -217,6 +218,9 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         [app showPreferencesWindow:nil];
         Pump(0.1);
         Check(@"preferences window", [[NSApp windows] count] > 1);
+        PrefsWindowController *preferences = [app valueForKey:@"prefsWindowController"];
+        [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Display"]];
+        Check(@"Display preferences exposes width controls", [[preferences valueForKey:@"window"] contentView] == [preferences valueForKey:@"displayView"] && [[preferences valueForKey:@"textWidthSlider"] isEnabled]);
         Check(@"no app-owned URL requests with old preferences", requestCount == 0);
     } @catch (NSException *exception) {
         [checks addObject:@{@"check": @"runtime exception", @"passed": @NO, @"detail": exception.description}];
@@ -225,6 +229,8 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
 }
 
 static void BeginFullScreenAcceptance(AppController *app, NotationController *notation, NSWindow *window, LinkingEditor *editor) {
+    BOOL originalLayout = [[GlobalPrefs defaultPrefs] horizontalLayout];
+    BOOL originalSearchVisible = window.toolbar.visible;
     NSLog(@"NV full screen origin active=%d key=%d main=%d space=%d visible=%d mask=%lu behavior=%lu", NSApp.active, window.keyWindow, window.mainWindow, window.isOnActiveSpace, window.visible, window.styleMask, window.collectionBehavior);
     __block BOOL finished = NO;
     __block id enterObserver = nil;
@@ -234,11 +240,15 @@ static void BeginFullScreenAcceptance(AppController *app, NotationController *no
         [center removeObserver:enterObserver];
         enterObserver = nil;
         Check(@"full screen enters a Space", (window.styleMask & NSWindowStyleMaskFullScreen) != 0 && window.isOnActiveSpace);
+        Check(@"full screen uses widescreen layout and preserves search visibility", [[GlobalPrefs defaultPrefs] horizontalLayout] && window.toolbar.visible == originalSearchVisible);
+        Check(@"full screen applies maximum text width", editor.textContainer.size.width <= [[GlobalPrefs defaultPrefs] maxNoteBodyWidth] + 10);
         exitObserver = [center addObserverForName:NSWindowDidExitFullScreenNotification object:window queue:nil usingBlock:^(NSNotification *note) {
             [center removeObserver:exitObserver];
             exitObserver = nil;
             finished = YES;
             Check(@"full screen exits", (window.styleMask & NSWindowStyleMaskFullScreen) == 0);
+            Check(@"full screen restores original layout and search visibility", [[GlobalPrefs defaultPrefs] horizontalLayout] == originalLayout && window.toolbar.visible == originalSearchVisible);
+            Check(@"leaving full screen restores unrestricted editor margins", editor.textContainerInset.width == 3);
             [[NSRunLoop mainRunLoop] performBlock:^{ CompleteDesktopAcceptance(app, notation, window, editor); }];
         }];
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC / 5), dispatch_get_main_queue(), ^{ [window toggleFullScreen:nil]; });
@@ -290,6 +300,15 @@ static void RunAcceptance(void) {
             modifierFlags:0 timestamp:0 windowNumber:window.windowNumber context:nil eventNumber:0 clickCount:2 pressure:1];
         [split mouseDown:doubleClick];
         Check(@"divider double-click collapses notes list", listPane.isCollapsed && !window.toolbar.visible);
+        GlobalPrefs *displayPrefs = [GlobalPrefs defaultPrefs];
+        NSString *beforeWidthChange = [[editor.string copy] autorelease];
+        [displayPrefs setMaxNoteBodyWidth:320 sender:nil];
+        [displayPrefs setManagesTextWidthInWindow:YES sender:nil];
+        Check(@"editor text width is capped with centered margins", editor.textContainerInset.width >= 8 && editor.textContainer.size.width <= 330);
+        Check(@"text width changes preserve note contents", [editor.string isEqualToString:beforeWidthChange]);
+        [displayPrefs setManagesTextWidthInWindow:NO sender:nil];
+        Check(@"disabling width limit restores editor margins", editor.textContainerInset.width == 3);
+        [displayPrefs setMaxNoteBodyWidth:660 sender:nil];
         [app toggleCollapse:nil];
         NSString *original = [[editor.string copy] autorelease];
         [editor setSelectedRange:NSMakeRange(editor.string.length, 0)];

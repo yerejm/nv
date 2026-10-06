@@ -66,6 +66,8 @@ static NSString *MakeURLsClickableKey = @"MakeURLsClickable";
 static NSString *AppActivationKeyCodeKey = @"AppActivationKeyCode";
 static NSString *AppActivationModifiersKey = @"AppActivationModifiers";
 static NSString *HorizontalLayoutKey = @"HorizontalLayout";
+static NSString *KeepsMaxTextWidthKey = @"KeepsMaxTextWidth";
+static NSString *NoteBodyMaxWidthKey = @"NoteBodyMaxWidth";
 static NSString *BookmarksKey = @"Bookmarks";
 static NSString *LastScrollOffsetKey = @"LastScrollOffset";
 static NSString *LastSearchStringKey = @"LastSearchString";
@@ -124,6 +126,8 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 			[NSNumber numberWithBool:YES], QuitWhenClosingMainWindowKey, 
 			[NSNumber numberWithBool:NO], TriedToImportBlorKey,
 			[NSNumber numberWithBool:NO], HorizontalLayoutKey,
+			@NO, KeepsMaxTextWidthKey,
+			@660, NoteBodyMaxWidthKey,
 			[NSNumber numberWithBool:YES], MakeURLsClickableKey,
 			[NSNumber numberWithBool:YES], HighlightSearchTermsKey, 
 			[NSNumber numberWithBool:YES], TableColumnsHaveBodyPreviewKey, 
@@ -729,6 +733,17 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 }
 - (BOOL)horizontalLayout {
 	return [defaults boolForKey:HorizontalLayoutKey];
+}
+
+- (BOOL)managesTextWidthInWindow { return [defaults boolForKey:KeepsMaxTextWidthKey]; }
+- (void)setManagesTextWidthInWindow:(BOOL)value sender:(id)sender {
+    [defaults setBool:value forKey:KeepsMaxTextWidthKey];
+    SEND_CALLBACKS();
+}
+- (CGFloat)maxNoteBodyWidth { return [defaults doubleForKey:NoteBodyMaxWidthKey]; }
+- (void)setMaxNoteBodyWidth:(CGFloat)value sender:(id)sender {
+    [defaults setDouble:MAX(240, MIN(1200, value)) forKey:NoteBodyMaxWidthKey];
+    SEND_CALLBACKS();
 }
 
 - (NSString*)lastSelectedPreferencesPane {
