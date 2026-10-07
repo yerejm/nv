@@ -173,6 +173,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 - (void)setShowNoteListGrid:(BOOL)value sender:(id)sender;
 - (NSColor *)interfaceSecondaryColor;
 - (NSColor *)interfaceSeparatorColor;
+- (void)resetAppearanceDependentAttributes;
 - (BOOL)useThemedScrollbars;
 - (void)setUseThemedScrollbars:(BOOL)value sender:(id)sender;
 - (BOOL)useAutoPairing;

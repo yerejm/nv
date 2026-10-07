@@ -1045,12 +1045,12 @@ bail:
 
 - (void)makeForegroundTextColorMatchGlobalPrefs {
 	NSColor *prefsFGColor = [notationPrefs foregroundColor];
-	if (prefsFGColor) {
-		NSColor *fgColor = [prefsController foregroundTextColor];
-		
-		if (!ColorsEqualWith8BitChannels(prefsFGColor, fgColor)) {			
-			[self setForegroundTextColor:fgColor];
-		}
+	NSColor *fgColor = [prefsController foregroundTextColor];
+	if (prefsFGColor && !ColorsEqualWith8BitChannels(prefsFGColor, fgColor)) {
+		[self setForegroundTextColor:fgColor];
+	} else if ([fgColor type] == NSColorTypeCatalog) {
+		//notes saved while a dynamic color was treated as black have no color, which draws black in dark mode
+		[allNotes makeObjectsPerformSelector:@selector(setForegroundTextColorOnly:) withObject:fgColor];
 	}
 }
 

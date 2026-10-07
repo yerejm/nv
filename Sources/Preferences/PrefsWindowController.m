@@ -150,9 +150,14 @@
 	
 }
 
-- (IBAction)changedBackgroundTextColorWell:(id)sender {
-	[prefsController setColorScheme:3 sender:self];
+//changing the scheme re-sends both colors to every observer, so a dragged color well should only do it once
+- (void)_selectCustomColorScheme {
+    if ([prefsController colorScheme] != 3) [prefsController setColorScheme:3 sender:self];
     [colorSchemeButton selectItemAtIndex:3];
+}
+
+- (IBAction)changedBackgroundTextColorWell:(id)sender {
+	[self _selectCustomColorScheme];
 	[prefsController setBackgroundTextColor:[backgroundColorWell color] sender:self];
 }
 
@@ -165,8 +170,7 @@
     [prefsController setManagesTextWidthInWindow:[sender state] == NSControlStateValueOn sender:self];
 }
 - (IBAction)changedForegroundTextColorWell:(id)sender {
-	[prefsController setColorScheme:3 sender:self];
-    [colorSchemeButton selectItemAtIndex:3];
+	[self _selectCustomColorScheme];
 	[prefsController setForegroundTextColor:[foregroundColorWell color] sender:self];
 }
 

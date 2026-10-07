@@ -65,7 +65,7 @@
 	BOOL activationRequested;
     BOOL pendingSearchFocus;
 	BOOL changingViewLayout;
-	BOOL fullScreenOriginalLayout, fullScreenSearchVisible, fullScreenEditorFocused;
+	BOOL fullScreenSwitchedLayout, fullScreenSearchVisible, fullScreenEditorFocused;
     NSTokenField *multiTagField;
     NSTextField *wordCountLabel;
     id modifierMonitor;

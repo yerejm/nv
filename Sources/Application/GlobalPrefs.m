@@ -494,6 +494,10 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 }
 
 BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
+	//a dynamic system color's channels depend on the current appearance, so it only matches itself
+	BOOL dynamic1 = [c1 type] == NSColorTypeCatalog, dynamic2 = [c2 type] == NSColorTypeCatalog;
+	if (dynamic1 || dynamic2) return dynamic1 && dynamic2 && [c1 isEqual:c2];
+
 	//sometimes floating point numbers really don't like to be compared to each other
 
 	CGFloat pRed, pGreen, pBlue, gRed, gGreen, gBlue, pAlpha, gAlpha;
@@ -832,6 +836,11 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 - (void)setShowNoteListGrid:(BOOL)value sender:(id)sender {
     [defaults setBool:value forKey:ShowNoteListGridKey];
     SEND_CALLBACKS();
+}
+- (void)resetAppearanceDependentAttributes {
+    //the highlight is blended with the background color as it resolved at the time
+    [searchTermHighlightAttributes release];
+    searchTermHighlightAttributes = nil;
 }
 - (NSColor *)interfaceSecondaryColor {
     return [[self backgroundTextColor] blendedColorWithFraction:0.65 ofColor:[self foregroundTextColor]];

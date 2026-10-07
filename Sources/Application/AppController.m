@@ -56,6 +56,8 @@
 
 //an instance of this class is designated in the nib as the delegate of the window, nstextfield and two nstextviews
 
+static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
+
 - (id)init {
     if ([super init]) {
 		
@@ -153,6 +155,11 @@
 	static BOOL awakenedViews = NO;
 	if (!awakenedViews) {
 		//NSLog(@"all (hopefully relevant) views awakend!");
+		if ([[NSUserDefaults standardUserDefaults] boolForKey:NVFullScreenSwitchedLayoutKey]) {
+			//the app last quit while full screen was showing its own layout instead of the user's
+			[prefsController setHorizontalLayout:NO sender:self];
+			[[NSUserDefaults standardUserDefaults] removeObjectForKey:NVFullScreenSwitchedLayoutKey];
+		}
 		[self _configureDividerForCurrentLayout];
 		[splitView restoreState:YES];
 		
@@ -206,9 +213,22 @@ void outletObjectAwoke(id sender) {
 	}
 }
 
+static void *NVEffectiveAppearanceContext = &NVEffectiveAppearanceContext;
+
+- (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context {
+    if (context != NVEffectiveAppearanceContext) {
+        [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
+        return;
+    }
+    //colors derived from dynamic system colors are resolved once, so they must be rebuilt for the new appearance
+    [prefsController resetAppearanceDependentAttributes];
+    [self updateInterfaceAppearance];
+}
+
 - (void)runDelayedUIActionsAfterLaunch {
     [self updateDesktopPresence];
     [self updateInterfaceAppearance];
+    [NSApp addObserver:self forKeyPath:@"effectiveAppearance" options:0 context:NVEffectiveAppearanceContext];
 	[[prefsController bookmarksController] setAppController:self];
 	[[prefsController bookmarksController] restoreWindowFromSave];
 	[[prefsController bookmarksController] updateBookmarksUI];
@@ -569,7 +589,8 @@ terminateApp:
 
 - (void)updateInterfaceAppearance {
     [window setAppearance:nil];
-    if ([prefsController colorScheme] != 0) {
+    //dynamic colors follow the system appearance; fixed ones pick the appearance that suits them
+    if ([prefsController colorScheme] != 0 && [[prefsController backgroundTextColor] type] != NSColorTypeCatalog) {
         NSColor *background = [[prefsController backgroundTextColor] colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
         CGFloat brightness = background.redComponent * 0.299 + background.greenComponent * 0.587 + background.blueComponent * 0.114;
         [window setAppearance:[NSAppearance appearanceNamed:brightness < 0.5 ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua]];
@@ -619,6 +640,7 @@ terminateApp:
 }
 
 - (IBAction)switchViewLayout:(id)sender {
+	if (sender != self) [self _setFullScreenSwitchedLayout:NO];
 	ViewLocationContext ctx = [notesTableView viewingLocation];
 	ctx.pivotRowWasEdge = NO;
 	[notesTableView noteFirstVisibleRow];
@@ -1187,12 +1209,21 @@ terminateApp:
 	currentNote = [aNote retain];
 }
 
+- (void)setNeedsWordCountUpdate {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(updateWordCount) object:nil];
+    [self performSelector:@selector(updateWordCount) withObject:nil afterDelay:0.2];
+}
+
 - (void)updateWordCount {
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(updateWordCount) object:nil];
     BOOL visible = currentNote && !textView.hidden && ([prefsController showWordCount] || temporaryWordCount);
     [wordCountLabel setHidden:!visible];
     NSScrollView *scroll = textView.enclosingScrollView;
-    [scroll setAutomaticallyAdjustsContentInsets:NO];
-    [scroll setContentInsets:NSEdgeInsetsMake(0, 0, visible ? 24 : 0, 0)];
+    CGFloat footerInset = visible ? 24 : 0;
+    if (scroll.automaticallyAdjustsContentInsets || scroll.contentInsets.bottom != footerInset) {
+        [scroll setAutomaticallyAdjustsContentInsets:NO];
+        [scroll setContentInsets:NSEdgeInsetsMake(0, 0, footerInset, 0)];
+    }
     if (!visible) return;
     __block NSUInteger count = 0;
     [textView.string enumerateSubstringsInRange:NSMakeRange(0, textView.string.length)
@@ -1533,7 +1564,7 @@ terminateApp:
 	
 	if (textObject == textView) {
 		[currentNote setContentString:[textView textStorage]];
-        [self updateWordCount];
+        if (![wordCountLabel isHidden]) [self setNeedsWordCountUpdate];
 	}
 }
 
@@ -1764,11 +1795,20 @@ terminateApp:
 	return proposedFrameSize;
 }
 
+//full screen's own switch to the widescreen layout is undone on exit unless the user has chosen a layout since
+- (void)_setFullScreenSwitchedLayout:(BOOL)switched {
+    fullScreenSwitchedLayout = switched;
+    if (switched) [[NSUserDefaults standardUserDefaults] setBool:YES forKey:NVFullScreenSwitchedLayoutKey];
+    else [[NSUserDefaults standardUserDefaults] removeObjectForKey:NVFullScreenSwitchedLayoutKey];
+}
+
 - (void)windowWillEnterFullScreen:(NSNotification *)notification {
-    fullScreenOriginalLayout = [prefsController horizontalLayout];
     fullScreenSearchVisible = [toolbar isVisible];
     fullScreenEditorFocused = [window firstResponder] == textView;
-    if (!fullScreenOriginalLayout) [self switchViewLayout:self];
+    if (![prefsController horizontalLayout]) {
+        [self switchViewLayout:self];
+        [self _setFullScreenSwitchedLayout:YES];
+    }
 }
 
 - (void)windowDidEnterFullScreen:(NSNotification *)notification {
@@ -1778,8 +1818,9 @@ terminateApp:
 }
 
 - (void)windowDidExitFullScreen:(NSNotification *)notification {
-    if ([prefsController horizontalLayout] != fullScreenOriginalLayout)
+    if (fullScreenSwitchedLayout && [prefsController horizontalLayout])
         [self switchViewLayout:self];
+    [self _setFullScreenSwitchedLayout:NO];
     [toolbar setVisible:fullScreenSearchVisible];
     [textView updateTextWidth];
     if (fullScreenEditorFocused) [window makeFirstResponder:textView];

@@ -223,6 +223,7 @@ static void RunReopenAcceptance(void) {
         Check(@"externally edited content survives quit and reopen", found && [found->contentString.string containsString:@"Automatic file monitoring acceptance"]);
         Check(@"wrong password rejected after reopen", ![notation.notationPrefs canLoadPassphrase:@"wrong password"]);
         Check(@"window size restoration", fabs([app window].frame.size.width - 720) < 1);
+        Check(@"quitting during full screen restores the previous layout on reopen", ![[GlobalPrefs defaultPrefs] horizontalLayout] && ![[NSUserDefaults standardUserDefaults] objectForKey:@"FullScreenSwitchedLayout"]);
         NSString *account = [NSString stringWithUTF8String:[notation.notationPrefs setKeychainIdentifier]];
         Check(@"temporary Keychain identity is retained", [account isEqualToString:saved[@"keychainAccount"]]);
         if ([account isEqualToString:saved[@"keychainAccount"]]) {
@@ -364,6 +365,8 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Desktop"]];
         Check(@"Desktop preferences exposes Dock and menu bar controls", [[preferences valueForKey:@"desktopView"] superview] == prefsWindow.contentView && [preferences valueForKey:@"showDockIconButton"] && [preferences valueForKey:@"showMenuBarIconButton"]);
         Check(@"no app-owned URL requests with old preferences", requestCount == 0);
+        if (![[GlobalPrefs defaultPrefs] horizontalLayout]) [app switchViewLayout:nil];
+        [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"FullScreenSwitchedLayout"];
     } @catch (NSException *exception) {
         [checks addObject:@{@"check": @"runtime exception", @"passed": @NO, @"detail": exception.description}];
     }
@@ -391,6 +394,15 @@ static void BeginFullScreenAcceptance(AppController *app, NotationController *no
             Check(@"full screen exits", (window.styleMask & NSWindowStyleMaskFullScreen) == 0);
             Check(@"full screen restores original layout and search visibility", [[GlobalPrefs defaultPrefs] horizontalLayout] == originalLayout && window.toolbar.visible == originalSearchVisible);
             Check(@"leaving full screen restores unrestricted editor margins", editor.textContainerInset.width == 3);
+            BOOL horizontal = [[GlobalPrefs defaultPrefs] horizontalLayout];
+            if (horizontal) [app switchViewLayout:nil];
+            [app windowWillEnterFullScreen:nil];
+            Check(@"full screen records its own layout switch", [[GlobalPrefs defaultPrefs] horizontalLayout] && [[NSUserDefaults standardUserDefaults] boolForKey:@"FullScreenSwitchedLayout"]);
+            [app switchViewLayout:nil];
+            [app switchViewLayout:nil];
+            [app windowDidExitFullScreen:nil];
+            Check(@"a layout chosen during full screen is kept on exit", [[GlobalPrefs defaultPrefs] horizontalLayout] && ![[NSUserDefaults standardUserDefaults] objectForKey:@"FullScreenSwitchedLayout"]);
+            if ([[GlobalPrefs defaultPrefs] horizontalLayout] != horizontal) [app switchViewLayout:nil];
             [[NSRunLoop mainRunLoop] performBlock:^{ CompleteDesktopAcceptance(app, notation, window, editor); }];
         }];
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC / 5), dispatch_get_main_queue(), ^{ [window toggleFullScreen:nil]; });
@@ -751,6 +763,7 @@ static void RunAcceptance(void) {
         [appearancePrefs setForegroundTextColor:[NSColor whiteColor] sender:nil];
         [appearancePrefs setBackgroundTextColor:[NSColor colorWithCalibratedWhite:0.12 alpha:1] sender:nil];
         Snapshot(window, @"custom-dark.png");
+        Check(@"fixed dark custom colors use the dark appearance", [window.appearance.name isEqualToString:NSAppearanceNameDarkAqua]);
         NSBitmapImageRep *listBitmap = [noteTable bitmapImageRepForCachingDisplayInRect:noteTable.bounds];
         [noteTable cacheDisplayInRect:noteTable.bounds toBitmapImageRep:listBitmap];
         [[listBitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}] writeToFile:[acceptanceRoot stringByAppendingPathComponent:@"note-list.png"] atomically:YES];
@@ -765,7 +778,10 @@ static void RunAcceptance(void) {
         Check(@"search editing resets native field editor styling", searchEditor && !searchEditor.drawsBackground && [searchEditor.insertionPointColor isEqual:[appearancePrefs foregroundTextColor]]);
         [appearancePrefs setForegroundTextColor:[NSColor textColor] sender:nil];
         [appearancePrefs setBackgroundTextColor:[NSColor textBackgroundColor] sender:nil];
+        Check(@"dynamic custom colors follow the system appearance", window.appearance == nil);
         [appearancePrefs setColorScheme:0 sender:nil];
+        NSColor *storedTextColor = editor.textStorage.length ? [editor.textStorage attribute:NSForegroundColorAttributeName atIndex:0 effectiveRange:NULL] : [NSColor textColor];
+        Check(@"system colors give note text a dynamic color", [editor.typingAttributes[NSForegroundColorAttributeName] isEqual:[NSColor textColor]] && [storedTextColor isEqual:[NSColor textColor]]);
         [appearancePrefs setShowNoteListGrid:YES sender:nil];
         [window makeFirstResponder:editor];
         [window setAppearance:[NSAppearance appearanceNamed:NSAppearanceNameAqua]];
