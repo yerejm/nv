@@ -45,6 +45,12 @@
 #import "LabelsListController.h"
 #import "NSString_CustomTruncation.h"
 
+@interface NVWindowTitleLabel : NSTextField
+@end
+
+@implementation NVWindowTitleLabel
+- (BOOL)mouseDownCanMoveWindow { return YES; }
+@end
 
 @implementation AppController
 
@@ -77,10 +83,16 @@
 	
 	NSView *dualSV = [field superview];
 	dualFieldItem = [[NSToolbarItem alloc] initWithItemIdentifier:@"DualField"];
-	//[[dualSV superview] setFrameSize:NSMakeSize([[dualSV superview] frame].size.width, [[dualSV superview] frame].size.height -1)];
 	[dualFieldItem setView:dualSV];
 	[dualSV setTranslatesAutoresizingMaskIntoConstraints:NO];
-    [[dualSV.widthAnchor constraintGreaterThanOrEqualToConstant:50] setActive:YES];
+    [field setTranslatesAutoresizingMaskIntoConstraints:NO];
+    [NSLayoutConstraint activateConstraints:@[
+        [dualSV.widthAnchor constraintGreaterThanOrEqualToConstant:50],
+        [dualSV.heightAnchor constraintEqualToConstant:23],
+        [field.leadingAnchor constraintEqualToAnchor:dualSV.leadingAnchor],
+        [field.trailingAnchor constraintEqualToAnchor:dualSV.trailingAnchor],
+        [field.topAnchor constraintEqualToAnchor:dualSV.topAnchor],
+        [field.bottomAnchor constraintEqualToAnchor:dualSV.bottomAnchor]]];
 
     [dualFieldItem setLabel:NSLocalizedString(@"Search or Create", @"placeholder text in search/create field")];
 	
@@ -92,7 +104,19 @@
 
 	[toolbar setVisible:![[NSUserDefaults standardUserDefaults] boolForKey:@"ToolbarHidden"]];
 	[toolbar setDelegate:self];
+    [window setToolbarStyle:NSWindowToolbarStyleExpanded];
 	[window setToolbar:toolbar];
+    windowTitleLabel = [NVWindowTitleLabel labelWithString:window.title];
+    windowTitleLabel.font = [NSFont systemFontOfSize:13 weight:NSFontWeightSemibold];
+    windowTitleLabel.alignment = NSTextAlignmentCenter;
+    windowTitleLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
+    NSView *titleView = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, NSWidth(window.frame) - 84, 32)] autorelease];
+    [titleView addSubview:windowTitleLabel];
+    NSTitlebarAccessoryViewController *titleAccessory = [[[NSTitlebarAccessoryViewController alloc] init] autorelease];
+    titleAccessory.view = titleView;
+    titleAccessory.layoutAttribute = NSLayoutAttributeRight;
+    window.titleVisibility = NSWindowTitleHidden;
+    [window addTitlebarAccessoryViewController:titleAccessory];
 	
 	[window setShowsToolbarButton:NO];
 	
@@ -103,6 +127,7 @@
 	[NSApp setDelegate:self];
 	[notesTableView setDelegate:self];
 	[window setDelegate:self];
+    [self _updateWindowTitleLayout];
 	[field setDelegate:self];
 	[textView setDelegate:self];
     modifierMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskFlagsChanged handler:^NSEvent *(NSEvent *event) {
@@ -384,6 +409,22 @@ terminateApp:
 	return [NSArray arrayWithObject:@"DualField"];
 }
 
+- (void)_setWindowTitle:(NSString *)title {
+    [window setTitle:title];
+    [windowTitleLabel setStringValue:title];
+}
+
+- (void)_updateWindowTitleLayout {
+    NSView *titleView = windowTitleLabel.superview;
+    [titleView setFrameSize:NSMakeSize(MAX(0, NSWidth(window.frame) - 84), 32)];
+    NSButton *closeButton = [window standardWindowButton:NSWindowCloseButton];
+    NSRect buttonFrame = [titleView convertRect:closeButton.bounds fromView:closeButton];
+    [windowTitleLabel setFrame:NSMakeRect(0, NSMidY(buttonFrame) - 9, MAX(0, NSWidth(window.frame) - 168), 18)];
+}
+
+- (void)windowDidResize:(NSNotification *)notification {
+    [self _updateWindowTitleLayout];
+}
 
 - (BOOL)validateMenuItem:(NSMenuItem*)menuItem {
 	SEL selector = [menuItem action];
@@ -1115,6 +1156,7 @@ terminateApp:
 }
 
 - (void)windowDidBecomeKey:(NSNotification *)notification {
+    [self _updateWindowTitleLayout];
     [self selectSearchAfterActivation];
 }
 
@@ -1301,7 +1343,7 @@ terminateApp:
 							[field setStringValue:titleOfNote(currentNote)];
 						}
 					} else {
-						[window setTitle:titleOfNote(currentNote)];
+						[self _setWindowTitle:titleOfNote(currentNote)];
 					}
 				}
 			}
@@ -1689,7 +1731,7 @@ terminateApp:
     if ([[splitView subviewAtPosition:0] isCollapsed])
         [[splitView subviewAtPosition:0] expand];
     if (![toolbar isVisible]) {
-        [window setTitle:@"Notation"];
+        [self _setWindowTitle:@"Notation"];
         [window toggleToolbarShown:nil];
         [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"ToolbarHidden"];
     }
@@ -1698,7 +1740,7 @@ terminateApp:
 - (void)_collapseToolbar {
 	if ([toolbar isVisible]) {
 		if (currentNote)
-			[window setTitle:titleOfNote(currentNote)];
+			[self _setWindowTitle:titleOfNote(currentNote)];
 		[window toggleToolbarShown:nil];
 		[[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"ToolbarHidden"];
 	}
@@ -1815,7 +1857,7 @@ terminateApp:
 		if ([toolbar isVisible]) {
 			[field setStringValue:titleOfNote(currentNote)];
 		} else {
-			[window setTitle:titleOfNote(currentNote)];
+			[self _setWindowTitle:titleOfNote(currentNote)];
 		}
     }
 	[[prefsController bookmarksController] updateBookmarksUI];

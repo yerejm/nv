@@ -46,6 +46,7 @@
     IBOutlet NSWindow *window;
 	NSToolbar *toolbar;
 	NSToolbarItem *dualFieldItem;
+    NSTextField *windowTitleLabel;
 	
 	
 	NSImage *verticalDividerImg;

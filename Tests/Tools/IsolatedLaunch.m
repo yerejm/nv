@@ -1,4 +1,5 @@
 #import <Cocoa/Cocoa.h>
+#import <ScreenCaptureKit/ScreenCaptureKit.h>
 #import "NVFileReference.h"
 #import "NVArchive.h"
 #import "NSData_transformations.h"
@@ -108,13 +109,50 @@ static void Pump(NSTimeInterval seconds) {
         [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.02]];
 }
 
-static void Snapshot(NSWindow *window, NSString *name) {
-    [window displayIfNeeded];
-    NSView *view = [window contentView];
+static void SnapshotView(NSView *view, NSString *name) {
+    [view.window displayIfNeeded];
     NSBitmapImageRep *bitmap = [view bitmapImageRepForCachingDisplayInRect:view.bounds];
-    [view cacheDisplayInRect:view.bounds toBitmapImageRep:bitmap];
+    [view.effectiveAppearance performAsCurrentDrawingAppearance:^{
+        [view cacheDisplayInRect:view.bounds toBitmapImageRep:bitmap];
+    }];
     [[bitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}]
         writeToFile:[acceptanceRoot stringByAppendingPathComponent:name] atomically:YES];
+}
+
+static void Snapshot(NSWindow *window, NSString *name) {
+    SnapshotView(window.contentView, name);
+}
+
+static void SnapshotWindow(NSWindow *window, NSString *name) {
+    dlopen("/System/Library/Frameworks/ScreenCaptureKit.framework/ScreenCaptureKit", RTLD_LAZY);
+    __block BOOL finished = NO;
+    [(id)NSClassFromString(@"SCShareableContent") getCurrentProcessShareableContentWithCompletionHandler:^(SCShareableContent *content, NSError *error) {
+        dispatch_async(dispatch_get_main_queue(), ^{
+            SCWindow *ownWindow = nil;
+            for (SCWindow *candidate in content.windows)
+                if (candidate.windowID == window.windowNumber) ownWindow = candidate;
+            if (!ownWindow) { finished = YES; return; }
+            SCContentFilter *filter = [[NSClassFromString(@"SCContentFilter") alloc] initWithDesktopIndependentWindow:ownWindow];
+            SCStreamConfiguration *configuration = [[NSClassFromString(@"SCStreamConfiguration") alloc] init];
+            configuration.width = NSWidth(window.frame) * window.backingScaleFactor;
+            configuration.height = NSHeight(window.frame) * window.backingScaleFactor;
+            configuration.ignoreShadowsSingleWindow = YES;
+            configuration.showsCursor = NO;
+            [(id)NSClassFromString(@"SCScreenshotManager") captureImageWithFilter:filter configuration:configuration completionHandler:^(CGImageRef image, NSError *captureError) {
+                if (image) {
+                    NSBitmapImageRep *bitmap = [[[NSBitmapImageRep alloc] initWithCGImage:image] autorelease];
+                    [[bitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}]
+                        writeToFile:[acceptanceRoot stringByAppendingPathComponent:name] atomically:YES];
+                }
+                dispatch_async(dispatch_get_main_queue(), ^{ finished = YES; });
+            }];
+            [filter release];
+            [configuration release];
+        });
+    }];
+    NSDate *limit = [NSDate dateWithTimeIntervalSinceNow:3];
+    while (!finished && limit.timeIntervalSinceNow > 0) Pump(0.02);
+    Check(@"isolated window screenshot", [[NSFileManager defaultManager] fileExistsAtPath:[acceptanceRoot stringByAppendingPathComponent:name]]);
 }
 
 static void FinishAcceptance(NSString *filename) {
@@ -306,6 +344,9 @@ static void RunAcceptance(void) {
         NSWindow *window = [app window];
         LinkingEditor *editor = [app valueForKey:@"textView"];
         NSArray *notes = [notation valueForKey:@"allNotes"];
+        [NSApp activateIgnoringOtherApps:YES];
+        [window makeKeyAndOrderFront:nil];
+        Pump(0.2);
         Check(@"real app launch on macOS 26", app && window.visible && notes.count > 0);
         Check(@"retired sync-enabled archive stays inert", [[notation notationPrefs].syncServiceAccounts[@"Simplenote"][@"enabled"] boolValue] && !NSClassFromString(@"SimplenoteSession") && !NSClassFromString(@"SUUpdater"));
         NoteObject *note = notes.firstObject;
@@ -318,6 +359,8 @@ static void RunAcceptance(void) {
         BOOL originalLayout = [[GlobalPrefs defaultPrefs] horizontalLayout];
         [app toggleCollapse:nil];
         Check(@"notes list and search collapse together", listPane.isCollapsed && !window.toolbar.visible && window.firstResponder == editor);
+        NSTextField *windowTitle = [app valueForKey:@"windowTitleLabel"];
+        Check(@"collapsed search preserves the selected note title", [windowTitle.stringValue isEqualToString:window.title] && [window.title isEqualToString:titleOfNote(note)]);
         [app switchViewLayout:nil];
         Check(@"collapsed notes list survives orientation change", listPane.isCollapsed && !window.toolbar.visible);
         [app toggleCollapse:nil];
@@ -561,6 +604,32 @@ static void RunAcceptance(void) {
         [app revealNote:note options:NVEditNoteToReveal | NVOrderFrontWindow];
         [window setFrame:NSMakeRect(window.frame.origin.x, window.frame.origin.y, 720, 520) display:YES];
         Check(@"window resizing", fabs(window.frame.size.width - 720) < 1);
+        DualField *searchField = [app valueForKey:@"field"];
+        NSRect originalFrame = window.frame;
+        [app searchForString:@"jjjj"];
+        for (NSNumber *width in @[@410, @960]) {
+            NSRect frame = originalFrame;
+            frame.size.width = width.doubleValue;
+            [window setFrame:frame display:YES];
+            Pump(0.05);
+            NSRect fieldFrame = [searchField convertRect:searchField.bounds toView:nil];
+            NSButton *closeButton = [window standardWindowButton:NSWindowCloseButton];
+            NSRect buttonFrame = [closeButton convertRect:closeButton.bounds toView:nil];
+            Check([NSString stringWithFormat:@"compact search fills a %@-point window below its title", width],
+                  NSWidth(fieldFrame) >= NSWidth(window.frame) - 48 && NSHeight(fieldFrame) == 23 && NSMaxY(fieldFrame) < NSMinY(buttonFrame));
+            NSRect titleFrame = [windowTitle convertRect:windowTitle.bounds toView:nil];
+            Check(@"window title stays centered and draggable while resizing", fabs(NSMidX(titleFrame) - NSWidth(window.frame) / 2) < 1 && windowTitle.mouseDownCanMoveWindow);
+            NSTextView *fieldEditor = (id)searchField.currentEditor;
+            NSRect editingFrame = [searchField convertRect:fieldEditor.bounds fromView:fieldEditor];
+            NSRect iconFrame = [searchField.cell snapbackButtonRectForBounds:searchField.bounds];
+            NSRect clearFrame = [searchField.cell clearButtonRectForBounds:searchField.bounds];
+            Check(@"search editing stays between its icons while resizing", [fieldEditor.string isEqualToString:@"jjjj"] &&
+                  NSMinX(editingFrame) >= NSMaxX(iconFrame) && NSMaxX(editingFrame) <= NSMinX(clearFrame) &&
+                  NSContainsRect(searchField.bounds, editingFrame));
+        }
+        [window setFrame:originalFrame display:YES];
+        [app searchForString:@""];
+        [app revealNote:note options:NVEditNoteToReveal];
         GlobalPrefs *appearancePrefs = [GlobalPrefs defaultPrefs];
         NotesTableView *noteTable = [app valueForKey:@"notesTableView"];
         Check(@"expanded note list retains visible rows", noteTable.numberOfRows == 3 && !noteTable.isHiddenOrHasHiddenAncestor && noteTable.visibleRect.size.height > 60);
@@ -602,7 +671,40 @@ static void RunAcceptance(void) {
         [window makeFirstResponder:editor];
         [window setAppearance:[NSAppearance appearanceNamed:NSAppearanceNameAqua]];
         Snapshot(window, @"light.png");
+        [app searchForString:@"jjjj"];
+        [searchField.currentEditor setSelectedRange:NSMakeRange(4, 0)];
+        Pump(0.1);
+        NSRect focusedTextFrame = [searchField convertRect:searchField.currentEditor.bounds fromView:searchField.currentEditor];
+        Check(@"focusing search reserves room for both icons", NSMinX(focusedTextFrame) >= NSMaxX([searchField.cell snapbackButtonRectForBounds:searchField.bounds]) &&
+              NSMaxX(focusedTextFrame) <= NSMinX([searchField.cell clearButtonRectForBounds:searchField.bounds]));
+        SnapshotWindow(window, @"compact-window-light.png");
+        [window makeFirstResponder:nil];
+        SnapshotView(searchField, @"compact-field-unfocused.png");
+        NSPoint searchPoint = [searchField convertPoint:NSMakePoint(NSMidX(searchField.bounds), NSMidY(searchField.bounds)) toView:nil];
+        NSEvent *searchClick = [NSEvent mouseEventWithType:NSEventTypeLeftMouseDown location:searchPoint modifierFlags:0 timestamp:0
+            windowNumber:window.windowNumber context:nil eventNumber:0 clickCount:1 pressure:1];
+        NSEvent *searchRelease = [NSEvent mouseEventWithType:NSEventTypeLeftMouseUp location:searchPoint modifierFlags:0 timestamp:0
+            windowNumber:window.windowNumber context:nil eventNumber:0 clickCount:1 pressure:0];
+        [NSApp postEvent:searchRelease atStart:YES];
+        [searchField mouseDown:searchClick];
+        NSRect clickedTextFrame = [searchField convertRect:searchField.currentEditor.bounds fromView:searchField.currentEditor];
+        Check(@"clicking search text begins editing beside the icon", searchField.currentEditor && fabs(NSMinX(clickedTextFrame) - NSMinX(focusedTextFrame)) < 1);
+        NSRect clearButton = [searchField.cell clearButtonRectForBounds:searchField.bounds];
+        NSPoint clearPoint = [searchField convertPoint:NSMakePoint(NSMidX(clearButton), NSMidY(clearButton)) toView:nil];
+        NSEvent *clearClick = [NSEvent mouseEventWithType:NSEventTypeLeftMouseDown location:clearPoint modifierFlags:0 timestamp:0
+            windowNumber:window.windowNumber context:nil eventNumber:0 clickCount:1 pressure:1];
+        NSEvent *clearRelease = [NSEvent mouseEventWithType:NSEventTypeLeftMouseUp location:clearPoint modifierFlags:0 timestamp:0
+            windowNumber:window.windowNumber context:nil eventNumber:0 clickCount:1 pressure:0];
+        [NSApp postEvent:clearRelease atStart:YES];
+        [searchField mouseDown:clearClick];
+        Check(@"clicking the aligned clear button clears search", searchField.stringValue.length == 0);
         [window setAppearance:[NSAppearance appearanceNamed:NSAppearanceNameDarkAqua]];
+        [app searchForString:@"jjjj"];
+        [searchField.currentEditor setSelectedRange:NSMakeRange(4, 0)];
+        Pump(0.2);
+        SnapshotWindow(window, @"compact-window-dark.png");
+        [app searchForString:@""];
+        [app revealNote:note options:NVEditNoteToReveal];
         Snapshot(window, @"dark.png");
         Check(@"light and dark rendering", [[NSFileManager defaultManager] fileExistsAtPath:[acceptanceRoot stringByAppendingPathComponent:@"dark.png"]]);
         [NSApp activateIgnoringOtherApps:YES];

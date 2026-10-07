@@ -25,7 +25,6 @@
 #import "AppController.h"
 #import "BookmarksController.h"
 
-#define BORDER_TOP_OFFSET 3.0
 #define BORDER_LEFT_OFFSET 3.0
 #define MAX_STATE_IMG_DIM 16.0
 #define CLEAR_BUTTON_IMG_DIM 16.0
@@ -54,11 +53,15 @@
 }
 
 - (NSRect)drawingRectForBounds:(NSRect)someBounds {
-	return NSInsetRect(someBounds, TEXT_LEFT_OFFSET, BORDER_TOP_OFFSET);
+    return [self textAreaForBounds:someBounds];
 }
 
-- (void)selectWithFrame:(NSRect)aRect inView:(NSView *)controlView editor:(NSText *)textObj delegate:(id)anObject start:(NSInteger)selStart length:(NSInteger)selLength {
-	[super selectWithFrame:[self textAreaForBounds:aRect] inView:controlView editor:textObj delegate:anObject start:selStart length:selLength];
+- (void)selectWithFrame:(NSRect)frame inView:(NSView *)controlView editor:(NSText *)editor delegate:(id)delegate start:(NSInteger)start length:(NSInteger)length {
+    [super selectWithFrame:[self textAreaForBounds:frame] inView:controlView editor:editor delegate:delegate start:start length:length];
+}
+
+- (void)editWithFrame:(NSRect)frame inView:(NSView *)controlView editor:(NSText *)editor delegate:(id)delegate event:(NSEvent *)event {
+    [super editWithFrame:[self textAreaForBounds:frame] inView:controlView editor:editor delegate:delegate event:event];
 }
 
 - (NSText *)setUpFieldEditorAttributes:(NSText *)textObj {
@@ -71,36 +74,33 @@
 	return textView;
 }
 
-- (void)endEditing:(NSText *)textObj {
-	//fix up any changes we might have made to the field editor in setUpFieldEditorAttributes:
-//	[(NSTextView*)textObj setTextContainerInset:NSMakeSize(0, 0)];
-	[super endEditing:textObj];
-}
-
 - (NSRect)clearButtonRectForBounds:(NSRect)rect {
-	NSRect part, clear;
-	
-	NSDivideRect(rect, &clear, &part, CLEAR_BUTTON_IMG_DIM + BORDER_LEFT_OFFSET + 4.0, NSMaxXEdge);
-	clear.origin.y -= 1.0;
-	return clear;
+    return NSMakeRect(NSMaxX(rect) - CLEAR_BUTTON_IMG_DIM - BORDER_LEFT_OFFSET,
+                      floor(NSMidY(rect) - CLEAR_BUTTON_IMG_DIM / 2),
+                      CLEAR_BUTTON_IMG_DIM, CLEAR_BUTTON_IMG_DIM);
 }
 
 - (NSRect)snapbackButtonRectForBounds:(NSRect)rect {
-	return NSMakeRect(BORDER_LEFT_OFFSET, BORDER_TOP_OFFSET, MAX_STATE_IMG_DIM, MAX_STATE_IMG_DIM);	
+    return NSMakeRect(NSMinX(rect) + BORDER_LEFT_OFFSET,
+                      floor(NSMidY(rect) - MAX_STATE_IMG_DIM / 2),
+                      MAX_STATE_IMG_DIM, MAX_STATE_IMG_DIM);
 }
 
 - (NSRect)textAreaForBounds:(NSRect)rect {
-	
-	NSRect textRect = rect;
-//	textRect.origin.y += BORDER_TOP_OFFSET;
-//	textRect.origin.x += TEXT_LEFT_OFFSET;
-//	textRect.size.height = MAX_STATE_IMG_DIM;
-	textRect.size.width = rect.size.width - 23;	
-	//if ([self clearButtonIsVisible]) {
-		textRect.size.width -= CLEAR_BUTTON_IMG_DIM - 1.0;
-	//}
-	
-	return textRect;
+    NSRect textRect = [super drawingRectForBounds:rect];
+    CGFloat height = MIN(NSHeight(textRect), ceil(self.font.ascender - self.font.descender + self.font.leading));
+    return NSMakeRect(NSMinX(rect) + TEXT_LEFT_OFFSET + 3,
+                      floor(NSMidY(textRect) - height / 2),
+                      MAX(0, NSWidth(rect) - TEXT_LEFT_OFFSET - CLEAR_BUTTON_IMG_DIM - BORDER_LEFT_OFFSET - 6),
+                      height);
+}
+
+- (void)drawFocusRingMaskWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {
+    [[NSBezierPath bezierPathWithRoundedRect:NSInsetRect(cellFrame, 1, 1) xRadius:6 yRadius:6] fill];
+}
+
+- (NSRect)focusRingMaskBoundsForFrame:(NSRect)cellFrame inView:(NSView *)controlView {
+    return NSInsetRect(cellFrame, 1, 1);
 }
 
 - (BOOL)clearButtonIsVisible {
@@ -133,8 +133,9 @@
 
 - (BOOL)handleMouseDown:(NSEvent *)theEvent {
 	DualField *controlView = (DualField *)[self controlView];
-	
-	if (![self clearButtonIsVisible] && ![self snapbackButtonIsVisible]) {
+    NSPoint location = [controlView convertPoint:theEvent.locationInWindow fromView:nil];
+    if (!([self clearButtonIsVisible] && [controlView mouse:location inRect:[self clearButtonRectForBounds:controlView.bounds]]) &&
+        !([self snapbackButtonIsVisible] && [controlView mouse:location inRect:[self snapbackButtonRectForBounds:controlView.bounds]])) {
 		return NO;
 	}
 	
@@ -172,19 +173,19 @@
     [[prefs interfaceSeparatorColor] setStroke];
     [border stroke];
     [self setTextColor:[prefs foregroundTextColor]];
-    [self drawInteriorWithFrame:cellFrame inView:controlView];
+    if (![(DualField *)controlView currentEditor])
+        [self drawInteriorWithFrame:cellFrame inView:controlView];
 	
 	if (BUTTON_HIDDEN != clearButtonState) {
 		NSImage *clearImg = [NSImage imageNamed:(clearButtonState == BUTTON_NORMAL ? @"Clear" : @"ClearPressed") ];
-		[clearImg drawCenteredInRect:[self clearButtonRectForBounds:cellFrame]];
+        [clearImg drawInRect:[self clearButtonRectForBounds:cellFrame] fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1 respectFlipped:YES hints:nil];
 	}
 	if (BUTTON_HIDDEN != snapbackButtonState) {
 		NSRect snRect = [self snapbackButtonRectForBounds:cellFrame];
-//		NSEraseRect(centeredRectInRect(snRect, NSMakeSize(MAX_STATE_IMG_DIM, MAX_STATE_IMG_DIM)));
 		NSImage *snapImg = [NSImage imageNamed:
 							[(DualField *)controlView hasFollowedLinks] ? (snapbackButtonState == BUTTON_NORMAL ? @"LinkBack" : @"LinkBackPressed") :
 							(snapbackButtonState == BUTTON_NORMAL ? @"SnapBack" : @"SnapBackPressed") ];
-		[snapImg drawCenteredInRect:snRect];
+        [snapImg drawInRect:snRect fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1 respectFlipped:YES hints:nil];
 	}
 }
 
@@ -208,12 +209,10 @@
 	[dualFieldCell setAction:[[self cell] action]];
 	[dualFieldCell setTarget:[[self cell] target]];
 	[self setCell:dualFieldCell];
-	//[self setDrawsBackground:NO];
 	DualFieldCell *myCell = [self cell];
-	//[myCell setWraps:YES];
 	
-	[self setDrawsBackground:YES];
-	[self setBordered:YES];
+	[self setDrawsBackground:NO];
+	[self setBordered:NO];
 	[self setBezeled:NO];
 	[self setFocusRingType:NSFocusRingTypeExterior];
 			
@@ -451,7 +450,7 @@
         NSImage *icon = [NSImage imageWithSystemSymbolName:showsDocumentIcon ? @"pencil" : @"magnifyingglass" accessibilityDescription:nil];
         icon = [icon imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPaletteColors:@[[[GlobalPrefs defaultPrefs] foregroundTextColor]]]];
         CGFloat opacity = self.window.isMainWindow ? 0.8 : 0.45;
-        NSRect frame = NSMakeRect(BORDER_LEFT_OFFSET + 1, BORDER_TOP_OFFSET + 1, 14, 14);
+        NSRect frame = NSInsetRect([self.cell snapbackButtonRectForBounds:self.bounds], 1, 1);
         [icon drawInRect:frame fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:opacity respectFlipped:YES hints:nil];
     }
 }
