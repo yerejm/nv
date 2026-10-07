@@ -8,9 +8,9 @@ Native macOS application, built with `Notation.xcodeproj` and the `Notation` sch
 - Display preferences offer centered text width, System/Black & White/Low Contrast/Custom colors, alternating rows, separators and optional themed overlay scrollbars. Full screen caps text width and restores the previous layout on exit.
 - Writing preferences offer character pairing, right-to-left editing, smart quotes, smart dashes and automatic spacing. ⌘Return inserts a paragraph below; ⇧⌘Return inserts one above. The existing Command-Return action on links still opens the link.
 - The View menu can show word count permanently; holding Option shows it temporarily. Tagging multiple selected notes edits their shared tags while preserving tags unique to each note.
-- Find selects a note when necessary, starts from the global search or clipboard, and stays open when switching notes. Native spelling and substitution settings persist.
+- Find uses the system-wide find text shared with other apps and stays open when switching notes; with no note selected, Find Next and Find Previous select one first. Native spelling and substitution settings persist.
 - Desktop preferences control the Dock and menu bar icons. Click the menu bar icon to show or hide the note window; right-click for commands. Hiding the Dock enables the menu bar icon, and removing that icon restores the Dock.
-- Export format and filename are independent: filenames can use a custom extension or no extension. Installed Sublime Text 2, Byword and iA Writer are included in external editor discovery.
+- Export format and filename are independent: filenames can use a custom extension or no extension, and changing the format only updates an extension that belongs to an export format. Installed Sublime Text 2, Byword and iA Writer are included in external editor discovery.
 
 ## Repository layout
 

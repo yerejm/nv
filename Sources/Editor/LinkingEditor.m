@@ -785,31 +785,24 @@ copyRTFType:
     }
 }
 
+static BOOL NVFindActionSelectsNote(NSInteger action) {
+    return action == NSTextFinderActionNextMatch || action == NSTextFinderActionPreviousMatch;
+}
+
 - (IBAction)performFindPanelAction:(id)sender {
     [self performTextFinderAction:sender];
 }
 
 - (void)performTextFinderAction:(id)sender {
-    AppController *controller = (id)NSApp.delegate;
     NSTextFinderAction action = [sender tag];
-    BOOL showing = action == NSTextFinderActionShowFindInterface || action == NSTextFinderActionShowReplaceInterface;
-    NSString *seed = nil;
-    if (showing && !self.enclosingScrollView.isFindBarVisible) {
-        seed = [[controller fieldSearchString] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]];
-        if (![seed length]) seed = [[NSPasteboard generalPasteboard] stringForType:NSPasteboardTypeString];
-    }
-    if (![controller selectedNoteObject]) {
+    if (![(AppController *)NSApp.delegate selectedNoteObject]) {
+        //only stepping through matches picks a note to search from
         NSInteger count = notesTableView.numberOfRows;
-        if (!count) return;
+        if (!count || !NVFindActionSelectsNote(action)) return;
         [notesTableView selectRowAndScroll:action == NSTextFinderActionPreviousMatch ? count - 1 : 0];
         [self setSelectedRange:NSMakeRange(action == NSTextFinderActionPreviousMatch ? self.string.length : 0, 0)];
     }
     [self.window makeFirstResponder:self];
-    if ([seed length]) {
-        NSPasteboard *pasteboard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
-        [pasteboard declareTypes:@[NSPasteboardTypeString] owner:nil];
-        [pasteboard setString:seed forType:NSPasteboardTypeString];
-    }
     [textFinder performAction:action];
     lastAutomaticallySelectedRange = self.selectedRange;
 }
@@ -1145,7 +1138,7 @@ copyRTFType:
 	SEL action = [menuItem action];
     if (action == @selector(performFindPanelAction:) || action == @selector(performTextFinderAction:)) {
         if (![(AppController *)NSApp.delegate selectedNoteObject])
-            return notesTableView.numberOfRows > 0;
+            return notesTableView.numberOfRows > 0 && NVFindActionSelectsNote(menuItem.tag);
         return [textFinder validateAction:menuItem.tag];
     }
 	if (action == @selector(defaultStyle:) ||

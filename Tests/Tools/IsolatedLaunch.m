@@ -577,6 +577,16 @@ static void RunAcceptance(void) {
             [format selectItemWithTag:PlainTextFormat];
             [exporter formatSelectorChanged:format];
             Check(@"export format changes leave filename extensions unrestricted", panel.allowedContentTypes.count == 0 && panel.allowsOtherFileTypes);
+            Check(@"export format changes keep custom filenames", [panel.nameFieldStringValue isEqualToString:exportName]);
+            if ([exportName isEqualToString:@"Custom export.log"]) {
+                [panel setNameFieldStringValue:@"Suggested.txt"];
+                [format selectItemWithTag:RTFTextFormat];
+                [exporter formatSelectorChanged:format];
+                Check(@"export format changes update a format extension", [panel.nameFieldStringValue isEqualToString:@"Suggested.rtf"]);
+                [format selectItemWithTag:PlainTextFormat];
+                [exporter formatSelectorChanged:format];
+                [panel setNameFieldStringValue:exportName];
+            }
             [panel cancel:nil];
             NSDate *cancelLimit = [NSDate dateWithTimeIntervalSinceNow:3];
             while (window.attachedSheet && cancelLimit.timeIntervalSinceNow > 0) Pump(0.1);
@@ -612,12 +622,19 @@ static void RunAcceptance(void) {
         [app revealNote:note options:NVEditNoteToReveal];
         NSMenuItem *findCommand = FindMenuCommand(NSApp.mainMenu);
         Check(@"Find menu targets the note editor from search focus", findCommand && findCommand.target == editor);
+        NSPasteboard *findPasteboard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
+        NSString *savedFindString = [[[findPasteboard stringForType:NSPasteboardTypeString] copy] autorelease];
+        NSMenuItem *nextMatch = [[[NSMenuItem alloc] initWithTitle:@"Next" action:@selector(performFindPanelAction:) keyEquivalent:@""] autorelease];
+        nextMatch.tag = NSTextFinderActionNextMatch;
         [app searchForString:@"Retained"];
         [[app valueForKey:@"notesTableView"] deselectAll:nil];
+        Check(@"Find is disabled when no note is selected", ![editor validateMenuItem:findCommand] && [editor validateMenuItem:nextMatch]);
         [NSApp sendAction:findCommand.action to:findCommand.target from:findCommand];
         Pump(0.3);
-        Check(@"Find opens and selects a note when nothing is selected", [app selectedNoteObject] && editor.enclosingScrollView.isFindBarVisible);
-        Check(@"Find starts with the global search text", [[[NSPasteboard pasteboardWithName:NSPasteboardNameFind] stringForType:NSPasteboardTypeString] isEqualToString:@"Retained"]);
+        Check(@"Find does nothing when no note is selected", ![app selectedNoteObject] && !editor.enclosingScrollView.isFindBarVisible);
+        [editor performFindPanelAction:nextMatch];
+        Pump(0.2);
+        Check(@"Find Next selects a note when none is selected", [app selectedNoteObject] != nil);
         [app searchForString:@""];
         [app revealNote:note options:NVEditNoteToReveal];
         NSPasteboard *clipboard = [NSPasteboard generalPasteboard];
@@ -627,23 +644,33 @@ static void RunAcceptance(void) {
             if (data) savedClipboard[type] = data;
         }
         [clipboard declareTypes:@[NSPasteboardTypeString] owner:nil];
-        [clipboard setString:@"Retained" forType:NSPasteboardTypeString];
+        [clipboard setString:@"Clipboard only" forType:NSPasteboardTypeString];
+        [findPasteboard declareTypes:@[NSPasteboardTypeString] owner:nil];
+        [findPasteboard setString:@"Shared find text" forType:NSPasteboardTypeString];
         [NSApp sendAction:findCommand.action to:findCommand.target from:findCommand];
-        Check(@"Find uses clipboard text when global search is empty", [[[NSPasteboard pasteboardWithName:NSPasteboardNameFind] stringForType:NSPasteboardTypeString] isEqualToString:@"Retained"]);
+        Pump(0.3);
+        Check(@"Find opens the find bar for the selected note", editor.enclosingScrollView.isFindBarVisible);
+        Check(@"Find keeps the shared find text", [[findPasteboard stringForType:NSPasteboardTypeString] isEqualToString:@"Shared find text"]);
         [clipboard declareTypes:savedClipboard.allKeys owner:nil];
         for (NSString *type in savedClipboard) [clipboard setData:savedClipboard[type] forType:type];
         NSView *findBar = editor.enclosingScrollView.findBarView;
         [app revealNote:secondTagged options:NVEditNoteToReveal];
         Pump(0.3);
         Check(@"Find bar survives switching notes", editor.enclosingScrollView.isFindBarVisible && editor.enclosingScrollView.findBarView == findBar);
-        NSMenuItem *nextMatch = [[[NSMenuItem alloc] initWithTitle:@"Next" action:@selector(performFindPanelAction:) keyEquivalent:@""] autorelease];
-        nextMatch.tag = NSTextFinderActionNextMatch;
         [app revealNote:note options:NVEditNoteToReveal];
+        NSMenuItem *useSelection = [[[NSMenuItem alloc] initWithTitle:@"Use Selection" action:@selector(performFindPanelAction:) keyEquivalent:@""] autorelease];
+        useSelection.tag = NSTextFinderActionSetSearchString;
+        [editor setSelectedRange:[editor.string rangeOfString:@"Retained" options:NSCaseInsensitiveSearch]];
+        [editor performFindPanelAction:useSelection];
         [editor setSelectedRange:NSMakeRange(0, 0)];
         [editor performFindPanelAction:nextMatch];
         Pump(0.2);
         Check(@"Find searches the newly displayed note", editor.selectedRange.length && [[editor.string substringWithRange:editor.selectedRange] localizedCaseInsensitiveContainsString:@"Retained"]);
         [editor clearFindPanel];
+        if (savedFindString) {
+            [findPasteboard declareTypes:@[NSPasteboardTypeString] owner:nil];
+            [findPasteboard setString:savedFindString forType:NSPasteboardTypeString];
+        }
         [window makeFirstResponder:[app valueForKey:@"field"]];
         [editor setContinuousSpellCheckingEnabled:YES];
         Check(@"spelling preference stays enabled without editor focus", editor.isContinuousSpellCheckingEnabled && displayPrefs.checkSpellingAsYouType);

@@ -39,6 +39,15 @@
 - (IBAction)formatSelectorChanged:(id)sender {
     [exportPanel setAllowedContentTypes:@[]];
     [exportPanel setAllowsOtherFileTypes:YES];
+    //keep a format's own extension in step with the chosen format, but leave any other name alone
+    NSString *name = [exportPanel nameFieldStringValue];
+    NSString *extension = [NotationPrefs pathExtensionForFormat:(int)[[formatSelectorPopup selectedItem] tag]];
+    for (int format = PlainTextFormat; format <= WordXMLFormat; format++) {
+        if ([[name pathExtension] caseInsensitiveCompare:[NotationPrefs pathExtensionForFormat:format]] == NSOrderedSame) {
+            [exportPanel setNameFieldStringValue:[[name stringByDeletingPathExtension] stringByAppendingPathExtension:extension]];
+            break;
+        }
+    }
 }
 
 - (void)exportPanelDidEnd:(NSSavePanel *)sheet returnCode:(NSModalResponse)returnCode contextInfo:(void  *)contextInfo {
