@@ -6,6 +6,7 @@
 #import "AppController.h"
 #import "AppController_Importing.h"
 #import "NotationPrefs.h"
+#import "NotationPrefsViewController.h"
 #import "NotationDirectoryManager.h"
 #import "NotationFileManager.h"
 #import "NoteObject.h"
@@ -246,6 +247,21 @@ static void CheckExternalEditor(NoteObject *note) {
     }
 }
 
+static BOOL WindowSnapshotShowsControlText(NSView *control, NSString *filename) {
+    NSBitmapImageRep *bitmap = [[[NSBitmapImageRep alloc] initWithData:[NSData dataWithContentsOfFile:[acceptanceRoot stringByAppendingPathComponent:filename]]] autorelease];
+    if (!bitmap || !control.window) return NO;
+    NSRect frame = NSInsetRect([control convertRect:control.bounds toView:nil], 6, 4);
+    CGFloat scale = bitmap.pixelsWide / NSWidth(control.window.frame);
+    NSInteger textPixels = 0;
+    for (NSInteger y = MAX(0, bitmap.pixelsHigh - NSMaxY(frame) * scale); y < MIN(bitmap.pixelsHigh, bitmap.pixelsHigh - NSMinY(frame) * scale); y += 2) {
+        for (NSInteger x = MAX(0, NSMinX(frame) * scale); x < MIN(bitmap.pixelsWide, NSMaxX(frame) * scale); x += 2) {
+            NSColor *color = [[bitmap colorAtX:x y:y] colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+            if (MAX(color.redComponent, MAX(color.greenComponent, color.blueComponent)) < 0.45) textPixels++;
+        }
+    }
+    return textPixels > 20;
+}
+
 static void CompleteDesktopAcceptance(AppController *app, NotationController *notation, NSWindow *window, LinkingEditor *editor) {
     @try {
         [NSApp hide:nil];
@@ -288,10 +304,43 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         Pump(0.1);
         Check(@"preferences window", [[NSApp windows] count] > 1);
         PrefsWindowController *preferences = [app valueForKey:@"prefsWindowController"];
+        NSWindow *prefsWindow = [preferences valueForKey:@"window"];
+        NSRect settingsFrame = prefsWindow.frame;
+        BOOL stableFrame = YES, allItemsVisible = YES;
+        for (NSToolbarItem *item in prefsWindow.toolbar.items) {
+            [preferences switchViews:item];
+            stableFrame &= NSEqualRects(settingsFrame, prefsWindow.frame);
+            Pump(0.1);
+            stableFrame &= NSEqualRects(settingsFrame, prefsWindow.frame);
+            allItemsVisible &= prefsWindow.toolbar.visibleItems.count == 7 && [prefsWindow.toolbar.selectedItemIdentifier isEqualToString:item.itemIdentifier];
+        }
+        Check(@"all seven settings icons remain visible in every pane", allItemsVisible);
+        Check(@"settings pane changes keep the window frame constant", stableFrame);
+        Check(@"settings minimum width fits the toolbar", prefsWindow.contentMinSize.width >= 640 && NSWidth(prefsWindow.contentView.bounds) >= prefsWindow.contentMinSize.width);
+        [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Notes"]];
+        NotationPrefsViewController *notesPreferences = [preferences notationPrefsViewController];
+        NSView *notesView = [notesPreferences view];
+        NSTabView *notesTabs = (NSTabView *)notesView.subviews.firstObject;
+        NSView *storagePopup = [notesPreferences valueForKey:@"storageFormatPopupButton"];
+        [notesTabs selectTabViewItemAtIndex:0];
+        Check(@"Notes Storage exposes its storage format control", !storagePopup.hiddenOrHasHiddenAncestor && NSContainsRect(notesTabs.selectedTabViewItem.view.bounds, storagePopup.frame));
+        for (NSString *appearance in @[NSAppearanceNameAqua, NSAppearanceNameDarkAqua]) {
+            [prefsWindow setAppearance:[NSAppearance appearanceNamed:appearance]];
+            for (NSTabViewItem *tabItem in notesTabs.tabViewItems) {
+                [notesTabs selectTabViewItem:tabItem];
+                Pump(0.2);
+                NSString *filename = [NSString stringWithFormat:@"settings-%@-%@.png", tabItem.identifier, [appearance isEqualToString:NSAppearanceNameAqua] ? @"light" : @"dark"];
+                SnapshotWindow(prefsWindow, filename);
+                if ([appearance isEqualToString:NSAppearanceNameAqua] && [tabItem.identifier isEqual:@"storage"])
+                    Check(@"Notes Storage text renders at its control coordinates on first display", WindowSnapshotShowsControlText(storagePopup, filename));
+            }
+        }
+        Check(@"Notes Security exposes encryption controls and hides Storage", [[notesPreferences valueForKey:@"enableEncryptionButton"] window] == prefsWindow && storagePopup.window == nil);
+        [prefsWindow setAppearance:nil];
         [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Display"]];
-        Check(@"Display preferences exposes width controls", [[preferences valueForKey:@"window"] contentView] == [preferences valueForKey:@"displayView"] && [[preferences valueForKey:@"textWidthSlider"] isEnabled]);
+        Check(@"Display preferences exposes width controls", [[preferences valueForKey:@"displayView"] superview] == prefsWindow.contentView && [[preferences valueForKey:@"textWidthSlider"] isEnabled]);
         [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Desktop"]];
-        Check(@"Desktop preferences exposes Dock and menu bar controls", [[preferences valueForKey:@"window"] contentView] == [preferences valueForKey:@"desktopView"] && [preferences valueForKey:@"showDockIconButton"] && [preferences valueForKey:@"showMenuBarIconButton"]);
+        Check(@"Desktop preferences exposes Dock and menu bar controls", [[preferences valueForKey:@"desktopView"] superview] == prefsWindow.contentView && [preferences valueForKey:@"showDockIconButton"] && [preferences valueForKey:@"showMenuBarIconButton"]);
         Check(@"no app-owned URL requests with old preferences", requestCount == 0);
     } @catch (NSException *exception) {
         [checks addObject:@{@"check": @"runtime exception", @"passed": @NO, @"detail": exception.description}];

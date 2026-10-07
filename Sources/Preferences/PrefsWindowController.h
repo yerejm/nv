@@ -63,6 +63,7 @@
     NSPopUpButton *colorSchemeButton;
     NSView *writingView;
     NSView *desktopView;
+    NSView *paneContainer;
     NSButton *showDockIconButton, *showMenuBarIconButton;
     NSButton *smartQuotesButton, *smartDashesButton, *smartInsertDeleteButton;
 }
@@ -108,5 +109,4 @@
 - (NSView*)databaseView;
 - (void)addToolbarItemWithName:(NSString*)name;
 - (void)switchViews:(NSToolbarItem *)item;
-	NSRect ScaleRectWithFactor(NSRect rect, float factor);
 @end

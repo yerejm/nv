@@ -58,6 +58,7 @@
     IBOutlet NSView *view;
 
 	BOOL didAwakeFromNib;
+    BOOL didConfigureTabs;
     
 	NSInvocation *postStorageFormatInvocation;
 	int notesStorageFormatInProgress;

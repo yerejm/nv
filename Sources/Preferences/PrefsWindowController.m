@@ -567,10 +567,27 @@
     [toolbar setDelegate:self];
     [toolbar setAllowsUserCustomization:NO];
     [toolbar setAutosavesConfiguration:NO]; 
+    [toolbar setDisplayMode:NSToolbarDisplayModeIconAndLabel];
+    [window setToolbarStyle:NSWindowToolbarStylePreference];
     [window setToolbar:toolbar];
     [toolbar release];  //setToolbar retains the toolbar we pass, so release the one we used.
 	
 	[window setShowsToolbarButton:NO];
+
+    CGFloat toolbarWidth = 40;
+    NSDictionary *labelAttributes = @{NSFontAttributeName: [NSFont systemFontOfSize:12]};
+    for (NSToolbarItem *item in toolbar.items)
+        toolbarWidth += MAX(64, ceil([item.label sizeWithAttributes:labelAttributes].width) + 24);
+    NSSize contentSize = NSMakeSize(MAX(640, toolbarWidth), 0);
+    for (NSView *pane in @[generalView, [self databaseView], editingView, fontsColorsView, displayView, writingView, desktopView]) {
+        contentSize.width = MAX(contentSize.width, NSWidth(pane.frame));
+        contentSize.height = MAX(contentSize.height, NSHeight(pane.frame));
+    }
+    paneContainer = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
+    [window setContentView:paneContainer];
+    [paneContainer release];
+    [window setContentMinSize:contentSize];
+    [window setContentSize:contentSize];
 
     [self switchViews:nil];  //select last selected pane by default
     
@@ -599,11 +616,11 @@
 	
     if (item == nil) {
         sender = [prefsController lastSelectedPreferencesPane];
-        [toolbar setSelectedItemIdentifier:sender];
     } else {
         sender = [item itemIdentifier];
 		[prefsController setLastSelectedPreferencesPane:sender sender:self];
     }
+    [toolbar setSelectedItemIdentifier:sender];
 	
     NSView *prefsView = nil;
 	
@@ -633,40 +650,14 @@
 	NSAssert(prefsView != nil, @"switching to a nil prefs view!");
     
 	[[NSFontPanel sharedFontPanel] close];
-	
-	//fix this math to convert between window and view coordinates for resolution independence
-	
-	float userSpaceScaleFactor = 1.0;
-	
-    //to stop flicker, we make a temp blank view.
-	
-	NSRect windowContentFrame = ScaleRectWithFactor([[window contentView] frame], userSpaceScaleFactor);
-    NSView *tempView = [[NSView alloc] initWithFrame:[[window contentView] frame]];
-    [window setContentView:tempView];
-    [tempView release];
-    
-    NSRect newFrame = [window frame];
-	NSRect viewFrameForWindow = ScaleRectWithFactor([prefsView frame], userSpaceScaleFactor);
-    newFrame.size.height = viewFrameForWindow.size.height + ([window frame].size.height - windowContentFrame.size.height);
-    newFrame.size.width = viewFrameForWindow.size.width;
-    newFrame.origin.y += (windowContentFrame.size.height - viewFrameForWindow.size.height);
-    	
 
-    [window setFrame:newFrame display:YES animate:YES];
-
-    [window setContentView:prefsView];
-}
-
-NSRect ScaleRectWithFactor(NSRect rect, float factor) {
-	NSRect newRect = rect;
-	newRect.size.width *= factor;
-	newRect.size.height *= factor;
-	newRect.origin.x *= factor;
-	newRect.origin.y *= factor;
-	
-	//these may still need to be rounded up
-	
-	return newRect;
+    [window makeFirstResponder:nil];
+    for (NSView *pane in [[paneContainer.subviews copy] autorelease])
+        [pane removeFromSuperview];
+    [prefsView setFrameOrigin:NSMakePoint(floor((NSWidth(paneContainer.bounds) - NSWidth(prefsView.frame)) / 2),
+                                        NSHeight(paneContainer.bounds) - NSHeight(prefsView.frame))];
+    [paneContainer addSubview:prefsView];
+    [window recalculateKeyViewLoop];
 }
 
 @end

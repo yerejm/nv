@@ -76,6 +76,17 @@
                 XCTAssertGreaterThan(NSApp.mainMenu.numberOfItems, 2);
             } else {
                 XCTAssertNotNil([owner valueForKey:[name isEqualToString:@"Preferences"] ? @"window" : @"view"]);
+                if ([name isEqualToString:@"Preferences"]) {
+                    NSWindow *window = [owner valueForKey:@"window"];
+                    NSRect frame = window.frame;
+                    XCTAssertGreaterThanOrEqual(window.contentMinSize.width, 640);
+                    for (NSToolbarItem *item in window.toolbar.items) {
+                        [owner switchViews:item];
+                        XCTAssertTrue(NSEqualRects(frame, window.frame), @"%@ %@", localization, item.itemIdentifier);
+                        NSView *pane = window.contentView.subviews.firstObject;
+                        XCTAssertTrue(NSContainsRect(window.contentView.bounds, pane.frame), @"%@ %@", localization, item.itemIdentifier);
+                    }
+                }
             }
             NSApp.delegate = nil;
             [registry setDictionary:savedObservers];

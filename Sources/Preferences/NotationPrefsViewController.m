@@ -51,7 +51,35 @@
 			return nil;
 		}
     }
-    
+    if (!didConfigureTabs) {
+        [view setWantsLayer:YES];
+        for (NSView *subview in [[view.subviews copy] autorelease]) {
+            if (![subview isKindOfClass:[NSTabView class]]) continue;
+            NSTabView *archivedTabs = (NSTabView *)subview;
+            NSTabView *tabs = [[NSTabView alloc] initWithFrame:archivedTabs.frame];
+            [tabs setAutoresizingMask:archivedTabs.autoresizingMask];
+            [tabs setFont:[NSFont systemFontOfSize:13]];
+            [tabs setTabViewType:archivedTabs.tabViewType];
+            // Native containers avoid the legacy archive's mirrored page drawing state.
+            for (NSTabViewItem *archivedItem in archivedTabs.tabViewItems) {
+                NSView *page = [[NSView alloc] initWithFrame:archivedItem.view.frame];
+                [page setWantsLayer:YES];
+                for (NSView *control in [[archivedItem.view.subviews copy] autorelease])
+                    [page addSubview:control];
+                NSTabViewItem *item = [[NSTabViewItem alloc] initWithIdentifier:archivedItem.identifier];
+                [item setLabel:archivedItem.label];
+                [item setView:page];
+                [tabs addTabViewItem:item];
+                [item release];
+                [page release];
+            }
+            [tabs selectTabViewItemWithIdentifier:archivedTabs.selectedTabViewItem.identifier];
+            [view addSubview:tabs];
+            [archivedTabs removeFromSuperview];
+            [tabs release];
+        }
+        didConfigureTabs = YES;
+    }
     return view;
 }
 
@@ -84,6 +112,11 @@
     [allowedTypesTable setDataSource:self];
     [allowedExtensionsTable setDelegate:self];
     [allowedTypesTable setDelegate:self];
+
+    for (NSTableView *table in @[allowedExtensionsTable, allowedTypesTable]) {
+        [table setBackgroundColor:[NSColor controlBackgroundColor]];
+        [table.enclosingScrollView setBackgroundColor:[NSColor controlBackgroundColor]];
+    }
 	
 	
 	NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
