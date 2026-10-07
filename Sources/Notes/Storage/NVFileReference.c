@@ -311,7 +311,12 @@ static OSStatus ExchangeFiles(const NVFileReference *source, const NVFileReferen
     OSStatus error = NVReferenceMakePath(source, (UInt8 *)sourcePath, sizeof(sourcePath));
     if (!error) error = NVReferenceMakePath(destination, (UInt8 *)destinationPath, sizeof(destinationPath));
     if (error) return error;
+    struct stat written;
+    if (lstat(sourcePath, &written)) return NVStatusFromErrno(errno);
     if (copyfile(destinationPath, sourcePath, NULL, COPYFILE_METADATA | COPYFILE_NOFOLLOW_SRC | COPYFILE_NOFOLLOW_DST)) return NVStatusFromErrno(errno);
+    // The replacement inherits the old file's creation date, permissions and attributes, but not its modification dates.
+    const struct timespec writtenDates[2] = {written.st_atimespec, written.st_mtimespec};
+    if (utimensat(AT_FDCWD, sourcePath, writtenDates, AT_SYMLINK_NOFOLLOW)) return NVStatusFromErrno(errno);
     int swapped = useSwap ? renamex_np(sourcePath, destinationPath, RENAME_SWAP) : -1;
     if (!useSwap) errno = ENOTSUP;
     if (swapped) {

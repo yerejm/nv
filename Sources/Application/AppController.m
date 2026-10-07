@@ -222,6 +222,56 @@ void outletObjectAwoke(id sender) {
 	[NSApp setServicesProvider:self];
 }
 
+//mounting can block until an unreachable server times out, so it runs in the background behind a cancellable panel;
+//a mount that finishes after cancelling or timing out is ignored
+- (void)_mountVolumeForAliasData:(NSData *)aliasData {
+	NSString *location = [[[NSFileManager defaultManager] pathCopiedFromAliasData:aliasData] stringByAbbreviatingWithTildeInPath];
+	NSPanel *panel = [[[NSPanel alloc] initWithContentRect:NSMakeRect(0, 0, 400, 96) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO] autorelease];
+	NSProgressIndicator *spinner = [[[NSProgressIndicator alloc] initWithFrame:NSMakeRect(20, 54, 16, 16)] autorelease];
+	[spinner setStyle:NSProgressIndicatorStyleSpinning];
+	[spinner setControlSize:NSControlSizeSmall];
+	[spinner startAnimation:nil];
+	NSTextField *label = [NSTextField labelWithString:location ? [NSString stringWithFormat:NSLocalizedString(@"Connecting to %@…", @"shown while mounting the notes folder's volume"), location] :
+						  NSLocalizedString(@"Connecting to the notes folder…", nil)];
+	[label setFrame:NSMakeRect(46, 52, 334, 20)];
+	[label setLineBreakMode:NSLineBreakByTruncatingMiddle];
+	NSButton *cancel = [NSButton buttonWithTitle:NSLocalizedString(@"Cancel", nil) target:self action:@selector(_cancelVolumeMount:)];
+	[cancel setKeyEquivalent:@"\e"];
+	[cancel setFrame:NSMakeRect(300, 12, 86, 32)];
+	[[panel contentView] addSubview:spinner];
+	[[panel contentView] addSubview:label];
+	[[panel contentView] addSubview:cancel];
+	[panel center];
+
+	__block BOOL waiting = YES;
+	NSData *bookmark = [aliasData copy];
+	dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+		NVFileReference ref;
+		[bookmark fsRefAsAliasMountingVolume:&ref];
+		[bookmark release];
+		dispatch_async(dispatch_get_main_queue(), ^{
+			if (waiting) [self _stopVolumeMountPanel];
+		});
+	});
+	dispatch_after(dispatch_time(DISPATCH_TIME_NOW, 30 * NSEC_PER_SEC), dispatch_get_main_queue(), ^{
+		if (waiting) [self _stopVolumeMountPanel];
+	});
+	[NSApp runModalForWindow:panel];
+	waiting = NO;
+	[panel orderOut:nil];
+}
+
+- (void)_stopVolumeMountPanel {
+	[NSApp stopModal];
+	//stopModal only ends the modal loop once it receives another event
+	[NSApp postEvent:[NSEvent otherEventWithType:NSEventTypeApplicationDefined location:NSZeroPoint modifierFlags:0 timestamp:0
+									windowNumber:0 context:nil subtype:0 data1:0 data2:0] atStart:YES];
+}
+
+- (void)_cancelVolumeMount:(id)sender {
+	[NSApp stopModal];
+}
+
 - (void)applicationDidFinishLaunching:(NSNotification*)aNote {
 	
 	//on tiger dualfield is often not ready to add tracking tracks until this point:
@@ -242,6 +292,8 @@ void outletObjectAwoke(id sender) {
 	}
 	
 	if (aliasData) {
+		NVFileReference mountedRef;
+		if (![aliasData fsRefAsAlias:&mountedRef]) [self _mountVolumeForAliasData:aliasData];
 	    newNotation = [[NotationController alloc] initWithAliasData:aliasData error:&err];
 	    subMessage = NSLocalizedString(@"Please choose a different folder in which to store your notes.",nil);
 	} else {

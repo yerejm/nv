@@ -17,6 +17,8 @@
 - (NSString*)pathURLFromWebArchive;
 
 - (BOOL)fsRefAsAlias:(NVFileReference*)fsRef;
+//may block until the volume mounts or its server times out; can show authentication UI
+- (BOOL)fsRefAsAliasMountingVolume:(NVFileReference*)fsRef;
 + (NSData*)aliasDataForFSRef:(NVFileReference*)fsRef;
 - (NSMutableString*)newStringUsingBOMReturningEncoding:(NSStringEncoding*)encoding;
 + (NSData*)uncachedDataFromFile:(NSString*)filename;

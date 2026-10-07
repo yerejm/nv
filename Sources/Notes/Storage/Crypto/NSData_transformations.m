@@ -240,16 +240,24 @@
     return [url absoluteString];
 }
 
-- (BOOL)fsRefAsAlias:(NVFileReference *)ref {
-    NSURL *url = [NSURL URLByResolvingBookmarkData:self options:NSURLBookmarkResolutionWithoutUI | NSURLBookmarkResolutionWithoutMounting relativeToURL:nil bookmarkDataIsStale:NULL error:NULL];
+static NSURL *NVResolveBookmark(NSData *data, NSURLBookmarkResolutionOptions options) {
+    NSURL *url = [NSURL URLByResolvingBookmarkData:data options:options relativeToURL:nil bookmarkDataIsStale:NULL error:NULL];
     if (!url) {
-        CFDataRef bookmark = NVBookmarkFromLegacyAlias((CFDataRef)self);
+        CFDataRef bookmark = NVBookmarkFromLegacyAlias((CFDataRef)data);
         if (bookmark) {
-            url = [NSURL URLByResolvingBookmarkData:(NSData *)bookmark options:NSURLBookmarkResolutionWithoutUI | NSURLBookmarkResolutionWithoutMounting relativeToURL:nil bookmarkDataIsStale:NULL error:NULL];
+            url = [NSURL URLByResolvingBookmarkData:(NSData *)bookmark options:options relativeToURL:nil bookmarkDataIsStale:NULL error:NULL];
             CFRelease(bookmark);
         }
     }
-    return NVURLGetFileReference((CFURLRef)url, ref);
+    return url;
+}
+
+- (BOOL)fsRefAsAlias:(NVFileReference *)ref {
+    return NVURLGetFileReference((CFURLRef)NVResolveBookmark(self, NSURLBookmarkResolutionWithoutUI | NSURLBookmarkResolutionWithoutMounting), ref);
+}
+
+- (BOOL)fsRefAsAliasMountingVolume:(NVFileReference *)ref {
+    return NVURLGetFileReference((CFURLRef)NVResolveBookmark(self, 0), ref);
 }
 
 + (NSData*)uncachedDataFromFile:(NSString*)filename {

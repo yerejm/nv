@@ -105,6 +105,34 @@
     XCTAssertTrue([bookmark fsRefAsAlias:&resolved]);
     XCTAssertEqual(NVCompareReferences(&directory, &resolved), noErr);
 }
+- (int)runDiskImageTool:(NSArray *)arguments {
+    NSTask *task = [[[NSTask alloc] init] autorelease];
+    task.launchPath = @"/usr/bin/hdiutil";
+    task.arguments = arguments;
+    [task launch];
+    [task waitUntilExit];
+    return task.terminationStatus;
+}
+- (void)testBookmarkMountsDetachedVolumeOnlyWhenAllowed {
+    NSString *volumeName = [@"NVMount-" stringByAppendingString:[[[NSUUID UUID] UUIDString] substringToIndex:8]];
+    NSString *image = [self.temporaryDirectory stringByAppendingPathComponent:@"notes.dmg"];
+    NSString *mountPoint = [self.temporaryDirectory stringByAppendingPathComponent:@"mount"];
+    XCTAssertEqual([self runDiskImageTool:(@[@"create", @"-quiet", @"-size", @"8m", @"-fs", @"APFS", @"-volname", volumeName, image])], 0);
+    XCTAssertEqual([self runDiskImageTool:(@[@"attach", @"-quiet", @"-nobrowse", @"-mountpoint", mountPoint, image])], 0);
+    NSString *notesPath = [mountPoint stringByAppendingPathComponent:@"notes"];
+    XCTAssertTrue([[NSFileManager defaultManager] createDirectoryAtPath:notesPath withIntermediateDirectories:NO attributes:nil error:NULL]);
+    NVFileReference directory, resolved;
+    XCTAssertEqual(NVPathMakeReference((const UInt8 *)notesPath.fileSystemRepresentation, &directory, NULL), noErr);
+    NSData *bookmark = [NSData aliasDataForFSRef:&directory];
+    XCTAssertNotNil(bookmark);
+    XCTAssertEqual([self runDiskImageTool:(@[@"detach", @"-quiet", mountPoint])], 0);
+    XCTAssertFalse([bookmark fsRefAsAlias:&resolved]);
+    XCTAssertTrue([bookmark fsRefAsAliasMountingVolume:&resolved]);
+    char resolvedPath[PATH_MAX];
+    XCTAssertEqual(NVReferenceMakePath(&resolved, (UInt8 *)resolvedPath, sizeof(resolvedPath)), noErr);
+    XCTAssertEqualObjects([@(resolvedPath) lastPathComponent], @"notes");
+    XCTAssertEqual([self runDiskImageTool:(@[@"detach", @"-quiet", [@(resolvedPath) stringByDeletingLastPathComponent]])], 0);
+}
 - (void)testAtomicExchangePreservesDestinationMetadata {
     NSString *sourcePath = [self.temporaryDirectory stringByAppendingPathComponent:@"temporary"];
     NSString *destinationPath = [self.temporaryDirectory stringByAppendingPathComponent:@"note.txt"];
@@ -113,6 +141,10 @@
     XCTAssertEqual(chmod(destinationPath.fileSystemRepresentation, 0640), 0);
     const char metadata[] = "retained metadata";
     XCTAssertEqual(setxattr(destinationPath.fileSystemRepresentation, "com.notational.velocity.test", metadata, sizeof(metadata), 0, 0), 0);
+    const struct timeval oldDates[2] = {{1577804400, 0}, {1577804400, 0}};
+    XCTAssertEqual(utimes(destinationPath.fileSystemRepresentation, oldDates), 0);
+    struct stat written;
+    XCTAssertEqual(stat(sourcePath.fileSystemRepresentation, &written), 0);
     NVFileReference source, destination, newSource, newDestination;
     XCTAssertEqual(NVPathMakeReference((const UInt8 *)sourcePath.fileSystemRepresentation, &source, NULL), noErr);
     XCTAssertEqual(NVPathMakeReference((const UInt8 *)destinationPath.fileSystemRepresentation, &destination, NULL), noErr);
@@ -122,6 +154,9 @@
     struct stat attributes;
     XCTAssertEqual(stat(destinationPath.fileSystemRepresentation, &attributes), 0);
     XCTAssertEqual(attributes.st_mode & 0777, 0640);
+    XCTAssertEqual(attributes.st_birthtimespec.tv_sec, oldDates[1].tv_sec);
+    XCTAssertEqual(attributes.st_mtimespec.tv_sec, written.st_mtimespec.tv_sec);
+    XCTAssertEqual(attributes.st_mtimespec.tv_nsec, written.st_mtimespec.tv_nsec);
     char actualMetadata[sizeof(metadata)];
     XCTAssertEqual(getxattr(destinationPath.fileSystemRepresentation, "com.notational.velocity.test", actualMetadata, sizeof(actualMetadata), 0, 0), (ssize_t)sizeof(metadata));
     XCTAssertEqual(memcmp(metadata, actualMetadata, sizeof(metadata)), 0);
