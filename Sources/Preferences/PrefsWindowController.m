@@ -42,7 +42,8 @@
 		 @selector(resolveNoteBodyFontFromNotationPrefsFromSender:), 
 		 @selector(setCheckSpellingAsYouType:sender:), 
 		 @selector(setConfirmNoteDeletion:sender:),
-         @selector(setUseSmartQuotes:sender:), @selector(setUseSmartDashes:sender:), @selector(setUseSmartInsertDelete:sender:), nil];
+         @selector(setUseSmartQuotes:sender:), @selector(setUseSmartDashes:sender:), @selector(setUseSmartInsertDelete:sender:),
+         @selector(setShowDockIcon:sender:), @selector(setShowMenuBarIcon:sender:), nil];
     }
     return self;
 }
@@ -184,6 +185,13 @@
 - (IBAction)changedAutoPairing:(id)sender {
     [prefsController setUseAutoPairing:[sender state] == NSControlStateValueOn sender:self];
 }
+- (IBAction)changedDesktopPresence:(id)sender {
+    BOOL enabled = [sender state] == NSControlStateValueOn;
+    if (sender == showDockIconButton) [prefsController setShowDockIcon:enabled sender:self];
+    else [prefsController setShowMenuBarIcon:enabled sender:self];
+    [showDockIconButton setState:[prefsController showDockIcon]];
+    [showMenuBarIconButton setState:[prefsController showMenuBarIcon]];
+}
 - (IBAction)changedSmartSubstitutions:(id)sender {
     BOOL enabled = [sender state] == NSControlStateValueOn;
     if (sender == smartQuotesButton) [prefsController setUseSmartQuotes:enabled sender:self];
@@ -281,6 +289,8 @@
 }
 
 - (void)settingChangedForSelectorString:(NSString*)selectorString {
+    [showDockIconButton setState:[prefsController showDockIcon]];
+    [showMenuBarIconButton setState:[prefsController showMenuBarIcon]];
     [smartQuotesButton setState:[prefsController useSmartQuotes]];
     [smartDashesButton setState:[prefsController useSmartDashes]];
     [smartInsertDeleteButton setState:[prefsController useSmartInsertDelete]];
@@ -419,8 +429,8 @@
     [item setLabel:localizedTitle];
     //[item setToolTip:@"General settings: appearance and behavior"];
     [item setImage:[[[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:name ofType:@"tiff"]] autorelease]];
-    if ([name isEqualToString:@"Display"] || [name isEqualToString:@"Writing"])
-        [item setImage:[NSImage imageWithSystemSymbolName:[name isEqualToString:@"Display"] ? @"rectangle.split.2x1" : @"text.cursor" accessibilityDescription:localizedTitle]];
+    NSString *symbol = @{@"Display": @"rectangle.split.2x1", @"Writing": @"text.cursor", @"Desktop": @"menubar.dock.rectangle"}[name];
+    if (symbol) [item setImage:[NSImage imageWithSystemSymbolName:symbol accessibilityDescription:localizedTitle]];
     [item setTarget:self];
     [item setAction:@selector(switchViews:)];
     [items setObject:item forKey:name];
@@ -428,6 +438,19 @@
 }
 
 - (void)awakeFromNib {
+    desktopView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 520, 180)];
+    showDockIconButton = [NSButton checkboxWithTitle:NSLocalizedString(@"Show Dock icon", nil) target:self action:@selector(changedDesktopPresence:)];
+    [showDockIconButton setFrame:NSMakeRect(24, 125, 472, 26)];
+    [showDockIconButton setState:[prefsController showDockIcon]];
+    [desktopView addSubview:showDockIconButton];
+    showMenuBarIconButton = [NSButton checkboxWithTitle:NSLocalizedString(@"Show menu bar icon", nil) target:self action:@selector(changedDesktopPresence:)];
+    [showMenuBarIconButton setFrame:NSMakeRect(24, 89, 472, 26)];
+    [showMenuBarIconButton setState:[prefsController showMenuBarIcon]];
+    [desktopView addSubview:showMenuBarIconButton];
+    NSTextField *desktopHint = [NSTextField wrappingLabelWithString:NSLocalizedString(@"Hiding the Dock icon enables the menu bar icon. Click the menu bar icon to show or hide the window; right-click for commands.", nil)];
+    [desktopHint setFrame:NSMakeRect(24, 22, 472, 50)];
+    [desktopHint setTextColor:[NSColor secondaryLabelColor]];
+    [desktopView addSubview:desktopHint];
     writingView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 520, 290)];
     NSButton *pairing = [NSButton checkboxWithTitle:NSLocalizedString(@"Pair brackets and double quotes automatically", nil) target:self action:@selector(changedAutoPairing:)];
     [pairing setFrame:NSMakeRect(24, 235, 472, 26)];
@@ -538,6 +561,7 @@
 	[self addToolbarItemWithName:@"Fonts & Colors"];
     [self addToolbarItemWithName:@"Display"];
     [self addToolbarItemWithName:@"Writing"];
+    [self addToolbarItemWithName:@"Desktop"];
 		
     toolbar = [[NSToolbar alloc] initWithIdentifier:@"preferencePanes"];
     [toolbar setDelegate:self];
@@ -562,7 +586,7 @@
 }
 
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar*)theToolbar {
-    return [NSArray arrayWithObjects:@"General", @"Notes", @"Editing", @"Fonts & Colors", @"Display", @"Writing", nil];
+    return [NSArray arrayWithObjects:@"General", @"Notes", @"Editing", @"Fonts & Colors", @"Display", @"Writing", @"Desktop", nil];
 }
 
 - (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar {
@@ -597,6 +621,8 @@
         prefsView = displayView;
     } else if ([sender isEqualToString:@"Writing"]) {
         prefsView = writingView;
+    } else if ([sender isEqualToString:@"Desktop"]) {
+        prefsView = desktopView;
 	} else {
 		NSLog(@"unknown sender: %@", sender);
 	}

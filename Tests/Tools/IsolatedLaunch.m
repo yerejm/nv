@@ -14,6 +14,7 @@
 #import "LinkingEditor.h"
 #import "AttributedPlainText.h"
 #import "ExternalEditorListController.h"
+#import "ExporterManager.h"
 #import "ODBEditor.h"
 #import "PTHotKeyCenter.h"
 #import "PTHotKey.h"
@@ -29,6 +30,24 @@
 
 @interface AppController (ServiceAcceptance)
 - (void)createFromSelection:(NSPasteboard *)pasteboard userData:(NSString *)userData error:(NSString **)error;
+@end
+
+@interface AcceptanceExportDestination : NSObject
+@property(nonatomic, retain) NSURL *URL;
+@end
+@implementation AcceptanceExportDestination
+- (void)dealloc { [_URL release]; [super dealloc]; }
+@end
+
+@interface AcceptanceStatusMenuObserver : NSObject <NSMenuDelegate>
+@property(nonatomic) BOOL opened;
+@end
+@implementation AcceptanceStatusMenuObserver
+- (void)menuWillOpen:(NSMenu *)menu { self.opened = YES; }
+@end
+
+@interface ExporterManager (Acceptance)
+- (void)exportPanelDidEnd:(NSSavePanel *)sheet returnCode:(NSModalResponse)returnCode contextInfo:(void *)context;
 @end
 
 static NSString *acceptanceRoot;
@@ -233,6 +252,8 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         PrefsWindowController *preferences = [app valueForKey:@"prefsWindowController"];
         [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Display"]];
         Check(@"Display preferences exposes width controls", [[preferences valueForKey:@"window"] contentView] == [preferences valueForKey:@"displayView"] && [[preferences valueForKey:@"textWidthSlider"] isEnabled]);
+        [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Desktop"]];
+        Check(@"Desktop preferences exposes Dock and menu bar controls", [[preferences valueForKey:@"window"] contentView] == [preferences valueForKey:@"desktopView"] && [preferences valueForKey:@"showDockIconButton"] && [preferences valueForKey:@"showMenuBarIconButton"]);
         Check(@"no app-owned URL requests with old preferences", requestCount == 0);
     } @catch (NSException *exception) {
         [checks addObject:@{@"check": @"runtime exception", @"passed": @NO, @"detail": exception.description}];
@@ -322,6 +343,41 @@ static void RunAcceptance(void) {
         Check(@"disabling width limit restores editor margins", editor.textContainerInset.width == 3);
         [displayPrefs setMaxNoteBodyWidth:660 sender:nil];
         [app toggleCollapse:nil];
+        [displayPrefs setShowMenuBarIcon:YES sender:nil];
+        NSStatusItem *menuBarItem = [app valueForKey:@"statusItem"];
+        Check(@"menu bar icon exposes a native click action", menuBarItem.button.image && menuBarItem.button.target == app && menuBarItem.button.action == @selector(statusItemAction:));
+        [NSApp activateIgnoringOtherApps:YES];
+        [window makeKeyAndOrderFront:nil];
+        Pump(0.2);
+        Check(@"menu bar button keeps its target", menuBarItem.button.target == app && menuBarItem.button.action == @selector(statusItemAction:));
+        Check(@"menu bar action is delivered", [NSApp sendAction:@selector(statusItemAction:) to:app from:menuBarItem.button]);
+        NSDate *hideLimit = [NSDate dateWithTimeIntervalSinceNow:2];
+        while (window.visible && hideLimit.timeIntervalSinceNow > 0) Pump(0.05);
+        Check(@"menu bar action hides the note window", !window.visible);
+        Check(@"menu bar button keeps its target", menuBarItem.button.target == app && menuBarItem.button.action == @selector(statusItemAction:));
+        Check(@"menu bar action is delivered", [NSApp sendAction:@selector(statusItemAction:) to:app from:menuBarItem.button]);
+        NSDate *showLimit = [NSDate dateWithTimeIntervalSinceNow:2];
+        while ((!NSApp.isActive || !window.isKeyWindow) && showLimit.timeIntervalSinceNow > 0) Pump(0.05);
+        Pump(0.1);
+        Check(@"menu bar action restores the note window and search focus", NSApp.isActive && window.isKeyWindow && window.firstResponder == [[app valueForKey:@"field"] currentEditor]);
+        NSMenu *menuBarMenu = [app valueForKey:@"statusMenu"];
+        AcceptanceStatusMenuObserver *menuObserver = [[[AcceptanceStatusMenuObserver alloc] init] autorelease];
+        menuBarMenu.delegate = menuObserver;
+        dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC / 3), dispatch_get_main_queue(), ^{
+            [menuBarMenu cancelTrackingWithoutAnimation];
+        });
+        [app showStatusMenu:nil];
+        Check(@"menu bar context menu opens with recovery commands", menuObserver.opened && menuBarMenu.numberOfItems == 6);
+        menuBarMenu.delegate = nil;
+        [displayPrefs setShowDockIcon:NO sender:nil];
+        NSDate *policyLimit = [NSDate dateWithTimeIntervalSinceNow:2];
+        while (NSApp.activationPolicy != NSApplicationActivationPolicyAccessory && policyLimit.timeIntervalSinceNow > 0) Pump(0.05);
+        Check(@"Dock can be hidden while the menu bar stays available", NSApp.activationPolicy == NSApplicationActivationPolicyAccessory && [app valueForKey:@"statusItem"] && displayPrefs.showMenuBarIcon);
+        [displayPrefs setShowMenuBarIcon:NO sender:nil];
+        policyLimit = [NSDate dateWithTimeIntervalSinceNow:2];
+        while (NSApp.activationPolicy != NSApplicationActivationPolicyRegular && policyLimit.timeIntervalSinceNow > 0) Pump(0.05);
+        Check(@"removing the last menu bar entry restores the Dock", NSApp.activationPolicy == NSApplicationActivationPolicyRegular && displayPrefs.showDockIcon && ![app valueForKey:@"statusItem"]);
+        [app revealNote:note options:NVEditNoteToReveal | NVOrderFrontWindow];
         NSString *original = [[editor.string copy] autorelease];
         [displayPrefs setUseAutoPairing:YES sender:nil];
         [editor setSelectedRange:NSMakeRange(editor.string.length, 0)];
@@ -394,6 +450,34 @@ static void RunAcceptance(void) {
         NVPathMakeReference((const UInt8 *)acceptanceRoot.fileSystemRepresentation, &exportDirectory, NULL);
         Check(@"text export", [note exportToDirectoryRef:&exportDirectory withFilename:@"Exported acceptance.txt" usingFormat:PlainTextFormat overwrite:NO] == noErr);
         Check(@"text import", [notation openFiles:@[[acceptanceRoot stringByAppendingPathComponent:@"Exported acceptance.txt"]]]);
+        ExporterManager *exporter = [ExporterManager sharedManager];
+        for (NSString *exportName in @[@"Export without extension", @"Custom export.log"]) {
+            [exporter exportNotes:@[note] forWindow:window];
+            Pump(0.4);
+            NSSavePanel *panel = [exporter valueForKey:@"exportPanel"];
+            [panel setDirectoryURL:[NSURL fileURLWithPath:acceptanceRoot isDirectory:YES]];
+            [panel setNameFieldStringValue:exportName];
+            NSPopUpButton *format = [exporter valueForKey:@"formatSelectorPopup"];
+            [format selectItemWithTag:RTFTextFormat];
+            [exporter formatSelectorChanged:format];
+            [format selectItemWithTag:PlainTextFormat];
+            [exporter formatSelectorChanged:format];
+            Check(@"export format changes leave filename extensions unrestricted", panel.allowedContentTypes.count == 0 && panel.allowsOtherFileTypes);
+            [panel cancel:nil];
+            NSDate *cancelLimit = [NSDate dateWithTimeIntervalSinceNow:3];
+            while (window.attachedSheet && cancelLimit.timeIntervalSinceNow > 0) Pump(0.1);
+            Check(@"export panel cancellation completes", !window.attachedSheet && ![exporter valueForKey:@"exportPanel"]);
+            AcceptanceExportDestination *destination = [[[AcceptanceExportDestination alloc] init] autorelease];
+            destination.URL = [NSURL fileURLWithPath:[acceptanceRoot stringByAppendingPathComponent:exportName]];
+            [exporter exportPanelDidEnd:(id)destination returnCode:NSModalResponseOK contextInfo:(void *)[@[note] retain]];
+            NSString *exportPath = [acceptanceRoot stringByAppendingPathComponent:exportName];
+            NSDate *exportLimit = [NSDate dateWithTimeIntervalSinceNow:4];
+            while (![[NSFileManager defaultManager] fileExistsAtPath:exportPath] && exportLimit.timeIntervalSinceNow > 0) Pump(0.1);
+            Check(@"export honors the chosen filename and content", [[NSString stringWithContentsOfFile:exportPath encoding:NSUTF8StringEncoding error:NULL] isEqualToString:note->contentString.string]);
+            if ([exporter valueForKey:@"exportPanel"]) [panel cancel:nil];
+            Pump(0.1);
+        }
+        Check(@"additional fork editors are recognized", [[NSSet setWithArray:@[@"com.sublimetext.2", @"com.metaclassy.byword", @"jp.informationarchitects.WriterForMacOSX"]] isSubsetOfSet:[ExternalEditorListController ODBAppIdentifiers]]);
         [notation.notationPrefs setNotesStorageFormat:PlainTextFormat];
         Check(@"individual file persistence", [notation flushAllNoteChanges] && [[NSFileManager defaultManager] fileExistsAtPath:note.noteFilePath]);
         NSArray *tagNotes = [notation notesAtIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, 2)]];
@@ -507,6 +591,8 @@ static void RunAcceptance(void) {
         Check(@"native inline editor uses readable custom colors", inlineEditor && [inlineEditor.textColor isEqual:[appearancePrefs foregroundTextColor]] && [inlineEditor.backgroundColor isEqual:[appearancePrefs backgroundTextColor]]);
         [noteTable abortEditing];
         [app bringFocusToControlField:nil];
+        NSDate *focusLimit = [NSDate dateWithTimeIntervalSinceNow:2];
+        while (![[app valueForKey:@"field"] currentEditor] && focusLimit.timeIntervalSinceNow > 0) Pump(0.05);
         NSTextView *searchEditor = (id)[[app valueForKey:@"field"] currentEditor];
         Check(@"search editing resets native field editor styling", searchEditor && !searchEditor.drawsBackground && [searchEditor.insertionPointColor isEqual:[appearancePrefs foregroundTextColor]]);
         [appearancePrefs setForegroundTextColor:[NSColor textColor] sender:nil];

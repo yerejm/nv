@@ -182,6 +182,7 @@ void outletObjectAwoke(id sender) {
 }
 
 - (void)runDelayedUIActionsAfterLaunch {
+    [self updateDesktopPresence];
     [self updateInterfaceAppearance];
 	[[prefsController bookmarksController] setAppController:self];
 	[[prefsController bookmarksController] restoreWindowFromSave];
@@ -284,6 +285,7 @@ void outletObjectAwoke(id sender) {
 	 @selector(setForegroundTextColor:sender:),  //ditto
      @selector(setBackgroundTextColor:sender:),
      @selector(setShowWordCount:sender:),
+     @selector(setShowDockIcon:sender:), @selector(setShowMenuBarIcon:sender:),
 	 @selector(setTableFontSize:sender:),  //when to tell notationcontroller to regenerate the (now potentially too-short) note-body previews
 	 @selector(addTableColumn:sender:),  //ditto
 	 @selector(removeTableColumn:sender:),  //ditto
@@ -385,6 +387,10 @@ terminateApp:
 
 - (BOOL)validateMenuItem:(NSMenuItem*)menuItem {
 	SEL selector = [menuItem action];
+    if (selector == @selector(toggleDockIcon:)) {
+        [menuItem setState:[prefsController showDockIcon] ? NSControlStateValueOn : NSControlStateValueOff];
+        return YES;
+    }
 	NSInteger numberSelected = [notesTableView numberOfSelectedRows];
 	if (selector == @selector(toggleCollapse:))
 		return currentNote != nil || [[splitView subviewAtPosition:0] isCollapsed];
@@ -708,6 +714,11 @@ terminateApp:
 }
 
 - (void)settingChangedForSelectorString:(NSString*)selectorString {
+    if ([selectorString isEqualToString:SEL_STR(setShowDockIcon:sender:)] ||
+        [selectorString isEqualToString:SEL_STR(setShowMenuBarIcon:sender:)]) {
+        [self updateDesktopPresence];
+        return;
+    }
     if ([selectorString isEqualToString:SEL_STR(setShowWordCount:sender:)]) {
         [self updateWordCount];
         [self updateNoteMenus];
@@ -844,6 +855,8 @@ terminateApp:
 }
 
 - (void)applicationDidBecomeActive:(NSNotification *)aNotification {
+    if (pendingSearchFocus)
+        [self performSelector:@selector(selectSearchAfterActivation) withObject:nil afterDelay:0];
 	[notationController checkJournalExistence];
 	
     if ([notationController currentNoteStorageFormat] != SingleDatabaseFormat)
@@ -855,6 +868,74 @@ terminateApp:
 - (void)applicationWillResignActive:(NSNotification *)aNotification {
 	//sync note files when switching apps so user doesn't have to guess when they'll be updated
 	[notationController synchronizeNoteChanges:nil];
+}
+
+- (void)updateDesktopPresence {
+    if ([prefsController showMenuBarIcon] && !statusItem) {
+        statusItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength] retain];
+        statusItem.button.image = [NSImage imageWithSystemSymbolName:@"note.text" accessibilityDescription:NSLocalizedString(@"Notational Velocity", nil)];
+        statusItem.button.image.template = YES;
+        statusItem.button.toolTip = NSLocalizedString(@"Notational Velocity — click to show or hide; right-click for commands", nil);
+        statusItem.button.target = self;
+        statusItem.button.action = @selector(statusItemAction:);
+        [statusItem.button sendActionOn:NSEventMaskLeftMouseUp | NSEventMaskRightMouseUp];
+        if (!statusMenu) {
+            statusMenu = [[NSMenu alloc] initWithTitle:NSLocalizedString(@"Notational Velocity", nil)];
+            NSArray *titles = @[NSLocalizedString(@"Show Notational Velocity", nil),
+                                NSLocalizedString(@"Add New Note from Clipboard", nil),
+                                NSLocalizedString(@"Preferences…", nil),
+                                NSLocalizedString(@"Show Dock Icon", nil)];
+            SEL actions[] = {@selector(bringFocusToControlField:), @selector(createNoteFromStatusClipboard:),
+                             @selector(showPreferencesWindow:), @selector(toggleDockIcon:)};
+            for (NSUInteger index = 0; index < titles.count; index++)
+                [[statusMenu addItemWithTitle:titles[index] action:actions[index] keyEquivalent:@""] setTarget:self];
+            [statusMenu addItem:[NSMenuItem separatorItem]];
+            [[statusMenu addItemWithTitle:NSLocalizedString(@"Quit Notational Velocity", nil) action:@selector(terminate:) keyEquivalent:@""] setTarget:NSApp];
+        }
+    } else if (![prefsController showMenuBarIcon] && statusItem) {
+        [[NSStatusBar systemStatusBar] removeStatusItem:statusItem];
+        [statusItem release];
+        statusItem = nil;
+    }
+    NSApplicationActivationPolicy policy = [prefsController showDockIcon] ? NSApplicationActivationPolicyRegular : NSApplicationActivationPolicyAccessory;
+    if (NSApp.activationPolicy != policy) {
+        BOOL wasActive = NSApp.isActive;
+        if (![NSApp setActivationPolicy:policy]) {
+            [prefsController setShowDockIcon:NSApp.activationPolicy == NSApplicationActivationPolicyRegular sender:self];
+            return;
+        }
+        if (wasActive) {
+            [NSApp activateIgnoringOtherApps:YES];
+            if (window.visible) [window makeKeyAndOrderFront:nil];
+        }
+    }
+}
+
+- (IBAction)statusItemAction:(id)sender {
+    NSEvent *event = NSApp.currentEvent;
+    if (event.type == NSEventTypeRightMouseUp || (event.modifierFlags & NSEventModifierFlagControl))
+        [self showStatusMenu:sender];
+    else if (NSApp.isActive && window.isMainWindow) {
+        [notationController synchronizeNoteChanges:nil];
+        [window orderOut:sender];
+        [[NSRunningApplication currentApplication] hide];
+    } else [self bringFocusToControlField:sender];
+}
+
+- (IBAction)showStatusMenu:(id)sender {
+    [statusMenu popUpMenuPositioningItem:nil atLocation:NSMakePoint(0, NSMinY(statusItem.button.bounds)) inView:statusItem.button];
+}
+
+- (IBAction)toggleDockIcon:(id)sender {
+    [prefsController setShowDockIcon:![prefsController showDockIcon] sender:self];
+    [self updateDesktopPresence];
+}
+
+- (IBAction)createNoteFromStatusClipboard:(id)sender {
+    [self bringFocusToControlField:sender];
+    [NSApp sendAction:@selector(paste:) to:notesTableView from:sender];
+    pendingSearchFocus = NO;
+    [NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(selectSearchAfterActivation) object:nil];
 }
 
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender {
@@ -1031,6 +1112,10 @@ terminateApp:
 - (void)flagsChanged:(NSEvent *)event {
     temporaryWordCount = (event.modifierFlags & NSEventModifierFlagOption) != 0;
     [self updateWordCount];
+}
+
+- (void)windowDidBecomeKey:(NSNotification *)notification {
+    [self selectSearchAfterActivation];
 }
 
 - (void)windowDidResignKey:(NSNotification *)notification {
@@ -1794,6 +1879,9 @@ terminateApp:
 }
 
 - (void)dealloc {
+    if (statusItem) [[NSStatusBar systemStatusBar] removeStatusItem:statusItem];
+    [statusItem release];
+    [statusMenu release];
     if (modifierMonitor) [NSEvent removeMonitor:modifierMonitor];
     [wordCountLabel release];
 	[previousActiveApplication release];
@@ -1823,6 +1911,7 @@ terminateApp:
 }
 
 - (IBAction)bringFocusToControlField:(id)sender {
+    pendingSearchFocus = YES;
 	[self _expandToolbar];
 	
 	if (![NSApp isActive]) {
@@ -1838,7 +1927,10 @@ terminateApp:
 }
 
 - (void)selectSearchAfterActivation {
-    if ([NSApp isActive] && window.isKeyWindow) [field selectText:nil];
+    if (pendingSearchFocus && [NSApp isActive] && window.isKeyWindow) {
+        pendingSearchFocus = NO;
+        [field selectText:nil];
+    }
 }
 
 - (void)captureActivationOrigin {

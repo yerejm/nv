@@ -37,10 +37,8 @@
 }
 
 - (IBAction)formatSelectorChanged:(id)sender {
-	NSSavePanel *panel = (NSSavePanel *)[sender window];
-	
-	int storageFormat = (int)[[formatSelectorPopup selectedItem] tag];
-	NVSetPanelTypes(panel, @[[NotationPrefs pathExtensionForFormat:storageFormat]]);
+    [exportPanel setAllowedContentTypes:@[]];
+    [exportPanel setAllowsOtherFileTypes:YES];
 }
 
 - (void)exportPanelDidEnd:(NSSavePanel *)sheet returnCode:(NSModalResponse)returnCode contextInfo:(void  *)contextInfo {
@@ -90,7 +88,7 @@
 			if (err == dupFNErr) {
 				//ask about overwriting
 				NSString *existingName = filename ? filename : filenameOfNote(note);
-				existingName = [[existingName stringByDeletingPathExtension] stringByAppendingPathExtension:[NotationPrefs pathExtensionForFormat:storageFormat]];
+				if (!filename) existingName = [[existingName stringByDeletingPathExtension] stringByAppendingPathExtension:[NotationPrefs pathExtensionForFormat:storageFormat]];
 				result = NVRunAlert(NSAlertStyleWarning, [NSString stringWithFormat:NSLocalizedString(@"A file named quotemark%@quotemark already exists.",nil), existingName], NSLocalizedString(@"Replace its current contents with that of the note?", @"replace the file's contents?"), NSLocalizedString(@"Replace",nil), NSLocalizedString(@"Don't Replace",nil), lastNote ? NSLocalizedString(@"Replace All",nil) : nil);
 				if (result == NSAlertFirstButtonReturn || result == NSAlertThirdButtonReturn) {
 					if (result == NSAlertThirdButtonReturn) overwriteNotes = YES;
@@ -112,8 +110,10 @@
 		
 
 		
-		[notes release];
 	}
+    [notes release];
+    [exportPanel release];
+    exportPanel = nil;
 }
 
 - (void)exportNotes:(NSArray*)notes forWindow:(NSWindow*)window {
@@ -128,6 +128,7 @@
 	
 	if ([notes count] == 1) {
 		NSSavePanel *savePanel = [NSSavePanel savePanel];
+        exportPanel = [savePanel retain];
 		[savePanel setAccessoryView:accessoryView];
 		[savePanel setCanCreateDirectories:YES];
 		[savePanel setCanSelectHiddenExtension:YES];

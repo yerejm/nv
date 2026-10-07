@@ -78,6 +78,8 @@ static NSString *UseThemedScrollbarsKey = @"UseThemedScrollbars";
 static NSString *UseAutoPairingKey = @"UseAutoPairing";
 static NSString *RightToLeftEditingKey = @"RightToLeftEditing";
 static NSString *ShowWordCountKey = @"ShowWordCount";
+static NSString *ShowDockIconKey = @"ShowDockIcon";
+static NSString *ShowMenuBarIconKey = @"ShowMenuBarIcon";
 static NSString *BookmarksKey = @"Bookmarks";
 static NSString *LastScrollOffsetKey = @"LastScrollOffset";
 static NSString *LastSearchStringKey = @"LastSearchString";
@@ -145,6 +147,8 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
             @NO, UseAutoPairingKey,
             @NO, RightToLeftEditingKey,
             @NO, ShowWordCountKey,
+            @YES, ShowDockIconKey,
+            @NO, ShowMenuBarIconKey,
             @NO, SmartInsertDeleteKey,
 			[NSNumber numberWithBool:YES], MakeURLsClickableKey,
 			[NSNumber numberWithBool:YES], HighlightSearchTermsKey, 
@@ -793,6 +797,24 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 - (BOOL)rightToLeftEditing { return [defaults boolForKey:RightToLeftEditingKey]; }
 - (void)setRightToLeftEditing:(BOOL)value sender:(id)sender {
     [defaults setBool:value forKey:RightToLeftEditingKey]; SEND_CALLBACKS();
+}
+- (BOOL)showDockIcon { return [defaults boolForKey:ShowDockIconKey]; }
+- (BOOL)showMenuBarIcon { return [defaults boolForKey:ShowMenuBarIconKey] || ![self showDockIcon]; }
+- (void)setShowDockIcon:(BOOL)value sender:(id)sender {
+    [defaults setBool:value forKey:ShowDockIconKey];
+    if (!value) {
+        [defaults setBool:YES forKey:ShowMenuBarIconKey];
+        [self notifyCallbacksForSelector:@selector(setShowMenuBarIcon:sender:) excludingSender:nil];
+    }
+    SEND_CALLBACKS();
+}
+- (void)setShowMenuBarIcon:(BOOL)value sender:(id)sender {
+    if (!value && ![self showDockIcon]) {
+        [defaults setBool:YES forKey:ShowDockIconKey];
+        [self notifyCallbacksForSelector:@selector(setShowDockIcon:sender:) excludingSender:nil];
+    }
+    [defaults setBool:value forKey:ShowMenuBarIconKey];
+    SEND_CALLBACKS();
 }
 - (BOOL)showWordCount { return [defaults boolForKey:ShowWordCountKey]; }
 - (void)setShowWordCount:(BOOL)value sender:(id)sender {

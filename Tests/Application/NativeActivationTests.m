@@ -1,5 +1,6 @@
 #import <XCTest/XCTest.h>
 #import "AppController.h"
+#import "GlobalPrefs.h"
 
 @interface ActivationApplication : NSObject
 @property(nonatomic) BOOL active;
@@ -37,6 +38,19 @@
 @interface NativeActivationTests : XCTestCase
 @end
 @implementation NativeActivationTests
+- (void)testDesktopPreferencesKeepApplicationReachable {
+    GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
+    BOOL dock = prefs.showDockIcon, menu = prefs.showMenuBarIcon;
+    @try {
+        [prefs setShowDockIcon:NO sender:nil];
+        XCTAssertTrue(prefs.showMenuBarIcon);
+        [prefs setShowMenuBarIcon:NO sender:nil];
+        XCTAssertTrue(prefs.showDockIcon);
+    } @finally {
+        [prefs setShowDockIcon:dock sender:nil];
+        [prefs setShowMenuBarIcon:menu sender:nil];
+    }
+}
 - (void)testActiveMainWindowTogglesHidden {
     NSApplication *original = NSApp;
     ActivationApplication *application = [[[ActivationApplication alloc] init] autorelease];

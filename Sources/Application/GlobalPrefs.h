@@ -179,6 +179,10 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 - (void)setUseAutoPairing:(BOOL)value sender:(id)sender;
 - (BOOL)rightToLeftEditing;
 - (void)setRightToLeftEditing:(BOOL)value sender:(id)sender;
+- (BOOL)showDockIcon;
+- (void)setShowDockIcon:(BOOL)value sender:(id)sender;
+- (BOOL)showMenuBarIcon;
+- (void)setShowMenuBarIcon:(BOOL)value sender:(id)sender;
 - (BOOL)showWordCount;
 - (void)setShowWordCount:(BOOL)value sender:(id)sender;
 

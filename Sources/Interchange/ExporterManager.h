@@ -22,6 +22,7 @@
 @interface ExporterManager : NSObject {
 	IBOutlet NSView *accessoryView;
 	IBOutlet NSPopUpButton *formatSelectorPopup;
+    NSSavePanel *exportPanel;
 	
 }
 
