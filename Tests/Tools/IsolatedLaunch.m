@@ -124,6 +124,28 @@ static void Snapshot(NSWindow *window, NSString *name) {
     SnapshotView(window.contentView, name);
 }
 
+static BOOL RowIsDrawnWithin(NSView *container, NSTableView *table, NSInteger row) {
+    [container.window displayIfNeeded];
+    NSBitmapImageRep *bitmap = [container bitmapImageRepForCachingDisplayInRect:container.bounds];
+    [container.effectiveAppearance performAsCurrentDrawingAppearance:^{
+        [container cacheDisplayInRect:container.bounds toBitmapImageRep:bitmap];
+    }];
+    NSRect rect = [container convertRect:NSIntersectionRect([table rectOfRow:row], table.visibleRect) fromView:table];
+    rect = NSIntersectionRect(rect, container.bounds);
+    if (NSIsEmptyRect(rect)) return NO;
+    CGFloat scale = bitmap.pixelsWide / NSWidth(container.bounds);
+    CGFloat darkest = 1, lightest = 0;
+    for (NSInteger y = NSMinY(rect) * scale; y < NSMaxY(rect) * scale; y++) {
+        NSInteger pixelY = container.isFlipped ? y : bitmap.pixelsHigh - 1 - y;
+        for (NSInteger x = NSMinX(rect) * scale; x < NSMaxX(rect) * scale; x++) {
+            CGFloat brightness = [[[bitmap colorAtX:x y:pixelY] colorUsingColorSpace:NSColorSpace.sRGBColorSpace] brightnessComponent];
+            darkest = MIN(darkest, brightness);
+            lightest = MAX(lightest, brightness);
+        }
+    }
+    return lightest - darkest > 0.4;
+}
+
 static void SnapshotWindow(NSWindow *window, NSString *name) {
     dlopen("/System/Library/Frameworks/ScreenCaptureKit.framework/ScreenCaptureKit", RTLD_LAZY);
     __block BOOL finished = NO;
@@ -682,6 +704,7 @@ static void RunAcceptance(void) {
         GlobalPrefs *appearancePrefs = [GlobalPrefs defaultPrefs];
         NotesTableView *noteTable = [app valueForKey:@"notesTableView"];
         Check(@"expanded note list retains visible rows", noteTable.numberOfRows == 3 && !noteTable.isHiddenOrHasHiddenAncestor && noteTable.visibleRect.size.height > 60);
+        Check(@"note list rows are drawn inside the split view", RowIsDrawnWithin([app valueForKey:@"splitView"], noteTable, 0));
         [appearancePrefs setColorScheme:2 sender:nil];
         Check(@"low contrast colors apply to editor and note list", [editor.backgroundColor isEqual:[appearancePrefs backgroundTextColor]] && [noteTable.backgroundColor isEqual:editor.backgroundColor]);
         [appearancePrefs setAlternatingRows:YES sender:nil];

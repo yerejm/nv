@@ -75,6 +75,12 @@ static animationData* currentAnimation = NULL;
 	return [[self couplingSplitView] isOpaque];
 }
 
+// drawRect: fills the dirty rect, which AppKit no longer limits to our bounds; without clipping
+// a later sibling's background would paint over earlier subviews.
+- (BOOL)clipsToBounds {
+	return YES;
+}
+
 // A hidden RBSplitSubview is not redrawn and is not considered for drawing dividers.
 // This won't work before 10.3, though.
 - (void)setHidden:(BOOL)flag {

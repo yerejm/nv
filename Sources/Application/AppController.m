@@ -551,14 +551,19 @@ terminateApp:
 	[splitView setDividerThickness:5.0];
 	
 	[[notesTableView enclosingScrollView] setBorderType: horiz ? NSNoBorder : NSBezelBorder];
-	
-	NSSize size = [[splitView subviewAtPosition:0] frame].size;
-	[[notesTableView enclosingScrollView] setFrame: horiz ? NSMakeRect(1, 0, size.width - 1, size.height - 1) : (NSRect){.size = size, .origin = NSZeroPoint}];
-	
+	[self _fitNotesListToPane];
+
 	[notesPane setMinDimension:horiz ? 100.0 : 60.0 andMaxDimension:0.0];
 	[splitSubview setMinDimension:100.0 andMaxDimension:0.0];
 	if (collapsed) [notesPane collapse];
 	changingViewLayout = NO;
+}
+
+//RBSplitSubview skips autoresizing below its minimum size, so a collapsed pane would otherwise leave the list sized for an earlier layout
+- (void)_fitNotesListToPane {
+	NSSize size = [[splitView subviewAtPosition:0] frame].size;
+	if (size.width < 1.0 || size.height < 1.0) return;
+	[[notesTableView enclosingScrollView] setFrame: [prefsController horizontalLayout] ? NSMakeRect(1, 0, size.width - 1, size.height - 1) : (NSRect){.size = size, .origin = NSZeroPoint}];
 }
 
 - (IBAction)switchViewLayout:(id)sender {
@@ -1668,6 +1673,11 @@ terminateApp:
 }
 
 
+
+- (void)splitView:(RBSplitView*)sender changedFrameOfSubview:(RBSplitSubview*)subview from:(NSRect)fromRect to:(NSRect)toRect {
+	if (sender == splitView && subview == [splitView subviewAtPosition:0])
+		[self _fitNotesListToPane];
+}
 
 - (void)splitView:(RBSplitView*)sender wasResizedFrom:(CGFloat)oldDimension to:(CGFloat)newDimension {
 	if (sender == splitView) {
