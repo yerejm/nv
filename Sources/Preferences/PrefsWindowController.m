@@ -138,7 +138,7 @@
 
 	NSFont *font = [prefsController noteBodyFont];
 	NSDictionary *attributes = [NSDictionary dictionaryWithObjectsAndKeys:font ? font : [NSFont systemFontOfSize:12.0],
-		NSFontAttributeName, [NSColor blackColor], NSForegroundColorAttributeName, centerStyle, NSParagraphStyleAttributeName, nil];
+		NSFontAttributeName, [NSColor textColor], NSForegroundColorAttributeName, centerStyle, NSParagraphStyleAttributeName, nil];
 
 	NSString *fontNameAndSize = font ? [NSString stringWithFormat:@"%@ %g", [font fontName], [font pointSize]] : @"Unknown";
 	NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:fontNameAndSize attributes:attributes];
@@ -432,9 +432,9 @@
     [item setPaletteLabel:localizedTitle];
     [item setLabel:localizedTitle];
     //[item setToolTip:@"General settings: appearance and behavior"];
-    [item setImage:[[[NSImage alloc] initWithContentsOfFile:[[NSBundle mainBundle] pathForResource:name ofType:@"tiff"]] autorelease]];
-    NSString *symbol = @{@"Display": @"rectangle.split.2x1", @"Writing": @"text.cursor", @"Desktop": @"menubar.dock.rectangle"}[name];
-    if (symbol) [item setImage:[NSImage imageWithSystemSymbolName:symbol accessibilityDescription:localizedTitle]];
+    NSString *symbol = @{@"General": @"gearshape", @"Notes": @"folder", @"Editing": @"pencil", @"Fonts & Colors": @"textformat",
+                         @"Display": @"rectangle.split.2x1", @"Writing": @"text.cursor", @"Desktop": @"menubar.dock.rectangle"}[name];
+    [item setImage:[NSImage imageWithSystemSymbolName:symbol accessibilityDescription:localizedTitle]];
     [item setTarget:self];
     [item setAction:@selector(switchViews:)];
     [items setObject:item forKey:name];
@@ -550,6 +550,7 @@
     [autoSuggestLinksButton setState:[prefsController linksAutoSuggested]];
 	[softTabsButton setState:[prefsController softTabs]];
 	[makeURLsClickable setState:[prefsController URLsAreClickable]];
+    [bodyTextFontField setBackgroundColor:[NSColor textBackgroundColor]];
     [self previewNoteBodyFont];
 	[appShortcutField setStringValue:[[prefsController appActivationKeyCombo] description]];
 	[searchHighlightColorWell setColor:[prefsController searchTermHighlightColorRaw:YES]];

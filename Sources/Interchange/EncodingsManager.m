@@ -138,6 +138,8 @@ static const NSStringEncoding AllowedEncodings[] = {
 				NSBeep();
 				return;
 			}
+			[textView setBackgroundColor:[NSColor textBackgroundColor]];
+			[[textView enclosingScrollView] setBackgroundColor:[NSColor textBackgroundColor]];
 		}
 		
 		[helpStringField setStringValue:[NSString stringWithFormat:NSLocalizedString(@"Notational Velocity should assume the file quotemark%@quotemark was saved with the encoding:",nil), filenameOfNote(note)]];
@@ -214,7 +216,8 @@ static const NSStringEncoding AllowedEncodings[] = {
 	NSString *stringFromData = (NSString*)CFStringCreateFromExternalRepresentation(kCFAllocatorDefault, (CFDataRef)noteData, CFStringConvertNSStringEncodingToEncoding(encoding));
 	
 	if (stringFromData) {
-		NSAttributedString *attributedStringFromData = [[NSAttributedString alloc] initWithString:stringFromData];
+		NSAttributedString *attributedStringFromData = [[NSAttributedString alloc] initWithString:stringFromData
+			attributes:@{NSForegroundColorAttributeName: [NSColor textColor]}];
 		NSTextStorage *storage = [textView textStorage];
 		[storage setAttributedString:attributedStringFromData];
 		

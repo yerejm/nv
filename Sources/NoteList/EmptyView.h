@@ -26,5 +26,6 @@
 }
 
 - (void)setLabelStatus:(NSInteger)notesNumber;
+- (void)updateInterfaceColors;
 
 @end

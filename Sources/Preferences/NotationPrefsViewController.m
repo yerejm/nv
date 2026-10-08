@@ -117,6 +117,11 @@
         [table setBackgroundColor:[NSColor controlBackgroundColor]];
         [table.enclosingScrollView setBackgroundColor:[NSColor controlBackgroundColor]];
     }
+    NVUseSymbolForListButton(newExtensionButton, @"plus");
+    NVUseSymbolForListButton(removeExtensionButton, @"minus");
+    NVUseSymbolForListButton(makeDefaultExtensionButton, @"checkmark");
+    NVUseSymbolForListButton(newTypeButton, @"plus");
+    NVUseSymbolForListButton(removeTypeButton, @"minus");
 	
 	
 	NSNotificationCenter *center = [NSNotificationCenter defaultCenter];

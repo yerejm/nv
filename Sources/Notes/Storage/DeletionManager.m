@@ -48,6 +48,7 @@
 	
 	[window setFloatingPanel:YES];
 	[window setDelegate:self];
+	[tableView setBackgroundColor:[NSColor controlBackgroundColor]];
 }
 
 - (void)dealloc {

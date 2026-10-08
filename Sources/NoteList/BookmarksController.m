@@ -159,6 +159,9 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 	[bookmarksTableView setDoubleAction:@selector(doubleClicked:)];
 	
 	[bookmarksTableView registerForDraggedTypes:[NSArray arrayWithObjects:MovedBookmarksType, nil]];
+	[bookmarksTableView setBackgroundColor:[NSColor controlBackgroundColor]];
+	NVUseSymbolForListButton(addBookmarkButton, @"plus");
+	NVUseSymbolForListButton(removeBookmarkButton, @"minus");
 }
 
 - (void)dealloc {

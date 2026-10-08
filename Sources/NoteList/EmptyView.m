@@ -17,6 +17,7 @@
 
 #import "EmptyView.h"
 #import "AppController.h"
+#import "GlobalPrefs.h"
 
 @implementation EmptyView
 
@@ -53,6 +54,11 @@
 	}
 }
 
+- (void)updateInterfaceColors {
+	[labelText setTextColor:[[GlobalPrefs defaultPrefs] interfaceSecondaryColor]];
+	[self setNeedsDisplay:YES];
+}
+
 - (void)resetCursorRects {
 	[self addCursorRect:[self bounds] cursor: [NSCursor arrowCursor]];
 }
@@ -64,10 +70,10 @@
 - (void)drawRect:(NSRect)rect {
 	NSRect bounds = [self bounds];
 	
-	[[NSColor whiteColor] set];
+	[[[GlobalPrefs defaultPrefs] backgroundTextColor] set];
     NSRectFill(bounds);
 	
-	[[NSColor lightGrayColor] set];
+	[[NSColor separatorColor] set];
     NSFrameRect(bounds);
 }
 

@@ -88,4 +88,14 @@ static inline NSString *NVFormatCount(NSString *format, NSUInteger count) {
     return [NSString stringWithFormat:wideFormat, (unsigned long)count];
 }
 
+//the nibs' square list buttons are bitmaps drawn for a light background; a system bezel and symbol follow the appearance
+static inline void NVUseSymbolForListButton(NSButton *button, NSString *symbolName) {
+    [button setButtonType:NSButtonTypeMomentaryPushIn];
+    [button setBezelStyle:NSBezelStyleSmallSquare];
+    [button setBordered:YES];
+    [button setImage:[NSImage imageWithSystemSymbolName:symbolName accessibilityDescription:[button toolTip]]];
+    [button setAlternateImage:nil];
+    [button setImagePosition:NSImageOnly];
+}
+
 #endif

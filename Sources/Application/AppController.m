@@ -597,6 +597,7 @@ terminateApp:
     }
     [window setBackgroundColor:[prefsController backgroundTextColor]];
     [splitView setBackground:[prefsController backgroundTextColor]];
+    [editorStatusView updateInterfaceColors];
     [field setTextColor:[prefsController foregroundTextColor]];
     [field setNeedsDisplay:YES];
     ResetFontRelatedTableAttributes();
