@@ -1,6 +1,7 @@
 #import <XCTest/XCTest.h>
 #import "TestPaths.h"
-#import "pbkdf2.h"
+#import "NSData_transformations.h"
+#import "NVMD5.h"
 #import "broken_md5.h"
 
 @interface CryptoCompatibilityTests : XCTestCase
@@ -18,21 +19,53 @@
     for (NSUInteger index = 0; index < data.length; index++) [result appendFormat:@"%02x", bytes[index]];
     return result;
 }
+- (NSData *)utf8:(NSString *)string {
+    return [string dataUsingEncoding:NSUTF8StringEncoding];
+}
 - (void)testPBKDF2PublishedVectors {
+    NSData *password = [self utf8:@"password"], *salt = [self utf8:@"salt"];
     NSArray *vectors = @[
         @[@1, @"0c60c80f961f0e71f3a9b524af6012062fe037a6"],
         @[@2, @"ea6c014dc72d6f8ccd1ed92ace1d41f0d8de8957"],
         @[@4096, @"4b007901b765489abead49d926f721d065a429c1"]
     ];
     for (NSArray *vector in vectors) {
-        unsigned char bytes[20];
-        XCTAssertTrue(pbkdf2_sha1("password", 8, "salt", 4, [vector[0] unsignedIntValue], (char *)bytes, sizeof(bytes)));
-        XCTAssertEqualObjects([self hex:[NSData dataWithBytes:bytes length:sizeof(bytes)]], vector[1]);
+        XCTAssertEqualObjects([self hex:[password derivedKeyOfLength:20 salt:salt iterations:[vector[0] intValue]]], vector[1]);
     }
+    NSData *multiBlock = [[self utf8:@"passwordPASSWORDpassword"] derivedKeyOfLength:25 salt:[self utf8:@"saltSALTsaltSALTsaltSALTsaltSALTsalt"] iterations:4096];
+    XCTAssertEqualObjects([self hex:multiBlock], @"3d2eec4fe41c849b80c8d83662c0e44a8b291a964cf2f07038");
+    NSData *embeddedNul = [[NSData dataWithBytes:"pass\0word" length:9] derivedKeyOfLength:16 salt:[NSData dataWithBytes:"sa\0lt" length:5] iterations:4096];
+    XCTAssertEqualObjects([self hex:embeddedNul], @"56fa6aa75548099dcc37d7f03425e0c3");
 }
 - (void)testPBKDF2RejectsZeroIterations {
-    char bytes[32];
-    XCTAssertFalse(pbkdf2_sha1("password", 8, "salt", 4, 0, bytes, sizeof(bytes)));
+    XCTAssertNil([[self utf8:@"password"] derivedKeyOfLength:32 salt:[self utf8:@"salt"] iterations:0]);
+}
+- (NSString *)legacyMD5:(NSData *)data {
+    NVMD5_CTX context;
+    unsigned char digest[16];
+    NVMD5Init(&context);
+    NVMD5Update(&context, data.bytes, (unsigned)data.length);
+    NVMD5Final(digest, &context);
+    return [self hex:[NSData dataWithBytes:digest length:sizeof(digest)]];
+}
+- (void)testLegacyDigestsAcrossBlockBoundaries {
+    NSDictionary *md5 = @{
+        @"": @"d41d8cd98f00b204e9800998ecf8427e",
+        @"abc": @"900150983cd24fb0d6963f7d28e17f72",
+        @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789": @"d174ab98d277d9f5a5611c2c9f419d9f",
+        @"12345678901234567890123456789012345678901234567890123456789012345678901234567890": @"57edf4a22be3c955ac49da2e2107b67a"
+    };
+    NSDictionary *sha1 = @{
+        @"": @"da39a3ee5e6b4b0d3255bfef95601890afd80709",
+        @"abc": @"a9993e364706816aba3e25717850c26c9cd0d89d",
+        @"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq": @"84983e441c3bd26ebaae4aa1f95129e5e54670f1"
+    };
+    for (NSString *input in md5) XCTAssertEqualObjects([self legacyMD5:[self utf8:input]], md5[input]);
+    for (NSString *input in sha1) XCTAssertEqualObjects([self hex:[[self utf8:input] SHA1Digest]], sha1[input]);
+    NSMutableData *millionAs = [NSMutableData dataWithLength:1000000];
+    memset(millionAs.mutableBytes, 'a', millionAs.length);
+    XCTAssertEqualObjects([self legacyMD5:millionAs], @"7707d6ae4e027c70eea2a935c2296f21");
+    XCTAssertEqualObjects([self hex:[millionAs SHA1Digest]], @"34aa973cd4c4daa4f61eeb2bdbad27316534016f");
 }
 - (void)testLegacyBrokenMD5Fixture {
     const unsigned char input[] = "legacy import: café 日本語";

@@ -24,9 +24,9 @@ sources = [
     'build/generated-tests/VolumeIdentity.m', 'build/generated-tests/HyperlinkUnits.m',
     'Sources/Notes/Storage/Crypto/NSData_transformations.m',
     'build/generated-tests/NSStringUtilities.m', 'build/generated-tests/GlobalPrefsCallbacks.m',
-    'Sources/Notes/Model/DeletedNoteObject.m', 'Sources/Notes/Storage/Crypto/pbkdf2.c',
-    'Sources/Notes/Storage/NVFileReference.c', 'Sources/Notes/Storage/Crypto/NVMD5.c',
-    'Sources/Notes/Storage/Crypto/hmacsha1.c', 'Sources/Notes/Storage/Crypto/Legacy/broken_md5.c',
+    'Sources/Notes/Model/DeletedNoteObject.m', 'Sources/Notes/Storage/NVFileReference.c',
+    'Sources/Notes/Storage/Crypto/Legacy/NVMD5.c', 'Sources/Notes/Storage/Crypto/Legacy/sha1.c',
+    'Sources/Notes/Storage/Crypto/Legacy/broken_md5.c',
 ]
 group, children, refs = file_groups(add, sources + ['Tests/Support/TestPaths.h'])
 refs = refs[:len(sources)]

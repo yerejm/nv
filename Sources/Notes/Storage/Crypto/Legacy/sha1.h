@@ -1,13 +1,7 @@
-/*
- *  hmacsha1.h
- *  Notation
- *
- */
+//only verifies Blor import passwords; CommonCrypto deprecates SHA-1
 
 #include <stdint.h>
 #include <sys/types.h>
-
-extern void hmac_sha1 (const void *key, size_t keylen, const void *in, size_t inlen, void *resbuf);
 
 typedef struct _sha1_ctx {
 	uint32_t A;

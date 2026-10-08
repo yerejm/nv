@@ -10,14 +10,13 @@
 /* NSData_transformations.m */
 
 #import "NSData_transformations.h"
-#include "pbkdf2.h"
-#include "hmacsha1.h"
+#include "sha1.h"
 #include "broken_md5.h"
 
-#include <unistd.h>
 #include <zlib.h>
 #include <CommonCrypto/CommonCryptor.h>
-#include "NVMD5.h"
+#include <CommonCrypto/CommonKeyDerivation.h>
+#include <CommonCrypto/CommonRandom.h>
 
 #import <WebKit/WebKit.h>
 
@@ -132,39 +131,19 @@
 }
 
 + (NSMutableData *)randomDataOfLength:(int)len {
-	NSMutableData *randomData = nil;
-	ssize_t amtRead = 0, oneRead;
-	NSFileHandle *devRandom = [ NSFileHandle fileHandleForReadingAtPath:@"/dev/random" ];
-	
-	if(devRandom != nil) {
-		randomData = [NSMutableData dataWithLength:len];
-		while (amtRead < len) {
-			
-			//read mutable data
-			oneRead = read( [ devRandom fileDescriptor ], [ randomData mutableBytes ],
-							len - amtRead );
-			if (oneRead <= 0 && ( errno != EINTR && errno != EAGAIN ) ) {
-				
-				NSLog(@"random data read error: %s", strerror(errno));
-				randomData = nil;
-				break;
-			}
-			amtRead += oneRead;
-		}
-		[devRandom closeFile];
-	} else
-		NSLog(@"error opening /dev/random");
-	
+	NSMutableData *randomData = [NSMutableData dataWithLength:len];
+	if (CCRandomGenerateBytes([randomData mutableBytes], len) != kCCSuccess) {
+		NSLog(@"error generating random data");
+		return nil;
+	}
 	return randomData;
 }
 
 - (NSMutableData*)derivedKeyOfLength:(NSUInteger)len salt:(NSData*)salt iterations:(int)count {
-	
 	NSMutableData *derivedKey = [NSMutableData dataWithLength:len];
-	
-	if (!pbkdf2_sha1([self bytes], [self length], [salt bytes], [salt length], (unsigned int)count, [derivedKey mutableBytes], (size_t)len))
-        return nil;
-
+	if (CCKeyDerivationPBKDF(kCCPBKDF2, [self bytes], [self length], [salt bytes], [salt length], kCCPRFHmacAlgSHA1,
+							 (unsigned)count, [derivedKey mutableBytes], len) != kCCSuccess)
+		return nil;
 	return derivedKey;
 }
 
@@ -210,23 +189,6 @@
 	
 	return digest;
 }
-
-- (NSData*)MD5Digest {
-    NVMD5_CTX context;
-    NVMD5Init(&context);
-    const unsigned char *bytes = [self bytes];
-    NSUInteger remaining = [self length];
-    while (remaining) {
-        unsigned length = (unsigned)MIN(remaining, (NSUInteger)UINT32_MAX);
-        NVMD5Update(&context, bytes, length);
-        bytes += length;
-        remaining -= length;
-    }
-    unsigned char digest[16];
-    NVMD5Final(digest, &context);
-    return [NSData dataWithBytes:digest length:sizeof(digest)];
-}
-
 
 - (NSString *)pathURLFromWebArchive {
     id archive = [NSPropertyListSerialization propertyListWithData:self options:NSPropertyListImmutable format:NULL error:NULL];
