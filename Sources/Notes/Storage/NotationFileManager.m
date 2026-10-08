@@ -331,7 +331,7 @@ long BlockSizeForNotation(NotationController *controller) {
 				CFURLRef url = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, filename, kCFURLPOSIXPathStyle, true);
 				[(id)url autorelease];
 				if (!url || !NVURLGetFileReference(url, &newParentRef)) {
-					NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"Unable to create an NVFileReference from the chosen directory.",nil), NSLocalizedString(@"Your notes were not moved.",nil), NSLocalizedString(@"OK",nil), NULL, NULL);
+					NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"The chosen folder could not be used.", nil), NSLocalizedString(@"Your notes were not moved.",nil), NSLocalizedString(@"OK",nil), NULL, NULL);
 					continue;
 				}
 				

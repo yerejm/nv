@@ -37,18 +37,6 @@
 /* alert title when asked to delete a note */
 "Delete the note titled quotemark%@quotemark?" = "删除标题为 “%@” 的笔记？";
 
-/* name of undo-creating-a-note button */
-"Undo Note" = "撤销笔记";
-
-/* alert title when asked to undo creating multiple notes */
-"Undo adding %d notes?" = "撤销添加 %d 条笔记？";
-
-/* alert title when asked to undo the creation of a note */
-"Undo adding the note quotemark%@quotemark?" = "撤销添加标题为 “%@” 的笔记？";
-
-/* informational undo-this-note? text */
-"Undoing a note has the effect of deleting it. Use quotemarkRedoquotemark to re-add it." = "撤销笔记会导致笔记删除，使用“重做”功能来添加它。";
-
 /* No comment provided by engineer. */
 "Does it still exist?" = "文件是否存在？";
 
@@ -96,9 +84,6 @@
 
 /* No comment provided by engineer. */
 "Note Importing Cancelled" = "导入笔记已取消";
-
-/* Error string returned to indicate that the user cancelled a syncing service operation */
-"Operation cancelled" = "操作已取消";
 
 /* the ubiquitous OK button */
 "OK" = "确认";
@@ -153,9 +138,6 @@
 
 /* No comment provided by engineer. */
 "This may be due to an error in the program or operating system." = "这可能是由于错误的程序或操作系统引起的。";
-
-/* error description of last resort for why a URL couldn't be accessed */
-"unknown error." = "位置错误。";
 
 /* string of last resort for errors not found in CarbonErrorStrings */
 "an error of type %d occurred" = "发生%d类错误";
@@ -257,9 +239,6 @@
 "Select files and folders from which to import notes." = "选择要导入笔记的文件或文件夹。";
 
 /* No comment provided by engineer. */
-"More Security Options" = "更多安全选项";
-
-/* No comment provided by engineer. */
 "Your entered passphrase does not match your verify passphrase." = "您两次输入的口令不匹配。";
 
 /* No comment provided by engineer. */
@@ -282,7 +261,6 @@
 
 /* No comment provided by engineer. */
 "Yesterday" = "昨天";
-
 
 /* No comment provided by engineer. */
 "%d Notes Selected" = "已选择 %d 条笔记";
@@ -359,132 +337,6 @@
 /* No comment provided by engineer. */
 "Individual files remain in the notes directory. Leave them alone or move them to the Trash?" = "独立文件仍然保留在笔记目录中，保留他们或移动到废纸篓？";
 
-/* no comment */
-"<Feedback loop warning title>" = "警告: 此笔记文件夹同时与 %@ 和 %@ 同步，如果多个 Notational Velocity 同时使用此文件夹。则可能造成无限循环的同步。";
-
-/* no comment */
-"<Feedback loop warning message>" = "为了避免发生这个问题，请在这台计算机上选择一另一位置，或关闭与 %@ 的同步。";
-
-/* No comment provided by engineer. */
-"The %@ server holds a different set of notes. Replace all %u notes in Notational Velocity with the %u notes on the server, or merge both sets together?" = "%@ 的服务器上存有不同的笔记，替换所有位于 Notational Velocity 中的 %u 条笔记，将会使用位于服务器上的 %u 条笔记，或进行合并？";
-
-/* No comment provided by engineer. */
-"The %@ server reports that no notes exist. Delete all %u notes in Notational Velocity to match it, or re-upload them now?" = "%@ 服务器无笔记记录，删除 Notational Velocity 中存在的 %u 条笔记，或重新上传？";
-
-/* No comment provided by engineer. */
-"Replacing will remove all %u notes from Notational Velocity. Merging will upload all notes to %@, omitting duplicates." = "替换将会从 Notational Velocity 中删除所有 %u 条笔记。合并将会上传所有笔记到 %@，并忽略重复项目。";
-
-/* No comment provided by engineer. */
-"If your %@ account is different, you may prefer to create a new database in Notational Velocity instead." = "如果与您的 %@ 帐号不同，您可以选择创建一个新的 Notational Velocity 数据库。";
-
-/* default button in the dialog above */
-"Turn Off Syncing" = "关闭同步";
-
-/* dialog button for deleting all notes */
-"Replace All Notes" = "替换所有笔记";
-
-/* dialog button for deleting all notes when none exist remotely */
-"Remove All Notes" = "移除所有笔记";
-
-/* dialog button for uploading local notes */
-"Merge Notes" = "合并笔记";
-
-/* dialog button for uploading local notes when none exist remotely */
-"Re-upload Notes" = "重新上传笔记";
-
-/* No comment provided by engineer. */
-"Add %u existing notes in the database to %@?" = "添加 %u 条已存在笔记到数据库 %@？";
-
-/* No comment provided by engineer. */
-"Notes will be merged, omitting entries duplicated on the server." = "笔记将会被合并，忽略服务器上的重复项目。";
-
-/* No comment provided by engineer. */
-"Upload Notes" = "上传笔记";
-
-/* human-readable name for the Simplenote service */
-"Simplenote" = "Simplenote";
-
-/* human-readable name for the SimpleText service */
-"SimpleText" = "SimpleText";
-
-/* human-readable name for Dropbox */
-"Dropbox" = "Dropbox";
-
-/* status text when downloading a note from the remote sync server */
-"Downloading %u of %u notes" = "正在下载 %u 条笔记，共 %u 条";
-
-/* no comment */
-"Logging in..." = "正在登录…";
-
-/* no comment */
-"Getting the list of notes..." = "获取笔记列表…";
-
-/* No comment provided by engineer. */
-"Downloading" = "正在下载";
-
-/* No comment provided by engineer. */
-"Creating" = "正在创建";
-
-/* No comment provided by engineer. */
-"Updating" = "正在更新";
-
-/* No comment provided by engineer. */
-"Deleting" = "正在删除";
-
-/* No comment provided by engineer. */
-"Processing" = "正在处理";
-
-/* e.g., 'Deleting a note...' */
-"%@ a note..." = "%@ 一条笔记…";
-
-/* example: Updating 'joe shmoe note' */
-"%@ quot%@quot..." = "%@ “%@”…";
-
-/* Downloading/Creating/Updating/Deleting 5 of 10 notes */
-"%@ %u of %u notes" = "%@ %u 条笔记，共 %u 条";
-
-/* e.g., Downloading 2 note(s) failed */
-"%@ %u note(s) failed" = "%@ %u 条笔记：失败";
-
-/* <Sync Service Name>: Disabled */
-"%@: Disabled" = "%@: 已禁用";
-
-/* label to prefix last sync time in the status menu */
-"Last sync: " = "最后同步: ";
-
-/* no comment */
-"Synchronize Now" = "立即同步";
-
-/* no comment */
-"Stop Synchronizing" = "停止同步";
-
-/* no comment */
-"%u update(s) in progress" = "%u 项更新";
-
-/* no comment */
-"Not synchronized yet" = "尚未同步";
-
-/* sync status menu msg */
-"Incorrect login and password" = "登录信息错误";
-
-/* message to report when sync service is not reachable over internet */
-"Internet unavailable." = "网络不可用。";
-
-/* no comment */
-"Session could not be created" = "会话无法被创建";
-
-/* Simplenote-specific error */
-"No authorization token" = "无验证";
-
-/* Simplenote-specific error */
-"The index of notes could not be parsed." = "无法解析笔记索引。";
-
-/* string to prefix a sync service error */
-"Error: " = "错误: ";
-
-/* no comment */
-"Changes could not be uploaded." = "无法上传更改内容。";
-
 /* No comment provided by engineer. */
 "Italic" = "斜体";
 
@@ -536,9 +388,6 @@
 /* Substitutions toggle for text replacement */
 "Text Replacement" = "文本替换";
 
-/* new-password command in the edit menu (shows generated passwords window) */
-"New Password..." = "新密码…";
-
 /* insert new password command in the edit menu */
 "Insert New Password" = "插入新密码";
 
@@ -550,12 +399,6 @@
 
 /* No comment provided by engineer. */
 "Relocate Notes" = "重定位笔记";
-
-/* No comment provided by engineer. */
-"Remove All Bookmarks" = "移除所有书签";
-
-/* alert title when clearing bookmarks */
-"Remove all bookmarks?" = "移除所有书签?";
 
 /* No comment provided by engineer. */
 "rich text" = "多信息文本";
@@ -576,9 +419,6 @@
 "Turn On Note Encryption..." = "开启笔记加密…";
 
 /* No comment provided by engineer. */
-"Unable to create an FSRef from the chosen directory." = "无法从选定的目录中创建 FSRef。";
-
-/* No comment provided by engineer. */
 "Unable to create or access the Interim Note-Changes file. Is another copy of Notational Velocity currently running?" = "无法创建或访问临时文件，是否当前有另一个 Notational Velocity 正在运行？";
 
 /* No comment provided by engineer. */
@@ -595,9 +435,6 @@
 
 /* No comment provided by engineer. */
 "You cannot create more than 26 bookmarks. Try removing some first." = "您无法创建多于26 个书签，尝试先移除一些不是那么有用的。";
-
-/* No comment provided by engineer. */
-"You cannot undo this action." = "您无法重做此动作。";
 
 /* No comment provided by engineer. */
 "You must select a note before it can be added as a bookmark." = "您必须先选择一个用于加入书签的笔记。";
@@ -638,12 +475,8 @@
 /* tooltip string for search/title field */
 "Now editing this note; rename it with %@-R" = "现在编辑这个笔记；使用 %@-R 重命名";
 
-
 /* default files name */
 "Excruciatingly Useful Shortcuts" = "常用快捷键";
-"Contact Information" = "联系信息";
-"This is the title of a note" = "这是一篇自动生成的笔记";
-"How does this thing work?" = "使用概览";
 
 "SiteURL" = "http://notational.net/";
 
@@ -665,7 +498,6 @@
 /* menu command to clear out custom external editors*/
 "Reset" = "重设";
 
-
 /* the space bar in a keyboard shortcut */
 "Space" = "空格";
 
@@ -677,3 +509,45 @@
 
 /* tooltip of the button that clears a keyboard shortcut */
 "Remove Shortcut" = "移除快捷键";
+
+"%lu words" = "%lu 字";
+
+"Apply" = "应用";
+
+"Collapse Notes List" = "折叠笔记列表";
+
+"Expand Notes List" = "展开笔记列表";
+
+"Connecting to %@…" = "正在连接到“%@”…";
+
+"Connecting to the notes folder…" = "正在连接到笔记文件夹…";
+
+"Edit Shared Tags" = "编辑共同标签";
+
+"Edit tags shared by the selected notes. Other tags are kept." = "编辑所选笔记共有的标签。其他标签会保留。";
+
+"Shared tags" = "共同标签";
+
+"Interface colors" = "界面颜色";
+
+"Maximum text width" = "最大文本宽度";
+
+"Maximum text width: %.0f pt" = "最大文本宽度：%.0f 点";
+
+"Notational Velocity" = "Notational Velocity";
+
+"Notational Velocity — click to show or hide; right-click for commands" = "Notational Velocity — 点按以显示或隐藏；右键点按以使用命令";
+
+"Please enter the passphrase to import old notes at %@." = "请输入密码以导入位于 %@ 的旧笔记。";
+
+"Settings…" = "设置…";
+
+"Quit Notational Velocity" = "退出 Notational Velocity";
+
+"Show Dock Icon" = "在程序坞中显示图标";
+
+"Show Notational Velocity" = "显示 Notational Velocity";
+
+"Show Word Count" = "显示字数";
+
+"The chosen folder could not be used." = "无法使用所选文件夹。";

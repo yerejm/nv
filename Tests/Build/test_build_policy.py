@@ -14,6 +14,21 @@ class BuildPolicyTests(unittest.TestCase):
         self.assertFalse(sorted(resources.glob('*.lproj/*.nib')))
         self.assertFalse([path for path in resources.glob('*.lproj/*.xib') if path.parent.name != 'Base.lproj'])
 
+    def test_code_strings_are_translated_and_translations_are_used(self):
+        literals, localized = set(), set()
+        for path in (ROOT / 'Sources').rglob('*.[mhc]'):
+            text = path.read_text(errors='replace')
+            literals.update(re.findall(r'@"((?:[^"\\]|\\.)*)"', text))
+            localized.update(re.findall(r'NSLocalizedString\(\s*@"((?:[^"\\]|\\.)*)"', text))
+        for language in ('en', 'de', 'fr', 'it', 'pt', 'zh_CN'):
+            data = (ROOT / 'Resources' / f'{language}.lproj' / 'Localizable.strings').read_bytes()
+            text = data.decode('utf-16') if data[:2] in (b'\xfe\xff', b'\xff\xfe') else data.decode('utf-8')
+            keys = set(re.findall(r'^"((?:[^"\\]|\\.)*)" = ', text, re.M))
+            with self.subTest(language=language):
+                self.assertEqual(keys - literals, set())
+                if language != 'en':
+                    self.assertEqual(localized - keys, set())
+
     def test_localized_strings_name_objects_in_their_base_layouts(self):
         for xib in sorted((ROOT / 'Resources/Base.lproj').glob('*.xib')):
             ids = set(re.findall(r'\bid="([^"]+)"', xib.read_text()))

@@ -1022,7 +1022,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
             statusMenu = [[NSMenu alloc] initWithTitle:NSLocalizedString(@"Notational Velocity", nil)];
             NSArray *titles = @[NSLocalizedString(@"Show Notational Velocity", nil),
                                 NSLocalizedString(@"Add New Note from Clipboard", nil),
-                                NSLocalizedString(@"Preferences…", nil),
+                                NSLocalizedString(@"Settings…", nil),
                                 NSLocalizedString(@"Show Dock Icon", nil)];
             SEL actions[] = {@selector(bringFocusToControlField:), @selector(createNoteFromStatusClipboard:),
                              @selector(showPreferencesWindow:), @selector(toggleDockIcon:)};

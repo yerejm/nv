@@ -182,7 +182,7 @@
 			notesChanged = YES;
 			[self flushEverything];
 		} else if ([notationPrefs epochIteration] > EPOC_ITERATION) {
-			if (NVRunAlert(NSAlertStyleCritical, NSLocalizedString(@"Warning: this database was created by a newer version of Notational Velocity. Continue anyway?", nil), NSLocalizedString(@"If you make changes, some settings and metadata will be lost.", nil), NSLocalizedString(@"Quit", nil), NSLocalizedString(@"Continue", nil), nil) == NSAlertFirstButtonReturn)
+			if (NVRunAlert(NSAlertStyleCritical, NSLocalizedString(@"Warning: this database was created by a newer version of Notational Velocity. Continue anyway?", nil), NSLocalizedString(@"If you make changes, some settings and metadata could be lost.", nil), NSLocalizedString(@"Quit", nil), NSLocalizedString(@"Continue", nil), nil) == NSAlertFirstButtonReturn)
 			exit(0);
 		}
 	}	
