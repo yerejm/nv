@@ -25,7 +25,6 @@
 @class NotationPrefs;
 
 @interface TemporaryFileCachePreparer : NSObject {
-	NSString *cachePath;
 	
 	id delegate;
 

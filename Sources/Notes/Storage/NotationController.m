@@ -67,7 +67,6 @@
 
 		bzero(&noteDatabaseRef, sizeof(NVFileReference));
 		bzero(&noteDirectoryRef, sizeof(NVFileReference));
-		volumeSupportsExchangeObjects = -1;
 		
 		lastLayoutStyleGenerated = -1;
 		lastCheckedDateInHours = hoursFromAbsoluteTime(CFAbsoluteTimeGetCurrent());

@@ -72,7 +72,6 @@ typedef struct _NoteCatalogEntry {
 	
 	NSMutableSet *deletedNotes;
     
-	int volumeSupportsExchangeObjects;
     FSCatalogInfo *fsCatInfoArray;
     HFSUniStr255 *HFSUniNameArray;
 

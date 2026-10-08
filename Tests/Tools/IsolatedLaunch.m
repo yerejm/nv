@@ -89,6 +89,15 @@ __attribute__((used, section("__DATA,__interpose"))) static struct {
 - (void)stopLoading {}
 @end
 
+static id FirstSubviewOfClass(NSView *view, Class viewClass) {
+    if ([view isKindOfClass:viewClass]) return view;
+    for (NSView *subview in view.subviews) {
+        id found = FirstSubviewOfClass(subview, viewClass);
+        if (found) return found;
+    }
+    return nil;
+}
+
 static NSMenuItem *MenuItemWithAction(NSMenu *menu, SEL action) {
     for (NSMenuItem *item in menu.itemArray) {
         if (item.action == action) return item;
@@ -984,13 +993,13 @@ static void RunAcceptance(void) {
         [app tagNote:nil];
         NSDate *tagSheetLimit = [NSDate dateWithTimeIntervalSinceNow:3];
         while (!window.attachedSheet && tagSheetLimit.timeIntervalSinceNow > 0) Pump(0.05);
-        NSTokenField *tagField = [app valueForKey:@"multiTagField"];
+        NSTokenField *tagField = FirstSubviewOfClass(window.attachedSheet.contentView, [NSTokenField class]);
         Check(@"multiple notes expose a shared-tag editor", window.attachedSheet && tagField && [[tagField objectValue] count] == 1);
         [tagField setObjectValue:@[@"new-tag"]];
         if (window.attachedSheet) [NSApp endSheet:window.attachedSheet returnCode:NSAlertFirstButtonReturn];
         tagSheetLimit = [NSDate dateWithTimeIntervalSinceNow:3];
-        while ((window.attachedSheet || [app valueForKey:@"multiTagField"]) && tagSheetLimit.timeIntervalSinceNow > 0) Pump(0.05);
-        Check(@"shared-tag sheet closes", !window.attachedSheet && ![app valueForKey:@"multiTagField"]);
+        while (window.attachedSheet && tagSheetLimit.timeIntervalSinceNow > 0) Pump(0.05);
+        Check(@"shared-tag sheet closes", !window.attachedSheet);
         Check(@"shared-tag changes preserve unique tags", [labelsOfNote(firstTagged) containsString:@"unique-one"] && [labelsOfNote(secondTagged) containsString:@"unique-two"] && [labelsOfNote(firstTagged) containsString:@"new-tag"] && ![labelsOfNote(secondTagged).lowercaseString containsString:@"shared"]);
         [firstTagged setLabelString:@""];
         [secondTagged setLabelString:@""];

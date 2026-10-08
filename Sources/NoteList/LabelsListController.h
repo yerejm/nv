@@ -28,9 +28,8 @@
 @class LabelObject;
 
 @interface LabelsListController : FastListDataSource {
-	NSCountedSet *allLabels, *filteredLabels;
+	NSCountedSet *allLabels;
 	NSMutableDictionary *labelImages;
-	unsigned *removeIndicies;
 }
 
 

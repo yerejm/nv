@@ -54,7 +54,6 @@ extern NSString *ExternalEditorsChangedNotification;
 @interface ExternalEditorListController : NSObject <NSMenuDelegate> {
 
 	NSMutableArray *userEditorList;
-	NSArray *ODBEditorList;
 	ExternalEditor *defaultEditor;
 	
 	NSMutableSet *editNotesMenus, *editorPrefsMenus;

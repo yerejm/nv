@@ -34,11 +34,7 @@
 - (id)init {
 	if ([super init]) {
 	    
-	    allLabels = [[NSCountedSet alloc] init]; //authoritative
-	    //for faster(?) filtering during search
-	    filteredLabels = [[NSCountedSet alloc] init];
-		
-	    removeIndicies = NULL;
+	    allLabels = [[NSCountedSet alloc] init];
 	}
 	
 	return self;
@@ -48,7 +44,6 @@
 	
 	[labelImages release];
 	[allLabels release];
-	[filteredLabels release];
 	[super dealloc];
 }
 

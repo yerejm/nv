@@ -52,7 +52,7 @@
 	NSString *path;
 	NSMutableData *blorData;
 	NSData *keyData;
-	unsigned int currentByteOffset, suspectedNoteCount, successfullyReadNoteCount;
+	unsigned int currentByteOffset, suspectedNoteCount;
 }
 
 - (id)initWithBlor:(NSString*)blorPath passwordHashData:(NSData*)passwordHashData;

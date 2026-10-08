@@ -10,7 +10,6 @@
 
 //	optional paramters to 'aevt'/'odoc'
 #define	keyFileSender					(NVOSTypeFromString(CFSTR("FSnd")))
-#define	keyFileSenderToken				(NVOSTypeFromString(CFSTR("FTok")))
 #define	keyFileCustomPath				(NVOSTypeFromString(CFSTR("Burl")))
 
 //	suite code for ODB editor suite events
@@ -29,5 +28,3 @@
 #define		keyNewLocation				(NVOSTypeFromString(CFSTR("New?")))
 #define	kAEClosedFile					(NVOSTypeFromString(CFSTR("FCls")))
 
-//	optional paramter to kAEModifiedFile/kAEClosedFile
-#define	keySenderToken					(NVOSTypeFromString(CFSTR("Tokn")))

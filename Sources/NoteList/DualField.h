@@ -44,7 +44,7 @@ enum { BUTTON_HIDDEN, BUTTON_NORMAL, BUTTON_PRESSED };
 @interface DualField : NSTextField <NSViewToolTipOwner> {
 	IBOutlet NSTableView *notesTable;
 	NSUInteger lastLengthReplaced;
-	NSString *snapbackString, *swappedOriginalString;
+	NSString *snapbackString;
 	
 	NSToolTipTag docIconTag, textAreaTag, clearButtonTag;
 	NSTrackingRectTag docIconRectTag;

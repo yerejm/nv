@@ -36,9 +36,6 @@ typedef struct _NSRect32 {
 } NSRect32;
 
 @interface StickiesDocument : NSObject <NSCoding> {
-    int mWindowColor;
-    int mWindowFlags;
-    NSRect32 mWindowFrame;
     NSData *mRTFDData;
     NSDate *mCreationDate;
     NSDate *mModificationDate;	

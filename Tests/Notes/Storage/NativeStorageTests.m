@@ -262,7 +262,7 @@
     NSMutableDictionary *sessions = [editor valueForKey:@"_filePathsBeingEdited"];
     NSString *resolved = filename.stringByResolvingSymlinksInPath;
     sessions[resolved] = @{@"ODBEditorNonRetainedClient": [NSValue valueWithNonretainedObject:note],
-                           @"ODBEditorFileName": resolved, @"ODBEditorIsEditingString": @NO};
+                           @"ODBEditorFileName": resolved};
     NSAppleEventDescriptor *event = [NSAppleEventDescriptor appleEventWithEventClass:kODBEditorSuite eventID:kAEModifiedFile targetDescriptor:nil returnID:kAutoGenerateReturnID transactionID:kAnyTransactionID];
     [event setParamDescriptor:[NSAppleEventDescriptor descriptorWithDescriptorType:typeFileURL data:[[NSURL fileURLWithPath:filename].absoluteString dataUsingEncoding:NSUTF8StringEncoding]] forKeyword:keyDirectObject];
     [editor handleModifiedFileEvent:event withReplyEvent:nil];

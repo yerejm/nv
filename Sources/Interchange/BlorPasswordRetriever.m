@@ -178,7 +178,6 @@
 			return nil;
 		}
 		
-		successfullyReadNoteCount = 0;
 		suspectedNoteCount = *(unsigned int*)([blorData bytes] + 20);
 		suspectedNoteCount = CFSwapInt32BigToHost(suspectedNoteCount);
 			
@@ -273,8 +272,6 @@
 	[attributedBody release];
 	[titleString release];
 	
-	successfullyReadNoteCount++;
-
 	return [note autorelease];
 }
 

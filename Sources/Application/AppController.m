@@ -814,11 +814,9 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
         [tags setDelegate:self];
         [tags setAccessibilityLabel:NSLocalizedString(@"Shared tags", nil)];
         [alert setAccessoryView:tags];
-        multiTagField = tags;
         [alert beginSheetModalForWindow:window completionHandler:^(NSModalResponse response) {
             if (response == NSAlertFirstButtonReturn)
                 [self applySharedTags:[tags objectValue] toNotes:notes originalSharedTags:shared];
-            multiTagField = nil;
         }];
 		[window.attachedSheet makeFirstResponder:tags];
 	} else if ([indexes count] == 1) {

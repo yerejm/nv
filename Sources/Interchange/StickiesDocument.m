@@ -34,22 +34,16 @@
 	[super dealloc];
 }
 
-/*
- int mWindowColor;
- int mWindowFlags;
- NSRect mWindowFrame;
- NSData *mRTFDData;
- NSDate *mCreationDate;
- NSDate *mModificationDate;
-*/
-
 - (id)initWithCoder:(id)decoder {
 	[super init];
 	
+	//the window fields are only read past to reach the dates
+	int windowFlags, windowColor;
+	NSRect32 windowFrame;
 	mRTFDData = [[decoder decodeObject] retain];
-	[decoder decodeValueOfObjCType:@encode(int) at:&mWindowFlags];
-	[decoder decodeValueOfObjCType:"{_NSRect={_NSPoint=ff}{_NSSize=ff}}" at:&mWindowFrame];
-	[decoder decodeValueOfObjCType:@encode(int) at:&mWindowColor];
+	[decoder decodeValueOfObjCType:@encode(int) at:&windowFlags];
+	[decoder decodeValueOfObjCType:"{_NSRect={_NSPoint=ff}{_NSSize=ff}}" at:&windowFrame];
+	[decoder decodeValueOfObjCType:@encode(int) at:&windowColor];
 	mCreationDate = [[decoder decodeObject] retain];
 	mModificationDate = [[decoder decodeObject] retain];
 	
