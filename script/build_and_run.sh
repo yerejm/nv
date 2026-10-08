@@ -9,6 +9,12 @@ case "$RUN_MODE" in
 esac
 RUN_DATA="$RUN_ROOT/build/isolated-run"
 RUN_APP="$RUN_ROOT/build/isolated-app/Notational Velocity Development.app"
+RUN_BUNDLE_ID=net.notational.velocity.development
+if [[ "$RUN_MODE" == --verify ]]; then
+    # A separate identity lets every acceptance run start from empty defaults without touching the development app's settings.
+    RUN_APP="$RUN_ROOT/build/acceptance-app/Notational Velocity Development.app"
+    RUN_BUNDLE_ID=net.notational.velocity.development.acceptance
+fi
 RUN_EXECUTABLE="$RUN_APP/Contents/MacOS/NVDevelopment"
 RUN_LIBRARY="$RUN_ROOT/build/isolated-launch.dylib"
 RUN_EDITOR_HELPER="$RUN_ROOT/build/acceptance-editor"
@@ -27,11 +33,11 @@ fi
 rm -rf "$RUN_APP"
 /usr/bin/ditto "$RUN_ROOT/build/app/Build/Products/Development/Notational Velocity.app" "$RUN_APP"
 mv "$RUN_APP/Contents/MacOS/Notational Velocity" "$RUN_EXECUTABLE"
-/usr/libexec/PlistBuddy -c 'Set :CFBundleIdentifier net.notational.velocity.development' "$RUN_APP/Contents/Info.plist"
+/usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $RUN_BUNDLE_ID" "$RUN_APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Set :CFBundleExecutable NVDevelopment' "$RUN_APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Delete :CFBundleURLTypes' "$RUN_APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Delete :NSServices' "$RUN_APP/Contents/Info.plist"
-/usr/bin/codesign --force --sign - --identifier net.notational.velocity.development "$RUN_APP"
+/usr/bin/codesign --force --sign - --identifier "$RUN_BUNDLE_ID" "$RUN_APP"
 RUN_INCLUDE_FLAGS=()
 while IFS= read -r RUN_INCLUDE_DIRECTORY; do
     RUN_INCLUDE_FLAGS+=(-I "$RUN_INCLUDE_DIRECTORY")
@@ -60,6 +66,8 @@ if [[ "$RUN_MODE" == --verify ]]; then
     trap 'exit 143' TERM
     trap 'exit 129' HUP
     rm -f "$RUN_DATA/result.json"
+    /usr/bin/defaults delete "$RUN_BUNDLE_ID" >/dev/null 2>&1 || true
+    rm -rf "$HOME/Library/Saved Application State/$RUN_BUNDLE_ID.savedState"
     RUN_ENV+=(--env NV_AUTOMATED_ACCEPTANCE=YES)
 fi
 if [[ "$RUN_MODE" == --debug ]]; then
@@ -97,6 +105,10 @@ case "$RUN_MODE" in
                     if ! /usr/bin/pgrep -x NVDevelopment >/dev/null; then break; fi
                     sleep 1
                 done
+                if [[ "$RUN_FAILED" == 1 ]] && /usr/bin/python3 -c 'import json,sys; sys.exit(not json.load(open(sys.argv[1])).get("activationRefused"))' "$RUN_DATA/result.json"; then
+                    echo "macOS declined to activate the app, so another app was likely in use; rerun with the desktop idle." >&2
+                    exit 75
+                fi
                 exit "$RUN_FAILED"
             fi
             sleep 1

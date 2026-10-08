@@ -26,10 +26,40 @@
     GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
     [[[prefs backgroundTextColor] blendedColorWithFraction:self.isHighlighted ? 0.12 : 0.04 ofColor:[prefs foregroundTextColor]] setFill];
     NSRectFill(frame);
-    [self setTextColor:[prefs foregroundTextColor]];
-    [self drawInteriorWithFrame:[self drawingRectForBounds:frame] inView:view];
+    [self drawInteriorWithFrame:frame inView:view];
     [[prefs interfaceSeparatorColor] setFill];
     NSRectFill(NSMakeRect(NSMinX(frame), NSMaxY(frame) - 1, NSWidth(frame), 1));
+    if (NSMaxX(frame) < NSMaxX(view.bounds) - 1)
+        NSRectFill(NSMakeRect(NSMaxX(frame) - 1, NSMinY(frame) + 6, 1, NSHeight(frame) - 12));
+}
+
+//AppKit centres only the sorted column's title, so every column is drawn here the same way
+- (void)drawInteriorWithFrame:(NSRect)frame inView:(NSView *)view {
+    NSTableView *table = [view isKindOfClass:[NSTableHeaderView class]] ? [(NSTableHeaderView *)view tableView] : nil;
+    NSImage *indicator = nil;
+    for (NSTableColumn *column in [table tableColumns])
+        if ([column headerCell] == self) indicator = [table indicatorImageInTableColumn:column];
+
+    NSRect titleRect = [self titleRectForBounds:frame];
+    if (indicator) {
+        [self drawSortIndicatorWithFrame:frame inView:view ascending:[[indicator name] isEqualToString:@"NSAscendingSortIndicator"] priority:0];
+        titleRect.size.width = MAX(0.0, NSMinX([self sortIndicatorRectForBounds:frame]) - 4 - NSMinX(titleRect));
+    }
+    NSFont *font = indicator ? [NSFont systemFontOfSize:[[self font] pointSize] weight:NSFontWeightSemibold] : [self font];
+    NSMutableParagraphStyle *style = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    [style setLineBreakMode:NSLineBreakByTruncatingTail];
+    [[self stringValue] drawWithRect:titleRect options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingTruncatesLastVisibleLine
+                          attributes:@{NSFontAttributeName: font, NSParagraphStyleAttributeName: style,
+                                       NSForegroundColorAttributeName: [[GlobalPrefs defaultPrefs] foregroundTextColor]}];
+}
+
+- (NSRect)titleRectForBounds:(NSRect)theRect {
+    NSRect rect = [self drawingRectForBounds:theRect];
+    NSFont *font = [self font];
+    CGFloat lineHeight = ceil([font ascender] - [font descender] + [font leading]);
+    rect.origin.y = round(NSMidY(theRect) - lineHeight / 2);
+    rect.size.height = lineHeight;
+    return rect;
 }
 
 - (NSRect)drawingRectForBounds:(NSRect)theRect {

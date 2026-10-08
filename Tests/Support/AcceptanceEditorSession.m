@@ -9,10 +9,18 @@ static NSString *CancellationPath(NSString *directory) {
     return [directory stringByAppendingPathComponent:@"external-editor-cancelled"];
 }
 
+// Application state, including other apps' active and hidden flags, only updates as pending events are delivered.
+static void RunBriefly(NSTimeInterval seconds) {
+    NSEvent *event;
+    while ((event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:nil inMode:NSDefaultRunLoopMode dequeue:YES]))
+        [NSApp sendEvent:event];
+    [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:seconds]];
+}
+
 static void WaitForEditorExit(NSRunningApplication *application, NSTimeInterval timeout) {
     NSDate *limit = [NSDate dateWithTimeIntervalSinceNow:timeout];
     while (!application.terminated && limit.timeIntervalSinceNow > 0)
-        [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.02]];
+        RunBriefly(0.02);
 }
 
 BOOL NVAcceptanceEditorMatchesIdentity(NSRunningApplication *application, NSDictionary *identity) {
@@ -69,6 +77,7 @@ BOOL NVCleanupAcceptanceEditor(NSString *directory) {
         if (!URL.isFileURL || ![URL.path.stringByResolvingSymlinksInPath hasPrefix:[_directory stringByAppendingString:@"/"]]) return NO;
     if ([[NSFileManager defaultManager] fileExistsAtPath:ReceiptPath(_directory)] ||
         [[NSFileManager defaultManager] fileExistsAtPath:CancellationPath(_directory)]) return NO;
+    NSRunningApplication *previousFrontmost = workspace.frontmostApplication;
     NSMutableSet *existing = [NSMutableSet set];
     for (NSRunningApplication *application in workspace.runningApplications)
         [existing addObject:@(application.processIdentifier)];
@@ -101,28 +110,33 @@ BOOL NVCleanupAcceptanceEditor(NSString *directory) {
     }];
     NSDate *limit = [NSDate dateWithTimeIntervalSinceNow:timeout];
     while (!_finishedOpening && limit.timeIntervalSinceNow > 0)
-        [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.02]];
+        RunBriefly(0.02);
     if (!_finishedOpening) [self tearDown];
     if (!_finishedOpening || !_openedSuccessfully || _teardownRequested) return NO;
     limit = [NSDate dateWithTimeIntervalSinceNow:timeout];
     while (!_application.finishedLaunching && !_application.terminated && limit.timeIntervalSinceNow > 0)
-        [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.02]];
+        RunBriefly(0.02);
     if (!_application.finishedLaunching || _application.terminated) {
         NSLog(@"NV acceptance editor did not finish launching: finished=%d terminated=%d", _application.finishedLaunching, _application.terminated);
         return NO;
     }
-    [_application hide];
-    while ((!_application.hidden || _application.active) && limit.timeIntervalSinceNow > 0)
-        [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.02]];
+    // A freshly launched app can ignore a hide request it receives before it is ready for it, and one that
+    // activates itself despite the configuration stays frontmost while hidden until another app is activated.
+    while ((!_application.hidden || _application.active) && limit.timeIntervalSinceNow > 0) {
+        if (!_application.hidden) [_application hide];
+        else [previousFrontmost activateWithOptions:0];
+        RunBriefly(0.25);
+    }
     BOOL background = _application.hidden && !_application.active;
-    if (!background) NSLog(@"NV acceptance editor could not remain in the background: hidden=%d active=%d", _application.hidden, _application.active);
+    if (!background) NSLog(@"NV acceptance editor could not remain in the background: hidden=%d active=%d frontmost=%@", _application.hidden, _application.active,
+        workspace.frontmostApplication.bundleIdentifier);
     return background;
 }
 - (BOOL)tearDown {
     _teardownRequested = YES;
     NSDate *limit = [NSDate dateWithTimeIntervalSinceNow:5];
     while (_opening && limit.timeIntervalSinceNow > 0)
-        [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.02]];
+        RunBriefly(0.02);
     if (_opening) return NO;
     if (!NVStopAcceptanceEditor(_application, _identity, 2)) return NO;
     if (!_identity) return YES;

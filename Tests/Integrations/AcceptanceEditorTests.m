@@ -14,9 +14,16 @@
 @property(nonatomic) BOOL hideSucceeds;
 @property(nonatomic) NSUInteger normalQuitCount;
 @property(nonatomic) NSUInteger forcedQuitCount;
+@property(nonatomic, assign) AcceptanceApplication *activationDeactivates;
+@property(nonatomic) NSUInteger activationCount;
 @end
 @implementation AcceptanceApplication
 - (BOOL)hide { self.hidden = self.hideSucceeds; return self.hidden; }
+- (BOOL)activateWithOptions:(NSApplicationActivationOptions)options {
+    self.activationCount++;
+    self.activationDeactivates.active = NO;
+    return YES;
+}
 - (BOOL)terminate {
     self.normalQuitCount++;
     self.terminated = self.normalQuitSucceeds;
@@ -32,6 +39,7 @@
 @interface AcceptanceWorkspace : NSObject
 @property(nonatomic, retain) NSArray *runningApplications;
 @property(nonatomic, retain) AcceptanceApplication *openedApplication;
+@property(nonatomic, retain) AcceptanceApplication *frontmostApplication;
 @property(nonatomic, retain) NSWorkspaceOpenConfiguration *configuration;
 @property(nonatomic) BOOL receivedOpen;
 @property(nonatomic) NSTimeInterval delay;
@@ -185,6 +193,15 @@
     XCTAssertFalse([self openWithTimeout:0.05]);
     XCTAssertTrue([self.session tearDown]);
     XCTAssertTrue(self.application.terminated);
+}
+- (void)testSelfActivatedEditorReturnsActivationToPreviousApplication {
+    AcceptanceApplication *previous = [[[AcceptanceApplication alloc] init] autorelease];
+    previous.activationDeactivates = self.application;
+    self.workspace.frontmostApplication = previous;
+    self.application.active = YES;
+    XCTAssertTrue([self openWithTimeout:1]);
+    XCTAssertGreaterThan(previous.activationCount, 0U);
+    XCTAssertTrue(self.application.hidden && !self.application.active);
 }
 - (void)testExceptionAfterOpeningStillClosesEditorInFinally {
     @try {

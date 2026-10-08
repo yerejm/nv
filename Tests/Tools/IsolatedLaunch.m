@@ -104,10 +104,28 @@ static void Check(NSString *name, BOOL passed) {
     NSLog(@"NV acceptance: %@ %@", passed ? @"PASS" : @"FAIL", name);
 }
 
+// Acceptance runs outside the app's event loop, so pending events are delivered here as that loop would;
+// otherwise activation, hiding and unhiding lag until something else, such as a menu, drains the queue.
 static void Pump(NSTimeInterval seconds) {
     NSDate *limit = [NSDate dateWithTimeIntervalSinceNow:seconds];
-    while ([limit timeIntervalSinceNow] > 0)
+    while ([limit timeIntervalSinceNow] > 0) {
+        NSEvent *event;
+        while ((event = [NSApp nextEventMatchingMask:NSEventMaskAny untilDate:nil inMode:NSDefaultRunLoopMode dequeue:YES]))
+            [NSApp sendEvent:event];
         [[NSRunLoop currentRunLoop] runUntilDate:[NSDate dateWithTimeIntervalSinceNow:0.02]];
+    }
+}
+
+// macOS may decline activation while someone is using another app; failures in such a run reflect the desktop, not the app.
+static BOOL activationRefused;
+
+static void WaitForActivation(NSWindow *window) {
+    NSDate *limit = [NSDate dateWithTimeIntervalSinceNow:3];
+    while ((!NSApp.isActive || NSApp.isHidden || !window.isKeyWindow) && limit.timeIntervalSinceNow > 0) Pump(0.05);
+    if (!NSApp.isActive) {
+        activationRefused = YES;
+        NSLog(@"NV acceptance: activation refused while %@ is frontmost", NSWorkspace.sharedWorkspace.frontmostApplication.bundleIdentifier);
+    }
 }
 
 static void SnapshotView(NSView *view, NSString *name) {
@@ -122,6 +140,38 @@ static void SnapshotView(NSView *view, NSString *name) {
 
 static void Snapshot(NSWindow *window, NSString *name) {
     SnapshotView(window.contentView, name);
+}
+
+static BOOL HeaderTitlesShareVerticalCentre(NSTableView *table) {
+    NSTableHeaderView *header = table.headerView;
+    if (!header || table.numberOfColumns < 2) return NO;
+    [header.window displayIfNeeded];
+    NSBitmapImageRep *bitmap = [header bitmapImageRepForCachingDisplayInRect:header.bounds];
+    [header.effectiveAppearance performAsCurrentDrawingAppearance:^{
+        [header cacheDisplayInRect:header.bounds toBitmapImageRep:bitmap];
+    }];
+    CGFloat scale = bitmap.pixelsWide / NSWidth(header.bounds);
+    CGFloat lowestCentre = CGFLOAT_MAX, highestCentre = -CGFLOAT_MAX;
+    for (NSInteger column = 0; column < table.numberOfColumns; column++) {
+        NSRect rect = [header headerRectOfColumn:column];
+        NSTableColumn *tableColumn = table.tableColumns[column];
+        if ([table indicatorImageInTableColumn:tableColumn])
+            rect.size.width = NSMinX([tableColumn.headerCell sortIndicatorRectForBounds:rect]) - NSMinX(rect);
+        rect = NSMakeRect(NSMinX(rect) + 3, NSMinY(rect), NSWidth(rect) - 6, NSHeight(rect) - 2);
+        CGFloat background = [[[bitmap colorAtX:NSMinX(rect) * scale y:(NSMinY(rect) + 2) * scale] colorUsingColorSpace:NSColorSpace.sRGBColorSpace] brightnessComponent];
+        NSInteger top = NSIntegerMax, bottom = -1;
+        for (NSInteger y = NSMinY(rect) * scale; y < NSMaxY(rect) * scale; y++)
+            for (NSInteger x = NSMinX(rect) * scale; x < NSMaxX(rect) * scale; x++)
+                if (fabs([[[bitmap colorAtX:x y:y] colorUsingColorSpace:NSColorSpace.sRGBColorSpace] brightnessComponent] - background) > 0.3) {
+                    top = MIN(top, y);
+                    bottom = MAX(bottom, y);
+                }
+        if (bottom < 0) return NO;
+        CGFloat centre = (top + bottom + 1) / scale / 2;
+        lowestCentre = MIN(lowestCentre, centre);
+        highestCentre = MAX(highestCentre, centre);
+    }
+    return highestCentre - lowestCentre <= 1;
 }
 
 static BOOL RowIsDrawnWithin(NSView *container, NSTableView *table, NSInteger row) {
@@ -154,7 +204,11 @@ static void SnapshotWindow(NSWindow *window, NSString *name) {
             SCWindow *ownWindow = nil;
             for (SCWindow *candidate in content.windows)
                 if (candidate.windowID == window.windowNumber) ownWindow = candidate;
-            if (!ownWindow) { finished = YES; return; }
+            if (!ownWindow) {
+                NSLog(@"NV acceptance: %@ not shareable (%lu windows, error %@)", name, (unsigned long)content.windows.count, error);
+                finished = YES;
+                return;
+            }
             SCContentFilter *filter = [[NSClassFromString(@"SCContentFilter") alloc] initWithDesktopIndependentWindow:ownWindow];
             SCStreamConfiguration *configuration = [[NSClassFromString(@"SCStreamConfiguration") alloc] init];
             configuration.width = NSWidth(window.frame) * window.backingScaleFactor;
@@ -162,6 +216,7 @@ static void SnapshotWindow(NSWindow *window, NSString *name) {
             configuration.ignoreShadowsSingleWindow = YES;
             configuration.showsCursor = NO;
             [(id)NSClassFromString(@"SCScreenshotManager") captureImageWithFilter:filter configuration:configuration completionHandler:^(CGImageRef image, NSError *captureError) {
+                if (!image) NSLog(@"NV acceptance: %@ capture failed: %@", name, captureError);
                 if (image) {
                     NSBitmapImageRep *bitmap = [[[NSBitmapImageRep alloc] initWithCGImage:image] autorelease];
                     [[bitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}]
@@ -175,12 +230,13 @@ static void SnapshotWindow(NSWindow *window, NSString *name) {
     }];
     NSDate *limit = [NSDate dateWithTimeIntervalSinceNow:3];
     while (!finished && limit.timeIntervalSinceNow > 0) Pump(0.02);
+    if (!finished) NSLog(@"NV acceptance: %@ capture timed out", name);
     Check(@"isolated window screenshot", [[NSFileManager defaultManager] fileExistsAtPath:[acceptanceRoot stringByAppendingPathComponent:name]]);
 }
 
 static void FinishAcceptance(NSString *filename) {
     NSDictionary *result = @{@"system": NSProcessInfo.processInfo.operatingSystemVersionString, @"dataRoot": acceptanceRoot,
-                             @"checks": checks, @"urlRequests": @(requestCount)};
+                             @"checks": checks, @"urlRequests": @(requestCount), @"activationRefused": @(activationRefused)};
     [[NSJSONSerialization dataWithJSONObject:result options:NSJSONWritingPrettyPrinted error:NULL]
         writeToFile:[acceptanceRoot stringByAppendingPathComponent:filename] atomically:YES];
     [NSApp terminate:nil];
@@ -288,7 +344,10 @@ static BOOL WindowSnapshotShowsControlText(NSView *control, NSString *filename) 
 static void CompleteDesktopAcceptance(AppController *app, NotationController *notation, NSWindow *window, LinkingEditor *editor) {
     @try {
         [NSApp hide:nil];
+        NSDate *hideLimit = [NSDate dateWithTimeIntervalSinceNow:3];
+        while ((!NSApp.isHidden || NSApp.isActive) && hideLimit.timeIntervalSinceNow > 0) Pump(0.05);
         [app bringFocusToControlField:nil];
+        WaitForActivation(window);
         Pump(0.2);
         Check(@"activation restores search focus", window.visible && window.firstResponder != editor);
         PTHotKeyCenter *center = [NSClassFromString(@"PTHotKeyCenter") sharedCenter];
@@ -367,6 +426,8 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         Check(@"no app-owned URL requests with old preferences", requestCount == 0);
         if (![[GlobalPrefs defaultPrefs] horizontalLayout]) [app switchViewLayout:nil];
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"FullScreenSwitchedLayout"];
+        // Leaving full screen restores the frame the window was first shown with, so the size checked after reopen is set last.
+        [window setFrame:NSMakeRect(window.frame.origin.x, window.frame.origin.y, 720, 520) display:YES];
     } @catch (NSException *exception) {
         [checks addObject:@{@"check": @"runtime exception", @"passed": @NO, @"detail": exception.description}];
     }
@@ -429,7 +490,7 @@ static void RunAcceptance(void) {
         NSArray *notes = [notation valueForKey:@"allNotes"];
         [NSApp activateIgnoringOtherApps:YES];
         [window makeKeyAndOrderFront:nil];
-        Pump(0.2);
+        WaitForActivation(window);
         Check(@"real app launch on macOS 26", app && window.visible && notes.count > 0);
         Check(@"retired sync-enabled archive stays inert", [[notation notationPrefs].syncServiceAccounts[@"Simplenote"][@"enabled"] boolValue] && !NSClassFromString(@"SimplenoteSession") && !NSClassFromString(@"SUUpdater"));
         NoteObject *note = notes.firstObject;
@@ -474,18 +535,18 @@ static void RunAcceptance(void) {
         Check(@"menu bar icon exposes a native click action", menuBarItem.button.image && menuBarItem.button.target == app && menuBarItem.button.action == @selector(statusItemAction:));
         [NSApp activateIgnoringOtherApps:YES];
         [window makeKeyAndOrderFront:nil];
-        Pump(0.2);
+        WaitForActivation(window);
         Check(@"menu bar button keeps its target", menuBarItem.button.target == app && menuBarItem.button.action == @selector(statusItemAction:));
         Check(@"menu bar action is delivered", [NSApp sendAction:@selector(statusItemAction:) to:app from:menuBarItem.button]);
-        NSDate *hideLimit = [NSDate dateWithTimeIntervalSinceNow:2];
-        while (window.visible && hideLimit.timeIntervalSinceNow > 0) Pump(0.05);
+        // Restoring before the system has handed activation to another app lets that handoff land afterwards and deactivate the app.
+        NSDate *hideLimit = [NSDate dateWithTimeIntervalSinceNow:3];
+        while ((window.visible || NSApp.isActive) && hideLimit.timeIntervalSinceNow > 0) Pump(0.05);
         Check(@"menu bar action hides the note window", !window.visible);
         Check(@"menu bar button keeps its target", menuBarItem.button.target == app && menuBarItem.button.action == @selector(statusItemAction:));
         Check(@"menu bar action is delivered", [NSApp sendAction:@selector(statusItemAction:) to:app from:menuBarItem.button]);
-        NSDate *showLimit = [NSDate dateWithTimeIntervalSinceNow:2];
-        while ((!NSApp.isActive || !window.isKeyWindow) && showLimit.timeIntervalSinceNow > 0) Pump(0.05);
+        WaitForActivation(window);
         Pump(0.1);
-        Check(@"menu bar action restores the note window and search focus", NSApp.isActive && window.isKeyWindow && window.firstResponder == [[app valueForKey:@"field"] currentEditor]);
+        Check(@"menu bar action restores the note window and search focus", NSApp.isActive && !NSApp.isHidden && window.isKeyWindow && window.firstResponder == [[app valueForKey:@"field"] currentEditor]);
         NSMenu *menuBarMenu = [app valueForKey:@"statusMenu"];
         AcceptanceStatusMenuObserver *menuObserver = [[[AcceptanceStatusMenuObserver alloc] init] autorelease];
         menuBarMenu.delegate = menuObserver;
@@ -623,11 +684,15 @@ static void RunAcceptance(void) {
         [app searchForString:@""];
         [[app valueForKey:@"notesTableView"] selectRowIndexes:[NSIndexSet indexSetWithIndexesInRange:NSMakeRange(0, 2)] byExtendingSelection:NO];
         [app tagNote:nil];
+        NSDate *tagSheetLimit = [NSDate dateWithTimeIntervalSinceNow:3];
+        while (!window.attachedSheet && tagSheetLimit.timeIntervalSinceNow > 0) Pump(0.05);
         NSTokenField *tagField = [app valueForKey:@"multiTagField"];
         Check(@"multiple notes expose a shared-tag editor", window.attachedSheet && tagField && [[tagField objectValue] count] == 1);
         [tagField setObjectValue:@[@"new-tag"]];
-        [NSApp endSheet:window.attachedSheet returnCode:NSAlertFirstButtonReturn];
-        Pump(0.2);
+        if (window.attachedSheet) [NSApp endSheet:window.attachedSheet returnCode:NSAlertFirstButtonReturn];
+        tagSheetLimit = [NSDate dateWithTimeIntervalSinceNow:3];
+        while ((window.attachedSheet || [app valueForKey:@"multiTagField"]) && tagSheetLimit.timeIntervalSinceNow > 0) Pump(0.05);
+        Check(@"shared-tag sheet closes", !window.attachedSheet && ![app valueForKey:@"multiTagField"]);
         Check(@"shared-tag changes preserve unique tags", [labelsOfNote(firstTagged) containsString:@"unique-one"] && [labelsOfNote(secondTagged) containsString:@"unique-two"] && [labelsOfNote(firstTagged) containsString:@"new-tag"] && ![labelsOfNote(secondTagged).lowercaseString containsString:@"shared"]);
         [firstTagged setLabelString:@""];
         [secondTagged setLabelString:@""];
@@ -697,6 +762,7 @@ static void RunAcceptance(void) {
         [displayPrefs setUseSmartInsertDelete:NO sender:nil];
         Check(@"preference changes update native editing behavior", !editor.isAutomaticTextReplacementEnabled && !editor.isAutomaticQuoteSubstitutionEnabled && !editor.isAutomaticDashSubstitutionEnabled && !editor.smartInsertDeleteEnabled);
         [app bringFocusToControlField:nil];
+        WaitForActivation(window);
         Pump(0.2);
         Check(@"activation finishes with the search field focused", window.firstResponder == [[app valueForKey:@"field"] currentEditor]);
         [app revealNote:note options:NVEditNoteToReveal];
@@ -744,6 +810,7 @@ static void RunAcceptance(void) {
         NotesTableView *noteTable = [app valueForKey:@"notesTableView"];
         Check(@"expanded note list retains visible rows", noteTable.numberOfRows == 3 && !noteTable.isHiddenOrHasHiddenAncestor && noteTable.visibleRect.size.height > 60);
         Check(@"note list rows are drawn inside the split view", RowIsDrawnWithin([app valueForKey:@"splitView"], noteTable, 0));
+        Check(@"sorted and unsorted note list headers share one title position", HeaderTitlesShareVerticalCentre(noteTable));
         [appearancePrefs setColorScheme:2 sender:nil];
         Check(@"low contrast colors apply to editor and note list", [editor.backgroundColor isEqual:[appearancePrefs backgroundTextColor]] && [noteTable.backgroundColor isEqual:editor.backgroundColor]);
         [appearancePrefs setAlternatingRows:YES sender:nil];
@@ -772,6 +839,7 @@ static void RunAcceptance(void) {
         Check(@"native inline editor uses readable custom colors", inlineEditor && [inlineEditor.textColor isEqual:[appearancePrefs foregroundTextColor]] && [inlineEditor.backgroundColor isEqual:[appearancePrefs backgroundTextColor]]);
         [noteTable abortEditing];
         [app bringFocusToControlField:nil];
+        WaitForActivation(window);
         NSDate *focusLimit = [NSDate dateWithTimeIntervalSinceNow:2];
         while (![[app valueForKey:@"field"] currentEditor] && focusLimit.timeIntervalSinceNow > 0) Pump(0.05);
         NSTextView *searchEditor = (id)[[app valueForKey:@"field"] currentEditor];
@@ -824,6 +892,7 @@ static void RunAcceptance(void) {
         Check(@"light and dark rendering", [[NSFileManager defaultManager] fileExistsAtPath:[acceptanceRoot stringByAppendingPathComponent:@"dark.png"]]);
         [NSApp activateIgnoringOtherApps:YES];
         [window makeKeyAndOrderFront:nil];
+        WaitForActivation(window);
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC / 2), dispatch_get_main_queue(), ^{
             BeginFullScreenAcceptance(app, notation, window, editor);
         });
