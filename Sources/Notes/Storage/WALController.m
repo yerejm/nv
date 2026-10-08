@@ -160,7 +160,6 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
     if ([super initWithParentFSRep:path encryptionKey:key]) {
 	
 	//we could make parent dir writable just in case, but that might be a security hazard depending on ownership
-	//chmod(path, S_IRWXU | S_IRWXG | S_IRWXO);
 	
 	//attempt to open/create the file exclusively with write-only and append access
 	
@@ -302,7 +301,6 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
 	}
 	
 	//write length, checksum of data, record salt, then data itself
-    //assert(sizeof(record) == sizeof(record.recordBuffer));
     
     if ([data length] > UINT32_MAX) return NO;
     record.dataLength = CFSwapInt32HostToBig((uint32_t)[data length]);

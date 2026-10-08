@@ -71,7 +71,6 @@ UInt32 diskUUIDIndexForNotation(NotationController *controller);
 - (OSStatus)storeDataAtomicallyInNotesDirectory:(NSData*)data withName:(NSString*)filename destinationRef:(NVFileReference*)destRef;
 - (OSStatus)storeDataAtomicallyInNotesDirectory:(NSData*)data withName:(NSString*)filename destinationRef:(NVFileReference*)destRef
 							 verifyWithSelector:(SEL)verifySel verificationDelegate:(id)verifyDelegate;
-+ (OSStatus)trashFolderRef:(NVFileReference*)trashRef forChild:(NVFileReference*)childRef;
 - (OSStatus)moveFileToTrash:(NVFileReference *)childRef forFilename:(NSString*)filename;
 
 @end

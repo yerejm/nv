@@ -409,6 +409,27 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         Check(@"all seven settings icons remain visible in every pane", allItemsVisible);
         Check(@"settings pane changes keep the window frame constant", stableFrame);
         Check(@"settings minimum width fits the toolbar", prefsWindow.contentMinSize.width >= 640 && NSWidth(prefsWindow.contentView.bounds) >= prefsWindow.contentMinSize.width);
+        [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Fonts & Colors"]];
+        NSView *fontsColorsPane = [preferences valueForKey:@"fontsColorsView"];
+        NSButton *systemHighlightButton = [preferences valueForKey:@"systemHighlightColorButton"];
+        GlobalPrefs *highlightPrefs = [GlobalPrefs defaultPrefs];
+        NSColorWell *highlightWell = [preferences valueForKey:@"searchHighlightColorWell"];
+        [highlightWell setColor:[NSColor systemPurpleColor]];
+        [preferences changedSearchHighlightColorWell:highlightWell];
+        BOOL customApplied = [highlightPrefs searchTermHighlightColorIsCustom];
+        [systemHighlightButton performClick:nil];
+        Check(@"Use System Color returns search highlighting to the system find color", customApplied && ![highlightPrefs searchTermHighlightColorIsCustom] &&
+              [[highlightPrefs searchTermHighlightAttributes][NSBackgroundColorAttributeName] isEqual:[NSColor findHighlightColor]] &&
+              [highlightWell.color isEqual:[NSColor findHighlightColor]] && !systemHighlightButton.enabled);
+        Check(@"Use System Color fits inside the Fonts & Colors pane", systemHighlightButton.window == prefsWindow &&
+              NSContainsRect(fontsColorsPane.bounds, [fontsColorsPane convertRect:systemHighlightButton.bounds fromView:systemHighlightButton]));
+        NSView *bodyFontField = [preferences valueForKey:@"bodyTextFontField"];
+        NSRect bodyFontFrame = bodyFontField.frame;
+        BOOL fontRowClear = YES;
+        for (NSView *sibling in bodyFontField.superview.subviews)
+            if (sibling != bodyFontField && [sibling isKindOfClass:[NSButton class]] && NSIntersectsRect(bodyFontFrame, sibling.frame)) fontRowClear = NO;
+        Check(@"body font field does not run under its Set button", fontRowClear);
+        SnapshotWindow(prefsWindow, @"settings-fonts-colors.png");
         [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Notes"]];
         NotationPrefsViewController *notesPreferences = [preferences notationPrefsViewController];
         NSView *notesView = [notesPreferences view];
@@ -505,11 +526,25 @@ static BOOL RowHasDarkPixels(NSTableView *table, NSBitmapImageRep *bitmap, NSInt
     return NO;
 }
 
+//the line under an unselected row is drawn at the row's bottom edge, not above it where the old row-height arithmetic put it
+static BOOL GridLineSitsAtRowBottom(NSTableView *table, NSBitmapImageRep *bitmap, NSInteger row) {
+    CGFloat scale = bitmap.pixelsWide / NSWidth(table.bounds);
+    NSRect rect = [table rectOfRow:row];
+    NSInteger x = (NSMinX(rect) + 4) * scale;
+    CGFloat (^brightness)(CGFloat) = ^CGFloat(CGFloat y) {
+        NSInteger pixelY = MIN(bitmap.pixelsHigh - 1, (NSInteger)(y * scale));
+        if (!table.isFlipped) pixelY = bitmap.pixelsHigh - 1 - pixelY;
+        return [[[bitmap colorAtX:x y:pixelY] colorUsingColorSpace:NSColorSpace.sRGBColorSpace] brightnessComponent];
+    };
+    CGFloat background = brightness(NSMaxY(rect) - 6);
+    return fabs(brightness(NSMaxY(rect) - 0.5) - background) > 0.05;
+}
+
 //the selected note row in each appearance, layout and focus state, so selection colors can also be compared by eye
 static void SnapshotNoteListStates(AppController *app, NSWindow *window, NotesTableView *noteTable, NSTextView *editor, NoteObject *note) {
     GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
     BOOL originalLayout = [prefs horizontalLayout];
-    BOOL focusedRowsAreLight = YES;
+    BOOL focusedRowsAreLight = YES, gridFollowsRows = YES;
     for (NSString *appearance in @[NSAppearanceNameAqua, NSAppearanceNameDarkAqua]) {
         [window setAppearance:[NSAppearance appearanceNamed:appearance]];
         for (NSInteger horizontal = 0; horizontal < 2; horizontal++) {
@@ -521,12 +556,14 @@ static void SnapshotNoteListStates(AppController *app, NSWindow *window, NotesTa
                 NSBitmapImageRep *bitmap = SnapshotView(noteTable, [NSString stringWithFormat:@"list-%@-%@-%@.png", [appearance isEqualToString:NSAppearanceNameAqua] ? @"light" : @"dark",
                                          horizontal ? @"horizontal" : @"vertical", editorFocused ? @"editor" : @"list"]);
                 if (!editorFocused && RowHasDarkPixels(noteTable, bitmap, noteTable.selectedRow)) focusedRowsAreLight = NO;
+                if (horizontal && !editorFocused && noteTable.numberOfRows > 2) gridFollowsRows &= GridLineSitsAtRowBottom(noteTable, bitmap, 1);
             }
         }
     }
     if ([prefs horizontalLayout] != originalLayout) [app switchViewLayout:nil];
     [window setAppearance:nil];
     Check(@"focused note list selection uses light text in both appearances and layouts", focusedRowsAreLight);
+    Check(@"note list grid lines sit on row boundaries in the sidebar layout", gridFollowsRows);
 }
 
 static void RunAcceptance(void) {
@@ -882,6 +919,13 @@ static void RunAcceptance(void) {
         NSMenuItem *afterSpelling = afterSpellingIndex < editMenu.numberOfItems ? [editMenu itemAtIndex:afterSpellingIndex] : nil;
         Check(@"app menu opens Settings", [settingsItem.title isEqualToString:@"Settings…"]);
         Check(@"edit menu has Spelling and Grammar", [spellingItem.title isEqualToString:@"Spelling and Grammar"]);
+        NSTextField *emptyLabel = [[app valueForKey:@"editorStatusView"] valueForKey:@"labelText"];
+        NSMenuItem *boldItem = MenuItemWithAction(NSApp.mainMenu, @selector(bold:));
+        NSFont *boldTitleFont = [boldItem.attributedTitle attribute:NSFontAttributeName atIndex:0 effectiveRange:NULL];
+        Check(@"empty editor label and styled Format menu titles use system fonts",
+              [emptyLabel.font.familyName isEqualToString:[NSFont systemFontOfSize:12].familyName] &&
+              [boldTitleFont.familyName isEqualToString:[NSFont menuFontOfSize:0].familyName] &&
+              ([[NSFontManager sharedFontManager] traitsOfFont:boldTitleFont] & NSBoldFontMask));
         Check(@"Substitutions follows Spelling and Grammar",
               afterSpelling.submenu && [afterSpelling.submenu indexOfItemWithTarget:nil andAction:@selector(toggleAutomaticQuoteSubstitution:)] != -1);
         [appearancePrefs setColorScheme:2 sender:nil];

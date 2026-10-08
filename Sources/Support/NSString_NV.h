@@ -29,13 +29,9 @@ unsigned int hoursFromAbsoluteTime(CFAbsoluteTime absTime);
 void resetCurrentDayTime(void);
 + (NSString*)relativeTimeStringWithDate:(CFDateRef)date relativeDay:(int)day;
 + (NSString*)relativeDateStringWithAbsoluteTime:(CFAbsoluteTime)absTime;
-- (CFArrayRef)copyRangesOfWordsInString:(NSString*)findString inRange:(NSRange)limitRange;
 + (NSString*)customPasteboardTypeOfCode:(int)code;
 - (NSString*)stringAsSafePathExtension;
 - (NSString*)filenameExpectingAdditionalCharCount:(NSInteger)charCount;
-#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_5
-- (NSString*)stringByReplacingOccurrencesOfString:(NSString*)stringToReplace withString:(NSString*)replacementString;
-#endif
 - (NSString*)fourCharTypeString;
 - (BOOL)isAMachineDirective;
 - (void)copyItemToPasteboard:(id)sender;
@@ -65,12 +61,10 @@ void resetCurrentDayTime(void);
 - (NSData *)decodeBase64;
 - (NSData *)decodeBase64WithNewlines:(BOOL)encodedWithNewlines;
 
-//- (NSTextView*)textViewWithFrame:(NSRect*)theFrame;
 
 @end
 
 @interface NSMutableString (NV)
-- (void)replaceTabsWithSpacesOfWidth:(int)tabWidth;
 + (NSMutableString*)newShortLivedStringFromFile:(NSString*)filename;
 + (NSMutableString*)newShortLivedStringFromData:(NSMutableData*)data ofGuessedEncoding:(NSStringEncoding*)encoding 
 									   withPath:(const char*)aPath orWithFSRef:(const NVFileReference*)fsRef;
@@ -84,10 +78,6 @@ void resetCurrentDayTime(void);
 
 + (NSCharacterSet*)labelSeparatorCharacterSet;
 + (NSCharacterSet*)listBulletsCharacterSet;
-
-#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_5
-+ (id)newlineCharacterSet;
-#endif
 
 @end
 

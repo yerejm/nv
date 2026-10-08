@@ -22,14 +22,9 @@ typedef NSUInteger NVPasswordOptions;
 }
 
 + (NSString*)passwordWithOptions:(NVPasswordOptions)options length:(NSUInteger)len;
-+ (NSString*)numericPasswordWithLength:(NSUInteger)len;
-+ (NSString*)alphaNumericPasswordWithLength:(NSUInteger)len;
 
-+ (NSString*)light;
-+ (NSString*)medium;
 + (NSString*)strong;
 
 // ordered from strong to light
-+ (NSArray*)suggestions;
 
 @end

@@ -28,15 +28,7 @@
 #import "NVPasswordGenerator.h"
 
 #include <CoreServices/CoreServices.h>
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5
 #include <Carbon/Carbon.h>
-#endif
-
-#define PASSWORD_SUGGESTIONS 0
-
-#ifdef notyet
-static long (*GetGetScriptManagerVariablePointer())(short);
-#endif
 
 @implementation LinkingEditor
 
@@ -129,7 +121,6 @@ static long (*GetGetScriptManagerVariablePointer())(short);
     } else if ([selectorString isEqualToString:SEL_STR(setNoteBodyFont:sender:)]) {
 
 		[self setTypingAttributes:[prefsController noteBodyAttributes]];
-		//[textView setFont:[prefsController noteBodyFont]];
 	} else if ([selectorString isEqualToString:SEL_STR(setMakeURLsClickable:sender:)]) {
 
 		[self setLinkTextAttributes:[self preferredLinkAttributes]];
@@ -211,7 +202,6 @@ static long (*GetGetScriptManagerVariablePointer())(short);
 }
 
 - (void)changeColor:(id)sender {
-	//NSLog(@"You do not change the color.");
 	return;
 }
 
@@ -296,7 +286,6 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 	//and the proposed-color-difference from the foreground can't be too poor
 	//this heuristic chooses all the system-highlight colors in default fg/bg combinations and fg/bg blends in all others
 	
-//	NSLog(@"fg diff of proposed: %g fg diff of sel: %g", fgDiff, fgSelDiff);
 	if ((_perceptualDarkness(fgColor) > _perceptualDarkness(defaultColor) && 
 		 _perceptualDarkness(defaultColor) > _perceptualDarkness(bgColor) && fgSelDiff > 300.0) || fgDiff < 170.0)
 		return defaultColor;
@@ -331,11 +320,6 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 			NSForegroundColorAttributeName, nil];
 }
 
-/*
-- (BOOL)acceptsFirstResponder {
-	
-    return ([[controlField stringValue] length] > 0);
-}*/
 
 - (void)setAutomaticTextReplacementEnabled:(BOOL)enabled {
     [super setAutomaticTextReplacementEnabled:enabled];
@@ -383,7 +367,6 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 }
 
 - (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard type:(NSString *)type {
-	//NSLog(@"readSelectionFromPasteboard: %@ (total %@)", type, [[pboard types] description]);
 	
 	if ([type isEqualToString:NVFilenamesPasteboardType]) {
 		//paste as a file:// URL, so that it can be linked
@@ -421,8 +404,6 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 				[self replaceCharactersInRange:selectedRange withRTF:[newString RTFFromRange:
 																	  NSMakeRange(0, [newString length]) documentAttributes:@{}]];
 			
-				//paragraph styles will ALWAYS be added _after_ replaceCharactersInRange, it seems
-				//[[self textStorage] removeAttribute:NSParagraphStyleAttributeName range:NSMakeRange(0, [[self string] length])];
 				[self didChangeText];
 				
 				return YES;
@@ -468,8 +449,6 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 	return [super writeSelectionToPasteboard:pboard type:type];
 }
 
-#define COPY_PASTE_DEBUG 0
-
 - (NSArray *)writablePasteboardTypes {
 	NSMutableArray *types = [NSMutableArray arrayWithObjects:NVPTFPboardType, NSPasteboardTypeString, nil];
 	
@@ -497,23 +476,13 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 				if ([attributes attributesHaveFontTrait:0 orAttribute:NSStrikethroughStyleAttributeName])
 					goto copyRTFType;
 			}
-#if COPY_PASTE_DEBUG
-			NSLog(@"false alarm: no real styles");
-#endif
 			
 		} else {
-#if COPY_PASTE_DEBUG
-			NSLog(@"homogeneous style");
-#endif
 		}
 		
 		if (0) {
 copyRTFType:
 			//we have more than a single styling segment within the selection--grudgingly allow regular RTF copying
-#if COPY_PASTE_DEBUG
-			NSLog(@"copying RTF due to multiple attributes");
-			[[self layoutManager] addTemporaryAttributes:[prefsController searchTermHighlightAttributes] forCharacterRange:effectiveRange];
-#endif
 			[types insertObject:NSPasteboardTypeRTF atIndex:1];
 		}
 	}
@@ -702,7 +671,6 @@ copyRTFType:
 				skipMatchingBrace++;
 			}
 		}
-		//NSBeep();
 	}
 	
 	char *leftChar = strchr(leftGroupings, (char)characterToCheck);
@@ -722,7 +690,6 @@ copyRTFType:
 				skipMatchingBrace++;
 			}
 		}
-		//NSBeep();
 	}
 		
 	// If it has a found a "starting" brace but not found a match, a double-click should only select the "starting" brace and not what it usually would select at a double-click
@@ -1032,29 +999,6 @@ static BOOL NVFindActionSelectsNote(NSInteger action) {
 }
 
 //maybe if we knew we would always have a mono-spaced font
-/*- (void)insertNewline:(id)sender {
-	NSString *lineEnding = @"\n";
-	NSRange charRange = [self rangeForUserTextChange];
-	if (charRange.location != NSNotFound) {
-		NSString *insertString = (lineEnding ? lineEnding : @"");
-		NSString *string = [self string];
-		if (charRange.location > 0) {
-			if (!lineEnding) {
-				// the newline has already been inserted.  Back up by one char.
-				charRange.location--;
-			}
-			if ((charRange.location > 0) && !IsHardLineBreakUnichar([string characterAtIndex:(charRange.location - 1)], string, charRange.location - 1)) {
-				NSUInteger tabWidth = [prefsController numberOfSpacesInTab];
-				NSRange paraRange = [string lineRangeForRange:NSMakeRange(charRange.location - 1, 1)];
-				NSUInteger leadingSpaces = [string numberOfLeadingSpacesFromRange:&paraRange tabWidth:tabWidth];
-
-				insertString = [insertString stringByAppendingString:[NSString tabbifiedStringWithNumberOfSpaces:leadingSpaces tabWidth:tabWidth 
-																										usesTabs:![prefsController softTabs]]];
-			}
-		}
-		[self insertText:insertString replacementRange:[self selectedRange]];
-	}	
-}*/
 
 - (void)mouseEntered:(NSEvent*)anEvent {
 	mouseInside = YES;
@@ -1122,7 +1066,6 @@ static BOOL NVFindActionSelectsNote(NSInteger action) {
 				//it's a multiple attribute range piece--don't want to bother
 				multipleAttributes = YES;
 			}
-			//NSLog(@"sel attrs: %@", attrs);
 		} else {
 			//nothing selected--look at typing attrs
 			attrs = [self typingAttributes];
@@ -1211,7 +1154,6 @@ static BOOL NVFindActionSelectsNote(NSInteger action) {
 
 - (NSRange)rangeForUserCompletion {
 	NSRange completionRange = [super rangeForUserCompletion];
-	//NSLog(@"completionRange: %@", [[self string] substringWithRange:completionRange]);
 	
 	
 	//problem: changedRange.location was 201, but completionRange.location was 195
@@ -1283,7 +1225,6 @@ cancelCompetion:
 		isAutocompleting = NO;
 	}
 	
-	//[[self window] invalidateCursorRectsForView:self];
 	
 	[super didChangeText];
 	
@@ -1324,18 +1265,6 @@ cancelCompetion:
     return allowed;
 }
 
-#ifdef notyet
-static long (*GetGetScriptManagerVariablePointer())(short) {
-	static long (*_GetScriptManagerVariablePointer)(short) = NULL;
-	if (!_GetScriptManagerVariablePointer) {
-		NSLog(@"looking up");
-		CFBundleRef csBundle = CFBundleCreate(NULL, CFURLCreateWithFileSystemPath(NULL, CFSTR("/System/Library/Frameworks/CoreServices.framework"), kCFURLPOSIXPathStyle, TRUE));
-		if (csBundle) _GetScriptManagerVariablePointer = (long (*)(short))CFBundleGetDataPointerForName(csBundle, CFSTR("GetScriptManagerVariable"));
-	}
-	return _GetScriptManagerVariablePointer;
-}
-#endif
-
 - (void)fixTypingAttributesForSubstitutedFonts {
 	//fixes a problem with fonts substituted by non-system input languages that Apple should have fixed themselves
 	
@@ -1352,15 +1281,11 @@ static long (*GetGetScriptManagerVariablePointer())(short) {
 	
 	BOOL currentKeyboardInputIsSystemLanguage = NO;
 	
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5
     TISInputSourceRef inputRef = TISCopyCurrentKeyboardInputSource();
     NSArray* inputLangs = [[(NSArray*)TISGetInputSourceProperty(inputRef, kTISPropertyInputSourceLanguages) retain] autorelease];
     CFRelease(inputRef);
     NSString *preferredLang = [[NSLocale autoupdatingCurrentLocale] objectForKey:NSLocaleLanguageCode];
     currentKeyboardInputIsSystemLanguage = nil != preferredLang && [inputLangs containsObject:preferredLang];
-#else
-	currentKeyboardInputIsSystemLanguage = GetScriptManagerVariable(smSysScript) == GetScriptManagerVariable(smKeyScript);
-#endif
 	
 	if (currentKeyboardInputIsSystemLanguage) {
 		//only attempt to restore fonts (with styles of course) if the current script is system default--that is, not using an input method that would change the font
@@ -1372,7 +1297,6 @@ static long (*GetGetScriptManagerVariablePointer())(short) {
 			
 			NSMutableDictionary *newTypingAttributes = [[self typingAttributes] mutableCopy];
 			[newTypingAttributes setObject:currentFont forKey:NSFontAttributeName];
-			//NSLog(@"mangling font 'back' to normal");
 			
 			if ([[self typingAttributes] attributesHaveFontTrait:NSBoldFontMask orAttribute:NSStrokeWidthAttributeName]) {
 				[newTypingAttributes applyStyleInverted:NO trait:NSBoldFontMask forFont:currentFont 
@@ -1465,7 +1389,6 @@ static long (*GetGetScriptManagerVariablePointer())(short) {
 				if (carriedBulletRange.length) {
 					[[self layoutManager] addTemporaryAttributes:[NSDictionary dictionaryWithObject:[NSNull null] forKey:NVHiddenBulletIndentAttributeName] 
 											   forCharacterRange:carriedBulletRange];
-					//[[self layoutManager] addTemporaryAttributes:[prefsController searchTermHighlightAttributes] forCharacterRange:carriedBulletRange];
 				}
 			}
 		}
@@ -1529,20 +1452,8 @@ static long (*GetGetScriptManagerVariablePointer())(short) {
 
 		[editMenu addItem:[NSMenuItem separatorItem]];
         
-#if PASSWORD_SUGGESTIONS
-        theMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"New Password...", "new password command in the edit menu")
-												 action:@selector(showGeneratedPasswords:) keyEquivalent:@"\\"];
-        [theMenuItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand];
-        [theMenuItem setTarget:nil]; // First Responder being the current Link Editor
-        [editMenu addItem:theMenuItem];
-        [theMenuItem release];
-#endif
-        
         theMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Insert New Password", "insert new password command in the edit menu")
 												 action:@selector(insertGeneratedPassword:) keyEquivalent:@"\\"];
-#if PASSWORD_SUGGESTIONS
-        [theMenuItem setAlternate:YES];
-#endif
         [theMenuItem setKeyEquivalentModifierMask:NSEventModifierFlagCommand|NSEventModifierFlagOption];
         [theMenuItem setTarget:nil]; // First Responder being the current Link Editor
         [editMenu addItem:theMenuItem];
@@ -1585,32 +1496,15 @@ static long (*GetGetScriptManagerVariablePointer())(short) {
     [self insertText:password replacementRange:[self selectedRange]];
     @try {
     NSPasteboard *pb = [NSPasteboard generalPasteboard];
-    #if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_6
     NSPasteboardItem *pbitem = [[[NSPasteboardItem alloc] init] autorelease];
     [pbitem setData:[password dataUsingEncoding:NSUTF8StringEncoding] forType:@"public.plain-text"];
     [pb writeObjects:[NSArray arrayWithObject:pbitem]];
-    #else
-    [pb declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
-    [pb setString:password forType:NSPasteboardTypeString];
-    #endif
     } @catch (NSException *e) {}
 }
 
 - (void)insertGeneratedPassword:(id)sender {
     NSString *password = [NVPasswordGenerator strong];
     [self insertPassword:password];
-}
-
-- (void)showGeneratedPasswords:(id)sender {
-    #ifdef notyet
-    NSArray *suggestedPasswords = [NVPasswordGenerator suggestions];
-    
-    // display modal overlay, get user selection and insert it
-    // Nice to have:
-    // keep stats on the user's selection and then use the most frequent choice in [insertGeneratedPassword] (instead of just [strong])
-    #lse
-    [self insertGeneratedPassword:nil];
-    #endif
 }
 
 - (void)dealloc {

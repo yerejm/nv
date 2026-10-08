@@ -45,8 +45,6 @@
 	} else {
 		// I get EINVAL sometimes when setting/getting xattrs on afp servers running 10.5. When I get this error, I find that everything is working correctly... so it seems to make sense to ignore them
 		// EINVAL means invalid argument. I know that the args are fine. 
-		//if ((errno != ENOATTR) && (errno != EINVAL) && error) // it is not an error to have no attribute set 
-		//	*error = [NSError errorWithDomain:NSPOSIXErrorDomain code:errno userInfo:[NSDictionary dictionaryWithObject:[self errnoString:errno] forKey:@"info"]];
 		return nil;
 	}
 	
@@ -169,11 +167,6 @@ errorReturn:
         }
     }
     return [values objectForKey:NSURLPathKey];
-}
-
-- (NSString*)pathFromFSPath:(char*)path {
-	DebugPath(path);
-	return [self stringWithFileSystemRepresentation:path length:strlen(path)];
 }
 
 - (NSString*)pathWithFSRef:(NVFileReference*)fsRef {

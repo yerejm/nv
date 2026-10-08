@@ -279,7 +279,6 @@
 				}
 			}
 		}
-		//NSLog(@"paths not found in DB: %@", unknownPaths);
 		
 		for (i=0; i<[unknownPaths count]; i++) {
 			NSURL *url = [NSURL fileURLWithPath:[unknownPaths objectAtIndex:i]];

@@ -40,15 +40,11 @@
 #import "LabelColumnCell.h"
 #import "ODBEditor.h"
 
-#if __LP64__
 // Needed for compatability with data created by 32bit app
 typedef struct NSRange32 {
     unsigned int location;
     unsigned int length;
 } NSRange32;
-#else
-typedef NSRange NSRange32;
-#endif
 
 @implementation NoteObject
 
@@ -311,10 +307,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 
 //make notationcontroller should send setDelegate: and setLabelString: (if necessary) to each note when unarchiving this way
 
-//there is no measurable difference in speed when using decodeValuesOfObjCTypes, oddly enough
-//the overhead of the _decodeObject* C functions must be significantly greater than the objc_msgSend and argument passing overhead
-#define DECODE_INDIVIDUALLY 1
-
 - (id)initWithCoder:(NSCoder*)decoder {
 	if ([self init]) {
 		
@@ -361,42 +353,23 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
             NSRange32 range32;
 			unsigned int serverModifiedTime = 0;
 			float scrolledProportion = 0.0;
-            #if __LP64__
             unsigned long longTemp;
-            #endif
-#if DECODE_INDIVIDUALLY
 			[decoder decodeValueOfObjCType:@encode(CFAbsoluteTime) at:&modifiedDate];
 			[decoder decodeValueOfObjCType:@encode(CFAbsoluteTime) at:&createdDate];
-            #if __LP64__
 			[decoder decodeValueOfObjCType:"{_NSRange=II}" at:&range32];
-            #else
-            [decoder decodeValueOfObjCType:@encode(NSRange) at:&range32];
-            #endif
 			[decoder decodeValueOfObjCType:@encode(float) at:&scrolledProportion];
 			
 			[decoder decodeValueOfObjCType:@encode(unsigned int) at:&logSequenceNumber];
 			
 			[decoder decodeValueOfObjCType:@encode(int) at:&currentFormatID];
-            #if __LP64__
             [decoder decodeValueOfObjCType:"L" at:&longTemp];
             nodeID = (UInt32)longTemp;
-            #else
-			[decoder decodeValueOfObjCType:@encode(UInt32) at:&nodeID];
-            #endif
 			[decoder decodeValueOfObjCType:@encode(UInt16) at:&fileModifiedDate.highSeconds];
-            #if __LP64__
 			[decoder decodeValueOfObjCType:"L" at:&longTemp];
             fileModifiedDate.lowSeconds = (UInt32)longTemp;
-            #else
-            [decoder decodeValueOfObjCType:@encode(UInt32) at:&fileModifiedDate.lowSeconds];
-            #endif
 			[decoder decodeValueOfObjCType:@encode(UInt16) at:&fileModifiedDate.fraction];	
             
-            #if __LP64__
             [decoder decodeValueOfObjCType:"I" at:&fileEncoding];
-            #else
-            [decoder decodeValueOfObjCType:@encode(NSStringEncoding) at:&fileEncoding];
-            #endif
 			
 			[decoder decodeValueOfObjCType:@encode(CFUUIDBytes) at:&uniqueNoteIDBytes];
 			[decoder decodeValueOfObjCType:@encode(unsigned int) at:&serverModifiedTime];
@@ -405,11 +378,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 			labelString = [[decoder decodeObject] retain];
 			contentString = [[decoder decodeObject] mutableCopy];
 			filename = [[decoder decodeObject] retain];
-#else 
-			[decoder decodeValuesOfObjCTypes: "dd{NSRange=ii}fIiI{UTCDateTime=SIS}I[16C]I@@@@", &modifiedDate, &createdDate, &range32, 
-				&scrolledProportion, &logSequenceNumber, &currentFormatID, &nodeID, &fileModifiedDate, &fileEncoding, &uniqueNoteIDBytes, 
-				&serverModifiedTime, &titleString, &labelString, &contentString, &filename];
-#endif
             selectedRange.location = range32.location;
             selectedRange.length = range32.length;
 			contentsWere7Bit = (*(unsigned int*)&scrolledProportion) != 0; //hacko wacko
@@ -460,41 +428,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		[coder encodeObject:contentString forKey:VAR_STR(contentString)];
 		[coder encodeObject:filename forKey:VAR_STR(filename)];
 		
-	} else {
-// 64bit encoding would break 32bit reading - keyed archives should be used
-#if !__LP64__
-		unsigned int serverModifiedTime = 0;
-		float scrolledProportion = 0.0;
-		*(unsigned int*)&scrolledProportion = (unsigned int)contentsWere7Bit;
-#if DECODE_INDIVIDUALLY
-		[coder encodeValueOfObjCType:@encode(CFAbsoluteTime) at:&modifiedDate];
-		[coder encodeValueOfObjCType:@encode(CFAbsoluteTime) at:&createdDate];
-        [coder encodeValueOfObjCType:@encode(NSRange) at:&selectedRange];
-		[coder encodeValueOfObjCType:@encode(float) at:&scrolledProportion];
-		
-		[coder encodeValueOfObjCType:@encode(unsigned int) at:&logSequenceNumber];
-		
-		[coder encodeValueOfObjCType:@encode(int) at:&currentFormatID];
-		[coder encodeValueOfObjCType:@encode(UInt32) at:&nodeID];
-		[coder encodeValueOfObjCType:@encode(UInt16) at:&fileModifiedDate.highSeconds];
-		[coder encodeValueOfObjCType:@encode(UInt32) at:&fileModifiedDate.lowSeconds];
-		[coder encodeValueOfObjCType:@encode(UInt16) at:&fileModifiedDate.fraction];
-		[coder encodeValueOfObjCType:@encode(NSStringEncoding) at:&fileEncoding];
-		
-		[coder encodeValueOfObjCType:@encode(CFUUIDBytes) at:&uniqueNoteIDBytes];
-		[coder encodeValueOfObjCType:@encode(unsigned int) at:&serverModifiedTime];
-		
-		[coder encodeObject:titleString];
-		[coder encodeObject:labelString];
-		[coder encodeObject:contentString];
-		[coder encodeObject:filename];
-		
-#else
-		[coder encodeValuesOfObjCTypes: "dd{NSRange=ii}fIiI{UTCDateTime=SIS}I[16C]I@@@@", &modifiedDate, &createdDate, &range32, 
-			&scrolledProportion, &logSequenceNumber, &currentFormatID, &nodeID, &fileModifiedDate, &fileEncoding, &uniqueNoteIDBytes, 
-			&serverModifiedTime, &titleString, &labelString, &contentString, &filename];
-#endif
-#endif // !__LP64__
 	}
 }
 
@@ -592,7 +525,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		
 		[self updateTablePreviewString];
 		contentCacheNeedsUpdate = YES;
-		//[self updateContentCacheCStringIfNecessary];
 		
 		[delegate note:self attributeChanged:NotePreviewString];
 	
@@ -605,16 +537,12 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 
 - (void)updateContentCacheCStringIfNecessary {
 	if (contentCacheNeedsUpdate) {
-		//NSLog(@"updating ccache strs");
 		cContentsFoundPtr = cContents = replaceString(cContents, [[contentString string] lowercaseUTF8String]);
 		contentCacheNeedsUpdate = NO;
 		
 		size_t len = strlen(cContents);
 		contentsWere7Bit = !(ContainsHighAscii(cContents, len));
 		
-		//could cache dumbwordcount here for faster launch, but string creation takes more time, anyway
-		//if (wordCountString) CFRelease((CFStringRef*)wordCountString); //this is CFString, so bridge will just call back to CFRelease, anyway
-		//wordCountString = (NSString*)CFStringFromBase10Integer(DumbWordCount(cContents, len));
 	}
 }
 
@@ -634,8 +562,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		contentsWere7Bit = cContents ? !(ContainsHighAscii(cContents, (len = strlen(cContents)))) : NO;
 	}
 	
-	//if (len < 0) len = strlen(cContents);
-	//wordCountString = (NSString*)CFStringFromBase10Integer(DumbWordCount(cContents, len));
 	
 	contentCacheNeedsUpdate = NO;
 }
@@ -648,39 +574,8 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	return syncServicesMD ? [NSString stringWithFormat:@"%@ / %@", titleString, syncServicesMD] : titleString;
 }
 
-- (NSString*)combinedContentWithContextSeparator:(NSString*)sepWContext {
-	//combine title and body based on separator data usually generated by -syntheticTitleAndSeparatorWithContext:bodyLoc:
-	//if separator does not exist or chars do not match trailing and leading chars of title and body, respectively,
-	//then just delimit with a double-newline
-	
-	NSString *content = [contentString string];
-	
-	BOOL defaultJoin = NO;
-	if (![sepWContext length] || ![content length] || ![titleString length] || 
-		[titleString characterAtIndex:[titleString length] - 1] != [sepWContext characterAtIndex:0] ||
-		[content characterAtIndex:0] != [sepWContext characterAtIndex:[sepWContext length] - 1]) {
-		defaultJoin = YES;
-	}
-	
-	NSString *separator = @"\n\n";
-	
-	//if the separator lacks any actual separating characters, then concatenate with an empty string
-	if (!defaultJoin) {
-		separator = [sepWContext length] > 2 ? [sepWContext substringWithRange:NSMakeRange(1, [sepWContext length] - 2)] : @"";
-	}
-	
-	NSMutableString *combined = [[NSMutableString alloc] initWithCapacity:[content length] + [titleString length] + [separator length]];
-	
-	[combined appendString:titleString];
-	[combined appendString:separator];
-	[combined appendString:content];
-	
-	return [combined autorelease];
-}
-
-
 - (NSAttributedString*)printableStringRelativeToBodyFont:(NSFont*)bodyFont {
-	NSFont *titleFont = [NSFont fontWithName:[bodyFont fontName] size:[bodyFont pointSize] + 6.0f];
+	NSFont *titleFont = [[NSFontManager sharedFontManager] convertFont:bodyFont toSize:[bodyFont pointSize] + 6.0f];
 	
 	NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:titleFont, NSFontAttributeName, nil];
 	
@@ -756,11 +651,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		
 		[self updateTablePreviewString];
 		
-		/*NSUndoManager *undoMan = [delegate undoManager];
-		[undoMan registerUndoWithTarget:self selector:@selector(setTitleString:) object:oldTitle];
-		if (![undoMan isUndoing] && ![undoMan isRedoing])
-			[undoMan setActionName:[NSString stringWithFormat:@"Rename Note \"%@\"", titleString]];
-		*/
 		[oldTitle release];
 		
 		[delegate note:self attributeChanged:NoteTitleColumnString];
@@ -874,12 +764,10 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 
 
 - (void)setSelectedRange:(NSRange)newRange {
-	//if (!newRange.length) newRange = NSMakeRange(0,0);
 	
 	//don't save the range if it's invalid, it's equal to the current range, or the entire note is selected
 	if ((newRange.location != NSNotFound) && !NSEqualRanges(newRange, selectedRange) && 
 		!NSEqualRanges(newRange, NSMakeRange(0, [contentString length]))) {
-	//	NSLog(@"saving: old range: %@, new range: %@", NSStringFromRange(selectedRange), NSStringFromRange(newRange));
 		selectedRange = newRange;
 		[self makeNoteDirtyUpdateTime:NO updateFile:NO];
 	}
@@ -894,15 +782,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 - (void)replaceMatchingLabelSet:(NSSet*)aLabelSet {
     [labelSet minusSet:aLabelSet];
     [labelSet unionSet:aLabelSet];
-}
-
-- (void)replaceMatchingLabel:(LabelObject*)aLabel {
-    [aLabel retain]; // just in case this is actually the same label
-    
-    //remove the old label and add the new one; if this is the same one, well, too bad
-    [labelSet removeObject:aLabel];
-    [labelSet addObject:aLabel];
-    [aLabel release];
 }
 
 - (void)updateLabelConnectionsAfterDecoding {
@@ -1091,7 +970,6 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 }
 
 - (void)invalidateFSRef {
-	//bzero(&noteFileRef, sizeof(NVFileReference));
 	if (noteFileRef)
 		free(noteFileRef);
 	noteFileRef = NULL;
@@ -1143,8 +1021,6 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
     BOOL wroteAllOfNote = [wal writeEstablishedNote:self];
 	
     if (wroteAllOfNote) {
-		//update formatID to absolutely ensure we don't reload an earlier note back from disk, from text encoding menu, for example
-		//currentFormatID = SingleDatabaseFormat;
 	} else {
 		[delegate noteDidNotWrite:self errorCode:kWriteJournalErr];
 	}
@@ -1194,14 +1070,12 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 			break;
 		default:
 			NSLog(@"Attempted to write using unknown format ID: %d", formatID);
-			//return NO;
     }
     
     if (formattedData) {
 		BOOL resetFilename = NO;
 		if (!filename || currentFormatID != formatID) {
 			//file will (probably) be renamed
-			//NSLog(@"resetting the file name due to format change: to %d from %d", formatID, currentFormatID);
 			[self setFilenameFromTitle];
 			resetFilename = YES;
 		}
@@ -1230,7 +1104,6 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 		[[NSURL fileURLWithPath:[[NSFileManager defaultManager] pathWithFSRef:noteFileRefInit(self)]] setResourceValue:@YES forKey:NSURLHasHiddenExtensionKey error:NULL];
 		
 		if (!resetFilename) {
-			//NSLog(@"resetting the file name just because.");
 			[self setFilenameFromTitle];
 		}
 		
@@ -1363,8 +1236,6 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 		
 		if ((updated = [self updateFromFile])) {
 			[self makeNoteDirtyUpdateTime:NO updateFile:NO];
-			//need to update modification time manually
-			//[[delegate delegate] contentsUpdatedForNote:self];
 		}
 	}
 	
@@ -1503,9 +1374,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 	[contentString release];
 	contentString = [attributedStringFromData retain];
 	[contentString santizeForeignStylesForImporting];
-	//NSLog(@"%s(%@): %@", sel_getName(_cmd), [self noteFilePath], [contentString string]);
 	
-	//[contentString setAttributedString:attributedStringFromData];
 	contentCacheNeedsUpdate = YES;
     [self updateContentCacheCStringIfNecessary];
 	[undoManager removeAllActions];
@@ -1525,7 +1394,6 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 		NSLog(@"Couldn't move file to trash: %d", err);
 	} else {
 		//file's gone! don't assume it's not coming back. if the storage format was not single-db, this note better be removed
-		//currentFormatID = SingleDatabaseFormat;
 	}
 }
 
@@ -1544,10 +1412,6 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 #else
 	[self moveFileToTrash];
 #endif
-}
-
-- (BOOL)removeUsingJournal:(WALStorageController*)wal {
-    return [wal writeRemovalForNote:self];
 }
 
 - (void)makeNoteDirtyUpdateTime:(BOOL)updateTime updateFile:(BOOL)updateFile {
@@ -1571,10 +1435,6 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 	//queue note to be written
     [delegate scheduleWriteForNote:self];	
 	
-	//tell delegate that the date modified changed
-	//[delegate note:self attributeChanged:NoteDateModifiedColumnString];
-	//except we don't want this here, as it will cause unnecessary (potential) re-sorting and updating of list view while typing
-	//so expect the delegate to know to schedule the same update itself
 }
 
 - (OSStatus)exportToDirectoryRef:(NVFileReference*)directoryRef withFilename:(NSString*)userFilename usingFormat:(int)storageFormat overwrite:(BOOL)overwrite {
@@ -1684,31 +1544,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 }
 -(void)odbEditor:(ODBEditor *)editor didClosefile:(NSString *)path context:(NSDictionary *)context {
 	//remove the temp file	
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5
 	[[NSFileManager defaultManager] removeItemAtPath:path error:NULL];
-#else
-	[[NSFileManager defaultManager] removeItemAtPath:path error:NULL];
-#endif
-}
-
-- (NSRange)nextRangeForWords:(NSArray*)words options:(unsigned)opts range:(NSRange)inRange {
-	//opts indicate forwards or backwards, inRange allows us to continue from where we left off
-	//return location of NSNotFound and length 0 if none of the words could be found inRange
-	
-	//an optimization would be to fall back on cached cString if contentsWere7Bit is true, but then we have to handle opts ourselves
-	unsigned int i;
-	NSString *haystack = [contentString string];
-	NSRange nextRange = NSMakeRange(NSNotFound, 0);
-	for (i=0; i<[words count]; i++) {
-		NSString *word = [words objectAtIndex:i];
-		if ([word length] > 0) {
-			nextRange = [haystack rangeOfString:word options:opts range:inRange];
-			if (nextRange.location != NSNotFound && nextRange.length)
-				break;
-		}
-	}
-
-	return nextRange;
 }
 
 force_inline void resetFoundPtrsForNote(NoteObject *note) {
@@ -1762,21 +1598,6 @@ BOOL noteTitleIsAPrefixOfOtherNoteTitle(NoteObject *longerNote, NoteObject *shor
     return labelSet;
 }
 
-/*
-- (CFArrayRef)rangesForWords:(NSString*)string inRange:(NSRange)rangeLimit {
-	//use cstring caches if note is all 7-bit, as we [REALLY OUGHT TO] be able to assume a 1-to-1 character mapping
-	
-	if (contentsWere7Bit) {
-		char *manglingString = strdup([string UTF8String]);
-		char *token, *separators = separatorsForCString(manglingString);
-		
-		while ((token = strsep(&manglingString, separators))) {
-			if (*token != '\0') {
-				//find all occurrences of token in cContents and add cfranges to cfmutablearray
-			}
-		}
-	}
-}*/
 
 - (NSUndoManager*)undoManager {
     if (!undoManager) {

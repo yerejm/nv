@@ -80,11 +80,7 @@
 - (void)fillArrayFromArray:(NSArray*)array {
 	NSUInteger oldArraySize = count;
 	
-	//release old values
-	//unsigned int i;
 	if (objects) {
-		//for (i=0; i<count; i++)
-			//objRelease(objects[i], @selector(release));
 	}
 	
 	count = CFArrayGetCount((CFArrayRef)array);	
@@ -94,9 +90,6 @@
 
 	CFArrayGetValues((CFArrayRef)array, CFRangeMake(0, count), (const void **)objects);
 	
-	//retain new ones
-	//for (i=0; i<count; i++)
-		//objRetain(objects[i], @selector(retain));
 }
 
 - (BOOL)filterArrayUsingFunction:(BOOL (*)(id, void*))present context:(void*)context {
@@ -112,7 +105,6 @@
 			
 			objects[j++] = obj;		
 		} else {
-			//objRelease(obj, @selector(release));
 		}
 	}
 	

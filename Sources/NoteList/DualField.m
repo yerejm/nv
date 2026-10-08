@@ -357,10 +357,6 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 	return snapbackString;
 }
 
-/*- (BOOL)becomeFirstResponder {
-	[(AppController *)[NSApp delegate] updateEmptyViewStatus];
-	return [super becomeFirstResponder];
-}*/
 
 - (void)setShowsDocumentIcon:(BOOL)showsIcon {
 	if (showsIcon != showsDocumentIcon) {
@@ -375,10 +371,6 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 
 - (BOOL)textView:(NSTextView *)aTextView shouldChangeTextInRange:(NSRange)affectedCharRange replacementString:(NSString *)replacementString {
 	
-	//if ([replacementString rangeOfString:@"\n" options:NSLiteralSearch].location != NSNotFound) {
-//		//NO! you cannot paste line feeds.
-//		return NO;
-//	}
 	
 	lastLengthReplaced = [replacementString length];
 	

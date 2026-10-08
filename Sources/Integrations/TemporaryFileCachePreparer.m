@@ -112,7 +112,6 @@ static NSString *TempDirectoryPathForEditing(void) {
 	}
 	
 	if (MountPointExists([RAMDiskMountPath() fileSystemRepresentation])) {
-		//NSLog(@"mount point already exists; giving path directly");
 		[self _finishPreparationWithPath:RAMDiskMountPath()];
 		return;
 	}
@@ -198,13 +197,8 @@ static NSString *TempDirectoryPathForEditing(void) {
 	NSError *err = nil;
 	NSFileManager *fileMan = [NSFileManager defaultManager];
 	BOOL isDirectory = NO, didCreate = ([fileMan fileExistsAtPath:path isDirectory:&isDirectory] && isDirectory) ? YES : 
-#if MAC_OS_X_VERSION_MIN_REQUIRED >= MAC_OS_X_VERSION_10_5
 	[fileMan createDirectoryAtPath:path withIntermediateDirectories:NO attributes:
 	 [NSDictionary dictionaryWithObject:[NSNumber numberWithUnsignedLong:0700] forKey:NSFilePosixPermissions] error:&err];
-#else
-	[fileMan createDirectoryAtPath:path attributes:
-	 [NSDictionary dictionaryWithObject:[NSNumber numberWithUnsignedLong:0700] forKey:NSFilePosixPermissions]];
-#endif
 	if (!didCreate) NSLog(@"couldn't create directory '%@': %@", path, (err ? [err localizedDescription] : @"(unknown error)"));
 	return didCreate;
 }
@@ -241,7 +235,6 @@ static NSString *TempDirectoryPathForEditing(void) {
 				NSLog(@"couldn't get device name from hdiutil attach");
 				[self _stopPreparation];
 			} else {
-//				NSLog(@"device name is '%@'", deviceName);
 				[self _buildHFSFileSystemOnDevice:deviceName];
 			}
 		}

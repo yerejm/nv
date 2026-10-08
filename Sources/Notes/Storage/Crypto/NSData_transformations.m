@@ -300,8 +300,6 @@ static NSURL *NVResolveBookmark(NSData *data, NSURLBookmarkResolutionOptions opt
 		len -= 3;
 		b += 3;
 		
-		//false because we just fixed the BOM right up there
-		//string = (NSString*)CFStringCreateWithBytes(kCFAllocatorDefault, b, len, kCFStringEncodingUTF8, false);
 		string = [[NSMutableString alloc] initWithBytes:b length:len encoding:NSUTF8StringEncoding];
 		if (string)
 			*encoding = NSUTF8StringEncoding;
@@ -353,37 +351,7 @@ static NSURL *NVResolveBookmark(NSData *data, NSURLBookmarkResolutionOptions opt
 
 @implementation NSMutableData (NVCryptoRelated)
 
-- (void)reverseBytes {
-	NSUInteger head, tail;
-	unsigned char temp, *str = [self mutableBytes];
-	if (!str || ![self length]) return;
-	tail = [self length] - 1;
-	
-	for (head = 0; head < tail; ++head, --tail) {
-		temp = str[tail];
-		str[tail] = str[head];
-		str[head] = temp;
-	}
-}
-
 //extends nsmutabledata if necessary
-- (void)alignForBlockSize:(int)alignedBlockSize {
-	if (alignedBlockSize <= 0) return;
-    NSUInteger dataBlockSize = [self length];
-    if (dataBlockSize > NSUIntegerMax - (NSUInteger)alignedBlockSize)
-        [NSException raise:NSRangeException format:@"Data is too large to align"];
-	NSUInteger paddedDataBlockSize = 0;
-	
-	if (dataBlockSize <= (NSUInteger)alignedBlockSize)
-		paddedDataBlockSize = alignedBlockSize;
-	else
-		paddedDataBlockSize = alignedBlockSize * ((dataBlockSize + (alignedBlockSize-1)) / alignedBlockSize);
-
-	//if malloc was used on conventional architectures, nsdata should be smart enough not to have to allocate a new block
-	NSUInteger difference = paddedDataBlockSize - dataBlockSize;
-	if (difference > 0)
-		[self increaseLengthBy:difference];	
-}
 
 static BOOL TransformAESData(NSMutableData *data, NSData *key, NSData *iv, CCOperation operation) {
     if ([key length] != kCCKeySizeAES256 || [iv length] != kCCBlockSizeAES128) return NO;

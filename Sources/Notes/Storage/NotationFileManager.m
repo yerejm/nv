@@ -574,14 +574,6 @@ terminate:
 
 
 
-+ (OSStatus)trashFolderRef:(NVFileReference *)trashRef forChild:(NVFileReference *)childRef {
-    NSString *path = [[NSFileManager defaultManager] pathWithFSRef:childRef];
-    if (!path) return fnfErr;
-    NSError *error = nil;
-    NSURL *trash = [[NSFileManager defaultManager] URLForDirectory:NSTrashDirectory inDomain:NSUserDomainMask appropriateForURL:[NSURL fileURLWithPath:path] create:YES error:&error];
-    return NVURLGetFileReference((CFURLRef)trash, trashRef) ? noErr : (error ? NVStatusFromErrno((int)[error code]) : fnfErr);
-}
-
 - (OSStatus)moveFileToTrash:(NVFileReference *)ref forFilename:(NSString *)filename {
     UniChar chars[256];
     OSStatus error = [self refreshFileRefIfNecessary:ref withName:filename charsBuffer:chars];

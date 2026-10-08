@@ -218,10 +218,8 @@
 			<array>
 				<string>000000000000000000000010</string>
 				<string>00000000000000000000001A</string>
-				<string>000000000000000000000033</string>
 				<string>000000000000000000000034</string>
 				<string>000000000000000000000041</string>
-				<string>000000000000000000000046</string>
 				<string>000000000000000000000050</string>
 			</array>
 			<key>sourceTree</key>
@@ -649,17 +647,6 @@
 			<key>lastKnownFileType</key>
 			<string>sourcecode.c.objc</string>
 		</dict>
-		<key>000000000000000000000033</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>path</key>
-			<string>NSTextFinder_LastFind.m</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.c.objc</string>
-		</dict>
 		<key>000000000000000000000034</key>
 		<dict>
 			<key>isa</key>
@@ -868,17 +855,6 @@
 			<string>PBXFileReference</string>
 			<key>path</key>
 			<string>BookmarksController.m</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.c.objc</string>
-		</dict>
-		<key>000000000000000000000046</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>path</key>
-			<string>MultiTextFinder.m</string>
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
 			<key>lastKnownFileType</key>
@@ -1612,13 +1588,6 @@
 			<key>fileRef</key>
 			<string>000000000000000000000032</string>
 		</dict>
-		<key>000000000000000000000095</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-			<key>fileRef</key>
-			<string>000000000000000000000033</string>
-		</dict>
 		<key>000000000000000000000096</key>
 		<dict>
 			<key>isa</key>
@@ -1723,13 +1692,6 @@
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000045</string>
-		</dict>
-		<key>0000000000000000000000A5</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-			<key>fileRef</key>
-			<string>000000000000000000000046</string>
 		</dict>
 		<key>0000000000000000000000A6</key>
 		<dict>
@@ -1959,7 +1921,6 @@
 				<string>000000000000000000000092</string>
 				<string>000000000000000000000093</string>
 				<string>000000000000000000000094</string>
-				<string>000000000000000000000095</string>
 				<string>000000000000000000000096</string>
 				<string>000000000000000000000097</string>
 				<string>000000000000000000000098</string>
@@ -1975,7 +1936,6 @@
 				<string>0000000000000000000000A2</string>
 				<string>0000000000000000000000A3</string>
 				<string>0000000000000000000000A4</string>
-				<string>0000000000000000000000A5</string>
 				<string>0000000000000000000000A6</string>
 				<string>0000000000000000000000A7</string>
 				<string>0000000000000000000000A8</string>

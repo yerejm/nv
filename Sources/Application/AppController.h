@@ -32,9 +32,7 @@
 @class RBSplitSubview;
 
 @interface AppController : NSObject
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
 <NSMenuItemValidation, NSApplicationDelegate, NSToolbarDelegate, NSTableViewDelegate, NSWindowDelegate, NSTextFieldDelegate, NSTextViewDelegate, NSTokenFieldDelegate>
-#endif
 {
     IBOutlet DualField *field;
 	IBOutlet RBSplitSubview *splitSubview;

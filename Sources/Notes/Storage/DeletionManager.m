@@ -42,7 +42,6 @@
 }
 
 - (void)awakeFromNib {
-	//[window setMaxSize:NSMakeSize(371, 0)];
 	
 	NSAssert(notationController != nil, @"attempting to awake DeletionManager without a NotationController");	
 	

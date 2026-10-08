@@ -47,7 +47,6 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 	if ([scanner scanCharactersFromSet:whiteSet intoString:NULL]) {
 		if ([scanner scanLocation] > 0) {
 			[self deleteCharactersInRange:NSMakeRange(0, [scanner scanLocation])];
-			//NSLog(@"deleting %d chars", [scanner scanLocation]);
 		}
 	}
 }
@@ -67,10 +66,6 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 			if ([textLists count] > 0) {
 				NSUInteger level = [textLists count] - 1;
 				NSString *indent = [@"" stringByPaddingToLength:level withString: @"\t" startingAtIndex:0];
-				/* Covered by restyleTextToFont
-				 NSRange paraRange = NSMakeRange(paraStart, contentsEnd - paraStart);
-				 [self removeAttribute:NSParagraphStyleAttributeName range:paraRange];
-				 */
 				[self replaceCharactersInRange:NSMakeRange(paraStart, 1) withString:@" "]; /* Leading tab to space */
 				[self replaceCharactersInRange:NSMakeRange(paraStart, 0) withString:indent]; /* Changes length */
 				paraEnd += level;
@@ -440,43 +435,6 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 #define VLISTBUFCOUNT 32
 
 //string after apply an array of attributes
-+ (NSMutableAttributedString*)attributedStringWithString:(NSString*)text attributesByRange:(NSDictionary*)attributes font:(NSFont*)font {
-	id *keys, *values;
-	id keysBuffer[VLISTBUFCOUNT], valuesBuffer[VLISTBUFCOUNT];
-	NSInteger i, discreteRangeCount = [attributes count];
-	
-	NSMutableAttributedString *attributedString = [[NSAttributedString alloc] initWithString:text];
-	
-	keys = (discreteRangeCount <= VLISTBUFCOUNT) ? keysBuffer : (id*)malloc(sizeof(id) * discreteRangeCount);
-	values = (discreteRangeCount <= VLISTBUFCOUNT) ? valuesBuffer : (id*)malloc(sizeof(id) * discreteRangeCount);
-	
-	if (keys && values && attributes) {
-		CFDictionaryGetKeysAndValues((CFDictionaryRef)attributes, (void*)keys, (void*)values);
-		
-		NS_DURING	
-		for (i=0; i<discreteRangeCount; i++) {
-			
-			NSValue *rangeValue = keys[i];
-			NSDictionary *theseAttributes = values[i];
-			if (rangeValue && theseAttributes) {
-				//we ought to do font substitution here, too -- convertFont:(NSFont *)aFont toFace:, for those matching default font
-				[attributedString setAttributes:theseAttributes range:[rangeValue rangeValue]];
-			}
-		}
-		NS_HANDLER
-			NSLog(@"Error setting attributes for string. %@: %@", [localException name], [localException reason]);
-		NS_ENDHANDLER
-		
-		if (keys != keysBuffer)
-			free(keys);
-		if (values != valuesBuffer)
-			free(values);
-	} else {
-		NSLog(@"Could not get values or keys! Not applying any attributes.");
-	}
-	
-	return [attributedString autorelease];
-}
 #endif
 
 @end

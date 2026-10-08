@@ -109,17 +109,10 @@
 {
 	static long modToChar[4][2] =
 	{
-#ifdef __BIG_ENDIAN__
-	{ cmdKey, 		0x23180000 },
-	{ optionKey,	0x23250000 },
-	{ controlKey,	0x005E0000 },
-	{ shiftKey,		0x21e70000 }
-#else
 	{ cmdKey, 		0x00002318 },
 	{ optionKey,	0x00002325 },
 	{ controlKey,	0x0000005E },
 	{ shiftKey,		0x000021e7 }
-#endif
 	};
 	
 	NSString* str = nil;

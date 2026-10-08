@@ -28,7 +28,6 @@
 
 + (NSBezierPath *)bezierPathWithRoundRectInRect:(NSRect)aRect radius:(float)radius;
 
-+ (NSBezierPath *)bezierPathWithLayoutManager:(NSLayoutManager*)layoutManager characterRange:(NSRange)charRange atPoint:(NSPoint)point;
 
 @end
 

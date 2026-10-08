@@ -33,9 +33,6 @@
 	unsigned *removeIndicies;
 }
 
-- (void)unfilterLabels;
-- (void)filterLabelSet:(NSSet*)labelSet;
-- (void)recomputeListFromFilteredSet;
 
 - (NSArray*)labelTitlesPrefixedByString:(NSString*)prefixString indexOfSelectedItem:(NSInteger *)anIndex minusWordSet:(NSSet*)antiSet;
 

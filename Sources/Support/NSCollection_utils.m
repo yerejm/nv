@@ -127,16 +127,6 @@
 
 @implementation NSArray (NoteUtilities)
 
-- (NSArray*)objectsFromDictionariesForKey:(id)aKey {
-	NSUInteger i = 0;
-	NSMutableArray *objects = [NSMutableArray arrayWithCapacity:[self count]];
-	for (i=0; i<[self count]; i++) {
-		id obj = [[self objectAtIndex:i] objectForKey:aKey];
-		if (obj) [objects addObject:obj];
-	}
-	return objects;
-}
-
 - (NSUInteger)indexOfNoteWithUUIDBytes:(CFUUIDBytes*)bytes {
 	NSUInteger i;
     for (i=0; i<[self count]; i++) {
@@ -150,40 +140,12 @@
 }
 
 
-#if 0
-- (NSRange)nextRangeForString:(NSString*)string activeNote:(NoteObject*)startNote options:(unsigned)opts range:(NSRange)inRange {
-	unsigned noteCount = [self count];
-	NSRange range = NSMakeRange(NSNotFound, 0);
-	
-	if (count > 0) {
-		unsigned noteIndex, startIndex = [self indexOfObjectIdenticalTo:startNote];
-		BOOL reversed = opts | NSBackwardsSearch;
-		if (startIndex == NSNotFound) startIndex = reversed ? count - 1 : 0;
-		noteIndex = startIndex;
-		
-		unsigned quoteIndex = [string rangeOfString:@"\"" options:NSLiteralSearch].location;
-		NSArray *words = [string componentsSeparatedByString:quoteIndex == NSNotFound ? @" " : @"\""];
-		
-		do {
-			NSRange range = [[self objectAtIndex:noteIndex] nextRangeForWords:words options:opts range:inRange];
-			noteIndex = noteIndex + reversed ? -1 : 1;
-		} while (range.location == NSNotFound && (reversed ? noteIndex > 0 : noteIndex < count - 1));
-	}
-	
-	return range;
-}
-#endif
-
 - (void)addMenuItemsForURLsInNotes:(NSMenu*)urlsMenu {
 	//iterate over notes in array
 	//accumulate links as NSMenuItems, with separators between them and disabled items being names of notes
 	unsigned int i;
 	
-	//while ([urlsMenu numberOfItems]) {
-	//	[urlsMenu removeItemAtIndex:0];
-	//}
 	
-//	NSMenu *urlsMenu = [[NSMenu alloc] initWithTitle:@"URLs Menu"];
 	NSDictionary *blackAttrs = [NSDictionary dictionaryWithObjectsAndKeys:[NSFont menuFontOfSize:13.0f], NSFontAttributeName, nil];
 	NSDictionary *grayAttrs = [NSDictionary dictionaryWithObjectsAndKeys:[NSColor grayColor], NSForegroundColorAttributeName, 
 		[NSFont menuFontOfSize:13.0f], NSFontAttributeName, nil];
@@ -221,10 +183,7 @@
 			}
 		}
 	}
-//	if (![urlsMenu numberOfItems])
-//		[urlsMenu addItemWithTitle:@"No URLs Found" action:NULL keyEquivalent:@""];
 	
-//	return [urlsMenu autorelease];
 }
 
 @end

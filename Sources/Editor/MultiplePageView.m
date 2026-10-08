@@ -158,10 +158,7 @@ static float defaultTextPadding(void) {
 		
 		NSAssert(NO, @"MultiplePageView should not be drawing to screen");
         
-//        [marginColor set];
-//        NSRectFill(rect);
 
- //       [lineColor set];
         for (cnt = firstPage; cnt <= lastPage; cnt++) {
 	    // Draw boundary around the page, making sure it doesn't overlap the document area in terms of pixels
 	    NSRect docRect = NSInsetRect([self centerScanRect:[self documentRectForPageNumber:cnt]], -1.0, -1.0);
@@ -184,10 +181,8 @@ static float defaultTextPadding(void) {
 }
 
 - (NSInteger)printedPageCountForAttributedString:(NSAttributedString*)string {
-	//NSPrintInfo *info = printInfo;
 	
 	NSSize textSize = [self documentSizeInPage];
-//	NSTextContainer *textContainer = [[NSTextContainer alloc] initWithContainerSize:textSize];
 
 	NSTextView *textView = [[NSTextView alloc] initWithFrame:NSMakeRect(0, 0, textSize.width, textSize.height)];
 	[[textView textContainer] setWidthTracksTextView:YES];
@@ -197,7 +192,6 @@ static float defaultTextPadding(void) {
 	float containerHeight = [[textView layoutManager] usedRectForTextContainer:[textView textContainer]].size.height;
 	float pageHeight = textSize.height - defaultTextPadding() * 2.0; //[info paperSize].height - ([info topMargin] + [info bottomMargin]);
 	
-	//NSLog(@"text height: %g, page height: %g", containerHeight, pageHeight);
 	[textView release];
 	
 	return (NSInteger)ceil(containerHeight/pageHeight);
@@ -223,7 +217,6 @@ static float defaultTextPadding(void) {
 	[pagesView setPrintInfo:[NSPrintInfo sharedPrintInfo]];
 
 	// set up the text object NSTextStorage->NSLayoutManager->((NSTextContainer->NSTextView) * numberOfPages)
-	//textStorage = [[NSTextStorage alloc] initWithAttributedString:[abstractView textStorage]];
 	NSLayoutManager *lm = [[NSLayoutManager alloc] init];
 	[pageStorage addLayoutManager:lm];
 	[lm release]; // owned by the text storage

@@ -45,10 +45,6 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 @implementation NotationPrefs
 
 
-+ (int)appVersion {
-	return [[[[NSBundle mainBundle] infoDictionary] objectForKey:@"CFBundleVersion"] intValue];
-}
-
 - (id)init {
     if ([super init]) {
 		allowedTypes = NULL;
@@ -617,9 +613,6 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 
 - (void)setKeyLengthInBits:(unsigned int)newLength {
 	//can't do this because we don't have password string
-    /*keyLengthInBits = newLength;
-    preferencesChanged = YES;
-    */
 }
 
 + (NSString*)pathExtensionForFormat:(int)format {

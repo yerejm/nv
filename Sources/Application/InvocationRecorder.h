@@ -35,11 +35,3 @@
 - (id)prepareWithInvocationTarget:(id)aTarget;
 
 @end
-
-@interface ComparableInvocation : NSObject {
-	NSInvocation *innerInvocation;
-}
-- (NSInvocation*)invocation;
-- (void)invoke;
-
-@end

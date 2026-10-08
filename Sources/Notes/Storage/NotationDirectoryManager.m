@@ -110,7 +110,6 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 		[self performSelector:@selector(_configureDirEventStream) withObject:nil afterDelay:0];
 	}
 	
-	//NSLog(@"FSEventsCallback got a path change");
 	[NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(synchronizeNotesFromDirectory) object:nil];
 	[self performSelector:@selector(synchronizeNotesFromDirectory) withObject:nil afterDelay:0.0];
 }
@@ -155,16 +154,6 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 - (void)startFileNotifications {
 	eventStreamStarted = YES;
 	
-#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_5				
-	if (IsZeros(&noteDirSubscription, sizeof(FNSubscriptionRef))) {
-		
-		OSStatus err = FNSubscribe(&noteDirectoryRef, subscriptionCallback, self, kFNNoImplicitAllSubscription | kFNNotifyInBackground, &noteDirSubscription);
-		if (err != noErr) {
-			NSLog(@"Could not subscribe to changes in notes directory!");
-			//just check modification time of directory?
-		}
-	}
-#endif
 	[self _configureDirEventStream];
 }
 
@@ -172,50 +161,17 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 	
 	if (!eventStreamStarted) return;
 	
-#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_5
-	OSStatus err = noErr;
-    if (!IsZeros(&noteDirSubscription, sizeof(FNSubscriptionRef))) {
-		
-		if ((err = FNUnsubscribe(noteDirSubscription)) != noErr) {
-			NSLog(@"Could not unsubscribe from note changes callback: %d", err);
-		} else {
-			bzero(&noteDirSubscription, sizeof(FNSubscriptionRef));
-		}
-		
-		[NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(synchronizeNotesFromDirectory) object:nil];
-    }
-#endif
-
 	[self _destroyDirEventStream];
 
 	eventStreamStarted = NO;
 }
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_5
-void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refcon, FNSubscriptionRef subscription) {
-    //this only works for the Finder and perhaps the navigation manager right now
-	if (kFNDirectoryModifiedMessage == message) {
-		//NSLog(@"note directory changed");
-		if (refcon) {
-			[NSObject cancelPreviousPerformRequestsWithTarget:(id)refcon selector:@selector(synchronizeNotesFromDirectory) object:nil];
-			[(id)refcon performSelector:@selector(synchronizeNotesFromDirectory) withObject:nil afterDelay:0.0];
-		}
-		
-    } else {
-		NSLog(@"we received an FNSubscr. callback and the directory didn't actually change?");
-    }
-}
-#endif
-
 - (BOOL)synchronizeNotesFromDirectory {
     if ([self currentNoteStorageFormat] == SingleDatabaseFormat) {
-		//NSLog(@"%s: called when storage format is singledatabase", sel_getName(_cmd));
 		return NO;
 	}
 	
-    //NSDate *date = [NSDate date];
     if ([self _readFilesInDirectory]) {
-		//NSLog(@"read files in directory");
 		
 		directoryChangesFound = NO;
 		if (catEntriesCount && [allNotes count]) {
@@ -244,7 +200,6 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 			[self updateTitlePrefixConnections];
 		}
 		
-		//NSLog(@"file sync time: %g, ",[[NSDate date] timeIntervalSinceDate:date]);
 		return YES;
     }
     
@@ -264,7 +219,6 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
     if (!HFSUniNameArray) HFSUniNameArray = (HFSUniStr255 *)calloc(kMaxFileIteratorCount, sizeof(HFSUniStr255));
 	
     if ((status = NVOpenIterator(&noteDirectoryRef, kFSIterateFlat, &dirIterator)) == noErr) {
-		//catEntriesCount = 0;
 		
         do {
             // Grab a batch of source files to process from the source directory
@@ -344,9 +298,6 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 	UTCDateTime lastReadDate = fileModifiedDateOfNote(aNoteObject);
 	UTCDateTime *lastAttrModDate = attrsModifiedDateOfNote(aNoteObject);
 	
-	//should we always update the note's stored inode here regardless?
-//	NSLog(@"content mod: %d,%d,%d, attr mod: %d,%d,%d", catEntry->lastModified.highSeconds,catEntry->lastModified.lowSeconds,catEntry->lastModified.fraction,
-//		  catEntry->lastAttrModified.highSeconds,catEntry->lastAttrModified.lowSeconds,catEntry->lastAttrModified.fraction);
 	
 	updateForVerifiedExistingNote(deletionManager, aNoteObject);
 	
@@ -361,7 +312,6 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 			
 			if (![aNoteObject updateFromCatalogEntry:catEntry]) {
 				NSLog(@"file %@ was modified but could not be updated", catEntry->filename);
-				//return NO;
 			}
 			//do not call makeNoteDirty because use of the WAL in this instance would cause redundant disk activity
 			//in the event of a crash this change could still be recovered; 
@@ -422,7 +372,6 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 				lastInserted = j;
 				exitedEarly = YES;
 				
-				//NSLog(@"FILE DELETED (during): %@", filenameOfNote(currentNotes[i]));
 				[removedEntries addObject:currentNotes[i]];
 				break;
 			} else if (order == kCFCompareEqualTo) {			//if (A[i] == B[j])
@@ -435,7 +384,6 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 				break;
 			}
 			
-			//NSLog(@"FILE ADDED (during): %@", catEntriesPtrs[j]->filename);
 			if ([notationPrefs catalogEntryAllowed:catEntriesPtrs[j]])
 				[addedEntries addObject:[NSValue valueWithPointer:catEntriesPtrs[j]]];
 		}
@@ -448,7 +396,6 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 								kCFCompareCaseInsensitive) == kCFCompareGreaterThan) {
 				lastInserted = bSize;
 				
-				//NSLog(@"FILE DELETED (after): %@", filenameOfNote(currentNotes[i]));
 				[removedEntries addObject:currentNotes[i]];
 			}
 		}
@@ -457,7 +404,6 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
     
     for (j=lastInserted; j<bSize; j++) {
 		
-		//NSLog(@"FILE ADDED (after): %@", catEntriesPtrs[j]->filename);
 		if ([notationPrefs catalogEntryAllowed:catEntriesPtrs[j]])
 			[addedEntries addObject:[NSValue valueWithPointer:catEntriesPtrs[j]]];
     }
@@ -560,7 +506,6 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 	if ([hfsAddedEntries count] && [hfsRemovedEntries count]) {
 		[self processNotesAddedByContent:hfsAddedEntries removed:hfsRemovedEntries];
 	} else {
-		//NSLog(@"hfsAddedEntries: %@, hfsRemovedEntries: %@", hfsAddedEntries, hfsRemovedEntries);
 		if (![hfsRemovedEntries count]) {
 			for (i=0; i<[hfsAddedEntries count]; i++) {
 				NSLog(@"File _actually_ added: %@ (%s)", ((NoteCatalogEntry*)[[hfsAddedEntries objectAtIndex:i] pointerValue])->filename, sel_getName(_cmd));
@@ -600,8 +545,6 @@ void NotesDirFNSubscriptionProc(FNMessage message, OptionBits flags, void * refc
 			[addedDict setObject:[addedEntries objectAtIndex:i] forKey:sizeKey];
 		}
 	}
-//	NSLog(@"removedEntries: %@", removedEntries);
-//	NSLog(@"addedDict: %@", addedDict);
 	
 	for (i=0; i<[removedEntries count]; i++) {
 		NoteObject *removedObj = [removedEntries objectAtIndex:i];

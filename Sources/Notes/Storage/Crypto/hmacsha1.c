@@ -31,13 +31,8 @@
 /* SWAP does an endian swap on architectures that are little-endian,
 as SHA1 needs some data in a big-endian form.  */
 
-#if __BIG_ENDIAN__
-# define SWAP(n) (n)
-#else
 # define SWAP(n) \
 (((n) << 24) | (((n) & 0xff00) << 8) | (((n) >> 8) & 0xff00) | ((n) >> 24))
-//#define SWAP(n) CFSwapInt32(n)
-#endif
 
 #define BLOCKSIZE 4096
 #if BLOCKSIZE % 64 != 0

@@ -67,7 +67,6 @@ extern NSString *NotationPrefsDidChangeNotification;
 
 NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serviceName);
 
-+ (int)appVersion;
 + (NSMutableArray*)defaultTypeStringsForFormat:(int)formatID;
 + (NSMutableArray*)defaultPathExtensionsForFormat:(int)formatID;
 - (BOOL)preferencesChanged;

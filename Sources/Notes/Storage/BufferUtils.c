@@ -111,27 +111,19 @@ void modp_tolower_copy(char* dest, const char* str, size_t len) {
 		 * This is based on the algorithm by Paul Hsieh
 		 * http://www.azillionmonkeys.com/qed/asmexample.html
 		 */
-#if __LP64__ || NS_BUILD_32_LIKE_64
 		ebx = (0x7f7f7f7f7f7f7f7fllu & eax) + 0x2525252525252525llu;
 		ebx = (0x7f7f7f7f7f7f7f7fllu & ebx) + 0x1a1a1a1a1a1a1a1allu;
 		ebx = ((ebx & ~eax) >> 2)  & 0x2020202020202020llu;
-#else
-		ebx = (0x7f7f7f7fu & eax) + 0x25252525u;
-		ebx = (0x7f7f7f7fu & ebx) + 0x1a1a1a1au;
-		ebx = ((ebx & ~eax) >> 2)  & 0x20202020u;
-#endif
 		*d++ = eax + ebx;
 	}
 	
 	i = imax * sizeof(NSUInteger);
 	dest = (char*) d;
 	switch (leftover) {
-#if __LP64__ || NS_BUILD_32_LIKE_64
 		case 7: *dest++ = (char) gsToLowerMap[ustr[i++]];
 		case 6: *dest++ = (char) gsToLowerMap[ustr[i++]];
 		case 5: *dest++ = (char) gsToLowerMap[ustr[i++]];
 		case 4: *dest++ = (char) gsToLowerMap[ustr[i++]];			
-#endif
 		case 3: *dest++ = (char) gsToLowerMap[ustr[i++]];
 		case 2: *dest++ = (char) gsToLowerMap[ustr[i++]];
 		case 1: *dest++ = (char) gsToLowerMap[ustr[i]];
@@ -177,9 +169,7 @@ void replace_breaks_utf8(char *s, size_t up_to_len) {
 		if (c == 0x0009 || c == 0x000a || c == 0x000d || c == 0x0003 || c == 0x2029 || c == 0x2028 || c == 0x000c) {
 			//fill in the entire UTF sequence with spaces
 			char *cur_s = (char*)&s[lasti];
-//			printf("\n");
 			do {
-//				printf("%X ", (u_int32_t)*cur_s);
 				*cur_s = ' ';
 			} while (++cur_s < &s[i]);
 		}
@@ -218,11 +208,7 @@ int ContainsHighAscii(const void *s1, size_t n) {
 	register NSUInteger *intBuffer = (NSUInteger*)s1;
 	register NSUInteger i, integerCount = n/sizeof(NSUInteger);	
 	register NSUInteger pattern = 
-#if __LP64__ || NS_BUILD_32_LIKE_64
 	0x8080808080808080;
-#else
-	0x80808080;
-#endif
 	
 	for (i=0; i<integerCount; i++ ) {
 		if (pattern & intBuffer[i]) {
@@ -260,7 +246,6 @@ unsigned DumbWordCount(const void *s1, size_t len) {
 	while ((ptr = memchr(ptr + 1, 0x20, len))) {
 		count++;
 	}
-//	printf("bacon: %u\n", count);
 
 	return count;
 }
@@ -278,31 +263,6 @@ NSInteger genericSortContextLast(void* one, void* two, int (*context) (void*, vo
 void QuickSortBuffer(void **buffer, unsigned int objCount, int (*compar)(const void *, const void *)) {
 	qsort_r((void *)buffer, (size_t)objCount, sizeof(void*), compar, (int (*)(void *, const void *, const void *))genericSortContextFirst);
 }
-
-#if 0
-//this does not use the user's defined date styles
-const double dayInSeconds = 86400.0;
-enum {ThisDay = 0, NextDay, PriorDay};
-CFStringRef GetRelativeDateStringFromTimeAndLocaleInfo(CFAbsoluteTime time, CFStringRef *designations, char **months) {
-    static CFAbsoluteTime currentDay = 0.0;
-    if (currentDay == 0.0)
-	currentDay = ceil(CFAbsoluteTimeGetCurrent() / dayInSeconds) * dayInSeconds;
-
-    CFGregorianDate unitsDate = CFAbsoluteTimeGetGregorianDate(time, NULL);
-    
-    CFAbsoluteTime timeDay = ceil(time / dayInSeconds) * dayInSeconds;
-    if (timeDay == currentDay) {
-	return designations[ThisDay];
-    } else if (timeDay == currentDay + dayInSeconds) {
-	return designations[NextDay];
-    } else if (timeDay == currentDay - dayInSeconds) {
-	return designations[PriorDay];
-    }
-    
-    return CFStringCreateWithFormat(kCFAllocatorDefault, NULL, CFSTR("%s %u, %u  %u:%u %s"), 
-				    months[unitsDate.month], unitsDate.day, unitsDate.year, unitsDate.hour, unitsDate.minute, amppmStr);
-}
-#endif
 
 //these two methods manipulate notes' perdiskinfo groups, changing the buffers in place
 //on return, groupCount will be set to the number of perdiskinfo structs currently in the buffer
@@ -348,7 +308,6 @@ unsigned int SetPerDiskInfoWithTableIndex(UTCDateTime *dateTime, UInt32 *nodeID,
 			return i;
 		}
 	}
-//	printf("table ID %u not found; expanding to %u\n", (unsigned)diskIndex, (unsigned)(count + 1));
 	
 	//diskID not found in existing buffer; add a new entry one or both attributes
 	ResizeArray(perDiskGroups, count + 1, groupCount);

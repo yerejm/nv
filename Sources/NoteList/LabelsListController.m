@@ -52,30 +52,6 @@
 	[super dealloc];
 }
 
-- (void)unfilterLabels {
-    [filteredLabels setSet:allLabels];
-    
-    if ([filteredLabels count] > count) {
-		count = [filteredLabels count];
-		objects = (id*)realloc(objects, count * sizeof(id));
-    }
-    [filteredLabels getObjects:objects];
-    
-}
-
-- (void)filterLabelSet:(NSSet*)labelSet {
-	[filteredLabels minusSet:labelSet];
-}
-
-- (void)recomputeListFromFilteredSet {
-    //we can ignore our objectsArray here as we never use it and just sort directly on our C-array
-	[filteredLabels getObjects:objects];
-	count = [filteredLabels count];
-	
-	//cfstringcompare here; strings always sorted alphabetically
-	mergesort((void *)objects, (size_t)count, sizeof(id), (int (*)(const void *, const void *))compareLabel);
-}
-
 - (NSArray*)labelTitlesPrefixedByString:(NSString*)prefixString indexOfSelectedItem:(NSInteger *)anIndex minusWordSet:(NSSet*)antiSet {
 	
 	NSMutableArray *objs = [[[allLabels allObjects] mutableCopy] autorelease];
@@ -103,13 +79,6 @@
 	}
 	return titles;
 }
-
-#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_5
-static CGRect NSRectToCGRect(NSRect nsrect) {
-    union _ {NSRect ns; CGRect cg;};
-    return ((union _ *)&nsrect)->cg;
-}
-#endif
 
 - (void)invalidateCachedLabelImages {
 	//used when the list font size changes

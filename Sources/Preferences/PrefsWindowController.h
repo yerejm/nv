@@ -23,9 +23,7 @@
 @class GlobalPrefs;
 
 @interface PrefsWindowController : NSObject 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
 <NSFontChanging, NSWindowDelegate, NSToolbarDelegate>
-#endif
 {
     IBOutlet NSPopUpButton *folderLocationsMenuButton;
     IBOutlet NSTextField *bodyTextFontField;
@@ -61,6 +59,7 @@
     NSSlider *textWidthSlider;
     NSTextField *textWidthLabel;
     NSPopUpButton *colorSchemeButton;
+    NSButton *systemHighlightColorButton;
     NSView *writingView;
     NSView *desktopView;
     NSView *paneContainer;

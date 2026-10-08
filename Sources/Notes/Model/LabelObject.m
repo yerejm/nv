@@ -100,13 +100,6 @@ int compareLabel(const void *one, const void *two) {
 	return [labelName stringByAppendingFormat:@" (used by %@)", notes];
 }
 
-/*- (NSArray*)notesSharedWithSet:(NSSet*)filteredSet {
-    NSMutableSet *intersectedSet = [NSMutableSet setWithSet:notes]; 
-
-    [intersectedSet intersectSet:filteredSet];
-    
-    return [intersectedSet allObjects];
-}*/
 
 - (BOOL)isEqual:(id)anObject {
     return [lowercaseName isEqualToString:[anObject associativeIdentifier]];

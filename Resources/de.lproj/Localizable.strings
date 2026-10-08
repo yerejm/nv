@@ -666,3 +666,6 @@
 
 /* menu command to clear out custom external editors*/
 "Reset" = "Zurücksetzen";
+
+/* button that returns the search highlight to the system find color */
+"Use System Color" = "Systemfarbe verwenden";

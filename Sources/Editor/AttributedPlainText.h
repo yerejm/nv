@@ -38,7 +38,6 @@ extern NSString *NVHiddenBulletIndentAttributeName;
 - (NSString*)trimLeadingSyntheticTitle;
 
 #if SEPARATE_ATTRS
-+ (NSMutableAttributedString*)attributedStringWithString:(NSString*)text attributesByRange:(NSDictionary*)attributes font:(NSFont*)font;
 #endif
 - (void)santizeForeignStylesForImporting;
 - (void)addLinkAttributesForRange:(NSRange)changedRange;

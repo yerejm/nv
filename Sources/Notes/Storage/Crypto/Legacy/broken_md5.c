@@ -34,13 +34,6 @@ thebuf[i]=ntohl(thebuf[i]);
 
 
 
-    /*word32 t;
-    do {
-	t = (word32) ((unsigned) buf[3] << 8 | buf[2]) << 16 |
-	    ((unsigned) buf[1] << 8 | buf[0]);
-	*(word32 *) buf = t;
-	buf += 4;
-    } while (--longs);*/
 }
 
 /*

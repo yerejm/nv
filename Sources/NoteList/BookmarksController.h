@@ -68,9 +68,7 @@
 @class GlobalPrefs;
 
 @interface BookmarksController : NSObject 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
 <NSMenuItemValidation, NSWindowDelegate, NSTableViewDelegate, NSTableViewDataSource>
-#endif
 {
 	//model
 	NSMutableArray *bookmarks;
@@ -107,7 +105,6 @@
 - (BOOL)restoreNoteBookmark:(NoteBookmark*)bookmark inBackground:(BOOL)inBG;
 
 - (void)restoreBookmark:(id)sender;
-- (void)clearAllBookmarks:(id)sender;
 - (void)hideBookmarks:(id)sender;
 - (void)showBookmarks:(id)sender;
 

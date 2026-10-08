@@ -38,21 +38,6 @@
 	return path;
 }
 
-+ (NSBezierPath *)bezierPathWithLayoutManager:(NSLayoutManager*)layoutManager characterRange:(NSRange)charRange atPoint:(NSPoint)point {
-	NSRange range = [layoutManager glyphRangeForCharacterRange:charRange actualCharacterRange:NULL];
-	CGGlyph *glyphs = (CGGlyph *)malloc(sizeof(CGGlyph) * range.length);
-	[layoutManager getGlyphsInRange:range glyphs:glyphs properties:NULL characterIndexes:NULL bidiLevels:NULL];
-		
-	NSBezierPath *path = [NSBezierPath bezierPath];
-	[path moveToPoint:point];
-	[path appendBezierPathWithCGGlyphs:glyphs count:range.length inFont:[[layoutManager textStorage] font]];
-	
-	free(glyphs);
-	
-	return path;
-}
-
-
 @end
 
 

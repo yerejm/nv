@@ -98,7 +98,6 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	[[self noteAttributeColumnForIdentifier:NoteLabelsColumnString] setDataCell: [[[LabelColumnCell alloc] init] autorelease]];
 	[self _configureAttributesForCurrentLayout];
 	[self setAllowsColumnSelection:NO];
-	//[self setVerticalMotionCanBeginDrag:NO];
 	
 	BOOL hideHeader = (([columnsToDisplay count] == 1 && [columnsToDisplay containsObject:NoteTitleColumnString]) || [globalPrefs horizontalLayout]);
 	if (hideHeader) {
@@ -110,8 +109,6 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	[[self noteAttributeColumnForIdentifier:NoteTitleColumnString] setResizingMask:NSTableColumnUserResizingMask | NSTableColumnAutoresizingMask];
 	[self setColumnAutoresizingStyle:NSTableViewUniformColumnAutoresizingStyle];
 		
-	//[self setSortDirection:[globalPrefs tableIsReverseSorted] 
-	//		 inTableColumn:[self tableColumnWithIdentifier:[globalPrefs sortedTableColumnKey]]];
 	
     }
     return self;
@@ -262,7 +259,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 }
 
 - (void)drawGridInClipRect:(NSRect)clipRect {
-	//draw lines manually to avoid interfering with title-focusrings and selection highlighting on leopard+
+	//draw lines manually to avoid interfering with title-focusrings and selection highlighting
 	if (![self dataSource] || ![globalPrefs showNoteListGrid]) {
 		return;
 	}
@@ -278,18 +275,15 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	NSInteger editedRow = [self editedRow];
 	
 	NSRange rangeOfRows = [self rowsInRect:clipRect];
-	float yToDraw = -0.5;
-	float ySpacing = [self rowHeight] + [self intercellSpacing].height;
-	float rowRectOrigin = ySpacing * rangeOfRows.location;
 	
 	for (i = rangeOfRows.location; i < rangeOfRows.location + rangeOfRows.length; i++) {
 		//don't draw this line if it's next to a selected row, or the row after it is being edited
-		if (![set containsIndex:i] && editedRow != (NSInteger)(i+1)) {			
-			yToDraw = rowRectOrigin + ySpacing - 0.5;
+		if (![set containsIndex:i] && editedRow != (NSInteger)(i+1)) {
+			//table styles can inset rows from the top, so lines follow the actual row frames
+			CGFloat yToDraw = NSMaxY([self rectOfRow:i]) - 0.5;
 			[line moveToPoint:NSMakePoint(clipRect.origin.x, yToDraw)];
 			[line lineToPoint:NSMakePoint(clipRect.origin.x + clipRect.size.width, yToDraw)];
 		}
-		rowRectOrigin += ySpacing;
 	}
 	[line stroke];
 	[NSGraphicsContext restoreGraphicsState];
@@ -405,7 +399,6 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 			if (ctx.pivotRowWasEdge && (pivotIndex != 0 && pivotIndex != lastRow)) {
 				pivotIndex = labs(pivotIndex) < labs(pivotIndex - lastRow) ? 0 : lastRow;
 				ctx.verticalDistanceToPivotRow = 0;
-				//NSLog(@"edge pivot dislodged!");
 			}
 			//(scroll pivotNote by verticalDistanceToPivotRow from the top)
 			[self scrollRowToVisible:pivotIndex withVerticalOffset:ctx.verticalDistanceToPivotRow];	
@@ -497,7 +490,6 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	}
 
 	if (oldHeader != newHeader) {
-		//[headerView setTableView:newHeader ? self : nil];
 		[self setHeaderView:newHeader];
 		[self setCornerView:newHeader ? cornerView : nil];
 		[[self enclosingScrollView] tile];
@@ -605,7 +597,6 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 		sortDescending = !sortDescending;
     } else {
 		//user clicked new column
-		//sortDescending = NO;
 		viewMenusValid = NO;
 	}
 	
@@ -1084,18 +1075,6 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 		[editor setString: tagsInTitleColumn ? labelsOfNote(note) : titleOfNote(note)];
 		
 		NSRange range = NSMakeRange(0, [[editor string] length]);
-#if 0
-		NoteAttributeColumn *col = [self noteAttributeColumnForIdentifier:NoteTitleColumnString];
-		if (tagsInTitleColumn && dereferencingFunction(col) != unifiedCellSingleLineForNote) {
-			//the textview will comply! when editing tags, use a smaller font, right-aligned
-			[editor setAlignment:NSTextAlignmentRight range:range];
-			NSFont *smallerFont = [NSFont systemFontOfSize:[globalPrefs tableFontSize] - 1.0];
-			[editor setFont:smallerFont range:range];
-			NSMutableParagraphStyle *pstyle = [[[NSMutableParagraphStyle alloc] init] autorelease];
-			[pstyle setAlignment:NSTextAlignmentRight];
-			[editor setTypingAttributes:[NSDictionary dictionaryWithObjectsAndKeys:pstyle, NSParagraphStyleAttributeName, smallerFont, NSFontAttributeName, nil]];
-		}
-#endif
 		
 		if (flag) [editor setSelectedRange:range];
 	}	
@@ -1125,7 +1104,6 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 		
 		NSTextView *editor = [aNotification object];
 		
-		//NSLog(@"isAutocompleting: %d, wasDeleting: %d", isAutocompleting, wasDeleting);
 		if (!isAutocompleting && !wasDeleting) {
 			isAutocompleting = YES;
 			[editor complete:self];
@@ -1147,7 +1125,6 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 		rowOrigin.y += rowRect.size.height;
 		
 		if (!NSPointInRect(rowOrigin, visibleRect)) {
-			//NSLog(@"scrolling scrollin scrollin, get them doggies scrollin: %g", rowOrigin.y);
 			[self scrollRowToVisible:firstRowIndexBeforeSplitResize];
 		}
 	} else {

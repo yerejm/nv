@@ -85,7 +85,6 @@ static NSString *LastScrollOffsetKey = @"LastScrollOffset";
 static NSString *LastSearchStringKey = @"LastSearchString";
 static NSString *LastSelectedNoteUUIDBytesKey = @"LastSelectedNoteUUIDBytes";
 static NSString *LastSelectedPreferencesPaneKey = @"LastSelectedPrefsPane";
-//static NSString *PasteClipboardOnNewNoteKey = @"PasteClipboardOnNewNote";
 
 //these 4 strings manually localized
 NSString *NoteTitleColumnString = @"Title";
@@ -156,8 +155,7 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 			[NSNumber numberWithDouble:0.0], LastScrollOffsetKey,
 			@"General", LastSelectedPreferencesPaneKey, 
 			
-			NVArchiveObject(
-			 [NSFont fontWithName:@"Helvetica" size:12.0f]), NoteBodyFontKey,
+			NVArchiveObject([NSFont systemFontOfSize:[NSFont systemFontSize]]), NoteBodyFontKey,
 			
 			NVArchiveObject([NSColor textColor]), ForegroundTextColorKey,
 			NVArchiveObject([NSColor textBackgroundColor]), BackgroundTextColorKey,
@@ -382,11 +380,6 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
     return [defaults boolForKey:PastePreservesStyleKey];
 }
 
-- (void)setAutoFormatsDoneTag:(BOOL)value sender:(id)sender {
-    [defaults setBool:value forKey:AutoFormatsDoneTagKey];
-	
-	SEND_CALLBACKS();
-}
 - (BOOL)autoFormatsDoneTag {
 	return [defaults boolForKey:AutoFormatsDoneTagKey];
 }
@@ -396,19 +389,9 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 - (BOOL)autoFormatsListBullets {
 	return [defaults boolForKey:AutoFormatsListBulletsKey];
 }
-- (void)setAutoFormatsListBullets:(BOOL)value sender:(id)sender {
-	[defaults setBool:value forKey:AutoFormatsListBulletsKey];
-	
-	SEND_CALLBACKS();
-}
 
 - (BOOL)autoIndentsNewLines {
 	return [defaults boolForKey:AutoIndentsNewLinesKey];
-}
-- (void)setAutoIndentsNewLines:(BOOL)value sender:(id)sender {
-	[defaults setBool:value forKey:AutoIndentsNewLinesKey];
-	
-	SEND_CALLBACKS();
 }
 
 - (void)setLinksAutoSuggested:(BOOL)value sender:(id)sender {
@@ -450,14 +433,30 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 	}
 }
 
-- (NSColor*)searchTermHighlightColorRaw:(BOOL)isRaw {
+- (void)useSystemSearchTermHighlightColorFromSender:(id)sender {
+	[searchTermHighlightAttributes release];
+	searchTermHighlightAttributes = nil;
 	
+	[defaults removeObjectForKey:SearchTermHighlightColorKey];
+	
+	[self notifyCallbacksForSelector:@selector(setSearchTermHighlightColor:sender:) excludingSender:sender];
+}
+
+- (NSColor*)customSearchTermHighlightColor {
 	NSData *theData = [defaults dataForKey:SearchTermHighlightColorKey];
 	NSColor *color = theData ? (NSColor *)NVUnarchivePreference(theData) : nil;
 	//the former fixed pink default counts as unset so that existing installs also move to the system color
 	NSColor *formerDefault = [NSColor colorWithCalibratedRed:0.945 green:0.702 blue:0.702 alpha:1.0f];
-	if (!color || ColorsEqualWith8BitChannels(color, formerDefault))
-		return [NSColor findHighlightColor];
+	return color && !ColorsEqualWith8BitChannels(color, formerDefault) ? color : nil;
+}
+
+- (BOOL)searchTermHighlightColorIsCustom {
+	return [self customSearchTermHighlightColor] != nil;
+}
+
+- (NSColor*)searchTermHighlightColorRaw:(BOOL)isRaw {
+	NSColor *color = [self customSearchTermHighlightColor];
+	if (!color) return [NSColor findHighlightColor];
 	if (isRaw) return color;
 	
 	//nslayoutmanager temporary attributes don't seem to like alpha components, so synthesize translucency using the bg color
@@ -597,7 +596,6 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 				[attrs setObject:pStyle forKey:NSParagraphStyleAttributeName];
 		}
 	   /*NSTextWritingDirectionEmbedding*/
-		//[NSArray arrayWithObjects:[NSNumber numberWithInt:0], [NSNumber numberWithInt:0], nil], @"NSWritingDirection", //for auto-LTR-RTL text
 		noteBodyAttributes = attrs;
 	}
 	return noteBodyAttributes;
@@ -630,7 +628,6 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 		while ((textTabToBeRemoved = [enumerator nextObject])) {
 			[noteBodyParagraphStyle removeTabStop:textTabToBeRemoved];
 		}
-		//[paragraphStyle setHeadIndent:sizeOfTab]; //for soft-indents, this would probably have to be applied contextually, and heaven help us for soft tabs
 
 		[noteBodyParagraphStyle setDefaultTabInterval:sizeOfTab];
 	}
@@ -936,18 +933,6 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
     if (IsZeros(ref, sizeof(*ref)) && ![[self aliasDataForDefaultDirectory] fsRefAsAlias:ref]) return nil;
     NSString *path = [[NSFileManager defaultManager] pathWithFSRef:ref];
     return path ? [[NSFileManager defaultManager] displayNameAtPath:path] : nil;
-}
-
-- (NSString *)humanViewablePathForDefaultDirectory {
-    NVFileReference ref;
-    if (![[self aliasDataForDefaultDirectory] fsRefAsAlias:&ref]) return nil;
-    NSString *path = [[NSFileManager defaultManager] pathWithFSRef:&ref];
-    NSMutableArray *names = [NSMutableArray array];
-    while ([path length] > 1) {
-        [names insertObject:[[NSFileManager defaultManager] displayNameAtPath:path] atIndex:0];
-        path = [path stringByDeletingLastPathComponent];
-    }
-    return [names componentsJoinedByString:@" : "];
 }
 
 - (void)setBlorImportAttempted:(BOOL)value {

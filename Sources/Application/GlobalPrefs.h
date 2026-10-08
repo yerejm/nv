@@ -130,14 +130,11 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 - (void)setPastePreservesStyle:(BOOL)value sender:(id)sender;
 - (BOOL)pastePreservesStyle;
 
-- (void)setAutoFormatsDoneTag:(BOOL)value sender:(id)sender;
 - (BOOL)autoFormatsDoneTag;
 
 - (BOOL)autoIndentsNewLines;
-- (void)setAutoIndentsNewLines:(BOOL)value sender:(id)sender;
 
 - (BOOL)autoFormatsListBullets;
-- (void)setAutoFormatsListBullets:(BOOL)value sender:(id)sender;
 
 - (void)setLinksAutoSuggested:(BOOL)value sender:(id)sender;
 - (BOOL)linksAutoSuggested;
@@ -148,6 +145,8 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 - (void)setShouldHighlightSearchTerms:(BOOL)shouldHighlight sender:(id)sender;
 - (BOOL)highlightSearchTerms;
 - (void)setSearchTermHighlightColor:(NSColor*)color sender:(id)sender;
+- (void)useSystemSearchTermHighlightColorFromSender:(id)sender;
+- (BOOL)searchTermHighlightColorIsCustom;
 - (NSDictionary*)searchTermHighlightAttributes;
 - (NSColor*)searchTermHighlightColorRaw:(BOOL)isRaw;
 
@@ -206,7 +205,6 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 - (NSData*)aliasDataForDefaultDirectory;
 
 - (NSString*)displayNameForDefaultDirectoryWithFSRef:(NVFileReference*)fsRef;
-- (NSString*)humanViewablePathForDefaultDirectory;
 
 - (void)setBlorImportAttempted:(BOOL)value;
 - (BOOL)triedToImportBlor;

@@ -45,7 +45,6 @@
 - (void)incrementLSN;
 - (BOOL)youngerThanLogObject:(id<SynchronizedNote>)obj;
 
-//- (void)removeKey:(NSString*)aKey forService:(NSString*)serviceName;
 - (void)removeAllSyncMDForService:(NSString*)serviceName;
 
 @end

@@ -420,7 +420,6 @@
 		
 		//need to show PW picker dialog after this ->
 		
-		//[picker showAroundWindow:[view window] resultDelegate:self];
 		
 		[postStorageFormatInvocation release];
 		

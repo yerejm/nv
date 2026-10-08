@@ -33,9 +33,7 @@
 @end
 
 @interface NotationPrefsViewController : NSObject 
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
 <NSTableViewDelegate, NSTableViewDataSource>
-#endif
 {
     IBOutlet NSTableView *allowedExtensionsTable;
     IBOutlet NSTableView *allowedTypesTable;

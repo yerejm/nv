@@ -23,14 +23,14 @@
 
 - (id)initWithFrame:(NSRect)frameRect {
 	if ((self = [super initWithFrame:frameRect]) != nil) {
-		// Add initialization code here
-		
 		lastNotesNumber = -1;
 	}
 	return self;
 }
 
 - (void)awakeFromNib {
+	//the nib archives Helvetica for this label
+	[labelText setFont:[NSFont systemFontOfSize:[[labelText font] pointSize]]];
 	outletObjectAwoke(self);
 }
 
@@ -45,7 +45,7 @@
 		if (notesNumber > 1) {
 			statusString = NVFormatCount(NSLocalizedString(@"%d Notes Selected",nil), notesNumber);
 		} else {
-			statusString = NSLocalizedString(@"No Note Selected",nil); //\nPress return to create one.";
+			statusString = NSLocalizedString(@"No Note Selected",nil);
 		}
 		
 		[labelText setStringValue:statusString];

@@ -162,40 +162,6 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 	return titles;
 }
 
-- (CFArrayRef)copyRangesOfWordsInString:(NSString*)findString inRange:(NSRange)limitRange {
-	CFStringRef quoteStr = CFSTR("\"");
-	CFRange quoteRange = CFStringFind((CFStringRef)findString, quoteStr, 0);
-	CFArrayRef terms = CFStringCreateArrayBySeparatingStrings(NULL, (CFStringRef)findString, 
-															  quoteRange.location == kCFNotFound ? CFSTR(" ") : quoteStr);
-	if (terms) {
-		CFIndex termIndex;
-		CFMutableArrayRef allRanges = NULL;
-		
-		for (termIndex = 0; termIndex < CFArrayGetCount(terms); termIndex++) {
-			CFStringRef term = CFArrayGetValueAtIndex(terms, termIndex);
-			if (CFStringGetLength(term) > 0) {
-				CFArrayRef ranges = CFStringCreateArrayWithFindResults(NULL, (CFStringRef)self, term, CFRangeMake(limitRange.location,limitRange.length), kCFCompareCaseInsensitive);
-				
-				if (ranges) {
-					if (!allRanges) {
-						//to make sure we get the right cfrange callbacks
-						allRanges = CFArrayCreateMutableCopy(NULL, 0, ranges);
-					} else {
-						CFArrayAppendArray(allRanges, ranges, CFRangeMake(0, CFArrayGetCount(ranges)));
-					}
-					CFRelease(ranges);
-				}
-			}
-		}
-		//should sort them all now by location
-		//CFArraySortValues(allRanges, CFRangeMake(0, CFArrayGetCount(allRanges)), <#CFComparatorFunction comparator#>,<#void * context#>);
-		CFRelease(terms);
-		return allRanges;
-	}
-	
-	return NULL;
-}
-
 + (NSString*)customPasteboardTypeOfCode:(int)code {
 	//returns something like CorePasteboardFlavorType 0x4D5A0003
 	return [NSString stringWithFormat:@"CorePasteboardFlavorType 0x%X", code];
@@ -219,16 +185,6 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 	[self hasPrefix:@"@import "] || [self hasPrefix:@"<?php"] || [self hasPrefix:@"bplist0"]; 
 	
 }
-
-#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_5
-- (NSString*)stringByReplacingOccurrencesOfString:(NSString*)stringToReplace withString:(NSString*)replacementString {
-	//NSLog(@"NSString_NV: %s", sel_getName(_cmd));
-	NSMutableString *sanitizedName = [[self mutableCopy] autorelease];
-	[sanitizedName replaceOccurrencesOfString:stringToReplace withString:replacementString options:NSLiteralSearch range:NSMakeRange(0, [sanitizedName length])];
-
-	return sanitizedName;
-}
-#endif
 
 - (NSString*)fourCharTypeString {
 	if ([[self dataUsingEncoding:NSMacOSRomanStringEncoding allowLossyConversion:YES] length] >= 4) {
@@ -435,7 +391,6 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 		return cstringBuffer;
 	} else {
 		//will be true on Snow Leopard for empty strings
-		//NSLog(@"found string that should have been 7 bit, but (apparently) is not.");
 	}
 	
 	return NULL;
@@ -537,37 +492,6 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 
 
 @implementation NSMutableString (NV)
-
-- (void)replaceTabsWithSpacesOfWidth:(int)tabWidth {
-	NSAssert(tabWidth < 50 && tabWidth > 0, @"that's a ridiculous tab width");
-	
-	@try {
-		NSRange tabRange, nextRange = NSMakeRange(0, [self length]);
-		while ((tabRange = [self rangeOfString:@"\t" options:NSLiteralSearch range:nextRange]).location != NSNotFound) {
-			
-			int numberOfSpacesPerTab = tabWidth;
-			NSInteger locationOnLine = tabRange.location - [self lineRangeForRange:tabRange].location;
-			if (numberOfSpacesPerTab != 0) {
-				int numberOfSpacesLess = locationOnLine % numberOfSpacesPerTab;
-				numberOfSpacesPerTab = numberOfSpacesPerTab - numberOfSpacesLess;
-			}
-			//NSLog(@"loc on line: %d, numberOfSpacesPerTab: %d", locationOnLine, numberOfSpacesPerTab);
-			
-			NSMutableString *spacesString = [[NSMutableString alloc] initWithCapacity:numberOfSpacesPerTab];
-			while (numberOfSpacesPerTab-- > 0) {
-				[spacesString appendString:@" "];
-			}
-			
-			[self replaceCharactersInRange:tabRange withString:spacesString];
-			[spacesString release];
-			
-			NSUInteger rangeLoc = MIN((tabRange.location + numberOfSpacesPerTab), [self length]);
-			nextRange = NSMakeRange(rangeLoc, [self length] - rangeLoc);
-		}
-	} @catch (NSException *e) {
-		NSLog(@"%s got an exception: %@", sel_getName(_cmd), [e reason]);
-	}
-}
 
 + (NSMutableString*)newShortLivedStringFromFile:(NSString*)filename {
 	NSStringEncoding anEncoding = NSMacOSRomanStringEncoding; //won't use this, doesn't matter
@@ -690,12 +614,6 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 	return charSet;
 	
 }
-
-#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_5
-+ (id)newlineCharacterSet {
-	return [NSCharacterSet characterSetWithCharactersInString:[NSString stringWithFormat:@"%C%C%C",0x000A,0x000D,0x0085]];
-}
-#endif
 
 @end
 

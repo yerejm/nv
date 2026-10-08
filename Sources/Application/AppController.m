@@ -51,6 +51,22 @@
 - (BOOL)mouseDownCanMoveWindow { return YES; }
 @end
 
+//the nib archives Lucida Grande in the styled Format menu titles, so each keeps its style in the menu font
+static void NVUseMenuFontForStyledTitles(NSMenu *menu) {
+    NSFontManager *fontManager = [NSFontManager sharedFontManager];
+    for (NSMenuItem *item in menu.itemArray) {
+        if (item.submenu) NVUseMenuFontForStyledTitles(item.submenu);
+        if (!item.attributedTitle.length) continue;
+        NSMutableAttributedString *title = [[item.attributedTitle mutableCopy] autorelease];
+        [title removeAttribute:@"NSOriginalFont" range:NSMakeRange(0, title.length)];
+        [item.attributedTitle enumerateAttribute:NSFontAttributeName inRange:NSMakeRange(0, title.length) options:0 usingBlock:^(NSFont *font, NSRange range, BOOL *stop) {
+            NSFontTraitMask traits = font ? [fontManager traitsOfFont:font] & (NSBoldFontMask | NSItalicFontMask) : 0;
+            [title addAttribute:NSFontAttributeName value:[fontManager convertFont:[NSFont menuFontOfSize:0] toHaveTrait:traits] range:range];
+        }];
+        item.attributedTitle = title;
+    }
+}
+
 @implementation AppController
 
 //an instance of this class is designated in the nib as the delegate of the window, nstextfield and two nstextviews
@@ -75,6 +91,7 @@ static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
 
 - (void)awakeFromNib {
     [textView configureFindMenu:NSApp.mainMenu];
+    NVUseMenuFontForStyledTitles(NSApp.mainMenu);
 	prefsController = [GlobalPrefs defaultPrefs];
 	
 
@@ -98,7 +115,6 @@ static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
 	[toolbar setAllowsUserCustomization:NO];
 	[toolbar setAutosavesConfiguration:NO];
 	[toolbar setDisplayMode:NSToolbarDisplayModeIconOnly];
-//	[toolbar setSizeMode:NSToolbarSizeModeRegular];
 
 	[toolbar setVisible:![[NSUserDefaults standardUserDefaults] boolForKey:@"ToolbarHidden"]];
 	[toolbar setDelegate:self];
@@ -137,8 +153,6 @@ static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
 
 	
 
-	//[window makeKeyAndOrderFront:self];
-	//[self setEmptyViewState:YES];
 	
 	outletObjectAwoke(self);
 }
@@ -147,7 +161,6 @@ static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
 - (void)setupViewsAfterAppAwakened {
 	static BOOL awakenedViews = NO;
 	if (!awakenedViews) {
-		//NSLog(@"all (hopefully relevant) views awakend!");
 		if ([[NSUserDefaults standardUserDefaults] boolForKey:NVFullScreenSwitchedLayoutKey]) {
 			//the app last quit while full screen was showing its own layout instead of the user's
 			[prefsController setHorizontalLayout:NO sender:self];
@@ -349,7 +362,6 @@ static void *NVEffectiveAppearanceContext = &NVEffectiveAppearanceContext;
 	[newNotation release];
 	
 	NSLog(@"load time: %g, ",[[NSDate date] timeIntervalSinceDate:before]);
-	//	NSLog(@"version: %s", PRODUCT_NAME);
 	
 	//import old database(s) here if necessary
 	[AlienNoteImporter importBlorOrHelpFilesIfNecessaryIntoNotation:newNotation];
@@ -1105,7 +1117,6 @@ terminateApp:
 		}
 		
 		if ((command == @selector(insertTab:) || command == @selector(insertTabIgnoringFieldEditor:))) {
-			//[self setEmptyViewState:NO];
 			
 			if (![[aTextView string] length]) {
 				return YES;
@@ -1354,7 +1365,6 @@ terminateApp:
 	
 	if (allowMultipleSelection != [notesTableView allowsMultipleSelection]) {
 		//we may need to hack some hidden NSTableView instance variables to improve mid-drag flags-changing
-		//NSLog(@"set allows mult: %d", allowMultipleSelection);
 		
 		[notesTableView setAllowsMultipleSelection:allowMultipleSelection];
 		
@@ -1372,8 +1382,6 @@ terminateApp:
 
 - (void)setTableAllowsMultipleSelection {
 	[notesTableView setAllowsMultipleSelection:YES];
-	//NSLog(@"allow mult: %d", [notesTableView allowsMultipleSelection]);
-	//[textView setNeedsDisplay:YES];
 }
 
 - (void)tableViewSelectionDidChange:(NSNotification *)aNotification {
@@ -1429,12 +1437,6 @@ terminateApp:
 			return;
 		}
 	} else { //tags
-#if 0
-		if (numberSelected == 1)
-			[notationController filterNotesFromLabelAtIndex:selectedRow];
-		else if (numberSelected > 1)
-			[notationController filterNotesFromLabelIndexSet:[table selectedRowIndexes]];		
-#endif
 	}
 	
 	if (!isFilteringFromTyping) {
@@ -1510,13 +1512,8 @@ terminateApp:
 			noteSelectionRange = NSMakeRange(0,0);
 		}
 		
-		//[textView beginInhibitingUpdates];
-		//scroll to the top first in the old note body if necessary, because the text will (or really ought to) have already been laid-out
-		//if ([textView visibleRect].origin.y > 0)
-		//	[textView scrollRangeToVisible:NSMakeRange(0,0)];
 		
 		if (![textView didRenderFully]) { 
-			//NSLog(@"redisplay because last note was too long to finish before we switched");
 			[textView setNeedsDisplayInRect:[textView visibleRect] avoidAdditionalLayout:YES];
 		}
 		
@@ -1526,7 +1523,6 @@ terminateApp:
         if ([prefsController rightToLeftEditing]) [textView updateWritingDirection];
         [self updateWordCount];
 		
-		//[textView setAutomaticallySelectedRange:NSMakeRange(0,0)];
 		
 		//highlight terms--delay this, too
 		if ((unsigned)noteIndex != [notationController preferredSelectedNoteIndex])
@@ -1541,8 +1537,6 @@ terminateApp:
 		[textView setAutomaticallySelectedRange:noteSelectionRange];
 		[textView scrollRangeToVisible:noteSelectionRange];
 		
-		//NSString *words = noteIndex != [notationController preferredSelectedNoteIndex] ? typedString : nil;
-		//[textView setFutureSelectionRange:noteSelectionRange highlightingWords:words];
 		return YES;
 	}
 	
@@ -1568,8 +1562,6 @@ terminateApp:
 
 - (void)textDidEndEditing:(NSNotification *)aNotification {
 	if ([aNotification object] == textView) {
-		//save last selection range for currentNote?
-		//[currentNote setSelectedRange:[textView selectedRange]];
 		
 		//we need to set this here as we could return to searching before changing notes
 		//and the next time the note would change would be when searching had triggered it
@@ -1930,7 +1922,6 @@ terminateApp:
 		//deal with one notation at a time
 
 		[notesTableView reloadData];
-		//[notesTableView noteNumberOfRowsChanged];
 		
 		if (!isFilteringFromTyping) {
 			if (savedSelectedNotes) {

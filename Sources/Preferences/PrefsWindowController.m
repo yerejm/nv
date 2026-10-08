@@ -109,11 +109,9 @@
 	NSFontManager *fontMan = [NSFontManager sharedFontManager];
 	NSFont *panelFont = [fontMan convertFont:[fontMan selectedFont]];
 	
-	if (/*![fontMan fontNamed:[panelFont fontName] hasTraits:NSUnboldFontMask | NSUnitalicFontMask]*/
-	([fontMan traitsOfFont:panelFont] & NSItalicFontMask) == NSItalicFontMask ||
+	if (([fontMan traitsOfFont:panelFont] & NSItalicFontMask) == NSItalicFontMask ||
 	([fontMan traitsOfFont:panelFont] & NSBoldFontMask) == NSBoldFontMask) {
 		//revert the font--using a bold or italic variant as the default could cause some notes to lose styles
-	//	NSLog(@"traits: %u", [fontMan traitsOfFont:panelFont]); 
 		
 		[self performSelector:@selector(changeBodyFont:) withObject:sender afterDelay:0.0];
 		NSBeep();
@@ -140,7 +138,7 @@
 	NSDictionary *attributes = [NSDictionary dictionaryWithObjectsAndKeys:font ? font : [NSFont systemFontOfSize:12.0],
 		NSFontAttributeName, [NSColor textColor], NSForegroundColorAttributeName, centerStyle, NSParagraphStyleAttributeName, nil];
 
-	NSString *fontNameAndSize = font ? [NSString stringWithFormat:@"%@ %g", [font fontName], [font pointSize]] : @"Unknown";
+	NSString *fontNameAndSize = font ? [NSString stringWithFormat:@"%@ %g", [font displayName], [font pointSize]] : @"Unknown";
 	NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:fontNameAndSize attributes:attributes];
 	
 	[[bodyTextFontField cell] setAttributedStringValue:attributedString];
@@ -207,6 +205,33 @@
 }
 - (IBAction)changedSearchHighlightColorWell:(id)sender {
 	[prefsController setSearchTermHighlightColor:[searchHighlightColorWell color] sender:self];
+	[systemHighlightColorButton setEnabled:YES];
+}
+- (void)useSystemSearchHighlightColor:(id)sender {
+	[prefsController useSystemSearchTermHighlightColorFromSender:self];
+	[searchHighlightColorWell setColor:[prefsController searchTermHighlightColorRaw:YES]];
+	[systemHighlightColorButton setEnabled:NO];
+}
+//the pane comes from a nib shared by every localization, so the button is added beside the color well here
+- (void)addSystemHighlightColorButton {
+	systemHighlightColorButton = [NSButton buttonWithTitle:NSLocalizedString(@"Use System Color", @"button that returns the search highlight to the system find color")
+													target:self action:@selector(useSystemSearchHighlightColor:)];
+	[systemHighlightColorButton setControlSize:NSControlSizeSmall];
+	[systemHighlightColorButton setFont:[NSFont systemFontOfSize:[NSFont systemFontSizeForControlSize:NSControlSizeSmall]]];
+	[systemHighlightColorButton sizeToFit];
+	NSRect wellFrame = [searchHighlightColorWell frame];
+	NSRect buttonFrame = [systemHighlightColorButton frame];
+	buttonFrame.origin = NSMakePoint(NSMaxX(wellFrame) + 8, round(NSMidY(wellFrame) - NSHeight(buttonFrame) / 2));
+	[systemHighlightColorButton setFrame:buttonFrame];
+	[systemHighlightColorButton setEnabled:[prefsController searchTermHighlightColorIsCustom]];
+	[[searchHighlightColorWell superview] addSubview:systemHighlightColorButton];
+	
+	//widening only makes room for the button; the font field would otherwise stretch under its Set button
+	NSRect paneFrame = [fontsColorsView frame];
+	paneFrame.size.width = MAX(NSWidth(paneFrame), NSMaxX(buttonFrame) + 20);
+	[fontsColorsView setAutoresizesSubviews:NO];
+	[fontsColorsView setFrame:paneFrame];
+	[fontsColorsView setAutoresizesSubviews:YES];
 }
 - (IBAction)changedHighlightSearchTerms:(id)sender {
 	[prefsController setShouldHighlightSearchTerms:[highlightSearchTermsButton state] sender:self];
@@ -431,7 +456,6 @@
 	NSString *localizedTitle = [[NSBundle mainBundle] localizedStringForKey:name value:@"" table:nil];
     [item setPaletteLabel:localizedTitle];
     [item setLabel:localizedTitle];
-    //[item setToolTip:@"General settings: appearance and behavior"];
     NSString *symbol = @{@"General": @"gearshape", @"Notes": @"folder", @"Editing": @"pencil", @"Fonts & Colors": @"textformat",
                          @"Display": @"rectangle.split.2x1", @"Writing": @"text.cursor", @"Desktop": @"menubar.dock.rectangle"}[name];
     [item setImage:[NSImage imageWithSystemSymbolName:symbol accessibilityDescription:localizedTitle]];
@@ -554,6 +578,7 @@
     [self previewNoteBodyFont];
 	[appShortcutField setStringValue:[[prefsController appActivationKeyCombo] description]];
 	[searchHighlightColorWell setColor:[prefsController searchTermHighlightColorRaw:YES]];
+	[self addSystemHighlightColorButton];
 	[highlightSearchTermsButton setState:[prefsController highlightSearchTerms]];
 	[foregroundColorWell setColor:[prefsController foregroundTextColor]];
 	[backgroundColorWell setColor:[prefsController backgroundTextColor]];

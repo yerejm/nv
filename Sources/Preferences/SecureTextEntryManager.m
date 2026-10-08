@@ -79,7 +79,6 @@ static SecureTextEntryManager *sharedInstance = nil;
 		//could also assert -[NSThread isMainThread] here
 		
 		_calledSecureEventInput = YES;
-		//NSLog(@"%s: enabled secure input", sel_getName(_cmd));
 		
 		EnableSecureEventInput();
 	}
@@ -90,7 +89,6 @@ static SecureTextEntryManager *sharedInstance = nil;
 		
 		DisableSecureEventInput();
 		
-		//NSLog(@"%s: disabled secure input", sel_getName(_cmd));
 		_calledSecureEventInput = NO;
 		
 		if (IsSecureEventInputEnabled())

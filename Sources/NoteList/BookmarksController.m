@@ -152,7 +152,6 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 												   name:NSTableViewSelectionDidChangeNotification object:bookmarksTableView];
 	[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(tableViewSelectionDidChange:) 
 												 name:NSTableViewSelectionIsChangingNotification object:bookmarksTableView];
-//	[window setFloatingPanel:YES];
 	[window setDelegate:self];
 	[bookmarksTableView setDelegate:self];
 	[bookmarksTableView setTarget:self];
@@ -312,7 +311,6 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 		//communicate with revealer here--tell it to search for this string and highlight note
 		isRestoringSearch = YES;
 		
-		//BOOL inBG = ([[window currentEvent] modifierFlags] & NSEventModifierFlagCommand) == 0;
 		[appController bookmarksController:self restoreNoteBookmark:bookmark inBackground:inBG];
 		[self selectBookmarkInTableView:bookmark];
 		
@@ -494,15 +492,6 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 
 	//highlight searches as appropriate while the window is open
 	//selecting a search restores it
-}
-
-- (void)clearAllBookmarks:(id)sender {
-	if (NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"Remove all bookmarks?",@"alert title when clearing bookmarks"), NSLocalizedString(@"You cannot undo this action.",nil), NSLocalizedString(@"Remove All Bookmarks",nil), NSLocalizedString(@"Cancel",nil), NULL) == NSAlertFirstButtonReturn) {
-
-		[bookmarks removeAllObjects];
-	
-		[self updateBookmarksUI];
-	}
 }
 
 - (void)addBookmark:(id)sender {

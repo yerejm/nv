@@ -65,10 +65,6 @@
 		sortedCatalogEntries = NULL;
 		catEntriesCount = totalCatEntriesCount = 0;
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_5
-		subscriptionCallback = NewFNSubscriptionUPP(NotesDirFNSubscriptionProc);
-		bzero(&noteDirSubscription, sizeof(FNSubscriptionRef));
-#endif
 		bzero(&noteDatabaseRef, sizeof(NVFileReference));
 		bzero(&noteDirectoryRef, sizeof(NVFileReference));
 		volumeSupportsExchangeObjects = -1;
@@ -344,7 +340,6 @@ returnResult:
 						//in this case the WAL should be destroyed, re-initialized, and the recovered (and de-duped) notes added back
 						NSLog(@"Unable to flush recovered notes back to database");
 						databaseCouldNotBeFlushed = YES;
-						//goto bail;
 					}
 				}
 				//is there a way that recoverNextObject could fail that would indicate a failure with the file as opposed to simple non-recovery?
@@ -436,18 +431,14 @@ bail:
 			} else if (existingNoteIndex != NSNotFound) {
 				
 				if ([[allNotes objectAtIndex:existingNoteIndex] youngerThanLogObject:obj]) {
-					// NSLog(@"replacing old note with new: %@", [[(NoteObject*)obj contentString] string]);
 					
 					[(NoteObject*)obj setDelegate:self];
 					[(NoteObject*)obj updateLabelConnectionsAfterDecoding];
 					[allNotes replaceObjectAtIndex:existingNoteIndex withObject:obj];
 					notesChanged = YES;
 				} else {
-					// NSLog(@"note %@ is not being replaced because its LSN is %u, while the old note's LSN is %u", 
-					//  [[(NoteObject*)obj contentString] string], [(NoteObject*)obj logSequenceNumber], [[allNotes objectAtIndex:existingNoteIndex] logSequenceNumber]);
 				}
 			} else {
-				//NSLog(@"Found new note: %@", [(NoteObject*)obj contentString]);
 				
 				[self _addNote:obj];
 				[(NoteObject*)obj updateLabelConnectionsAfterDecoding];
@@ -571,9 +562,6 @@ bail:
 		
 		[self stopFileNotifications];
 		
-		/*if (![self initializeJournaling]) {
-			[self performSelector:@selector(handleJournalError) withObject:nil afterDelay:0.0];
-		}*/
 		
     } else {
 		//write to disk any unwritten notes; do this before flushing database to make sure that when it is flushed, it gets the new file mod. dates
@@ -583,11 +571,6 @@ bail:
 		if (currentStorageFormat != oldFormat)
 			[allNotes makeObjectsPerformSelector:@selector(writeUsingCurrentFileFormatIfNonExistingOrChanged)];
 
-		//flush and close the journal if necessary
-		/*if (walWriter) {
-			if ([self flushAllNoteChanges])
-				[self closeJournal];
-		}*/
 		//notationPrefs should call flushAllNoteChanges after this method, anyway
 		
 		[self startFileNotifications];
@@ -631,7 +614,6 @@ bail:
 			[unwrittenNotes makeObjectsPerformSelector:@selector(writeUsingJournal:) withObject:walWriter];
 		}
 				
-		//NSLog(@"wrote %d unwritten notes", [unwrittenNotes count]);
 		
 		[unwrittenNotes removeAllObjects];
 		
@@ -745,7 +727,6 @@ bail:
 
 	if ([[self undoManager] isUndoing]) {
 		//prohibit undoing of creation--only redoing of deletion
-		//NSLog(@"registering %s", sel_getName(_cmd));
 		[undoManager registerUndoWithTarget:self selector:@selector(removeNote:) object:note];
 		if (! [[self undoManager] isUndoing] && ! [[self undoManager] isRedoing])
 			[undoManager setActionName:[NSString stringWithFormat:NSLocalizedString(@"Create Note quotemark%@quotemark",@"undo action name for creating a single note"), titleOfNote(note)]];
@@ -791,7 +772,6 @@ bail:
 	
 	if ([[self undoManager] isUndoing]) {
 		//prohibit undoing of creation--only redoing of deletion
-		//NSLog(@"registering %s", sel_getName(_cmd));
 		[undoManager registerUndoWithTarget:self selector:@selector(removeNotes:) object:noteArray];		
 		if (! [[self undoManager] isUndoing] && ! [[self undoManager] isRedoing])
 			[undoManager setActionName:NVFormatCount(NSLocalizedString(@"Add %d Notes", @"undo action name for creating multiple notes"), [noteArray count])];
@@ -818,7 +798,6 @@ bail:
 		return;
 	}
 	
-	//[self scheduleUpdateListForAttribute:attribute];
 	[self performSelector:@selector(scheduleUpdateListForAttribute:) withObject:attribute afterDelay:0.0];
 
 	//special case for title requires this method, as app controller needs to know a few note-specific things
@@ -854,7 +833,6 @@ bail:
 			return YES;
 		}
 	}
-	//NSLog(@"paths not found in DB: %@", unknownPaths);
 	NSArray *createdNotes = [[[[AlienNoteImporter alloc] initWithStoragePaths:unknownPaths] autorelease] importedNotes];
 	if (!createdNotes) return NO;
 	
@@ -1091,13 +1069,11 @@ bail:
         
     //this can only happen while the note is visible
 	
-	//[self refilterNotes];
 }
 
 - (void)note:(NoteObject*)note didRemoveLabelSet:(NSSet*)labelSet {
 	[labelsListController removeLabelSet:labelSet fromNote:note];
         
-	//[self refilterNotes];
 }
 
 - (void)filterNotesFromLabelAtIndex:(int)labelIndex {
@@ -1154,13 +1130,11 @@ bail:
 		//the search must be re-initialized; our strings don't have the same prefix
 		
 		[notesListDataSource fillArrayFromArray:allNotes];
-		//[labelsListController unfilterLabels];
 		
 		stringHasExistingPrefix = NO;
 		lastWordInFilterStr = 0;
 		didFilterNotes = YES;
 		
-		//		NSLog(@"filter: scanning all notes");
     }
     
 	
@@ -1211,8 +1185,6 @@ bail:
 				resetFoundPtrsForNote(notesBuffer[i]);
 		}
 		
-		//we have to re-create the array at each iteration while searching notes, but not here, so we can wait until the end
-		//[labelsListController recomputeListFromFilteredSet];
     }
     
 	//PHASE 4: autocomplete based on results
@@ -1426,9 +1398,6 @@ bail:
 	[notationPrefs setDelegate:nil];
 	[allNotes makeObjectsPerformSelector:@selector(setDelegate:) withObject:nil];
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED < MAC_OS_X_VERSION_10_5
-    DisposeFNSubscriptionUPP(subscriptionCallback);
-#endif
 	if (fsCatInfoArray)
 		free(fsCatInfoArray);
 	if (HFSUniNameArray)

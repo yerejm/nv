@@ -29,8 +29,6 @@
 @end
 
 @interface NSMutableData (NVCryptoRelated)
-- (void)reverseBytes;
-- (void)alignForBlockSize:(int)alignedBlockSize;
 
 - (BOOL)encryptAESDataWithKey:(NSData*)key iv:(NSData*)iv;
 - (BOOL)decryptAESDataWithKey:(NSData*)key iv:(NSData*)iv;

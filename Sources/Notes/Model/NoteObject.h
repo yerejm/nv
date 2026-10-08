@@ -49,7 +49,6 @@ typedef struct _NoteFilterContext {
 	//if this note's title is "Chicken Shack menu listing", its prefix parent might have the title "Chicken Shack"
 	NSMutableArray *prefixParentNotes;
 	
-//	NSString *wordCountString;
 	NSString *dateModifiedString, *dateCreatedString;
 	
 	id delegate; //the notes controller
@@ -152,7 +151,6 @@ NSInteger compareFileSize(id *a, id *b);
 
 - (NSSet*)labelSet;
 - (void)replaceMatchingLabelSet:(NSSet*)aLabelSet;
-- (void)replaceMatchingLabel:(LabelObject*)label;
 - (void)updateLabelConnectionsAfterDecoding;
 - (void)updateLabelConnections;
 - (void)disconnectLabels;
@@ -166,7 +164,6 @@ NSInteger compareFileSize(id *a, id *b);
 
 - (void)setSyncObjectAndKeyMD:(NSDictionary*)aDict forService:(NSString*)serviceName;
 - (void)removeAllSyncMDForService:(NSString*)serviceName;
-//- (void)removeKey:(NSString*)aKey forService:(NSString*)serviceName;
 
 - (OSStatus)writeCurrentFileEncodingToFSRef:(NVFileReference*)fsRef;
 - (void)_setFileEncoding:(NSStringEncoding)encoding;
@@ -192,10 +189,8 @@ NSInteger compareFileSize(id *a, id *b);
 
 - (void)moveFileToTrash;
 - (void)removeFileFromDirectory;
-- (BOOL)removeUsingJournal:(WALStorageController*)wal;
 
 - (OSStatus)exportToDirectoryRef:(NVFileReference*)directoryRef withFilename:(NSString*)userFilename usingFormat:(int)storageFormat overwrite:(BOOL)overwrite;
-- (NSRange)nextRangeForWords:(NSArray*)words options:(unsigned)opts range:(NSRange)inRange;
 - (void)editExternallyUsingEditor:(ExternalEditor*)ed;
 - (void)abortEditingInExternalEditor;
 
@@ -209,7 +204,6 @@ NSInteger compareFileSize(id *a, id *b);
 - (void)setContentString:(NSAttributedString*)attributedString;
 - (NSAttributedString*)contentString;
 - (NSAttributedString*)printableStringRelativeToBodyFont:(NSFont*)bodyFont;
-- (NSString*)combinedContentWithContextSeparator:(NSString*)sepWContext;
 - (void)setForegroundTextColorOnly:(NSColor*)aColor;
 - (void)_resanitizeContent;
 - (void)updateUnstyledTextWithBaseFont:(NSFont*)baseFont;

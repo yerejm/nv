@@ -394,9 +394,6 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 		}
 		
 	}
-	// else {
-		//try spotlight importer if on 10.4
-	//}
 		
 
 	if (attributedStringFromData) {
@@ -447,7 +444,6 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 - (NSArray*)notesInDirectory:(NSString*)filename {
 	
 	//recurse through all subdirectories calling notesInFile where appropriate and collecting arrays into one
-	//NSDirectoryEnumerator *enumerator  = [[NSFileManager defaultManager] enumeratorAtPath:filename];
 	NSArray *filenames = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:filename error:NULL];
 	NSEnumerator *enumerator = [filenames objectEnumerator];
 	

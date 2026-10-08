@@ -32,7 +32,6 @@
 - (BOOL)youngerThanLogObject:(id<SynchronizedNote>)obj;
 
 - (void)setSyncObjectAndKeyMD:(NSDictionary*)aDict forService:(NSString*)serviceName;
-//- (void)removeKey:(NSString*)aKey forService:(NSString*)serviceName;
 - (void)removeAllSyncMDForService:(NSString*)serviceName;
 
 
