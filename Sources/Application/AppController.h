@@ -21,6 +21,7 @@
 
 #import "NotationController.h"
 #import "NotesTableView.h"
+#import "NVSplitView.h"
 
 @class LinkingEditor;
 @class EmptyView;
@@ -28,15 +29,13 @@
 @class GlobalPrefs;
 @class PrefsWindowController;
 @class DualField;
-@class RBSplitView;
-@class RBSplitSubview;
 
 @interface AppController : NSObject
-<NSMenuItemValidation, NSApplicationDelegate, NSToolbarDelegate, NSTableViewDelegate, NSWindowDelegate, NSTextFieldDelegate, NSTextViewDelegate, NSTokenFieldDelegate>
+<NSMenuItemValidation, NSApplicationDelegate, NSToolbarDelegate, NSTableViewDelegate, NSWindowDelegate, NSTextFieldDelegate, NSTextViewDelegate, NSTokenFieldDelegate, NVSplitViewDelegate>
 {
     IBOutlet DualField *field;
-	IBOutlet RBSplitSubview *splitSubview;
-	IBOutlet RBSplitView *splitView;
+	IBOutlet NSView *splitSubview;
+	IBOutlet NVSplitView *splitView;
     IBOutlet NotesTableView *notesTableView;
     IBOutlet LinkingEditor *textView;
 	IBOutlet EmptyView *editorStatusView;
@@ -44,9 +43,6 @@
 	NSToolbar *toolbar;
 	NSToolbarItem *dualFieldItem;
     NSTextField *windowTitleLabel;
-	
-	
-	NSImage *verticalDividerImg;
 	
 	NSURL *URLToInterpretOnLaunch;
 	NSMutableArray *pathsToOpenOnLaunch;

@@ -68,13 +68,8 @@
 }
 
 - (void)drawRect:(NSRect)rect {
-	NSRect bounds = [self bounds];
-	
 	[[[GlobalPrefs defaultPrefs] backgroundTextColor] set];
-    NSRectFill(bounds);
-	
-	[[NSColor separatorColor] set];
-    NSFrameRect(bounds);
+    NSRectFill([self bounds]);
 }
 
 @end

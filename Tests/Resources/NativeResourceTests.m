@@ -28,6 +28,21 @@
 }
 @end
 
+//legacy nibs are checked in compiled; xibs are compiled here the way the app build does
+static NSData *CompiledNibData(NSString *basePath, NSString *scratchDirectory) {
+    NSString *xib = [basePath stringByAppendingPathExtension:@"xib"];
+    if (![[NSFileManager defaultManager] fileExistsAtPath:xib])
+        return [NSData dataWithContentsOfFile:[[basePath stringByAppendingPathExtension:@"nib"] stringByAppendingPathComponent:@"keyedobjects.nib"]];
+    NSString *output = [scratchDirectory stringByAppendingPathComponent:[[NSUUID UUID].UUIDString stringByAppendingPathExtension:@"nib"]];
+    NSTask *task = [[[NSTask alloc] init] autorelease];
+    task.executableURL = [NSURL fileURLWithPath:@"/usr/bin/xcrun"];
+    task.arguments = @[@"ibtool", @"--minimum-deployment-target", @"15.0", @"--compile", output, xib];
+    task.standardOutput = [NSFileHandle fileHandleWithNullDevice];
+    if (![task launchAndReturnError:NULL]) return nil;
+    [task waitUntilExit];
+    return task.terminationStatus == 0 ? [NSData dataWithContentsOfFile:output] : nil;
+}
+
 @interface NativeResourceTests : XCTestCase
 @end
 @implementation NativeResourceTests
@@ -61,8 +76,7 @@
             NSMutableDictionary *savedObservers = [NSMutableDictionary dictionary];
             for (NSString *selector in registry)
                 savedObservers[selector] = [[registry[selector] mutableCopy] autorelease];
-            NSString *filename = [root stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.lproj/%@.nib", localization, name]];
-            NSData *nibData = [NSData dataWithContentsOfFile:[filename stringByAppendingPathComponent:@"keyedobjects.nib"]];
+            NSData *nibData = CompiledNibData([root stringByAppendingPathComponent:[NSString stringWithFormat:@"%@.lproj/%@", localization, name]], directory);
             NSNib *nib = [[[NSNib alloc] initWithNibData:nibData bundle:nil] autorelease];
             XCTAssertNotNil(nib, @"%@ %@", localization, name);
             id owner = [name isEqualToString:@"MainMenu"] ? (id)NSApp :

@@ -35,7 +35,6 @@
 #import "LinkingEditor.h"
 #import "EmptyView.h"
 #import "DualField.h"
-#import "RBSplitView/RBSplitView.h"
 #import "AugmentedScrollView.h"
 #import "BookmarksController.h"
 #import "MultiplePageView.h"
@@ -166,8 +165,7 @@ static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
 			[prefsController setHorizontalLayout:NO sender:self];
 			[[NSUserDefaults standardUserDefaults] removeObjectForKey:NVFullScreenSwitchedLayoutKey];
 		}
-		[self _configureDividerForCurrentLayout];
-		[splitView restoreState:YES];
+		[self _restoreNotesListLayout];
 		
 		[splitSubview addSubview:editorStatusView positioned:NSWindowAbove relativeTo:splitSubview];
 		[editorStatusView setFrame:[[textView enclosingScrollView] frame]];
@@ -508,7 +506,7 @@ terminateApp:
     }
 	NSInteger numberSelected = [notesTableView numberOfSelectedRows];
 	if (selector == @selector(toggleCollapse:))
-		return currentNote != nil || [[splitView subviewAtPosition:0] isCollapsed];
+		return currentNote != nil || [splitView isLeadingPaneCollapsed];
 	
 	if (selector == @selector(printNote:) || 
 		selector == @selector(deleteNote:) ||
@@ -565,7 +563,7 @@ terminateApp:
 	} else {
 		collapseItem = [viewMenu itemAtIndex:collapseIndex];
 	}
-	[collapseItem setTitle:[[splitView subviewAtPosition:0] isCollapsed] ?
+	[collapseItem setTitle:[splitView isLeadingPaneCollapsed] ?
 		NSLocalizedString(@"Expand Notes List", nil) : NSLocalizedString(@"Collapse Notes List", nil)];
 	
 	menuIndex = [viewMenu indexOfItemWithTarget:notesTableView andAction:@selector(toggleNoteBodyPreviews:)];
@@ -598,7 +596,7 @@ terminateApp:
         [window setAppearance:[NSAppearance appearanceNamed:brightness < 0.5 ? NSAppearanceNameDarkAqua : NSAppearanceNameAqua]];
     }
     [window setBackgroundColor:[prefsController backgroundTextColor]];
-    [splitView setBackground:[prefsController backgroundTextColor]];
+    [splitView setSeparatorColor:[prefsController interfaceSeparatorColor]];
     [editorStatusView updateInterfaceColors];
     [field setTextColor:[prefsController foregroundTextColor]];
     [field setNeedsDisplay:YES];
@@ -614,32 +612,52 @@ terminateApp:
         [cell setTextColor:[cell isHighlighted] && [notesTableView isActiveStyle] ? [NSColor alternateSelectedControlTextColor] : [prefsController foregroundTextColor]];
 }
 
-- (void)_configureDividerForCurrentLayout {
-	BOOL horiz = [prefsController horizontalLayout];
-	RBSplitSubview *notesPane = [splitView subviewAtPosition:0];
-	BOOL collapsed = [notesPane isCollapsed];
-	changingViewLayout = YES;
-	if (collapsed) [notesPane expand];
-	[splitView setVertical:horiz];
-	
-	if (!verticalDividerImg && [splitView divider]) verticalDividerImg = [[splitView divider] retain];
-	[splitView setDivider:verticalDividerImg];
-	[splitView setDividerThickness:5.0];
-	
-	[[notesTableView enclosingScrollView] setBorderType: horiz ? NSNoBorder : NSBezelBorder];
-	[self _fitNotesListToPane];
+static NSString *NVNotesListSizeKey(BOOL sideBySide) {
+	return sideBySide ? @"NotesListWidth" : @"NotesListHeight";
+}
 
-	[notesPane setMinDimension:horiz ? 100.0 : 60.0 andMaxDimension:0.0];
-	[splitSubview setMinDimension:100.0 andMaxDimension:0.0];
-	if (collapsed) [notesPane collapse];
+//RBSplitView stored "<pane count> <list size> <editor size>" for each orientation, with a negative size for a collapsed pane
++ (void)migrateLegacyNotesListLayoutInDefaults:(NSUserDefaults *)defaults sideBySide:(BOOL)sideBySide {
+	for (NSNumber *layout in @[@NO, @YES]) {
+		NSString *legacyKey = [layout boolValue] ? @"RBSplitView V centralSplitView" : @"RBSplitView H centralSplitView";
+		NSArray *parts = [[defaults stringForKey:legacyKey] componentsSeparatedByString:@" "];
+		if ([parts count] == 3 && ![defaults objectForKey:NVNotesListSizeKey([layout boolValue])]) {
+			double size = [[parts objectAtIndex:1] doubleValue];
+			[defaults setDouble:floor(fabs(size)) forKey:NVNotesListSizeKey([layout boolValue])];
+			if ([layout boolValue] == sideBySide && ![defaults objectForKey:@"NotesListCollapsed"])
+				[defaults setBool:size <= 0.0 forKey:@"NotesListCollapsed"];
+		}
+		[defaults removeObjectForKey:legacyKey];
+	}
+}
+
+- (void)_restoreNotesListLayout {
+	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+	[[self class] migrateLegacyNotesListLayoutInDefaults:defaults sideBySide:[prefsController horizontalLayout]];
+	[self _configureDividerForCurrentLayout];
+	changingViewLayout = YES;
+	[splitView setLeadingPaneCollapsed:[defaults boolForKey:@"NotesListCollapsed"]];
 	changingViewLayout = NO;
 }
 
-//RBSplitSubview skips autoresizing below its minimum size, so a collapsed pane would otherwise leave the list sized for an earlier layout
-- (void)_fitNotesListToPane {
-	NSSize size = [[splitView subviewAtPosition:0] frame].size;
-	if (size.width < 1.0 || size.height < 1.0) return;
-	[[notesTableView enclosingScrollView] setFrame: [prefsController horizontalLayout] ? NSMakeRect(1, 0, size.width - 1, size.height - 1) : (NSRect){.size = size, .origin = NSZeroPoint}];
+- (void)_saveNotesListLayout {
+	NSUserDefaults *defaults = [NSUserDefaults standardUserDefaults];
+	[defaults setDouble:[splitView expandedLeadingPaneSize] forKey:NVNotesListSizeKey([splitView isVertical])];
+	[defaults setBool:[splitView isLeadingPaneCollapsed] forKey:@"NotesListCollapsed"];
+}
+
+- (void)_configureDividerForCurrentLayout {
+	BOOL sideBySide = [prefsController horizontalLayout];
+	changingViewLayout = YES;
+	[splitView setVertical:sideBySide];
+	[splitView adjustSubviews];
+	CGFloat size = [[NSUserDefaults standardUserDefaults] doubleForKey:NVNotesListSizeKey(sideBySide)];
+	if (size <= 0.0) {
+		NSSize splitSize = [splitView bounds].size;
+		size = round((sideBySide ? splitSize.width : splitSize.height) / 3.0);
+	}
+	[splitView setExpandedLeadingPaneSize:size];
+	changingViewLayout = NO;
 }
 
 - (IBAction)switchViewLayout:(id)sender {
@@ -648,11 +666,11 @@ terminateApp:
 	ctx.pivotRowWasEdge = NO;
 	[notesTableView noteFirstVisibleRow];
 	
+	[self _saveNotesListLayout];
 	[prefsController setHorizontalLayout:![prefsController horizontalLayout] sender:self];
 	[notationController updateDateStringsIfNecessary];
 	[self _configureDividerForCurrentLayout];
 	[notationController regenerateAllPreviews];
-	[splitView adjustSubviews];
 	
 	[notesTableView setViewingLocation:ctx];
 	[notesTableView makeFirstPreviouslyVisibleRowVisibleIfNecessary];
@@ -1740,31 +1758,33 @@ terminateApp:
 
 
 
-- (void)splitView:(RBSplitView*)sender changedFrameOfSubview:(RBSplitSubview*)subview from:(NSRect)fromRect to:(NSRect)toRect {
-	if (sender == splitView && subview == [splitView subviewAtPosition:0])
-		[self _fitNotesListToPane];
-}
-
-- (void)splitView:(RBSplitView*)sender wasResizedFrom:(CGFloat)oldDimension to:(CGFloat)newDimension {
-	if (sender == splitView) {
-		[sender adjustSubviewsExcepting:[splitView subviewAtPosition:0]];
-	}
-}
-
-- (BOOL)splitView:(RBSplitView*)sender shouldHandleEvent:(NSEvent*)theEvent inDivider:(NSUInteger)divider 
-	  betweenView:(RBSplitSubview*)leading andView:(RBSplitSubview*)trailing {
+- (void)splitViewWillTrackDivider:(NVSplitView *)sender {
 	//if upon the first mousedown, the top selected index is visible, snap to it when resizing
 	[notesTableView noteFirstVisibleRow];
-	
-	if ([theEvent clickCount]>1) {
-        [self toggleCollapse:sender];
-        return NO;
-    }
-	return YES;
+}
+
+- (void)splitViewDidDoubleClickDivider:(NVSplitView *)sender {
+	[self toggleCollapse:sender];
+}
+
+- (CGFloat)splitView:(NSSplitView *)sender constrainMinCoordinate:(CGFloat)proposedMin ofSubviewAt:(NSInteger)dividerIndex {
+	return proposedMin + ([prefsController horizontalLayout] ? 100.0 : 60.0);
+}
+
+- (CGFloat)splitView:(NSSplitView *)sender constrainMaxCoordinate:(CGFloat)proposedMax ofSubviewAt:(NSInteger)dividerIndex {
+	return proposedMax - 100.0;
+}
+
+//window resizing goes to the editor while it has room, as the notes list keeps the size the user chose
+- (BOOL)splitView:(NSSplitView *)sender shouldAdjustSizeOfSubview:(NSView *)subview {
+	if (subview != [[sender subviews] firstObject]) return YES;
+	NSSize size = [sender bounds].size;
+	CGFloat listSize = [sender isVertical] ? NSWidth([subview frame]) : NSHeight([subview frame]);
+	return ([sender isVertical] ? size.width : size.height) - listSize - [sender dividerThickness] < 100.0;
 }
 
 //mail.app-like resizing behavior wrt item selections
-- (void)willAdjustSubviews:(RBSplitView*)sender {
+- (void)splitViewDidResizeSubviews:(NSNotification *)notification {
 	//problem: don't do this if the horizontal splitview is being resized; in horizontal layout, only do this when resizing the window
 	if (![prefsController horizontalLayout]) {
 		[notesTableView makeFirstPreviouslyVisibleRowVisibleIfNecessary];
@@ -1814,8 +1834,7 @@ terminateApp:
 }
 
 - (void)_expandToolbar {
-    if ([[splitView subviewAtPosition:0] isCollapsed])
-        [[splitView subviewAtPosition:0] expand];
+    [splitView setLeadingPaneCollapsed:NO];
     if (![toolbar isVisible]) {
         [self _setWindowTitle:@"Notation"];
         [window toggleToolbarShown:nil];
@@ -1832,11 +1851,6 @@ terminateApp:
 	}
 }
 
-- (BOOL)splitView:(RBSplitView*)sender shouldResizeWindowForDivider:(NSUInteger)divider
-      betweenView:(RBSplitSubview*)leading andView:(RBSplitSubview*)trailing willGrow:(BOOL)grow {
-    return NO;
-}
-
 - (void)tableViewColumnDidResize:(NSNotification *)aNotification {
 	NoteAttributeColumn *col = [[aNotification userInfo] objectForKey:@"NSTableColumn"];
 	if ([[col identifier] isEqualToString:NoteTitleColumnString]) {
@@ -1847,41 +1861,23 @@ terminateApp:
 	}
 }
 
-- (NSRect)splitView:(RBSplitView*)sender willDrawDividerInRect:(NSRect)dividerRect betweenView:(RBSplitSubview*)leading 
-			andView:(RBSplitSubview*)trailing withProposedRect:(NSRect)imageRect {
-	
-    [[prefsController interfaceSeparatorColor] setFill];
-    NSRectFill(dividerRect);
-	
-	return NSZeroRect;
-}
-
-- (BOOL)splitView:(RBSplitView*)sender canCollapse:(RBSplitSubview*)subview {
-	if ([sender subviewAtPosition:0] == subview) {
-		return currentNote != nil;
-	}
-	return NO;
+- (BOOL)splitView:(NSSplitView *)sender canCollapseSubview:(NSView *)subview {
+	return subview == [[sender subviews] firstObject] && currentNote != nil;
 }
 
 - (IBAction)toggleCollapse:(id)sender {
-	RBSplitSubview *notesPane = [splitView subviewAtPosition:0];
-	if ([notesPane isCollapsed]) [notesPane expand];
-	else if (currentNote) [notesPane collapse];
-	[splitView adjustSubviews];
+	if ([splitView isLeadingPaneCollapsed]) [splitView setLeadingPaneCollapsed:NO];
+	else if (currentNote) [splitView setLeadingPaneCollapsed:YES];
 }
 
-- (void)splitView:(RBSplitView*)sender didCollapse:(RBSplitSubview*)subview {
+- (void)splitView:(NVSplitView *)sender leadingPaneDidCollapse:(BOOL)collapsed {
 	if (changingViewLayout) return;
-	[self _collapseToolbar];
-	[window makeFirstResponder:textView];
-	[sender adjustSubviews];
-	[self updateNoteMenus];
-}
-
-- (void)splitView:(RBSplitView*)sender didExpand:(RBSplitSubview*)subview {
-	if (changingViewLayout) return;
-	[self _expandToolbar];
-	[sender adjustSubviews];
+	if (collapsed) {
+		[self _collapseToolbar];
+		[window makeFirstResponder:textView];
+	} else {
+		[self _expandToolbar];
+	}
 	[self updateNoteMenus];
 }
 
@@ -2002,6 +1998,7 @@ terminateApp:
 	else
 		NSLog(@"Could not flush database, so not removing journal");
 	
+    [self _saveNotesListLayout];
     [prefsController synchronize];
 }
 

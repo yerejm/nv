@@ -709,7 +709,6 @@
 					<string>$(SRCROOT)/../Sources/Support</string>
 					<string>$(SRCROOT)/../Vendor/PTHotKeys</string>
 					<string>$(SRCROOT)/../Vendor/ODBEditor</string>
-					<string>$(SRCROOT)/../Vendor/RBSplitView</string>
 					<string>$(SRCROOT)/Support</string>
 				</array>
 				<key>GENERATE_INFOPLIST_FILE</key>
@@ -776,7 +775,6 @@
 					<string>$(SRCROOT)/../Sources/Support</string>
 					<string>$(SRCROOT)/../Vendor/PTHotKeys</string>
 					<string>$(SRCROOT)/../Vendor/ODBEditor</string>
-					<string>$(SRCROOT)/../Vendor/RBSplitView</string>
 					<string>$(SRCROOT)/Support</string>
 				</array>
 				<key>GENERATE_INFOPLIST_FILE</key>

@@ -23,7 +23,7 @@
 #import "PTKeyCombo.h"
 #import "DualField.h"
 #import "AugmentedScrollView.h"
-#import "RBSplitView/RBSplitView.h"
+#import "NVSplitView.h"
 #import "TemporaryFileCachePreparer.h"
 #import "AcceptanceEditorSession.h"
 #include <sys/mount.h>
@@ -32,6 +32,7 @@
 
 @interface AppController (ServiceAcceptance)
 - (void)createFromSelection:(NSPasteboard *)pasteboard userData:(NSString *)userData error:(NSString **)error;
++ (void)migrateLegacyNotesListLayoutInDefaults:(NSUserDefaults *)defaults sideBySide:(BOOL)sideBySide;
 @end
 
 @interface AcceptanceExportDestination : NSObject
@@ -206,6 +207,68 @@ static BOOL RowIsDrawnWithin(NSView *container, NSTableView *table, NSInteger ro
     return lightest - darkest > 0.4;
 }
 
+//the notes list is the split view's first pane and the editor its second
+static BOOL ListPaneCollapsed(NVSplitView *split) {
+    return split.isLeadingPaneCollapsed;
+}
+
+static CGFloat ListPaneSize(NVSplitView *split) {
+    NSSize size = split.subviews.firstObject.frame.size;
+    return split.isVertical ? size.width : size.height;
+}
+
+static void SetListPaneSize(NVSplitView *split, CGFloat size) {
+    [split setPosition:size ofDividerAtIndex:0];
+}
+
+static BOOL DividerIsVisible(NVSplitView *split) {
+    return split.dividerThickness >= 1 && [split.dividerColor isEqual:[[GlobalPrefs defaultPrefs] interfaceSeparatorColor]];
+}
+
+static NSPoint DividerPoint(NVSplitView *split) {
+    NSRect editorFrame = split.subviews.lastObject.frame;
+    CGFloat inset = split.dividerThickness / 2;
+    return split.isVertical ? NSMakePoint(NSMinX(editorFrame) - inset, NSMidY(editorFrame)) : NSMakePoint(NSMidX(editorFrame), NSMinY(editorFrame) - inset);
+}
+
+static NSEvent *DividerMouseEvent(NVSplitView *split, NSEventType type, NSPoint point, NSInteger clickCount) {
+    return [NSEvent mouseEventWithType:type location:[split convertPoint:point toView:nil] modifierFlags:0 timestamp:NSProcessInfo.processInfo.systemUptime
+                          windowNumber:split.window.windowNumber context:nil eventNumber:0 clickCount:clickCount pressure:type == NSEventTypeLeftMouseUp ? 0 : 1];
+}
+
+static NSEvent *DividerDoubleClick(NVSplitView *split) {
+    return DividerMouseEvent(split, NSEventTypeLeftMouseDown, DividerPoint(split), 2);
+}
+
+static BOOL DividerIsDrawn(NVSplitView *split) {
+    [split.window displayIfNeeded];
+    NSBitmapImageRep *bitmap = [split bitmapImageRepForCachingDisplayInRect:split.bounds];
+    [split.effectiveAppearance performAsCurrentDrawingAppearance:^{
+        [split cacheDisplayInRect:split.bounds toBitmapImageRep:bitmap];
+    }];
+    CGFloat scale = bitmap.pixelsWide / NSWidth(split.bounds);
+    NSPoint divider = DividerPoint(split);
+    NSPoint editor = split.isVertical ? NSMakePoint(divider.x + 2, divider.y) : NSMakePoint(divider.x, divider.y + 2);
+    CGFloat (^brightness)(NSPoint) = ^CGFloat(NSPoint point) {
+        NSInteger y = (split.isFlipped ? point.y : NSHeight(split.bounds) - point.y) * scale;
+        return [[[bitmap colorAtX:point.x * scale y:y] colorUsingColorSpace:NSColorSpace.sRGBColorSpace] brightnessComponent];
+    };
+    return fabs(brightness(divider) - brightness(editor)) > 0.05;
+}
+
+//the split view tracks a drag from the queued events once it receives the mouse down; it only collapses a pane it sees dragged past the threshold step by step
+static void DragDivider(NVSplitView *split, CGFloat position) {
+    NSPoint start = DividerPoint(split);
+    NSPoint end = split.isVertical ? NSMakePoint(position, start.y) : NSMakePoint(start.x, position);
+    for (NSInteger step = 1; step <= 10; step++) {
+        CGFloat fraction = step / 10.0;
+        NSPoint point = NSMakePoint(start.x + (end.x - start.x) * fraction, start.y + (end.y - start.y) * fraction);
+        [NSApp postEvent:DividerMouseEvent(split, NSEventTypeLeftMouseDragged, point, 1) atStart:NO];
+    }
+    [NSApp postEvent:DividerMouseEvent(split, NSEventTypeLeftMouseUp, end, 1) atStart:NO];
+    [split mouseDown:DividerMouseEvent(split, NSEventTypeLeftMouseDown, start, 1)];
+}
+
 static void SnapshotWindow(NSWindow *window, NSString *name) {
     dlopen("/System/Library/Frameworks/ScreenCaptureKit.framework/ScreenCaptureKit", RTLD_LAZY);
     __block BOOL finished = NO;
@@ -290,6 +353,12 @@ static void RunReopenAcceptance(void) {
         Check(@"wrong password rejected after reopen", ![notation.notationPrefs canLoadPassphrase:@"wrong password"]);
         Check(@"window size restoration", fabs([app window].frame.size.width - 720) < 1);
         Check(@"quitting during full screen restores the previous layout on reopen", ![[GlobalPrefs defaultPrefs] horizontalLayout] && ![[NSUserDefaults standardUserDefaults] objectForKey:@"FullScreenSwitchedLayout"]);
+        NVSplitView *split = [app valueForKey:@"splitView"];
+        CGFloat stackedSize = ListPaneSize(split);
+        [app switchViewLayout:nil];
+        CGFloat sideBySideSize = ListPaneSize(split);
+        [app switchViewLayout:nil];
+        Check(@"notes list sizes for both layouts survive quit and reopen", fabs(stackedSize - 140) < 1 && fabs(sideBySideSize - 230) < 1);
         NSString *account = [NSString stringWithUTF8String:[notation.notationPrefs setKeychainIdentifier]];
         Check(@"temporary Keychain identity is retained", [account isEqualToString:saved[@"keychainAccount"]]);
         if ([account isEqualToString:saved[@"keychainAccount"]]) {
@@ -455,7 +524,10 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Desktop"]];
         Check(@"Desktop preferences exposes Dock and menu bar controls", [[preferences valueForKey:@"desktopView"] superview] == prefsWindow.contentView && [preferences valueForKey:@"showDockIconButton"] && [preferences valueForKey:@"showMenuBarIconButton"]);
         Check(@"no app-owned URL requests with old preferences", requestCount == 0);
-        if (![[GlobalPrefs defaultPrefs] horizontalLayout]) [app switchViewLayout:nil];
+        if ([[GlobalPrefs defaultPrefs] horizontalLayout]) [app switchViewLayout:nil];
+        SetListPaneSize([app valueForKey:@"splitView"], 140);
+        [app switchViewLayout:nil];
+        SetListPaneSize([app valueForKey:@"splitView"], 230);
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"FullScreenSwitchedLayout"];
         // Leaving full screen restores the frame the window was first shown with, so the size checked after reopen is set last.
         [window setFrame:NSMakeRect(window.frame.origin.x, window.frame.origin.y, 720, 520) display:YES];
@@ -544,7 +616,7 @@ static BOOL GridLineSitsAtRowBottom(NSTableView *table, NSBitmapImageRep *bitmap
 static void SnapshotNoteListStates(AppController *app, NSWindow *window, NotesTableView *noteTable, NSTextView *editor, NoteObject *note) {
     GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
     BOOL originalLayout = [prefs horizontalLayout];
-    BOOL focusedRowsAreLight = YES, gridFollowsRows = YES;
+    BOOL focusedRowsAreLight = YES, gridFollowsRows = YES, dividersDrawn = YES;
     for (NSString *appearance in @[NSAppearanceNameAqua, NSAppearanceNameDarkAqua]) {
         [window setAppearance:[NSAppearance appearanceNamed:appearance]];
         for (NSInteger horizontal = 0; horizontal < 2; horizontal++) {
@@ -558,12 +630,15 @@ static void SnapshotNoteListStates(AppController *app, NSWindow *window, NotesTa
                 if (!editorFocused && RowHasDarkPixels(noteTable, bitmap, noteTable.selectedRow)) focusedRowsAreLight = NO;
                 if (horizontal && !editorFocused && noteTable.numberOfRows > 2) gridFollowsRows &= GridLineSitsAtRowBottom(noteTable, bitmap, 1);
             }
+            dividersDrawn &= DividerIsDrawn([app valueForKey:@"splitView"]);
+            SnapshotWindow(window, [NSString stringWithFormat:@"window-%@-%@.png", [appearance isEqualToString:NSAppearanceNameAqua] ? @"light" : @"dark", horizontal ? @"horizontal" : @"vertical"]);
         }
     }
     if ([prefs horizontalLayout] != originalLayout) [app switchViewLayout:nil];
     [window setAppearance:nil];
     Check(@"focused note list selection uses light text in both appearances and layouts", focusedRowsAreLight);
     Check(@"note list grid lines sit on row boundaries in the sidebar layout", gridFollowsRows);
+    Check(@"the divider between notes list and editor is drawn in both layouts and appearances", dividersDrawn);
 }
 
 static void RunAcceptance(void) {
@@ -584,28 +659,23 @@ static void RunAcceptance(void) {
         Check(@"search content", [[notation notesListDataSource] count] == 1);
         [app revealNote:note options:NVEditNoteToReveal | NVOrderFrontWindow];
         Check(@"editor focus", window.firstResponder == editor);
-        RBSplitView *split = [app valueForKey:@"splitView"];
-        RBSplitSubview *listPane = [split subviewAtPosition:0];
+        NVSplitView *split = [app valueForKey:@"splitView"];
         BOOL originalLayout = [[GlobalPrefs defaultPrefs] horizontalLayout];
         [app toggleCollapse:nil];
-        Check(@"notes list and search collapse together", listPane.isCollapsed && !window.toolbar.visible && window.firstResponder == editor);
+        Check(@"notes list and search collapse together", ListPaneCollapsed(split) && !window.toolbar.visible && window.firstResponder == editor);
         NSTextField *windowTitle = [app valueForKey:@"windowTitleLabel"];
         Check(@"collapsed search preserves the selected note title", [windowTitle.stringValue isEqualToString:window.title] && [window.title isEqualToString:titleOfNote(note)]);
         [app switchViewLayout:nil];
-        Check(@"collapsed notes list survives orientation change", listPane.isCollapsed && !window.toolbar.visible);
+        Check(@"collapsed notes list survives orientation change", ListPaneCollapsed(split) && !window.toolbar.visible);
         [app toggleCollapse:nil];
-        Check(@"notes list and search expand together", !listPane.isCollapsed && window.toolbar.visible);
-        Check(@"widescreen divider is visible and draggable", split.divider != nil && split.dividerThickness >= 5);
+        Check(@"notes list and search expand together", !ListPaneCollapsed(split) && window.toolbar.visible);
+        Check(@"widescreen divider is visible and draggable", DividerIsVisible(split));
         [app toggleCollapse:nil];
         [app switchViewLayout:nil];
-        Check(@"collapsed notes list survives return to original orientation", listPane.isCollapsed && [[GlobalPrefs defaultPrefs] horizontalLayout] == originalLayout);
+        Check(@"collapsed notes list survives return to original orientation", ListPaneCollapsed(split) && [[GlobalPrefs defaultPrefs] horizontalLayout] == originalLayout);
         [app toggleCollapse:nil];
-        NSRect paneFrame = listPane.frame;
-        NSPoint dividerPoint = split.isVertical ? NSMakePoint(NSMaxX(paneFrame) + 2, NSMidY(paneFrame)) : NSMakePoint(NSMidX(paneFrame), NSMaxY(paneFrame) + 2);
-        NSEvent *doubleClick = [NSEvent mouseEventWithType:NSEventTypeLeftMouseDown location:[split convertPoint:dividerPoint toView:nil]
-            modifierFlags:0 timestamp:0 windowNumber:window.windowNumber context:nil eventNumber:0 clickCount:2 pressure:1];
-        [split mouseDown:doubleClick];
-        Check(@"divider double-click collapses notes list", listPane.isCollapsed && !window.toolbar.visible);
+        [split mouseDown:DividerDoubleClick(split)];
+        Check(@"divider double-click collapses notes list", ListPaneCollapsed(split) && !window.toolbar.visible);
         GlobalPrefs *displayPrefs = [GlobalPrefs defaultPrefs];
         NSString *beforeWidthChange = [[editor.string copy] autorelease];
         [displayPrefs setMaxNoteBodyWidth:320 sender:nil];
@@ -615,7 +685,48 @@ static void RunAcceptance(void) {
         [displayPrefs setManagesTextWidthInWindow:NO sender:nil];
         Check(@"disabling width limit restores editor margins", editor.textContainerInset.width == 3);
         [displayPrefs setMaxNoteBodyWidth:660 sender:nil];
+        [split mouseDown:DividerDoubleClick(split)];
+        Check(@"divider double-click expands the collapsed notes list", !ListPaneCollapsed(split) && window.toolbar.visible);
+        CGFloat minimumListSize = [displayPrefs horizontalLayout] ? 100 : 60;
+        SetListPaneSize(split, 150);
+        DragDivider(split, minimumListSize - 10);
+        Check(@"dragging the divider stops the notes list at its minimum size", !ListPaneCollapsed(split) && fabs(ListPaneSize(split) - minimumListSize) < 1);
+        SetListPaneSize(split, 150);
+        DragDivider(split, 2);
+        BOOL draggedClosed = ListPaneCollapsed(split) && !window.toolbar.visible;
         [app toggleCollapse:nil];
+        Check(@"dragging the divider closed collapses the notes list, which reopens at its earlier size",
+              draggedClosed && !ListPaneCollapsed(split) && window.toolbar.visible && fabs(ListPaneSize(split) - 150) < 1);
+        NSRect frameBeforeGrowth = window.frame;
+        [window setFrame:NSInsetRect(frameBeforeGrowth, -40, -40) display:YES];
+        BOOL keptWhileGrowing = fabs(ListPaneSize(split) - 150) < 1;
+        [window setFrame:frameBeforeGrowth display:YES];
+        Check(@"notes list keeps its size when the window is resized", keptWhileGrowing && fabs(ListPaneSize(split) - 150) < 1);
+        SetListPaneSize(split, 140);
+        [app switchViewLayout:nil];
+        SetListPaneSize(split, 230);
+        [app switchViewLayout:nil];
+        CGFloat firstLayoutSize = ListPaneSize(split);
+        [app switchViewLayout:nil];
+        CGFloat secondLayoutSize = ListPaneSize(split);
+        [app switchViewLayout:nil];
+        Check(@"each layout remembers its own notes list size", fabs(firstLayoutSize - 140) < 1 && fabs(secondLayoutSize - 230) < 1);
+        NSUserDefaults *layoutDefaults = [NSUserDefaults standardUserDefaults];
+        NSArray *layoutKeys = @[@"NotesListHeight", @"NotesListWidth", @"NotesListCollapsed"];
+        NSDictionary *savedLayout = [layoutDefaults dictionaryWithValuesForKeys:layoutKeys];
+        for (NSString *key in layoutKeys) [layoutDefaults removeObjectForKey:key];
+        [layoutDefaults setObject:@"2 153.335526 304.664474" forKey:@"RBSplitView H centralSplitView"];
+        [layoutDefaults setObject:@"2 -212.25 180" forKey:@"RBSplitView V centralSplitView"];
+        [AppController migrateLegacyNotesListLayoutInDefaults:layoutDefaults sideBySide:YES];
+        Check(@"RBSplitView divider positions migrate to the notes list layout settings",
+              [layoutDefaults doubleForKey:@"NotesListHeight"] == 153 && [layoutDefaults doubleForKey:@"NotesListWidth"] == 212 &&
+              [layoutDefaults boolForKey:@"NotesListCollapsed"] && ![layoutDefaults objectForKey:@"RBSplitView H centralSplitView"] &&
+              ![layoutDefaults objectForKey:@"RBSplitView V centralSplitView"]);
+        for (NSString *key in layoutKeys) {
+            id value = savedLayout[key];
+            if (value == [NSNull null]) [layoutDefaults removeObjectForKey:key];
+            else [layoutDefaults setObject:value forKey:key];
+        }
         [displayPrefs setShowMenuBarIcon:YES sender:nil];
         NSStatusItem *menuBarItem = [app valueForKey:@"statusItem"];
         Check(@"menu bar icon exposes a native click action", menuBarItem.button.image && menuBarItem.button.target == app && menuBarItem.button.action == @selector(statusItemAction:));
