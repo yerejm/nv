@@ -747,6 +747,44 @@ static BOOL GridLineSitsAtRowBottom(NSTableView *table, NSBitmapImageRep *bitmap
     return fabs(brightness(NSMaxY(rect) - 0.5) - background) > 0.05;
 }
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+//cell-based table rows only answer the attribute-based accessibility API
+static id AccessibilityValue(id element, NSString *attribute) {
+    return [[element accessibilityAttributeNames] containsObject:attribute] ? [element accessibilityAttributeValue:attribute] : nil;
+}
+#pragma clang diagnostic pop
+
+//what VoiceOver is given for the search field and the note list
+static void CheckAccessibility(AppController *app, NSWindow *window, NotesTableView *noteTable, NoteObject *note) {
+    DualField *field = [app valueForKey:@"field"];
+    DualFieldCell *cell = [field cell];
+    [app revealNote:note options:NVEditNoteToReveal];
+    Pump(0.1);
+    id clear = [cell accessibilityClearButton], back = [cell accessibilitySearchButton];
+    Check(@"the note list and search field have VoiceOver names", [[noteTable accessibilityLabel] length] && [[cell accessibilityLabel] length] &&
+          [[cell accessibilitySubrole] isEqualToString:NSAccessibilitySearchFieldSubrole]);
+    Check(@"the search field's clear and back buttons are VoiceOver buttons", [[clear accessibilityRole] isEqualToString:NSAccessibilityButtonRole] &&
+          [[back accessibilityRole] isEqualToString:NSAccessibilityButtonRole] && [[clear accessibilityLabel] length] && [[back accessibilityLabel] length] &&
+          [[cell accessibilityChildren] containsObject:clear] && [[cell accessibilityChildren] containsObject:back] &&
+          NSContainsRect([window convertRectToScreen:[field convertRect:field.bounds toView:nil]], [clear accessibilityFrame]));
+    [window makeFirstResponder:field];
+    [clear accessibilityPerformPress];
+    Pump(0.1);
+    Check(@"pressing Clear Search through accessibility clears the field", [[field stringValue] length] == 0 && ![cell clearButtonIsVisible]);
+    GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
+    BOOL originalLayout = [prefs horizontalLayout];
+    if (!originalLayout) [app switchViewLayout:nil];
+    [app revealNote:note options:NVEditNoteToReveal];
+    Pump(0.1);
+    id row = [[noteTable accessibilityRows] objectAtIndex:[noteTable selectedRow]];
+    id rowCell = [AccessibilityValue(row, NSAccessibilityChildrenAttribute) firstObject];
+    NSString *description = AccessibilityValue(rowCell, NSAccessibilityDescriptionAttribute);
+    Check(@"single-column note rows tell VoiceOver their date as well as their text", [description length] &&
+          [description containsString:dateModifiedStringOfNote(noteTable, note, NSNotFound)]);
+    if ([prefs horizontalLayout] != originalLayout) [app switchViewLayout:nil];
+}
+
 //the selected note row in each appearance, layout and focus state, so selection colors can also be compared by eye
 static void SnapshotNoteListStates(AppController *app, NSWindow *window, NotesTableView *noteTable, NSTextView *editor, NoteObject *note) {
     GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
@@ -1153,6 +1191,7 @@ static void RunAcceptance(void) {
         if (!ColumnIsSet(NoteLabelsColumn, [appearancePrefs tableColumnsBitmap]))
             [noteTable addPermanentTableColumn:[noteTable noteAttributeColumnForIdentifier:NoteLabelsColumnString]];
         SnapshotNoteListStates(app, window, noteTable, editor, note);
+        CheckAccessibility(app, window, noteTable, note);
         CheckColumnResize(app, noteTable);
         NSDictionary *highlight = [appearancePrefs searchTermHighlightAttributes];
         Check(@"search highlight defaults to the system find color with readable text",

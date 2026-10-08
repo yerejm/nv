@@ -23,6 +23,7 @@ enum { BUTTON_HIDDEN, BUTTON_NORMAL, BUTTON_PRESSED };
 
 @interface DualFieldCell : NSTextFieldCell {
 	int clearButtonState, snapbackButtonState;
+	NSAccessibilityElement *clearButtonElement, *snapbackButtonElement;
 }
 
 - (BOOL)snapbackButtonIsVisible;

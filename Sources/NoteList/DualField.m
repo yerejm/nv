@@ -35,6 +35,32 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
     [icon drawInRect:rect fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:opacity respectFlipped:YES hints:nil];
 }
 
+//the clear and back buttons are drawn by the cell, so VoiceOver reaches them through these
+@interface DualFieldButtonElement : NSAccessibilityElement
+@property (nonatomic, assign) DualFieldCell *fieldCell;
+@property (nonatomic) BOOL clears;
+@end
+
+@implementation DualFieldButtonElement
+
+- (NSRect)accessibilityFrame {
+	NSView *view = [self.fieldCell controlView];
+	NSRect rect = self.clears ? [self.fieldCell clearButtonRectForBounds:[view bounds]] : [self.fieldCell snapbackButtonRectForBounds:[view bounds]];
+	return NSAccessibilityFrameInView(view, rect);
+}
+
+- (id)accessibilityParent {
+	return self.fieldCell;
+}
+
+- (BOOL)accessibilityPerformPress {
+	if (self.clears) [NSApp tryToPerform:@selector(cancelOperation:) with:nil];
+	else [(DualField *)[self.fieldCell controlView] snapback:nil];
+	return YES;
+}
+
+@end
+
 @implementation DualFieldCell
 
 - (id) init {
@@ -134,6 +160,65 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 		[[controlView window] invalidateCursorRectsForView:controlView];
 	}
 	
+}
+
+- (DualFieldButtonElement *)_accessibilityButtonClearing:(BOOL)clears {
+	DualFieldButtonElement *element = [[[DualFieldButtonElement alloc] init] autorelease];
+	[element setFieldCell:self];
+	[element setClears:clears];
+	[element setAccessibilityRole:NSAccessibilityButtonRole];
+	[element setAccessibilityLabel:clears ? NSLocalizedString(@"Clear Search", @"accessibility name of the button that clears the search field") :
+		NSLocalizedString(@"Back to Search", @"accessibility name of the button that returns from a note to the search")];
+	[element setAccessibilityHelp:clears ? NSLocalizedString(@"Clear the search; press ESC", @"tooltip string for search/title field") :
+		[NSString stringWithFormat:NSLocalizedString(@"Go back to search; press %@-D to deselect", @"tooltip string for search/title field"), @"\u2318"]];
+	return element;
+}
+
+//cells are copied bitwise, so a copy makes its own accessibility buttons
+- (id)copyWithZone:(NSZone *)zone {
+	DualFieldCell *copy = [super copyWithZone:zone];
+	copy->clearButtonElement = nil;
+	copy->snapbackButtonElement = nil;
+	return copy;
+}
+
+- (void)dealloc {
+	[clearButtonElement release];
+	[snapbackButtonElement release];
+	[super dealloc];
+}
+
+- (NSAccessibilitySubrole)accessibilitySubrole {
+	return NSAccessibilitySearchFieldSubrole;
+}
+
+- (NSString *)accessibilityLabel {
+	return NSLocalizedString(@"Search or Create", @"placeholder text in search/create field");
+}
+
+- (NSString *)accessibilityHelp {
+	return NSLocalizedString(@"Type any text to search; press Return to create a note", @"tooltip string for search/title field");
+}
+
+- (id)accessibilityClearButton {
+	if (![self clearButtonIsVisible]) return nil;
+	if (!clearButtonElement) clearButtonElement = [[self _accessibilityButtonClearing:YES] retain];
+	return clearButtonElement;
+}
+
+//the back button only lights up under the pointer, but going back is possible whenever a note or followed link is showing
+- (id)accessibilitySearchButton {
+	DualField *field = (DualField *)[self controlView];
+	if (![field showsDocumentIcon] && ![field hasFollowedLinks]) return nil;
+	if (!snapbackButtonElement) snapbackButtonElement = [[self _accessibilityButtonClearing:NO] retain];
+	return snapbackButtonElement;
+}
+
+- (NSArray *)accessibilityChildren {
+	NSMutableArray *children = [NSMutableArray arrayWithArray:[super accessibilityChildren] ?: @[]];
+	for (id button in @[[self accessibilitySearchButton] ?: [NSNull null], [self accessibilityClearButton] ?: [NSNull null]])
+		if (button != [NSNull null]) [children addObject:button];
+	return children;
 }
 
 - (BOOL)handleMouseDown:(NSEvent *)theEvent {

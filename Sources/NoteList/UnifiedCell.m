@@ -103,6 +103,16 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
     return (created ? dateCreatedStringOfNote : dateModifiedStringOfNote)((id)self.controlView, noteObject, NSNotFound);
 }
 
+//the date and tags are drawn beside the cell's text rather than being part of it, so VoiceOver hears them here
+- (NSString *)accessibilityLabel {
+	NSMutableArray *parts = [NSMutableArray array];
+	NSString *date = [self dateString];
+	if ([date length]) [parts addObject:date];
+	if (ColumnIsSet(NoteLabelsColumn, [[GlobalPrefs defaultPrefs] tableColumnsBitmap]) && [labelsOfNote(noteObject) length])
+		[parts addObject:labelsOfNote(noteObject)];
+	return [parts count] ? [parts componentsJoinedByString:@", "] : [super accessibilityLabel];
+}
+
 - (CGFloat)dateWidthForFrame:(NSRect)frame {
     NSString *date = [self dateString];
     return date.length ? MIN(ceil([date sizeWithAttributes:[self baseTextAttributes]].width) + 4, frame.size.width * 0.6) : 0;

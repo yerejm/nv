@@ -39,6 +39,10 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 
 @implementation NotesTableView
 
+- (NSString *)accessibilityLabel {
+	return NSLocalizedString(@"Notes", nil);
+}
+
 //there's something wrong with this initialization under panther, I think
 - (id)initWithCoder:(NSCoder *)decoder {
     if ((self = [super initWithCoder:decoder])) {
