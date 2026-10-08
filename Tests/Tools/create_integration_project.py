@@ -28,7 +28,7 @@ sources.extend(ROOT / 'Tests' / filename for filename in [
     'Notes/Storage/NativeStorageTests.m', 'Application/NativeQuitTests.m',
     'Resources/NativeResourceTests.m', 'Application/NativeLinkRoutingTests.m',
     'Application/NativeActivationTests.m', 'Integrations/AcceptanceEditorTests.m',
-    'Preferences/ShortcutRecorderTests.m',
+    'Preferences/ShortcutRecorderTests.m', 'Notes/Model/PreviewTruncationTests.m',
     'Support/AcceptanceEditorSession.m'])
 objects = {}
 

@@ -29,59 +29,22 @@
 static NSMutableParagraphStyle *LineBreakingStyle(void);
 static NSDictionary *GrayTextAttributes(void);
 static NSDictionary *LineTruncAttributes(void);
-static size_t EstimatedCharCountForWidth(float upToWidth);
+static NSUInteger PreviewCharacterLimitForWidth(CGFloat width);
 
-
-
-- (NSString*)truncatedPreviewStringOfLength:(NSUInteger)bodyCharCount {
-	
-	//try to get the underlying C-string buffer and copy only part of it
-	//this won't be exact because chars != bytes, but that's alright because it is expected to be further truncated by an NSTextFieldCell
-	CFStringEncoding bodyPreviewEncoding = CFStringGetFastestEncoding((CFStringRef)self);
-	const char * cStrPtr = CFStringGetCStringPtr((CFStringRef)self, bodyPreviewEncoding);
-	char *bodyPreviewBuffer = calloc(bodyCharCount + 1, sizeof(char));
-	CFIndex usedBufLen = bodyCharCount;
-	
-	if (bodyCharCount > 1) {
-		if (cStrPtr && kCFStringEncodingUTF8 != bodyPreviewEncoding && kCFStringEncodingUnicode != bodyPreviewEncoding) {
-			//only attempt to copy the buffer directly if the fastest encoding is not a unicode variant
-			memcpy(bodyPreviewBuffer, cStrPtr, bodyCharCount);
-		} else {
-			bodyPreviewEncoding = kCFStringEncodingUTF8;
-			if ([self length] == bodyCharCount) {
-				//if this is supposed to be the entire string, don't waffle around
-				const char *fullUTF8String = [self UTF8String];
-				if (fullUTF8String) {
-					usedBufLen = bodyCharCount = strlen(fullUTF8String);
-					bodyPreviewBuffer = realloc(bodyPreviewBuffer, bodyCharCount + 1);
-					memcpy(bodyPreviewBuffer, fullUTF8String, bodyCharCount + 1);
-					goto replace;
-				}
-			}
-			if (!CFStringGetBytes((CFStringRef)self, CFRangeMake(0, bodyCharCount), bodyPreviewEncoding, ' ', FALSE, 
-								  (UInt8 *)bodyPreviewBuffer, bodyCharCount + 1, &usedBufLen)) {
-				NSLog(@"can't get utf8 string from '%@' (charcount: %lu)", self, (unsigned long)bodyCharCount);
-				free(bodyPreviewBuffer);
-				return nil;
-			}
-		}
+- (NSString*)truncatedPreviewStringOfLength:(NSUInteger)characterCount {
+	//an empty range would still return the first composed character
+	if (!characterCount || ![self length]) return @"";
+	NSRange range = [self rangeOfComposedCharacterSequencesForRange:NSMakeRange(0, MIN(characterCount, [self length]))];
+	NSMutableString *preview = [[[self substringWithRange:range] mutableCopy] autorelease];
+	static NSCharacterSet *breaks = nil;
+	if (!breaks) {
+		const unichar breakCharacters[] = { '\t', '\n', '\r', '\f', 0x0003, 0x2028, 0x2029 };
+		breaks = [[NSCharacterSet characterSetWithCharactersInString:[NSString stringWithCharacters:breakCharacters length:sizeof(breakCharacters) / sizeof(*breakCharacters)]] retain];
 	}
-replace:
-	//if bodyPreviewBuffer is a UTF-8 encoded string, then examine the string one UTF-8 sequence at a time to catch multi-byte breaks
-	if (bodyPreviewEncoding == kCFStringEncodingUTF8) {
-		replace_breaks_utf8(bodyPreviewBuffer, bodyCharCount);
-	} else {
-		replace_breaks(bodyPreviewBuffer, bodyCharCount);
-	}
-	
-	NSString* truncatedBodyString = [[NSString alloc] initWithBytesNoCopy:bodyPreviewBuffer length:usedBufLen 
-																 encoding:CFStringConvertEncodingToNSStringEncoding(bodyPreviewEncoding) freeWhenDone:YES];
-	if (!truncatedBodyString) {
-		free(bodyPreviewBuffer);
-		NSLog(@"can't create cfstring from '%@' (cstr lens: %lu/%ld) with encoding %u (fastest = %u)", self, (unsigned long)bodyCharCount, (long)usedBufLen, bodyPreviewEncoding, CFStringGetFastestEncoding((CFStringRef)self));
-		return nil;
-	}
-	return [truncatedBodyString autorelease];
+	NSRange found = NSMakeRange(0, 0);
+	while ((found = [preview rangeOfCharacterFromSet:breaks options:NSLiteralSearch range:NSMakeRange(NSMaxRange(found), [preview length] - NSMaxRange(found))]).location != NSNotFound)
+		[preview replaceCharactersInRange:found withString:@" "];
+	return preview;
 }
 
 static NSMutableDictionary *titleTruncAttrs = nil;
@@ -132,8 +95,9 @@ NSDictionary *LineTruncAttributesForTitle(void) {
 	return titleTruncAttrs;
 }
 
-static size_t EstimatedCharCountForWidth(float upToWidth) {
-	return (size_t)(upToWidth / ([[GlobalPrefs defaultPrefs] tableFontSize] / 2.5f));
+//enough characters to fill the width even if every one is as narrow as a space; the cell truncates whatever overflows
+static NSUInteger PreviewCharacterLimitForWidth(CGFloat width) {
+	return (NSUInteger)ceil(MAX(width, 0) / ([[GlobalPrefs defaultPrefs] tableFontSize] * 0.2));
 }
 
 //LineTruncAttributesForTags would be variable, depending on the note; each preview string will have its own copy of the nsdictionary
@@ -145,13 +109,8 @@ static size_t EstimatedCharCountForWidth(float upToWidth) {
 	//upToWidth will be used to manually truncate note-bodies only, and should be the full column width available
 	//intWidth will typically be the width of the tags string or other representation
 	
-	size_t bodyCharCount = (EstimatedCharCountForWidth(upToWidth) * 2) - EstimatedCharCountForWidth(intWidth);
-	bodyCharCount = MIN(bodyCharCount, [bodyText length]);
-	
-	NSMutableString *unattributedPreview = [[NSMutableString alloc] initWithCapacity:bodyCharCount + [self length] + 2];
-	
-	NSString *truncatedBodyString = [[bodyText string] truncatedPreviewStringOfLength:bodyCharCount];
-	if (!truncatedBodyString) return nil;
+	NSString *truncatedBodyString = [[bodyText string] truncatedPreviewStringOfLength:PreviewCharacterLimitForWidth(upToWidth) * 2];
+	NSMutableString *unattributedPreview = [[NSMutableString alloc] initWithCapacity:[truncatedBodyString length] + [self length] + 1];
 	
 	[unattributedPreview appendString:self];
 	[unattributedPreview appendString:@"\n"];
@@ -193,12 +152,8 @@ static size_t EstimatedCharCountForWidth(float upToWidth) {
 
 - (NSAttributedString*)attributedSingleLinePreviewFromBodyText:(NSAttributedString*)bodyText upToWidth:(float)upToWidth {
 	
-	//compute the char count for this note based on the width of the title column and the length of the receiver
-	size_t bodyCharCount = EstimatedCharCountForWidth(upToWidth) - [self length];
-	bodyCharCount = MIN(bodyCharCount, [bodyText length]);
-	
-	NSString *truncatedBodyString = [[bodyText string] truncatedPreviewStringOfLength:bodyCharCount];
-	if (!truncatedBodyString) return nil;
+	NSUInteger limit = PreviewCharacterLimitForWidth(upToWidth);
+	NSString *truncatedBodyString = [[bodyText string] truncatedPreviewStringOfLength:limit > [self length] ? limit - [self length] : 0];
 	
 	NSMutableString *unattributedPreview = [self mutableCopy];
 	NSString *delimiter = NSLocalizedString(@" option-shift-dash ", @"title/description delimiter");
