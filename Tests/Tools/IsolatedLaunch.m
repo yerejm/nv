@@ -18,9 +18,8 @@
 #import "ExternalEditorListController.h"
 #import "ExporterManager.h"
 #import "ODBEditor.h"
-#import "PTHotKeyCenter.h"
-#import "PTHotKey.h"
-#import "PTKeyCombo.h"
+#import "NVHotKey.h"
+#import "NVShortcutRecorder.h"
 #import "DualField.h"
 #import "AugmentedScrollView.h"
 #import "NVSplitView.h"
@@ -420,6 +419,85 @@ static BOOL WindowSnapshotShowsControlText(NSView *control, NSString *filename) 
     return textPixels > 20;
 }
 
+static BOOL ShortcutIsFree(NSInteger keyCode, NSUInteger modifiers) {
+    NVHotKey *probe = [[[NVHotKey alloc] initWithTarget:nil action:NULL] autorelease];
+    BOOL free = [probe registerKeyCode:keyCode carbonModifiers:modifiers];
+    [probe unregister];
+    return free;
+}
+
+// Sent the way NSApplication delivers a key press, so shortcuts the menus would claim are tested too.
+static void TypeKey(NSWindow *window, unsigned short keyCode, NSEventModifierFlags flags) {
+    NSEvent *event = [NSEvent keyEventWithType:NSEventTypeKeyDown location:NSZeroPoint modifierFlags:flags timestamp:NSProcessInfo.processInfo.systemUptime
+                                  windowNumber:window.windowNumber context:nil characters:@"" charactersIgnoringModifiers:@"" isARepeat:NO keyCode:keyCode];
+    if (![window performKeyEquivalent:event]) [window sendEvent:event];
+}
+
+static void ClickView(NSView *view, NSPoint pointInView) {
+    NSPoint point = [view convertPoint:pointInView toView:nil];
+    for (NSEventType type = NSEventTypeLeftMouseDown; type <= NSEventTypeLeftMouseUp; type++) {
+        [view.window sendEvent:[NSEvent mouseEventWithType:type location:point modifierFlags:0 timestamp:NSProcessInfo.processInfo.systemUptime
+                                              windowNumber:view.window.windowNumber context:nil eventNumber:0 clickCount:1 pressure:1]];
+    }
+}
+
+static void CheckShortcutRecorder(PrefsWindowController *preferences, NSWindow *prefsWindow) {
+    GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
+    [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"General"]];
+    // A click in an inactive window only activates it, so the recorder is clicked once Settings is key.
+    [NSApp activateIgnoringOtherApps:YES];
+    [prefsWindow makeKeyAndOrderFront:nil];
+    WaitForActivation(prefsWindow);
+    NVShortcutRecorder *recorder = [preferences valueForKey:@"appShortcutRecorder"];
+    NSView *generalPane = [preferences valueForKey:@"generalView"];
+    Check(@"shortcut recorder fits inside the General pane", recorder.window == prefsWindow &&
+          NSContainsRect(generalPane.bounds, [generalPane convertRect:recorder.bounds fromView:recorder]));
+    const NSUInteger chord = cmdKey | optionKey | controlKey;
+    BOOL saved = [prefs setAppActivationKeyCode:kVK_F19 modifiers:chord sender:nil];
+    [recorder setKeyCode:prefs.appActivationKeyCode carbonModifiers:prefs.appActivationModifiers];
+    Check(@"the bring-to-front shortcut is registered while not recording", saved && !ShortcutIsFree(kVK_F19, chord));
+    ClickView(recorder, NSMakePoint(NSMidX(recorder.bounds) - 20, NSMidY(recorder.bounds)));
+    Check(@"clicking the recorder starts recording and frees the current shortcut", recorder.recording && prefsWindow.firstResponder == recorder && ShortcutIsFree(kVK_F19, chord));
+    TypeKey(prefsWindow, kVK_ANSI_N, 0);
+    TypeKey(prefsWindow, kVK_ANSI_N, NSEventModifierFlagShift);
+    Check(@"letters without Command, Option or Control are not recorded", recorder.recording && prefs.appActivationKeyCode == kVK_F19);
+    BOOL wasRecording = recorder.recording;
+    TypeKey(prefsWindow, kVK_Escape, 0);
+    Check(@"Escape stops recording and keeps the shortcut", wasRecording && !recorder.recording && prefs.appActivationKeyCode == kVK_F19 && !ShortcutIsFree(kVK_F19, chord));
+    ClickView(recorder, NSMakePoint(NSMidX(recorder.bounds) - 20, NSMidY(recorder.bounds)));
+    TypeKey(prefsWindow, kVK_ANSI_N, NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagControl | NSEventModifierFlagShift);
+    Check(@"a recorded shortcut is saved, registered and shown in ⌃⌥⇧⌘ order", !recorder.recording && prefs.appActivationKeyCode == kVK_ANSI_N &&
+          prefs.appActivationModifiers == (chord | shiftKey) && !ShortcutIsFree(kVK_ANSI_N, chord | shiftKey) && ShortcutIsFree(kVK_F19, chord) &&
+          [recorder.accessibilityLabel hasPrefix:@"⌃⌥⇧⌘"]);
+    NVHotKey *competitor = [[[NVHotKey alloc] initWithTarget:nil action:NULL] autorelease];
+    [competitor registerKeyCode:kVK_F18 carbonModifiers:chord];
+    ClickView(recorder, NSMakePoint(NSMidX(recorder.bounds) - 20, NSMidY(recorder.bounds)));
+    TypeKey(prefsWindow, kVK_F18, NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagControl | NSEventModifierFlagFunction);
+    Check(@"a shortcut already in use is refused and the previous one restored", prefs.appActivationKeyCode == kVK_ANSI_N && recorder.keyCode == kVK_ANSI_N &&
+          !ShortcutIsFree(kVK_ANSI_N, chord | shiftKey));
+    [competitor unregister];
+    ClickView(recorder, NSMakePoint(NSMidX(recorder.bounds) - 20, NSMidY(recorder.bounds)));
+    TypeKey(prefsWindow, kVK_F18, NSEventModifierFlagFunction);
+    Check(@"a function key alone can be recorded", prefs.appActivationKeyCode == kVK_F18 && prefs.appActivationModifiers == 0 && !ShortcutIsFree(kVK_F18, 0) &&
+          [recorder.accessibilityLabel isEqualToString:@"F18"]);
+    for (NSString *appearance in @[NSAppearanceNameAqua, NSAppearanceNameDarkAqua]) {
+        [prefsWindow setAppearance:[NSAppearance appearanceNamed:appearance]];
+        Pump(0.2);
+        SnapshotWindow(prefsWindow, [NSString stringWithFormat:@"settings-general-%@.png", [appearance isEqualToString:NSAppearanceNameAqua] ? @"light" : @"dark"]);
+    }
+    [prefsWindow setAppearance:nil];
+    NSButton *clearButton = [recorder valueForKey:@"clearButton"];
+    BOOL clearable = !clearButton.hidden && prefs.appActivationKeyCode >= 0;
+    [clearButton performClick:nil];
+    Check(@"the remove button clears the shortcut", clearable && prefs.appActivationKeyCode == -1 && recorder.keyCode == -1 && ShortcutIsFree(kVK_F18, 0) && clearButton.hidden);
+    ClickView(recorder, NSMakePoint(NSMidX(recorder.bounds), NSMidY(recorder.bounds)));
+    TypeKey(prefsWindow, kVK_ANSI_N, NSEventModifierFlagCommand | NSEventModifierFlagOption);
+    ClickView(recorder, NSMakePoint(NSMidX(recorder.bounds), NSMidY(recorder.bounds)));
+    BOOL recordedBeforeDelete = recorder.recording && prefs.appActivationKeyCode == kVK_ANSI_N;
+    TypeKey(prefsWindow, kVK_Delete, 0);
+    Check(@"Delete while recording removes the shortcut", recordedBeforeDelete && !recorder.recording && prefs.appActivationKeyCode == -1 && ShortcutIsFree(kVK_ANSI_N, cmdKey | optionKey));
+}
+
 static void CompleteDesktopAcceptance(AppController *app, NotationController *notation, NSWindow *window, LinkingEditor *editor) {
     @try {
         [NSApp hide:nil];
@@ -429,24 +507,20 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         WaitForActivation(window);
         Pump(0.2);
         Check(@"activation restores search focus", window.visible && window.firstResponder != editor);
-        PTHotKeyCenter *center = [NSClassFromString(@"PTHotKeyCenter") sharedCenter];
-        PTHotKey *hotkey = [[[NSClassFromString(@"PTHotKey") alloc] init] autorelease];
-        hotkey.name = @"NV isolated acceptance";
-        hotkey.keyCombo = [NSClassFromString(@"PTKeyCombo") keyComboWithKeyCode:90 modifiers:cmdKey | optionKey | controlKey];
-        hotkey.target = [[[NVHotkeyRecorder alloc] init] autorelease];
-        hotkey.action = @selector(fired:);
-        BOOL registered = [center registerHotKey:hotkey];
-        NSNumber *keyID = [[[center valueForKey:@"mHotKeyMap"] allKeysForObject:hotkey] firstObject];
-        EventHotKeyID identity = { 'PTHk', keyID.unsignedIntValue };
+        NVHotKey *hotkey = [[[NVHotKey alloc] initWithTarget:[[[NVHotkeyRecorder alloc] init] autorelease] action:@selector(fired:)] autorelease];
+        BOOL registered = [hotkey registerKeyCode:kVK_F20 carbonModifiers:cmdKey | optionKey | controlKey];
+        EventHotKeyID identity = { 'NVhk', [[hotkey valueForKey:@"identifier"] unsignedIntValue] };
         EventRef event = NULL;
         OSStatus eventStatus = CreateEvent(NULL, kEventClassKeyboard, kEventHotKeyPressed, 0, 0, &event);
-        if (eventStatus == noErr && keyID) {
+        if (eventStatus == noErr) {
             SetEventParameter(event, kEventParamDirectObject, typeEventHotKeyID, sizeof(identity), &identity);
             eventStatus = SendEventToEventTarget(event, GetEventDispatcherTarget());
         }
         if (event) ReleaseEvent(event);
         Check(@"hotkey registration and Carbon event dispatch", registered && eventStatus == noErr && hotkeyCount == 1);
-        [center unregisterHotKey:hotkey];
+        Check(@"a shortcut another hot key owns is refused", !ShortcutIsFree(kVK_F20, cmdKey | optionKey | controlKey));
+        [hotkey unregister];
+        Check(@"an unregistered shortcut is released", ShortcutIsFree(kVK_F20, cmdKey | optionKey | controlKey));
         NoteObject *note = [app valueForKey:@"currentNote"];
         CheckExternalEditor(note);
         [notation.notationPrefs setNotesStorageFormat:SingleDatabaseFormat];
@@ -478,6 +552,7 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         Check(@"all seven settings icons remain visible in every pane", allItemsVisible);
         Check(@"settings pane changes keep the window frame constant", stableFrame);
         Check(@"settings minimum width fits the toolbar", prefsWindow.contentMinSize.width >= 640 && NSWidth(prefsWindow.contentView.bounds) >= prefsWindow.contentMinSize.width);
+        CheckShortcutRecorder(preferences, prefsWindow);
         [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Fonts & Colors"]];
         NSView *fontsColorsPane = [preferences valueForKey:@"fontsColorsView"];
         NSButton *systemHighlightButton = [preferences valueForKey:@"systemHighlightColorButton"];

@@ -29,9 +29,7 @@
 #import "AttributedPlainText.h"
 #import "FastListDataSource.h"
 #import "NotesTableView.h"
-#import "PTHotKey.h"
-#import "PTKeyCombo.h"
-#import "PTHotKeyCenter.h"
+#import "NVHotKey.h"
 #import "NSString_NV.h"
 
 #define SEND_CALLBACKS() sendCallbacksForGlobalPrefs(self, _cmd, sender)
@@ -97,7 +95,6 @@ NSString *NotePreviewString = @"Note Preview";
 
 NSString *NVPTFPboardType = @"Notational Velocity Poor Text Format";
 
-NSString *HotKeyAppToFrontName = @"bring Notational Velocity to the foreground";
 
 
 @implementation GlobalPrefs
@@ -326,47 +323,59 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
     return [defaults boolForKey:QuitWhenClosingMainWindowKey];
 }
 
-- (void)setAppActivationKeyCombo:(PTKeyCombo*)aCombo sender:(id)sender {
-	if (aCombo) {
-		[appActivationKeyCombo release];
-		appActivationKeyCombo = [aCombo retain];
-		
-		[[self appActivationHotKey] setKeyCombo:appActivationKeyCombo];
-	
-		[defaults setInteger:[aCombo keyCode] forKey:AppActivationKeyCodeKey];
-		[defaults setInteger:[aCombo modifiers] forKey:AppActivationModifiersKey];
-		
-		SEND_CALLBACKS();
+- (NSInteger)appActivationKeyCode {
+	NSInteger keyCode = [defaults integerForKey:AppActivationKeyCodeKey];
+	NSInteger modifiers = [defaults integerForKey:AppActivationModifiersKey];
+	//earlier versions stored -1 for both, or nothing, when no shortcut was set
+	return keyCode >= 0 && (modifiers > 0 || NVHotKeyIsFunctionKey(keyCode)) ? keyCode : -1;
+}
+
+- (NSUInteger)appActivationModifiers {
+	return [self appActivationKeyCode] < 0 ? 0 : (NSUInteger)[defaults integerForKey:AppActivationModifiersKey];
+}
+
+- (void)_storeAppActivationKeyCode:(NSInteger)keyCode modifiers:(NSUInteger)modifiers {
+	if (keyCode < 0) {
+		[defaults removeObjectForKey:AppActivationKeyCodeKey];
+		[defaults removeObjectForKey:AppActivationModifiersKey];
+	} else {
+		[defaults setInteger:keyCode forKey:AppActivationKeyCodeKey];
+		[defaults setInteger:(NSInteger)modifiers forKey:AppActivationModifiersKey];
 	}
 }
 
-- (PTHotKey*)appActivationHotKey {
-	if (!appActivationHotKey) {
-		appActivationHotKey = [[PTHotKey alloc] init];
-		[appActivationHotKey setName:HotKeyAppToFrontName];
-		[appActivationHotKey setKeyCombo:[self appActivationKeyCombo]];
+- (BOOL)_registerAppActivationHotKey {
+	NSInteger keyCode = [self appActivationKeyCode];
+	if (!appActivationHotKey) return YES;
+	if (keyCode < 0) {
+		[appActivationHotKey unregister];
+		return YES;
 	}
-	
-	return appActivationHotKey;
+	return [appActivationHotKey registerKeyCode:keyCode carbonModifiers:[self appActivationModifiers]];
 }
 
-- (PTKeyCombo*)appActivationKeyCombo {
-	if (!appActivationKeyCombo) {
-		appActivationKeyCombo = [[PTKeyCombo alloc] initWithKeyCode:[[defaults objectForKey:AppActivationKeyCodeKey] intValue]
-														  modifiers:[[defaults objectForKey:AppActivationModifiersKey] intValue]];
+- (BOOL)setAppActivationKeyCode:(NSInteger)keyCode modifiers:(NSUInteger)modifiers sender:(id)sender {
+	NSInteger previousKeyCode = [self appActivationKeyCode];
+	NSUInteger previousModifiers = [self appActivationModifiers];
+	[self _storeAppActivationKeyCode:keyCode modifiers:modifiers];
+	if (![self _registerAppActivationHotKey]) {
+		[self _storeAppActivationKeyCode:previousKeyCode modifiers:previousModifiers];
+		[self _registerAppActivationHotKey];
+		return NO;
 	}
-	return appActivationKeyCombo;
+	SEND_CALLBACKS();
+	return YES;
+}
+
+- (void)setAppActivationShortcutSuspended:(BOOL)suspended {
+	if (suspended) [appActivationHotKey unregister];
+	else [self _registerAppActivationHotKey];
 }
 
 - (BOOL)registerAppActivationKeystrokeWithTarget:(id)target selector:(SEL)selector {
-	PTHotKey *hotKey = [self appActivationHotKey];
-	
-	[hotKey setTarget:target];
-	[hotKey setAction:selector];
-	
-	[[PTHotKeyCenter sharedCenter] unregisterHotKeyForName:HotKeyAppToFrontName];
-	
-	return [[PTHotKeyCenter sharedCenter] registerHotKey:hotKey];
+	[appActivationHotKey release];
+	appActivationHotKey = [[NVHotKey alloc] initWithTarget:target action:selector];
+	return [self _registerAppActivationHotKey];
 }
 
 - (void)setPastePreservesStyle:(BOOL)value sender:(id)sender {

@@ -199,7 +199,7 @@
 /* No Comment */
 "Select the folder that Notational Velocity should use for reading and storing notes." = "Wähle das Verzeichnis welches Notational Velocity zum Lesen und Speichern der Notizen verwenden soll.";
 
-/* description for no key combination */
+/* menu item for using no external editor */
 "(None)" = "(Nichts)";
 
 /* no comment */
@@ -669,3 +669,15 @@
 
 /* button that returns the search highlight to the system find color */
 "Use System Color" = "Systemfarbe verwenden";
+
+/* the space bar in a keyboard shortcut */
+"Space" = "Leertaste";
+
+/* prompt in an empty keyboard shortcut field */
+"Record Shortcut" = "Kurzbefehl aufnehmen";
+
+/* prompt while recording a keyboard shortcut */
+"Press Shortcut" = "Kurzbefehl drücken";
+
+/* tooltip of the button that clears a keyboard shortcut */
+"Remove Shortcut" = "Kurzbefehl entfernen";

@@ -18,8 +18,6 @@
 
 
 #import "PrefsWindowController.h"
-#import "PTKeyComboPanel.h"
-#import "PTKeyCombo.h"
 #import "NotationPrefsViewController.h"
 #import "ExternalEditorListController.h"
 #import "NSData_transformations.h"
@@ -82,22 +80,17 @@
 	NSLog(@"I need an update: %@", [menu description]);
 }
 
-- (IBAction)setAppShortcut:(id)sender {
-	[[PTKeyComboPanel sharedPanel] showSheetForHotkey:[prefsController appActivationHotKey] forWindow:window modalDelegate:self];
+- (BOOL)shortcutRecorder:(NVShortcutRecorder *)recorder shouldChangeToKeyCode:(NSInteger)keyCode carbonModifiers:(NSUInteger)modifiers {
+	return [prefsController setAppActivationKeyCode:keyCode modifiers:modifiers sender:self];
 }
 
-- (void)keyComboPanelEnded:(PTKeyComboPanel*)panel {
-	PTKeyCombo *oldKeyCombo = [[prefsController appActivationKeyCombo] retain];
-	[prefsController setAppActivationKeyCombo:[panel keyCombo] sender:self];
-	
-	[appShortcutField setStringValue:[[prefsController appActivationKeyCombo] description]];
-		
-	if (![prefsController registerAppActivationKeystrokeWithTarget:(AppController *)[NSApp delegate] selector:@selector(toggleNVActivation:)]) {
-		[prefsController setAppActivationKeyCombo:oldKeyCombo sender:self];
-		NSLog(@"reverting to old (hopefully working key combo");
-	}
-	
-	[oldKeyCombo release];
+//so pressing the current shortcut records it instead of hiding the app
+- (void)shortcutRecorderDidBeginRecording:(NVShortcutRecorder *)recorder {
+	[prefsController setAppActivationShortcutSuspended:YES];
+}
+
+- (void)shortcutRecorderDidEndRecording:(NVShortcutRecorder *)recorder {
+	[prefsController setAppActivationShortcutSuspended:NO];
 }
 
 - (IBAction)changeBodyFont:(id)sender {
@@ -576,7 +569,7 @@
 	[makeURLsClickable setState:[prefsController URLsAreClickable]];
     [bodyTextFontField setBackgroundColor:[NSColor textBackgroundColor]];
     [self previewNoteBodyFont];
-	[appShortcutField setStringValue:[[prefsController appActivationKeyCombo] description]];
+	[appShortcutRecorder setKeyCode:[prefsController appActivationKeyCode] carbonModifiers:[prefsController appActivationModifiers]];
 	[searchHighlightColorWell setColor:[prefsController searchTermHighlightColorRaw:YES]];
 	[self addSystemHighlightColorButton];
 	[highlightSearchTermsButton setState:[prefsController highlightSearchTerms]];

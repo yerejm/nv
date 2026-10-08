@@ -199,7 +199,7 @@
 /* No Comment */
 "Select the folder that Notational Velocity should use for reading and storing notes." = "选择 Notational Velocity 用于读取和存储笔记的文件夹。";
 
-/* description for no key combination */
+/* menu item for using no external editor */
 "(None)" = "(无)";
 
 /* no comment */
@@ -667,3 +667,15 @@
 
 /* button that returns the search highlight to the system find color */
 "Use System Color" = "使用系统颜色";
+
+/* the space bar in a keyboard shortcut */
+"Space" = "空格";
+
+/* prompt in an empty keyboard shortcut field */
+"Record Shortcut" = "录制快捷键";
+
+/* prompt while recording a keyboard shortcut */
+"Press Shortcut" = "按下快捷键";
+
+/* tooltip of the button that clears a keyboard shortcut */
+"Remove Shortcut" = "移除快捷键";

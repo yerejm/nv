@@ -28,12 +28,6 @@ Italian - Paolo Tramannoni
 
 --
 
-HotKeys
-
-Copyright (c) 2003 Quentin D. Carnicelli. All rights reserved.
-
---
-
 CiphSafe NSData compression category methods
 
 Copyright © 2003, Bryan L Blackburn.  All rights reserved.

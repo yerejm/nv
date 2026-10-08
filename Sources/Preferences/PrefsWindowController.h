@@ -18,12 +18,13 @@
 
 
 #import <Cocoa/Cocoa.h>
+#import "NVShortcutRecorder.h"
 
 @class NotationPrefsViewController;
 @class GlobalPrefs;
 
 @interface PrefsWindowController : NSObject 
-<NSFontChanging, NSWindowDelegate, NSToolbarDelegate>
+<NSFontChanging, NSWindowDelegate, NSToolbarDelegate, NVShortcutRecorderDelegate>
 {
     IBOutlet NSPopUpButton *folderLocationsMenuButton;
     IBOutlet NSTextField *bodyTextFontField;
@@ -31,7 +32,7 @@
     IBOutlet NSPopUpButton *tableTextMenuButton;
 	IBOutlet NSPopUpButton *externalEditorMenuButton;
     IBOutlet NSTextField *tableTextSizeField;
-    IBOutlet NSTextField *appShortcutField;
+    IBOutlet NVShortcutRecorder *appShortcutRecorder;
 	IBOutlet NSButton *completeNoteTitlesButton;
 	IBOutlet NSButton *checkSpellingButton;
 	IBOutlet NSButton *confirmDeletionButton;
@@ -85,7 +86,6 @@
 - (IBAction)changedMakeURLsClickable:(id)sender;
 - (IBAction)changedStyledTextBehavior:(id)sender;
 - (IBAction)changedAutoSuggestLinks:(id)sender;
-- (IBAction)setAppShortcut:(id)sender;
 - (IBAction)changeBodyFont:(id)sender;
 - (void)previewNoteBodyFont;
 - (IBAction)changedNoteDeletion:(id)sender;

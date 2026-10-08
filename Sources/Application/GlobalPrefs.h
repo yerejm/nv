@@ -36,8 +36,7 @@ extern NSString *NVPTFPboardType;
 @class NotesTableView;
 @class BookmarksController;
 @class NotationPrefs;
-@class PTKeyCombo;
-@class PTHotKey;
+@class NVHotKey;
 
 enum { NoteTitleColumn, NoteLabelsColumn, NoteDateModifiedColumn, NoteDateCreatedColumn };
 
@@ -52,8 +51,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 	void (*runCallbacksIMP)(GlobalPrefs*, SEL, SEL, id);
 	NSMutableDictionary *selectorObservers;
 	
-	PTKeyCombo *appActivationKeyCombo;
-	PTHotKey *appActivationHotKey;
+	NVHotKey *appActivationHotKey;
 	
 	BookmarksController *bookmarksController;
 	NotationPrefs *notationPrefs;
@@ -122,9 +120,12 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 - (void)setQuitWhenClosingWindow:(BOOL)value sender:(id)sender;
 - (BOOL)quitWhenClosingWindow;
 
-- (void)setAppActivationKeyCombo:(PTKeyCombo*)aCombo sender:(id)sender;
-- (PTKeyCombo*)appActivationKeyCombo;
-- (PTHotKey*)appActivationHotKey;
+//the key code is -1 when no shortcut is set; modifiers are Carbon flags
+- (NSInteger)appActivationKeyCode;
+- (NSUInteger)appActivationModifiers;
+//keeps the previous shortcut and returns NO when another app owns the new one
+- (BOOL)setAppActivationKeyCode:(NSInteger)keyCode modifiers:(NSUInteger)modifiers sender:(id)sender;
+- (void)setAppActivationShortcutSuspended:(BOOL)suspended;
 - (BOOL)registerAppActivationKeystrokeWithTarget:(id)target selector:(SEL)selector;
 
 - (void)setPastePreservesStyle:(BOOL)value sender:(id)sender;

@@ -378,7 +378,7 @@ errorReturn:
 
 	if (!didAddItem) {
 		//disabled placeholder menu item; will probably not be displayed, but would be necessary for preferences list
-		NSMenuItem *theMenuItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"(None)", @"description for no key combination") action:NULL keyEquivalent:@""] autorelease];
+		NSMenuItem *theMenuItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"(None)", @"menu item for using no external editor") action:NULL keyEquivalent:@""] autorelease];
 		[theMenuItem setEnabled:NO];
 		[theMenu addItem:theMenuItem];
 	}

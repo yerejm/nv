@@ -687,7 +687,6 @@
 					<string>$(SRCROOT)/../Sources/Interchange</string>
 					<string>$(SRCROOT)/../Sources/Integrations</string>
 					<string>$(SRCROOT)/../Sources/Support</string>
-					<string>$(SRCROOT)/../Vendor/PTHotKeys</string>
 					<string>$(SRCROOT)/../Vendor/ODBEditor</string>
 					<string>$(SRCROOT)/Support</string>
 				</array>
@@ -753,7 +752,6 @@
 					<string>$(SRCROOT)/../Sources/Interchange</string>
 					<string>$(SRCROOT)/../Sources/Integrations</string>
 					<string>$(SRCROOT)/../Sources/Support</string>
-					<string>$(SRCROOT)/../Vendor/PTHotKeys</string>
 					<string>$(SRCROOT)/../Vendor/ODBEditor</string>
 					<string>$(SRCROOT)/Support</string>
 				</array>

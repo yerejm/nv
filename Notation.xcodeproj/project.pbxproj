@@ -44,7 +44,6 @@
 		212EEA2A12EFBD1800F89538 /* Este é o título de uma nota.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 212EEA2612EFBD1800F89538 /* Este é o título de uma nota.nvhelp */; };
 		21317FAF1113840E00472211 /* Excruciatingly Useful Shortcuts.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 21317FAD1113840E00472211 /* Excruciatingly Useful Shortcuts.nvhelp */; };
 		213FAD530B3C6B52004C74BD /* FSExchangeObjectsCompat.c in Sources */ = {isa = PBXBuildFile; fileRef = 213FAD520B3C6B52004C74BD /* FSExchangeObjectsCompat.c */; };
-		213FB0240B3CB1C4004C74BD /* PTKeyboardIcon.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 213FB0230B3CB1C4004C74BD /* PTKeyboardIcon.tiff */; };
 		2143322812EC584E000F473B /* Ceci est le titre d'une note.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 2143322412EC584E000F473B /* Ceci est le titre d'une note.nvhelp */; };
 		2143322912EC584E000F473B /* Raccourcis incroyablement utiles.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 2143322612EC584E000F473B /* Raccourcis incroyablement utiles.nvhelp */; };
 		2143331F12ECC4B2000F473B /* Dies ist der Titel einer Notiz.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 2143331B12ECC4B2000F473B /* Dies ist der Titel einer Notiz.nvhelp */; };
@@ -85,7 +84,7 @@
 		219190F109C4A60700586B15 /* DualField.m in Sources */ = {isa = PBXBuildFile; fileRef = 219190F009C4A60700586B15 /* DualField.m */; };
 		2191926709C52AA600586B15 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 2191926609C52AA600586B15 /* libz.dylib */; };
 		219192D409CFBC8800586B15 /* NoteAttributeColumn.m in Sources */ = {isa = PBXBuildFile; fileRef = 219192D309CFBC8700586B15 /* NoteAttributeColumn.m */; };
-		219195E609D3A20F00586B15 /* Preferences.nib in Resources */ = {isa = PBXBuildFile; fileRef = 219195E409D3A20F00586B15 /* Preferences.nib */; };
+		219195E609D3A20F00586B15 /* Preferences.xib in Resources */ = {isa = PBXBuildFile; fileRef = 219195E409D3A20F00586B15 /* Preferences.xib */; };
 		219196BF09D4F20100586B15 /* Add_Pressed.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 219196BB09D4F20000586B15 /* Add_Pressed.tiff */; };
 		219196C009D4F20100586B15 /* Add.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 219196BC09D4F20000586B15 /* Add.tiff */; };
 		219196C109D4F20100586B15 /* Remove_Pressed.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 219196BD09D4F20000586B15 /* Remove_Pressed.tiff */; };
@@ -111,6 +110,8 @@
 		21A73DC8099712A8009F8A6C /* WALController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21A73DC7099712A8009F8A6C /* WALController.m */; };
 		21B1BC361104D20E0004A7D0 /* InvocationRecorder.m in Sources */ = {isa = PBXBuildFile; fileRef = 21B1BC351104D20E0004A7D0 /* InvocationRecorder.m */; };
 		4E5F6A7B8C9D0E1F2A3B4C01 /* NVSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E5F6A7B8C9D0E1F2A3B4C03 /* NVSplitView.m */; };
+		4E5F6A7B8C9D0E1F2A3B4C04 /* NVHotKey.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E5F6A7B8C9D0E1F2A3B4C06 /* NVHotKey.m */; };
+		4E5F6A7B8C9D0E1F2A3B4C07 /* NVShortcutRecorder.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E5F6A7B8C9D0E1F2A3B4C09 /* NVShortcutRecorder.m */; };
 		21B548FA112F307E00E163A1 /* NotationDirectoryManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 21B548F8112F307E00E163A1 /* NotationDirectoryManager.m */; };
 		21B54C021134F2E800E163A1 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21B54C011134F2E800E163A1 /* IOKit.framework */; };
 		21B64A2612E61FA700D87EFC /* LabelColumnCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 21B64A2512E61FA700D87EFC /* LabelColumnCell.m */; };
@@ -137,13 +138,6 @@
 		21E6B09F0B6E6D18001ABEDC /* URLGetter.m in Sources */ = {isa = PBXBuildFile; fileRef = 21E6B09D0B6E6D18001ABEDC /* URLGetter.m */; };
 		21E6EC21111DD52B0038ECC7 /* Comment ça marche.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 21E6EC1F111DD52B0038ECC7 /* Comment ça marche.nvhelp */; };
 		21EA369C111C9AD900E2B517 /* Contact.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 21EA3697111C9AD900E2B517 /* Contact.nvhelp */; };
-		21F1CD6D0B3A38DB001FB5F6 /* PTHotKeyCenter.m in Sources */ = {isa = PBXBuildFile; fileRef = 21F1CD660B3A38DB001FB5F6 /* PTHotKeyCenter.m */; };
-		21F1CD6F0B3A38DB001FB5F6 /* PTKeyBroadcaster.m in Sources */ = {isa = PBXBuildFile; fileRef = 21F1CD690B3A38DB001FB5F6 /* PTKeyBroadcaster.m */; };
-		21F1CD700B3A38DB001FB5F6 /* PTKeyCodes.plist in Resources */ = {isa = PBXBuildFile; fileRef = 21F1CD6A0B3A38DB001FB5F6 /* PTKeyCodes.plist */; };
-		21F1CD710B3A38DB001FB5F6 /* PTKeyComboPanel.m in Sources */ = {isa = PBXBuildFile; fileRef = 21F1CD6C0B3A38DB001FB5F6 /* PTKeyComboPanel.m */; };
-		21F1CD980B3A3F77001FB5F6 /* PTHotKey.m in Sources */ = {isa = PBXBuildFile; fileRef = 21F1CD970B3A3F77001FB5F6 /* PTHotKey.m */; };
-		21F1CD9F0B3A3F88001FB5F6 /* PTKeyComboPanel.nib in Resources */ = {isa = PBXBuildFile; fileRef = 21F1CD990B3A3F88001FB5F6 /* PTKeyComboPanel.nib */; };
-		21F1CDAD0B3A401F001FB5F6 /* PTKeyCombo.m in Sources */ = {isa = PBXBuildFile; fileRef = 21F1CDAC0B3A401F001FB5F6 /* PTKeyCombo.m */; };
 		21F447F311B896C4004D008B /* Informações de Contato.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 21F447EE11B896C4004D008B /* Informações de Contato.nvhelp */; };
 		21F459AD0A92E01D00FB6FFE /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21F4599B0A92E01C00FB6FFE /* Carbon.framework */; };
 		21FF94F30B5AD22800DB6A2F /* ExporterManager.nib in Resources */ = {isa = PBXBuildFile; fileRef = 21FF94ED0B5AD22800DB6A2F /* ExporterManager.nib */; };
@@ -196,8 +190,7 @@
 		210D88BC12FE658B00ED7730 /* zh_CN */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = zh_CN; path = zh_CN.lproj/PassphraseChanger.nib; sourceTree = "<group>"; };
 		210D88BD12FE658B00ED7730 /* zh_CN */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = zh_CN; path = zh_CN.lproj/PassphrasePicker.nib; sourceTree = "<group>"; };
 		210D88BE12FE658B00ED7730 /* zh_CN */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = zh_CN; path = zh_CN.lproj/PassphraseRetriever.nib; sourceTree = "<group>"; };
-		210D88BF12FE658B00ED7730 /* zh_CN */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = zh_CN; path = zh_CN.lproj/Preferences.nib; sourceTree = "<group>"; };
-		210D88C012FE658B00ED7730 /* zh_CN */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = zh_CN; path = zh_CN.lproj/PTKeyComboPanel.nib; sourceTree = "<group>"; };
+		210D88BF12FE658B00ED7730 /* zh_CN */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = zh_CN; path = zh_CN.lproj/Preferences.xib; sourceTree = "<group>"; };
 		210D88C112FE658B00ED7730 /* zh_CN */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = zh_CN; path = zh_CN.lproj/SavedSearches.nib; sourceTree = "<group>"; };
 		210D88C212FE658B00ED7730 /* zh_CN */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = zh_CN; path = zh_CN.lproj/URLGetter.nib; sourceTree = "<group>"; };
 		210D88C412FE658B00ED7730 /* zh_CN */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = zh_CN; path = "zh_CN.lproj/使用概览.nvhelp"; sourceTree = "<group>"; };
@@ -236,7 +229,6 @@
 		212DCF600A6DEECB00F74E46 /* DeletionManager.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = DeletionManager.m; sourceTree = "<group>"; };
 		213FAD510B3C6B52004C74BD /* FSExchangeObjectsCompat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FSExchangeObjectsCompat.h; sourceTree = "<group>"; };
 		213FAD520B3C6B52004C74BD /* FSExchangeObjectsCompat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = FSExchangeObjectsCompat.c; sourceTree = "<group>"; };
-		213FB0230B3CB1C4004C74BD /* PTKeyboardIcon.tiff */ = {isa = PBXFileReference; lastKnownFileType = image.tiff; name = PTKeyboardIcon.tiff; path = PTKeyboardIcon.tiff; sourceTree = "<group>"; };
 		2143D3D810E987B100127EA6 /* Pencil.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Pencil.png; path = Pencil.png; sourceTree = "<group>"; };
 		21447B6D133BFE1E00ACC1A7 /* ExternalEditorListController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExternalEditorListController.h; sourceTree = "<group>"; };
 		21447B6E133BFE1E00ACC1A7 /* ExternalEditorListController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ExternalEditorListController.m; sourceTree = "<group>"; };
@@ -321,6 +313,10 @@
 		21B1BC351104D20E0004A7D0 /* InvocationRecorder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = InvocationRecorder.m; sourceTree = "<group>"; };
 		4E5F6A7B8C9D0E1F2A3B4C02 /* NVSplitView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NVSplitView.h; sourceTree = "<group>"; };
 		4E5F6A7B8C9D0E1F2A3B4C03 /* NVSplitView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NVSplitView.m; sourceTree = "<group>"; };
+		4E5F6A7B8C9D0E1F2A3B4C05 /* NVHotKey.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NVHotKey.h; sourceTree = "<group>"; };
+		4E5F6A7B8C9D0E1F2A3B4C06 /* NVHotKey.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NVHotKey.m; sourceTree = "<group>"; };
+		4E5F6A7B8C9D0E1F2A3B4C08 /* NVShortcutRecorder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NVShortcutRecorder.h; sourceTree = "<group>"; };
+		4E5F6A7B8C9D0E1F2A3B4C09 /* NVShortcutRecorder.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NVShortcutRecorder.m; sourceTree = "<group>"; };
 		21B548F8112F307E00E163A1 /* NotationDirectoryManager.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = NotationDirectoryManager.m; sourceTree = "<group>"; };
 		21B548F9112F307E00E163A1 /* NotationDirectoryManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NotationDirectoryManager.h; sourceTree = "<group>"; };
 		21B54C011134F2E800E163A1 /* IOKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOKit.framework; path = /System/Library/Frameworks/IOKit.framework; sourceTree = "<absolute>"; };
@@ -353,17 +349,6 @@
 		21DF19B110D172F600543C35 /* DFCapLeftRounded.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = DFCapLeftRounded.png; path = DFCapLeftRounded.png; sourceTree = "<group>"; };
 		21E6B09D0B6E6D18001ABEDC /* URLGetter.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = URLGetter.m; sourceTree = "<group>"; };
 		21E6B09E0B6E6D18001ABEDC /* URLGetter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = URLGetter.h; sourceTree = "<group>"; };
-		21F1CD650B3A38DB001FB5F6 /* PTHotKeyCenter.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = PTHotKeyCenter.h; path = PTHotKeyCenter.h; sourceTree = "<group>"; };
-		21F1CD660B3A38DB001FB5F6 /* PTHotKeyCenter.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; name = PTHotKeyCenter.m; path = PTHotKeyCenter.m; sourceTree = "<group>"; };
-		21F1CD680B3A38DB001FB5F6 /* PTKeyBroadcaster.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = PTKeyBroadcaster.h; path = PTKeyBroadcaster.h; sourceTree = "<group>"; };
-		21F1CD690B3A38DB001FB5F6 /* PTKeyBroadcaster.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; name = PTKeyBroadcaster.m; path = PTKeyBroadcaster.m; sourceTree = "<group>"; };
-		21F1CD6A0B3A38DB001FB5F6 /* PTKeyCodes.plist */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = text.plist; name = PTKeyCodes.plist; path = PTKeyCodes.plist; sourceTree = "<group>"; };
-		21F1CD6B0B3A38DB001FB5F6 /* PTKeyComboPanel.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = PTKeyComboPanel.h; path = PTKeyComboPanel.h; sourceTree = "<group>"; };
-		21F1CD6C0B3A38DB001FB5F6 /* PTKeyComboPanel.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; name = PTKeyComboPanel.m; path = PTKeyComboPanel.m; sourceTree = "<group>"; };
-		21F1CD960B3A3F77001FB5F6 /* PTHotKey.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = PTHotKey.h; path = PTHotKey.h; sourceTree = "<group>"; };
-		21F1CD970B3A3F77001FB5F6 /* PTHotKey.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; name = PTHotKey.m; path = PTHotKey.m; sourceTree = "<group>"; };
-		21F1CDAB0B3A401F001FB5F6 /* PTKeyCombo.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; name = PTKeyCombo.h; path = PTKeyCombo.h; sourceTree = "<group>"; };
-		21F1CDAC0B3A401F001FB5F6 /* PTKeyCombo.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; name = PTKeyCombo.m; path = PTKeyCombo.m; sourceTree = "<group>"; };
 		21F4599B0A92E01C00FB6FFE /* Carbon.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Carbon.framework; path = /System/Library/Frameworks/Carbon.framework; sourceTree = "<absolute>"; };
 		21FF94F50B5AD23B00DB6A2F /* ExporterManager.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = ExporterManager.m; sourceTree = "<group>"; };
 		21FF94F60B5AD23B00DB6A2F /* ExporterManager.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = ExporterManager.h; sourceTree = "<group>"; };
@@ -387,11 +372,10 @@
 		6E6AFB0A24DAE61A005CFF74 /* it */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/Localizable.strings; sourceTree = "<group>"; };
 		6E6AFB0B24DAE61A005CFF74 /* it */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = it; path = it.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		6E6AFB0C24DAE61A005CFF74 /* it */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = it; path = it.lproj/NotationPrefsView.nib; sourceTree = "<group>"; };
-		6E6AFB0D24DAE61A005CFF74 /* it */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = it; path = it.lproj/PTKeyComboPanel.nib; sourceTree = "<group>"; };
 		6E6AFB0E24DAE61A005CFF74 /* it */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = it; path = it.lproj/PassphraseChanger.nib; sourceTree = "<group>"; };
 		6E6AFB0F24DAE61A005CFF74 /* it */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = it; path = it.lproj/PassphrasePicker.nib; sourceTree = "<group>"; };
 		6E6AFB1024DAE61A005CFF74 /* it */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = it; path = it.lproj/PassphraseRetriever.nib; sourceTree = "<group>"; };
-		6E6AFB1124DAE61A005CFF74 /* it */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = it; path = it.lproj/Preferences.nib; sourceTree = "<group>"; };
+		6E6AFB1124DAE61A005CFF74 /* it */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = it; path = it.lproj/Preferences.xib; sourceTree = "<group>"; };
 		6E6AFB1224DAE61A005CFF74 /* it */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = it; path = it.lproj/SavedSearches.nib; sourceTree = "<group>"; };
 		6E6AFB1324DAE61A005CFF74 /* it */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = it; path = it.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		6E6AFB1424DAE61B005CFF74 /* it */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = it; path = it.lproj/URLGetter.nib; sourceTree = "<group>"; };
@@ -410,11 +394,10 @@
 		6E6AFB2224DAE627005CFF74 /* en */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		6E6AFB2324DAE627005CFF74 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		6E6AFB2424DAE628005CFF74 /* en */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = en; path = en.lproj/NotationPrefsView.nib; sourceTree = "<group>"; };
-		6E6AFB2524DAE628005CFF74 /* en */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = en; path = en.lproj/PTKeyComboPanel.nib; sourceTree = "<group>"; };
 		6E6AFB2624DAE628005CFF74 /* en */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = en; path = en.lproj/PassphraseChanger.nib; sourceTree = "<group>"; };
 		6E6AFB2724DAE629005CFF74 /* en */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = en; path = en.lproj/PassphrasePicker.nib; sourceTree = "<group>"; };
 		6E6AFB2824DAE629005CFF74 /* en */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = en; path = en.lproj/PassphraseRetriever.nib; sourceTree = "<group>"; };
-		6E6AFB2924DAE629005CFF74 /* en */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = en; path = en.lproj/Preferences.nib; sourceTree = "<group>"; };
+		6E6AFB2924DAE629005CFF74 /* en */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = en; path = en.lproj/Preferences.xib; sourceTree = "<group>"; };
 		6E6AFB2A24DAE629005CFF74 /* en */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = en; path = en.lproj/SavedSearches.nib; sourceTree = "<group>"; };
 		6E6AFB2B24DAE62A005CFF74 /* en */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		6E6AFB2C24DAE62A005CFF74 /* en */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = en; path = en.lproj/URLGetter.nib; sourceTree = "<group>"; };
@@ -433,11 +416,10 @@
 		6E6AFB3A24DAE62C005CFF74 /* de */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/Localizable.strings; sourceTree = "<group>"; };
 		6E6AFB3B24DAE62D005CFF74 /* de */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = de; path = de.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		6E6AFB3C24DAE62D005CFF74 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/NotationPrefsView.nib; sourceTree = "<group>"; };
-		6E6AFB3D24DAE62D005CFF74 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/PTKeyComboPanel.nib; sourceTree = "<group>"; };
 		6E6AFB3E24DAE62D005CFF74 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/PassphraseChanger.nib; sourceTree = "<group>"; };
 		6E6AFB3F24DAE62E005CFF74 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/PassphrasePicker.nib; sourceTree = "<group>"; };
 		6E6AFB4024DAE62E005CFF74 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/PassphraseRetriever.nib; sourceTree = "<group>"; };
-		6E6AFB4124DAE62E005CFF74 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/Preferences.nib; sourceTree = "<group>"; };
+		6E6AFB4124DAE62E005CFF74 /* de */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = de; path = de.lproj/Preferences.xib; sourceTree = "<group>"; };
 		6E6AFB4224DAE62E005CFF74 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/SavedSearches.nib; sourceTree = "<group>"; };
 		6E6AFB4324DAE62F005CFF74 /* de */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = de; path = de.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		6E6AFB4424DAE62F005CFF74 /* de */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = de; path = de.lproj/URLGetter.nib; sourceTree = "<group>"; };
@@ -456,11 +438,10 @@
 		6E6AFB5224DAE635005CFF74 /* fr */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/Localizable.strings; sourceTree = "<group>"; };
 		6E6AFB5324DAE635005CFF74 /* fr */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = fr; path = fr.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		6E6AFB5424DAE635005CFF74 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/NotationPrefsView.nib; sourceTree = "<group>"; };
-		6E6AFB5524DAE636005CFF74 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/PTKeyComboPanel.nib; sourceTree = "<group>"; };
 		6E6AFB5624DAE636005CFF74 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/PassphraseChanger.nib; sourceTree = "<group>"; };
 		6E6AFB5724DAE636005CFF74 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/PassphrasePicker.nib; sourceTree = "<group>"; };
 		6E6AFB5824DAE636005CFF74 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/PassphraseRetriever.nib; sourceTree = "<group>"; };
-		6E6AFB5924DAE636005CFF74 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/Preferences.nib; sourceTree = "<group>"; };
+		6E6AFB5924DAE636005CFF74 /* fr */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = fr; path = fr.lproj/Preferences.xib; sourceTree = "<group>"; };
 		6E6AFB5A24DAE636005CFF74 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/SavedSearches.nib; sourceTree = "<group>"; };
 		6E6AFB5B24DAE636005CFF74 /* fr */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = fr; path = fr.lproj/ServicesMenu.strings; sourceTree = "<group>"; };
 		6E6AFB5C24DAE636005CFF74 /* fr */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = fr; path = fr.lproj/URLGetter.nib; sourceTree = "<group>"; };
@@ -479,11 +460,10 @@
 		6E6AFB6A24DAE637005CFF74 /* pt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.strings; name = pt; path = pt.lproj/Localizable.strings; sourceTree = "<group>"; };
 		6E6AFB6B24DAE638005CFF74 /* pt */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = pt; path = pt.lproj/MainMenu.xib; sourceTree = "<group>"; };
 		6E6AFB6C24DAE638005CFF74 /* pt */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = pt; path = pt.lproj/NotationPrefsView.nib; sourceTree = "<group>"; };
-		6E6AFB6D24DAE638005CFF74 /* pt */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = pt; path = pt.lproj/PTKeyComboPanel.nib; sourceTree = "<group>"; };
 		6E6AFB6E24DAE638005CFF74 /* pt */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = pt; path = pt.lproj/PassphraseChanger.nib; sourceTree = "<group>"; };
 		6E6AFB6F24DAE638005CFF74 /* pt */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = pt; path = pt.lproj/PassphrasePicker.nib; sourceTree = "<group>"; };
 		6E6AFB7024DAE638005CFF74 /* pt */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = pt; path = pt.lproj/PassphraseRetriever.nib; sourceTree = "<group>"; };
-		6E6AFB7124DAE638005CFF74 /* pt */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = pt; path = pt.lproj/Preferences.nib; sourceTree = "<group>"; };
+		6E6AFB7124DAE638005CFF74 /* pt */ = {isa = PBXFileReference; lastKnownFileType = file.xib; name = pt; path = pt.lproj/Preferences.xib; sourceTree = "<group>"; };
 		6E6AFB7224DAE638005CFF74 /* pt */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = pt; path = pt.lproj/SavedSearches.nib; sourceTree = "<group>"; };
 		6E6AFB7324DAE638005CFF74 /* pt */ = {isa = PBXFileReference; lastKnownFileType = wrapper.nib; name = pt; path = pt.lproj/URLGetter.nib; sourceTree = "<group>"; };
 		6E6AFB7424DAE638005CFF74 /* pt */ = {isa = PBXFileReference; lastKnownFileType = text; name = pt; path = "pt.lproj/Atalhos Incrivelmente Úteis.nvhelp"; sourceTree = "<group>"; };
@@ -544,6 +524,8 @@
 				21D60127098FDB46007440DF /* GlobalPrefs.m */,
 				21B1BC341104D20E0004A7D0 /* InvocationRecorder.h */,
 				21B1BC351104D20E0004A7D0 /* InvocationRecorder.m */,
+				4E5F6A7B8C9D0E1F2A3B4C05 /* NVHotKey.h */,
+				4E5F6A7B8C9D0E1F2A3B4C06 /* NVHotKey.m */,
 				4E5F6A7B8C9D0E1F2A3B4C02 /* NVSplitView.h */,
 				4E5F6A7B8C9D0E1F2A3B4C03 /* NVSplitView.m */,
 				29B97316FDCFA39411CA2CEA /* main.m */,
@@ -723,6 +705,8 @@
 				21A2FA1609DF6174001AF0B5 /* NotationPrefsViewController.m */,
 				D3EEC9FF106F66C70023D7F8 /* NVPasswordGenerator.h */,
 				D3EEC9FE106F66C70023D7F8 /* NVPasswordGenerator.m */,
+				4E5F6A7B8C9D0E1F2A3B4C08 /* NVShortcutRecorder.h */,
+				4E5F6A7B8C9D0E1F2A3B4C09 /* NVShortcutRecorder.m */,
 				2144987D0AE192F900E2A2B6 /* PassphraseChanger.h */,
 				215450F80B06509600C0D1D5 /* PassphraseChanger.m */,
 				214495110ADC8A6600E2A2B6 /* PassphrasePicker.h */,
@@ -756,7 +740,6 @@
 			isa = PBXGroup;
 			children = (
 				2F7A9399A91EBBCC83C381BA /* ODBEditor */,
-				B2315FBACDA78B815C32A2DD /* PTHotKeys */,
 			);
 			path = Vendor;
 			sourceTree = "<group>";
@@ -771,24 +754,6 @@
 				212897E11330030100380B64 /* ODBEditorSuite.h */,
 			);
 			path = ODBEditor;
-			sourceTree = "<group>";
-		};
-		B2315FBACDA78B815C32A2DD /* PTHotKeys */ = {
-			isa = PBXGroup;
-			children = (
-				21F1CD960B3A3F77001FB5F6 /* PTHotKey.h */,
-				21F1CD970B3A3F77001FB5F6 /* PTHotKey.m */,
-				21F1CD650B3A38DB001FB5F6 /* PTHotKeyCenter.h */,
-				21F1CD660B3A38DB001FB5F6 /* PTHotKeyCenter.m */,
-				21F1CD680B3A38DB001FB5F6 /* PTKeyBroadcaster.h */,
-				21F1CD690B3A38DB001FB5F6 /* PTKeyBroadcaster.m */,
-				21F1CD6A0B3A38DB001FB5F6 /* PTKeyCodes.plist */,
-				21F1CDAB0B3A401F001FB5F6 /* PTKeyCombo.h */,
-				21F1CDAC0B3A401F001FB5F6 /* PTKeyCombo.m */,
-				21F1CD6B0B3A38DB001FB5F6 /* PTKeyComboPanel.h */,
-				21F1CD6C0B3A38DB001FB5F6 /* PTKeyComboPanel.m */,
-			);
-			path = PTHotKeys;
 			sourceTree = "<group>";
 		};
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
@@ -882,8 +847,7 @@
 				214495810ADCC07E00E2A2B6 /* PassphraseChanger.nib */,
 				214495740ADCC06300E2A2B6 /* PassphrasePicker.nib */,
 				21973A230AFE447A0046683E /* PassphraseRetriever.nib */,
-				219195E409D3A20F00586B15 /* Preferences.nib */,
-				21F1CD990B3A3F88001FB5F6 /* PTKeyComboPanel.nib */,
+				219195E409D3A20F00586B15 /* Preferences.xib */,
 				21CA2A8D1310E05300490979 /* Questo è il titolo di una nota.nvhelp */,
 				2143322612EC584E000F473B /* Raccourcis incroyablement utiles.nvhelp */,
 				2110C0CF0B65F09E00F5C52E /* SavedSearches.nib */,
@@ -926,7 +890,6 @@
 				2144950E0ADC883000E2A2B6 /* PasswordAssistantButtonPressed.tif */,
 				6E12BAC024DAF0D300CBB989 /* Search@2x.png */,
 				2144950D0ADC883000E2A2B6 /* PasswordAssistantButton.tif */,
-				213FB0230B3CB1C4004C74BD /* PTKeyboardIcon.tiff */,
 				21A38EE212EA864400CEB5F0 /* MakeDefault_Pressed.tiff */,
 				21A38EE312EA864400CEB5F0 /* MakeDefault.tiff */,
 				21BD2F3510DAF61700BA3DF6 /* SplitViewDimple.tif */,
@@ -997,7 +960,7 @@
 			files = (
 				8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */,
 				2114C25B095885C800614E74 /* Localizable.strings in Resources */,
-				219195E609D3A20F00586B15 /* Preferences.nib in Resources */,
+				219195E609D3A20F00586B15 /* Preferences.xib in Resources */,
 				219196BF09D4F20100586B15 /* Add_Pressed.tiff in Resources */,
 				219196C009D4F20100586B15 /* Add.tiff in Resources */,
 				219196C109D4F20100586B15 /* Remove_Pressed.tiff in Resources */,
@@ -1013,9 +976,6 @@
 				21973A290AFE447A0046683E /* PassphraseRetriever.nib in Resources */,
 				21544FBE0B06331800C0D1D5 /* KeyDerivationManager.nib in Resources */,
 				211344C00B3551BD0081B064 /* BlorPasswordRetriever.nib in Resources */,
-				21F1CD700B3A38DB001FB5F6 /* PTKeyCodes.plist in Resources */,
-				21F1CD9F0B3A3F88001FB5F6 /* PTKeyComboPanel.nib in Resources */,
-				213FB0240B3CB1C4004C74BD /* PTKeyboardIcon.tiff in Resources */,
 				212850880B56E549005F6E34 /* CarbonErrorStrings.plist in Resources */,
 				21FF94F30B5AD22800DB6A2F /* ExporterManager.nib in Resources */,
 				2110C0D90B65F09F00F5C52E /* SavedSearches.nib in Resources */,
@@ -1114,11 +1074,6 @@
 				219FD63E0B309B69004E132B /* BlorPasswordRetriever.m in Sources */,
 				211344450B354E000081B064 /* idea_ossl.c in Sources */,
 				211345AB0B35D8540081B064 /* broken_md5.c in Sources */,
-				21F1CD6D0B3A38DB001FB5F6 /* PTHotKeyCenter.m in Sources */,
-				21F1CD6F0B3A38DB001FB5F6 /* PTKeyBroadcaster.m in Sources */,
-				21F1CD710B3A38DB001FB5F6 /* PTKeyComboPanel.m in Sources */,
-				21F1CD980B3A3F77001FB5F6 /* PTHotKey.m in Sources */,
-				21F1CDAD0B3A401F001FB5F6 /* PTKeyCombo.m in Sources */,
 				213FAD530B3C6B52004C74BD /* FSExchangeObjectsCompat.c in Sources */,
 				21C737950B50C73E0048C08A /* MultiplePageView.m in Sources */,
 				21FF94F70B5AD23B00DB6A2F /* ExporterManager.m in Sources */,
@@ -1129,6 +1084,8 @@
 				D3EECA00106F66C70023D7F8 /* NVPasswordGenerator.m in Sources */,
 				21B1BC361104D20E0004A7D0 /* InvocationRecorder.m in Sources */,
 				4E5F6A7B8C9D0E1F2A3B4C01 /* NVSplitView.m in Sources */,
+				4E5F6A7B8C9D0E1F2A3B4C04 /* NVHotKey.m in Sources */,
+				4E5F6A7B8C9D0E1F2A3B4C07 /* NVShortcutRecorder.m in Sources */,
 				21B548FA112F307E00E163A1 /* NotationDirectoryManager.m in Sources */,
 				57F27FB91197407400C63ACF /* SearchCommand.m in Sources */,
 				216D987F12CE68AD0004B9CE /* NSFileManager_NV.m in Sources */,
@@ -1429,7 +1386,7 @@
 			name = MainMenu.xib;
 			sourceTree = "<group>";
 		};
-		219195E409D3A20F00586B15 /* Preferences.nib */ = {
+		219195E409D3A20F00586B15 /* Preferences.xib */ = {
 			isa = PBXVariantGroup;
 			children = (
 				210D88BF12FE658B00ED7730 /* zh_CN */,
@@ -1439,7 +1396,7 @@
 				6E6AFB5924DAE636005CFF74 /* fr */,
 				6E6AFB7124DAE638005CFF74 /* pt */,
 			);
-			name = Preferences.nib;
+			name = Preferences.xib;
 			sourceTree = "<group>";
 		};
 		21973A230AFE447A0046683E /* PassphraseRetriever.nib */ = {
@@ -1553,19 +1510,6 @@
 			name = Contact.nvhelp;
 			sourceTree = "<group>";
 		};
-		21F1CD990B3A3F88001FB5F6 /* PTKeyComboPanel.nib */ = {
-			isa = PBXVariantGroup;
-			children = (
-				210D88C012FE658B00ED7730 /* zh_CN */,
-				6E6AFB0D24DAE61A005CFF74 /* it */,
-				6E6AFB2524DAE628005CFF74 /* en */,
-				6E6AFB3D24DAE62D005CFF74 /* de */,
-				6E6AFB5524DAE636005CFF74 /* fr */,
-				6E6AFB6D24DAE638005CFF74 /* pt */,
-			);
-			name = PTKeyComboPanel.nib;
-			sourceTree = "<group>";
-		};
 		21F447EE11B896C4004D008B /* Informações de Contato.nvhelp */ = {
 			isa = PBXVariantGroup;
 			children = (
@@ -1653,7 +1597,6 @@
 					"$(SRCROOT)/Sources/Interchange",
 					"$(SRCROOT)/Sources/Integrations",
 					"$(SRCROOT)/Sources/Support",
-					"$(SRCROOT)/Vendor/PTHotKeys",
 					"$(SRCROOT)/Vendor/ODBEditor",
 				);
 				INFOPLIST_FILE = Configuration/Info.plist;
@@ -1738,7 +1681,6 @@
 					"$(SRCROOT)/Sources/Interchange",
 					"$(SRCROOT)/Sources/Integrations",
 					"$(SRCROOT)/Sources/Support",
-					"$(SRCROOT)/Vendor/PTHotKeys",
 					"$(SRCROOT)/Vendor/ODBEditor",
 				);
 				INFOPLIST_FILE = Configuration/Info.plist;
@@ -1803,7 +1745,6 @@
 					"$(SRCROOT)/Sources/Interchange",
 					"$(SRCROOT)/Sources/Integrations",
 					"$(SRCROOT)/Sources/Support",
-					"$(SRCROOT)/Vendor/PTHotKeys",
 					"$(SRCROOT)/Vendor/ODBEditor",
 				);
 				GCC_TREAT_WARNINGS_AS_ERRORS = NO;
