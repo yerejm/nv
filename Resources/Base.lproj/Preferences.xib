@@ -7,14 +7,19 @@
     <objects>
         <customObject id="-2" userLabel="File's Owner" customClass="PrefsWindowController">
             <connections>
+                <outlet property="alternatingRowsButton" destination="nvP-ar-btn" id="out-nvP-ar-btn"/>
                 <outlet property="appShortcutRecorder" destination="288" id="291"/>
+                <outlet property="autoPairingButton" destination="nvW-pr-btn" id="out-nvW-pr-btn"/>
                 <outlet property="autoSuggestLinksButton" destination="283" id="299"/>
                 <outlet property="backgroundColorWell" destination="400" id="423"/>
                 <outlet property="bodyTextFontField" destination="387" id="394"/>
                 <outlet property="checkSpellingButton" destination="276" id="293"/>
+                <outlet property="colorSchemeButton" destination="nvP-cs-pop" id="out-nvP-cs-pop"/>
                 <outlet property="completeNoteTitlesButton" destination="175" id="265"/>
                 <outlet property="confirmDeletionButton" destination="172" id="266"/>
                 <outlet property="databaseView" destination="250" id="259"/>
+                <outlet property="desktopView" destination="nvD-pn-vw" id="out-nvD-pn-vw"/>
+                <outlet property="displayView" destination="nvP-pn-vw" id="out-nvP-pn-vw"/>
                 <outlet property="editingView" destination="268" id="298"/>
                 <outlet property="externalEditorMenuButton" destination="431" id="437"/>
                 <outlet property="folderLocationsMenuButton" destination="252" id="260"/>
@@ -22,17 +27,29 @@
                 <outlet property="foregroundColorWell" destination="396" id="424"/>
                 <outlet property="generalView" destination="155" id="236"/>
                 <outlet property="highlightSearchTermsButton" destination="415" id="419"/>
+                <outlet property="limitTextWidthButton" destination="nvP-lw-btn" id="out-nvP-lw-btn"/>
                 <outlet property="makeURLsClickable" destination="311" id="312"/>
                 <outlet property="notationPrefsView" destination="257" id="258"/>
+                <outlet property="noteListGridButton" destination="nvP-gr-btn" id="out-nvP-gr-btn"/>
                 <outlet property="quitWhenClosingButton" destination="174" id="267"/>
+                <outlet property="rightToLeftButton" destination="nvW-rl-btn" id="out-nvW-rl-btn"/>
                 <outlet property="searchHighlightColorWell" destination="354" id="412"/>
+                <outlet property="showDockIconButton" destination="nvD-dk-btn" id="out-nvD-dk-btn"/>
+                <outlet property="showMenuBarIconButton" destination="nvD-mb-btn" id="out-nvD-mb-btn"/>
+                <outlet property="smartDashesButton" destination="nvW-sd-btn" id="out-nvW-sd-btn"/>
+                <outlet property="smartInsertDeleteButton" destination="nvW-si-btn" id="out-nvW-si-btn"/>
+                <outlet property="smartQuotesButton" destination="nvW-sq-btn" id="out-nvW-sq-btn"/>
                 <outlet property="softTabsButton" destination="307" id="309"/>
                 <outlet property="styledTextButton" destination="278" id="300"/>
                 <outlet property="systemHighlightColorButton" destination="nvU-sc-btn" id="er5-N5-ayo"/>
                 <outlet property="tabKeyRadioMatrix" destination="271" id="294"/>
                 <outlet property="tableTextMenuButton" destination="158" id="249"/>
                 <outlet property="tableTextSizeField" destination="178" id="246"/>
+                <outlet property="textWidthLabel" destination="nvP-wl-lbl" id="out-nvP-wl-lbl"/>
+                <outlet property="textWidthSlider" destination="nvP-ws-sld" id="out-nvP-ws-sld"/>
+                <outlet property="themedScrollbarsButton" destination="nvP-sb-btn" id="out-nvP-sb-btn"/>
                 <outlet property="window" destination="5" id="238"/>
+                <outlet property="writingView" destination="nvW-pn-vw" id="out-nvW-pn-vw"/>
             </connections>
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
@@ -719,6 +736,368 @@
                 <constraint firstItem="354" firstAttribute="top" relation="greaterThanOrEqual" secondItem="401" secondAttribute="bottom" constant="4" id="yC0-pd-oA2"/>
                 <constraint firstAttribute="trailing" secondItem="388" secondAttribute="trailing" priority="600" constant="96" id="yv2-1K-SeX"/>
                 <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="388" secondAttribute="trailing" constant="20" id="zyc-xG-YOo"/>
+            </constraints>
+        </customView>
+        <customView id="nvD-pn-vw">
+            <rect key="frame" x="0.0" y="0.0" width="520" height="180"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <subviews>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvD-dk-btn">
+                    <rect key="frame" x="24" y="125" width="472" height="26"/>
+                    <buttonCell key="cell" type="check" title="Show Dock icon" bezelStyle="regularSquare" imagePosition="left" inset="2" id="nvD-dk-btnC">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="470" id="Dtt-L6-mlm"/>
+                    </constraints>
+                    <connections>
+                        <action selector="changedDesktopPresence:" target="-2" id="cha-dk-btn"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvD-mb-btn">
+                    <rect key="frame" x="24" y="89" width="472" height="26"/>
+                    <buttonCell key="cell" type="check" title="Show menu bar icon" bezelStyle="regularSquare" imagePosition="left" inset="2" id="nvD-mb-btnC">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="470" id="bnP-ZS-Gjy"/>
+                    </constraints>
+                    <connections>
+                        <action selector="changedDesktopPresence:" target="-2" id="cha-mb-btn"/>
+                    </connections>
+                </button>
+                <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" preferredMaxLayoutWidth="468" translatesAutoresizingMaskIntoConstraints="NO" id="nvD-ht-lbl">
+                    <rect key="frame" x="24" y="22" width="472" height="50"/>
+                    <constraints>
+                        <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="50" id="6D2-7f-kFz"/>
+                    </constraints>
+                    <textFieldCell key="cell" selectable="YES" title="Hiding the Dock icon enables the menu bar icon. Click the menu bar icon to show or hide the window; right-click for commands." id="nvD-ht-lblC">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+            </subviews>
+            <constraints>
+                <constraint firstAttribute="trailing" secondItem="nvD-ht-lbl" secondAttribute="trailing" constant="26" id="1S1-bg-2MV"/>
+                <constraint firstItem="nvD-ht-lbl" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvD-pn-vw" secondAttribute="leading" constant="20" id="4MO-jJ-fv5"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvD-mb-btn" secondAttribute="trailing" constant="20" id="ESt-bt-eGc"/>
+                <constraint firstItem="nvD-mb-btn" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvD-dk-btn" secondAttribute="bottom" constant="4" id="FL5-3t-yF7"/>
+                <constraint firstAttribute="trailing" secondItem="nvD-dk-btn" secondAttribute="trailing" priority="600" constant="24" id="ODf-OQ-QmK"/>
+                <constraint firstItem="nvD-mb-btn" firstAttribute="leading" secondItem="nvD-pn-vw" secondAttribute="leading" priority="600" constant="26" id="Py3-az-hMT"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvD-dk-btn" secondAttribute="trailing" constant="20" id="UOd-7y-Nae"/>
+                <constraint firstItem="nvD-dk-btn" firstAttribute="leading" secondItem="nvD-pn-vw" secondAttribute="leading" priority="600" constant="26" id="Wy6-L8-UVg"/>
+                <constraint firstAttribute="bottom" secondItem="nvD-ht-lbl" secondAttribute="bottom" priority="600" constant="22" id="jU8-Zo-PGS"/>
+                <constraint firstItem="nvD-dk-btn" firstAttribute="top" secondItem="nvD-pn-vw" secondAttribute="top" constant="30" id="k27-oo-QO8"/>
+                <constraint firstItem="nvD-ht-lbl" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvD-mb-btn" secondAttribute="bottom" constant="4" id="kQ3-1K-LmE"/>
+                <constraint firstAttribute="trailing" secondItem="nvD-mb-btn" secondAttribute="trailing" priority="600" constant="24" id="lpb-pW-QT5"/>
+                <constraint firstItem="nvD-ht-lbl" firstAttribute="top" secondItem="nvD-mb-btn" secondAttribute="bottom" priority="600" constant="18" id="qY6-F7-0xA"/>
+                <constraint firstItem="nvD-dk-btn" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvD-pn-vw" secondAttribute="leading" constant="20" id="qg2-HK-sZ7"/>
+                <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="nvD-ht-lbl" secondAttribute="bottom" constant="12" id="qtQ-Ki-SW1"/>
+                <constraint firstItem="nvD-ht-lbl" firstAttribute="leading" secondItem="nvD-pn-vw" secondAttribute="leading" priority="600" constant="26" id="s3E-ty-jav"/>
+                <constraint firstItem="nvD-mb-btn" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvD-pn-vw" secondAttribute="leading" constant="20" id="tsD-Kl-64G"/>
+                <constraint firstItem="nvD-mb-btn" firstAttribute="top" secondItem="nvD-dk-btn" secondAttribute="bottom" priority="600" constant="12" id="zJc-JM-3lE"/>
+            </constraints>
+        </customView>
+        <customView id="nvW-pn-vw">
+            <rect key="frame" x="0.0" y="0.0" width="520" height="290"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <subviews>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvW-pr-btn">
+                    <rect key="frame" x="24" y="235" width="472" height="26"/>
+                    <buttonCell key="cell" type="check" title="Pair brackets and double quotes automatically" bezelStyle="regularSquare" imagePosition="left" inset="2" id="nvW-pr-btnC">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="470" id="YvU-fN-3Wk"/>
+                    </constraints>
+                    <connections>
+                        <action selector="changedAutoPairing:" target="-2" id="cha-pr-btn"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvW-rl-btn">
+                    <rect key="frame" x="24" y="199" width="472" height="26"/>
+                    <buttonCell key="cell" type="check" title="Edit notes from right to left" bezelStyle="regularSquare" imagePosition="left" inset="2" id="nvW-rl-btnC">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="470" id="evp-2P-h1R"/>
+                    </constraints>
+                    <connections>
+                        <action selector="changedWritingDirection:" target="-2" id="cha-rl-btn"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvW-sq-btn">
+                    <rect key="frame" x="24" y="163" width="472" height="26"/>
+                    <buttonCell key="cell" type="check" title="Use smart quotes" bezelStyle="regularSquare" imagePosition="left" inset="2" id="nvW-sq-btnC">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="470" id="CNn-XJ-3z4"/>
+                    </constraints>
+                    <connections>
+                        <action selector="changedSmartSubstitutions:" target="-2" id="cha-sq-btn"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvW-sd-btn">
+                    <rect key="frame" x="24" y="127" width="472" height="26"/>
+                    <buttonCell key="cell" type="check" title="Use smart dashes" bezelStyle="regularSquare" imagePosition="left" inset="2" id="nvW-sd-btnC">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="470" id="DlV-km-oPk"/>
+                    </constraints>
+                    <connections>
+                        <action selector="changedSmartSubstitutions:" target="-2" id="cha-sd-btn"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvW-si-btn">
+                    <rect key="frame" x="24" y="91" width="472" height="26"/>
+                    <buttonCell key="cell" type="check" title="Adjust spaces when inserting or deleting text" bezelStyle="regularSquare" imagePosition="left" inset="2" id="nvW-si-btnC">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="470" id="TXv-N6-ZoW"/>
+                    </constraints>
+                    <connections>
+                        <action selector="changedSmartSubstitutions:" target="-2" id="cha-si-btn"/>
+                    </connections>
+                </button>
+                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvW-ht-lbl">
+                    <rect key="frame" x="24" y="42" width="472" height="24"/>
+                    <constraints>
+                        <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="24" id="U3P-oZ-D9T"/>
+                    </constraints>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="⌘Return inserts a paragraph below; ⇧⌘Return inserts above." id="nvW-ht-lblC">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+            </subviews>
+            <constraints>
+                <constraint firstItem="nvW-sd-btn" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvW-sq-btn" secondAttribute="bottom" constant="4" id="0uP-np-PtN"/>
+                <constraint firstAttribute="trailing" secondItem="nvW-pr-btn" secondAttribute="trailing" priority="600" constant="24" id="2Hm-Ry-7y7"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvW-sq-btn" secondAttribute="trailing" constant="20" id="2VB-02-Ykg"/>
+                <constraint firstItem="nvW-rl-btn" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvW-pn-vw" secondAttribute="leading" constant="20" id="2pk-aM-OqF"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvW-sd-btn" secondAttribute="trailing" constant="20" id="4gM-jQ-sRa"/>
+                <constraint firstItem="nvW-pr-btn" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvW-pn-vw" secondAttribute="leading" constant="20" id="5ly-3z-jp0"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvW-rl-btn" secondAttribute="trailing" constant="20" id="6AF-rV-mqA"/>
+                <constraint firstItem="nvW-sd-btn" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvW-pn-vw" secondAttribute="leading" constant="20" id="76h-NI-vvs"/>
+                <constraint firstItem="nvW-sd-btn" firstAttribute="leading" secondItem="nvW-pn-vw" secondAttribute="leading" priority="600" constant="26" id="CGh-wE-USE"/>
+                <constraint firstAttribute="trailing" secondItem="nvW-si-btn" secondAttribute="trailing" priority="600" constant="24" id="DhV-fX-hMr"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvW-si-btn" secondAttribute="trailing" constant="20" id="FV0-zF-XsB"/>
+                <constraint firstItem="nvW-sd-btn" firstAttribute="top" secondItem="nvW-sq-btn" secondAttribute="bottom" priority="600" constant="12" id="MKi-dM-xLB"/>
+                <constraint firstItem="nvW-pr-btn" firstAttribute="top" secondItem="nvW-pn-vw" secondAttribute="top" constant="30" id="OOr-TG-M52"/>
+                <constraint firstAttribute="trailing" secondItem="nvW-ht-lbl" secondAttribute="trailing" priority="600" constant="26" id="UEE-yn-pck"/>
+                <constraint firstItem="nvW-si-btn" firstAttribute="top" secondItem="nvW-sd-btn" secondAttribute="bottom" priority="600" constant="12" id="UkB-eq-pkZ"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvW-pr-btn" secondAttribute="trailing" constant="20" id="VB6-Ta-ooZ"/>
+                <constraint firstItem="nvW-sq-btn" firstAttribute="top" secondItem="nvW-rl-btn" secondAttribute="bottom" priority="600" constant="12" id="ZEG-LJ-IXN"/>
+                <constraint firstItem="nvW-pr-btn" firstAttribute="leading" secondItem="nvW-pn-vw" secondAttribute="leading" priority="600" constant="26" id="fIy-Bk-5SJ"/>
+                <constraint firstItem="nvW-rl-btn" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvW-pr-btn" secondAttribute="bottom" constant="4" id="j24-3h-H62"/>
+                <constraint firstItem="nvW-ht-lbl" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvW-si-btn" secondAttribute="bottom" constant="4" id="jwO-eP-dLB"/>
+                <constraint firstItem="nvW-ht-lbl" firstAttribute="leading" secondItem="nvW-pn-vw" secondAttribute="leading" priority="600" constant="26" id="knQ-kA-3x8"/>
+                <constraint firstItem="nvW-si-btn" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvW-sd-btn" secondAttribute="bottom" constant="4" id="mUb-DB-NqG"/>
+                <constraint firstItem="nvW-ht-lbl" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvW-pn-vw" secondAttribute="leading" constant="20" id="n5o-9V-dPO"/>
+                <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="nvW-ht-lbl" secondAttribute="bottom" constant="12" id="oUZ-5s-FRz"/>
+                <constraint firstItem="nvW-sq-btn" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvW-rl-btn" secondAttribute="bottom" constant="4" id="pPa-0x-tn1"/>
+                <constraint firstItem="nvW-sq-btn" firstAttribute="leading" secondItem="nvW-pn-vw" secondAttribute="leading" priority="600" constant="26" id="qEl-SI-ORM"/>
+                <constraint firstItem="nvW-si-btn" firstAttribute="leading" secondItem="nvW-pn-vw" secondAttribute="leading" priority="600" constant="26" id="rGj-AO-rgj"/>
+                <constraint firstItem="nvW-rl-btn" firstAttribute="top" secondItem="nvW-pr-btn" secondAttribute="bottom" priority="600" constant="12" id="rPi-Lj-Zf8"/>
+                <constraint firstItem="nvW-ht-lbl" firstAttribute="top" secondItem="nvW-si-btn" secondAttribute="bottom" priority="600" constant="26" id="t4H-2v-xYp"/>
+                <constraint firstAttribute="bottom" secondItem="nvW-ht-lbl" secondAttribute="bottom" priority="600" constant="42" id="tZS-zm-IX1"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvW-ht-lbl" secondAttribute="trailing" constant="20" id="tta-PP-f6O"/>
+                <constraint firstAttribute="trailing" secondItem="nvW-sd-btn" secondAttribute="trailing" priority="600" constant="24" id="tyD-c4-8gM"/>
+                <constraint firstItem="nvW-sq-btn" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvW-pn-vw" secondAttribute="leading" constant="20" id="up1-ae-PFn"/>
+                <constraint firstAttribute="trailing" secondItem="nvW-rl-btn" secondAttribute="trailing" priority="600" constant="24" id="vnm-Nw-fBK"/>
+                <constraint firstItem="nvW-rl-btn" firstAttribute="leading" secondItem="nvW-pn-vw" secondAttribute="leading" priority="600" constant="26" id="wkW-eI-idQ"/>
+                <constraint firstAttribute="trailing" secondItem="nvW-sq-btn" secondAttribute="trailing" priority="600" constant="24" id="y62-5s-9dK"/>
+                <constraint firstItem="nvW-si-btn" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvW-pn-vw" secondAttribute="leading" constant="20" id="ymK-Ak-2SP"/>
+            </constraints>
+        </customView>
+        <customView id="nvP-pn-vw">
+            <rect key="frame" x="0.0" y="0.0" width="520" height="340"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <subviews>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvP-lw-btn">
+                    <rect key="frame" x="24" y="292" width="460" height="24"/>
+                    <buttonCell key="cell" type="check" title="Limit text width in windows" bezelStyle="regularSquare" imagePosition="left" inset="2" id="nvP-lw-btnC">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="458" id="sd7-Vm-lzA"/>
+                    </constraints>
+                    <connections>
+                        <action selector="changedTextWidthLimit:" target="-2" id="cha-lw-btn"/>
+                    </connections>
+                </button>
+                <textField horizontalHuggingPriority="200" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvP-wl-lbl">
+                    <rect key="frame" x="24" y="263" width="460" height="22"/>
+                    <constraints>
+                        <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="22" id="ZBo-Fv-bdH"/>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="150" id="cKj-Dw-vP3"/>
+                    </constraints>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Maximum text width: 660 pt" id="nvP-wl-lblC">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvP-ws-sld">
+                    <rect key="frame" x="24" y="232" width="460" height="24"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="16" id="8je-DP-4hk"/>
+                        <constraint firstAttribute="width" constant="456" id="n7a-ge-eDy"/>
+                    </constraints>
+                    <sliderCell key="cell" continuous="YES" state="on" alignment="left" minValue="240" maxValue="1200" doubleValue="660" tickMarkPosition="above" sliderType="linear" id="nvP-ws-sldC"/>
+                    <connections>
+                        <action selector="changedTextWidth:" target="-2" id="cha-ws-sld"/>
+                    </connections>
+                </slider>
+                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvP-wh-lbl">
+                    <rect key="frame" x="24" y="201" width="460" height="22"/>
+                    <constraints>
+                        <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="22" id="kTT-jK-oTs"/>
+                    </constraints>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Full screen always centers text within this width." id="nvP-wh-lblC">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvP-cs-lbl">
+                    <rect key="frame" x="24" y="154" width="155" height="22"/>
+                    <constraints>
+                        <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="22" id="kFh-zZ-Dhh"/>
+                    </constraints>
+                    <textFieldCell key="cell" lineBreakMode="clipping" title="Interface colors" id="nvP-cs-lblC">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="labelColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <popUpButton verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvP-cs-pop">
+                    <rect key="frame" x="190" y="151" width="294" height="28"/>
+                    <popUpButtonCell key="cell" type="push" title="System" bezelStyle="rounded" alignment="left" lineBreakMode="truncatingTail" state="on" borderStyle="borderAndBezel" imageScaling="proportionallyDown" inset="2" selectedItem="nvP-cs-popI0" id="nvP-cs-popC">
+                        <behavior key="behavior" lightByBackground="YES" lightByGray="YES"/>
+                        <font key="font" metaFont="message"/>
+                        <menu key="menu" id="nvP-cs-popM">
+                            <items>
+                                <menuItem title="System" state="on" id="nvP-cs-popI0"/>
+                                <menuItem title="Black &amp; White" id="nvP-cs-popI1"/>
+                                <menuItem title="Low Contrast" id="nvP-cs-popI2"/>
+                                <menuItem title="Custom (Fonts &amp; Colors)" id="nvP-cs-popI3"/>
+                            </items>
+                        </menu>
+                    </popUpButtonCell>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="23" id="P1H-EF-pG8"/>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="287" id="X5X-fe-rBg"/>
+                    </constraints>
+                    <connections>
+                        <action selector="changedColorScheme:" target="-2" id="cha-cs-pop"/>
+                    </connections>
+                </popUpButton>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvP-ar-btn">
+                    <rect key="frame" x="24" y="115" width="460" height="24"/>
+                    <buttonCell key="cell" type="check" title="Alternate note row backgrounds" bezelStyle="regularSquare" imagePosition="left" inset="2" id="nvP-ar-btnC">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="458" id="puy-uU-S77"/>
+                    </constraints>
+                    <connections>
+                        <action selector="changedAlternatingRows:" target="-2" id="cha-ar-btn"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvP-gr-btn">
+                    <rect key="frame" x="24" y="82" width="460" height="24"/>
+                    <buttonCell key="cell" type="check" title="Show note separators" bezelStyle="regularSquare" imagePosition="left" inset="2" id="nvP-gr-btnC">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="458" id="srX-rk-vAu"/>
+                    </constraints>
+                    <connections>
+                        <action selector="changedNoteListGrid:" target="-2" id="cha-gr-btn"/>
+                    </connections>
+                </button>
+                <button verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="nvP-sb-btn">
+                    <rect key="frame" x="24" y="49" width="460" height="24"/>
+                    <buttonCell key="cell" type="check" title="Use themed overlay scrollbars" bezelStyle="regularSquare" imagePosition="left" inset="2" id="nvP-sb-btnC">
+                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                        <font key="font" metaFont="system"/>
+                    </buttonCell>
+                    <constraints>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="458" id="mVH-wO-hjX"/>
+                    </constraints>
+                    <connections>
+                        <action selector="changedThemedScrollbars:" target="-2" id="cha-sb-btn"/>
+                    </connections>
+                </button>
+            </subviews>
+            <constraints>
+                <constraint firstItem="nvP-lw-btn" firstAttribute="leading" secondItem="nvP-pn-vw" secondAttribute="leading" priority="600" constant="26" id="09Z-L1-1qt"/>
+                <constraint firstItem="nvP-wh-lbl" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvP-pn-vw" secondAttribute="leading" constant="20" id="2Df-kJ-gET"/>
+                <constraint firstItem="nvP-wh-lbl" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvP-ws-sld" secondAttribute="bottom" constant="4" id="2UM-ve-isR"/>
+                <constraint firstItem="nvP-cs-lbl" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvP-pn-vw" secondAttribute="leading" constant="20" id="5GF-Ol-Z72"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvP-lw-btn" secondAttribute="trailing" constant="20" id="8Ep-cx-VMM"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvP-wh-lbl" secondAttribute="trailing" constant="20" id="9Ym-G2-WeI"/>
+                <constraint firstItem="nvP-wh-lbl" firstAttribute="leading" secondItem="nvP-pn-vw" secondAttribute="leading" priority="600" constant="26" id="BS6-2W-hKG"/>
+                <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="nvP-sb-btn" secondAttribute="bottom" constant="12" id="BWQ-Xh-Dl7"/>
+                <constraint firstItem="nvP-lw-btn" firstAttribute="top" secondItem="nvP-pn-vw" secondAttribute="top" constant="25" id="Bav-cu-zP9"/>
+                <constraint firstItem="nvP-gr-btn" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvP-ar-btn" secondAttribute="bottom" constant="4" id="CoO-up-zHy"/>
+                <constraint firstItem="nvP-wl-lbl" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvP-lw-btn" secondAttribute="bottom" constant="4" id="E5K-Bk-wyO"/>
+                <constraint firstItem="nvP-sb-btn" firstAttribute="top" secondItem="nvP-gr-btn" secondAttribute="bottom" priority="600" constant="11" id="EWF-U2-iG1"/>
+                <constraint firstItem="nvP-cs-pop" firstAttribute="leading" secondItem="nvP-cs-lbl" secondAttribute="trailing" constant="16" id="H7Z-oI-TLf"/>
+                <constraint firstItem="nvP-sb-btn" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvP-gr-btn" secondAttribute="bottom" constant="4" id="H8K-LB-7ua"/>
+                <constraint firstAttribute="trailing" secondItem="nvP-wh-lbl" secondAttribute="trailing" priority="600" constant="38" id="KJu-XD-VXj"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvP-sb-btn" secondAttribute="trailing" constant="20" id="Kpm-B2-y65"/>
+                <constraint firstAttribute="trailing" secondItem="nvP-ar-btn" secondAttribute="trailing" priority="600" constant="36" id="LI9-Gn-aHu"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvP-gr-btn" secondAttribute="trailing" constant="20" id="M12-Uz-skH"/>
+                <constraint firstAttribute="trailing" secondItem="nvP-gr-btn" secondAttribute="trailing" priority="600" constant="36" id="NbQ-aa-Ell"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvP-ws-sld" secondAttribute="trailing" constant="20" id="NhO-ls-tE5"/>
+                <constraint firstItem="nvP-ws-sld" firstAttribute="top" secondItem="nvP-wl-lbl" secondAttribute="bottom" priority="600" constant="9" id="NzK-9w-41x"/>
+                <constraint firstAttribute="trailing" secondItem="nvP-sb-btn" secondAttribute="trailing" priority="600" constant="36" id="P2u-v1-CF7"/>
+                <constraint firstItem="nvP-sb-btn" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvP-pn-vw" secondAttribute="leading" constant="20" id="PPE-RV-Fiw"/>
+                <constraint firstItem="nvP-ar-btn" firstAttribute="leading" secondItem="nvP-pn-vw" secondAttribute="leading" priority="600" constant="26" id="PYa-B1-NDe"/>
+                <constraint firstItem="nvP-lw-btn" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvP-pn-vw" secondAttribute="leading" constant="20" id="QE0-sX-xg2"/>
+                <constraint firstItem="nvP-wl-lbl" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvP-pn-vw" secondAttribute="leading" constant="20" id="Rgg-T7-CpP"/>
+                <constraint firstItem="nvP-wh-lbl" firstAttribute="top" secondItem="nvP-ws-sld" secondAttribute="bottom" priority="600" constant="15" id="aTT-dE-el8"/>
+                <constraint firstItem="nvP-cs-pop" firstAttribute="top" secondItem="nvP-wh-lbl" secondAttribute="bottom" priority="600" constant="23" id="fVc-EY-8yb"/>
+                <constraint firstItem="nvP-cs-pop" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvP-wh-lbl" secondAttribute="bottom" constant="4" id="h8l-rr-wmO"/>
+                <constraint firstItem="nvP-ar-btn" firstAttribute="top" secondItem="nvP-cs-pop" secondAttribute="bottom" priority="600" constant="17" id="i9n-ON-cul"/>
+                <constraint firstItem="nvP-sb-btn" firstAttribute="leading" secondItem="nvP-pn-vw" secondAttribute="leading" priority="600" constant="26" id="iwm-Lm-OwN"/>
+                <constraint firstItem="nvP-cs-lbl" firstAttribute="top" secondItem="nvP-cs-pop" secondAttribute="top" constant="2" id="jCB-zo-Twt"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvP-ar-btn" secondAttribute="trailing" constant="20" id="jIh-sm-wO0"/>
+                <constraint firstAttribute="trailing" secondItem="nvP-cs-pop" secondAttribute="trailing" priority="600" constant="40" id="l1W-Td-jau"/>
+                <constraint firstItem="nvP-wl-lbl" firstAttribute="leading" secondItem="nvP-pn-vw" secondAttribute="leading" priority="600" constant="26" id="mJQ-1x-Nxu"/>
+                <constraint firstItem="nvP-ws-sld" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvP-pn-vw" secondAttribute="leading" constant="20" id="mp9-dD-HEi"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="nvP-cs-pop" secondAttribute="trailing" constant="20" id="mu5-kA-pwU"/>
+                <constraint firstItem="nvP-gr-btn" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvP-pn-vw" secondAttribute="leading" constant="20" id="myM-SH-fOk"/>
+                <constraint firstItem="nvP-ws-sld" firstAttribute="leading" secondItem="nvP-pn-vw" secondAttribute="leading" priority="600" constant="26" id="nOB-go-kTO"/>
+                <constraint firstAttribute="trailing" secondItem="nvP-lw-btn" secondAttribute="trailing" priority="600" constant="36" id="o9W-4y-DMm"/>
+                <constraint firstItem="nvP-ws-sld" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvP-wl-lbl" secondAttribute="bottom" constant="4" id="p3h-KR-ND4"/>
+                <constraint firstItem="nvP-wl-lbl" firstAttribute="top" secondItem="nvP-lw-btn" secondAttribute="bottom" priority="600" constant="8" id="pVJ-u4-i3b"/>
+                <constraint firstItem="nvP-ar-btn" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvP-cs-lbl" secondAttribute="bottom" constant="4" id="prb-8t-HIJ"/>
+                <constraint firstItem="nvP-cs-lbl" firstAttribute="leading" secondItem="nvP-pn-vw" secondAttribute="leading" priority="600" constant="26" id="sC5-PS-i28"/>
+                <constraint firstItem="nvP-gr-btn" firstAttribute="top" secondItem="nvP-ar-btn" secondAttribute="bottom" priority="600" constant="11" id="tI3-Ol-6JT"/>
+                <constraint firstItem="nvP-ar-btn" firstAttribute="top" relation="greaterThanOrEqual" secondItem="nvP-cs-pop" secondAttribute="bottom" constant="4" id="uX3-vE-AN8"/>
+                <constraint firstAttribute="trailing" secondItem="nvP-wl-lbl" secondAttribute="trailing" constant="38" id="wip-bQ-Pmz"/>
+                <constraint firstAttribute="trailing" secondItem="nvP-ws-sld" secondAttribute="trailing" priority="600" constant="38" id="wo9-d0-Kr1"/>
+                <constraint firstAttribute="bottom" secondItem="nvP-sb-btn" secondAttribute="bottom" priority="600" constant="50" id="xT1-jr-cZK"/>
+                <constraint firstItem="nvP-gr-btn" firstAttribute="leading" secondItem="nvP-pn-vw" secondAttribute="leading" priority="600" constant="26" id="y6C-hs-SXX"/>
+                <constraint firstItem="nvP-ar-btn" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="nvP-pn-vw" secondAttribute="leading" constant="20" id="zTT-Bg-iMd"/>
             </constraints>
         </customView>
     </objects>

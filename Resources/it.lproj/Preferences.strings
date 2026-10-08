@@ -90,3 +90,66 @@
 
 /* Use System Color */
 "nvU-sc-cel.title" = "Usa colore di sistema";
+
+/* Show Dock icon */
+"nvD-dk-btnC.title" = "Mostra icona nel Dock";
+
+/* Show menu bar icon */
+"nvD-mb-btnC.title" = "Mostra icona nella barra dei menu";
+
+/* Hiding the Dock icon enables the menu bar icon. Click the menu bar icon to show or hide the window; right-click for commands. */
+"nvD-ht-lblC.title" = "Nascondendo l’icona del Dock si attiva l’icona nella barra dei menu. Fai clic su di essa per mostrare o nascondere la finestra; fai clic con il tasto destro per i comandi.";
+
+/* Pair brackets and double quotes automatically */
+"nvW-pr-btnC.title" = "Chiudi automaticamente parentesi e virgolette doppie";
+
+/* Edit notes from right to left */
+"nvW-rl-btnC.title" = "Modifica le note da destra a sinistra";
+
+/* Use smart quotes */
+"nvW-sq-btnC.title" = "Usa virgolette smart";
+
+/* Use smart dashes */
+"nvW-sd-btnC.title" = "Usa trattini smart";
+
+/* Adjust spaces when inserting or deleting text */
+"nvW-si-btnC.title" = "Regola gli spazi quando inserisci o elimini testo";
+
+/* ⌘Return inserts a paragraph below; ⇧⌘Return inserts above. */
+"nvW-ht-lblC.title" = "⌘A capo inserisce un paragrafo sotto; ⇧⌘A capo lo inserisce sopra.";
+
+/* Limit text width in windows */
+"nvP-lw-btnC.title" = "Limita la larghezza del testo nelle finestre";
+
+/* Maximum text width: 660 pt */
+"nvP-wl-lblC.title" = "Larghezza massima del testo: 660 pt";
+
+/* Full screen always centers text within this width. */
+"nvP-wh-lblC.title" = "A tutto schermo il testo è sempre centrato entro questa larghezza.";
+
+/* Interface colors */
+"nvP-cs-lblC.title" = "Colori dell’interfaccia";
+
+/* System */
+"nvP-cs-popI0.title" = "Sistema";
+
+/* Black & White */
+"nvP-cs-popI1.title" = "Bianco e nero";
+
+/* Low Contrast */
+"nvP-cs-popI2.title" = "Basso contrasto";
+
+/* Custom (Fonts & Colors) */
+"nvP-cs-popI3.title" = "Personalizzati (Font e colori)";
+
+/* System */
+"nvP-cs-popC.title" = "Sistema";
+
+/* Alternate note row backgrounds */
+"nvP-ar-btnC.title" = "Alterna lo sfondo delle righe delle note";
+
+/* Show note separators */
+"nvP-gr-btnC.title" = "Mostra separatori tra le note";
+
+/* Use themed overlay scrollbars */
+"nvP-sb-btnC.title" = "Usa barre di scorrimento sovrapposte a tema";

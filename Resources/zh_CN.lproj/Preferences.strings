@@ -87,3 +87,66 @@
 
 /* Use System Color */
 "nvU-sc-cel.title" = "使用系统颜色";
+
+/* Show Dock icon */
+"nvD-dk-btnC.title" = "在程序坞中显示图标";
+
+/* Show menu bar icon */
+"nvD-mb-btnC.title" = "在菜单栏中显示图标";
+
+/* Hiding the Dock icon enables the menu bar icon. Click the menu bar icon to show or hide the window; right-click for commands. */
+"nvD-ht-lblC.title" = "隐藏程序坞图标会启用菜单栏图标。点按菜单栏图标可显示或隐藏窗口；右键点按可使用命令。";
+
+/* Pair brackets and double quotes automatically */
+"nvW-pr-btnC.title" = "自动配对括号和双引号";
+
+/* Edit notes from right to left */
+"nvW-rl-btnC.title" = "从右到左编辑笔记";
+
+/* Use smart quotes */
+"nvW-sq-btnC.title" = "使用智能引号";
+
+/* Use smart dashes */
+"nvW-sd-btnC.title" = "使用智能破折号";
+
+/* Adjust spaces when inserting or deleting text */
+"nvW-si-btnC.title" = "插入或删除文本时调整空格";
+
+/* ⌘Return inserts a paragraph below; ⇧⌘Return inserts above. */
+"nvW-ht-lblC.title" = "⌘Return 在下方插入段落；⇧⌘Return 在上方插入。";
+
+/* Limit text width in windows */
+"nvP-lw-btnC.title" = "在窗口中限制文本宽度";
+
+/* Maximum text width: 660 pt */
+"nvP-wl-lblC.title" = "最大文本宽度：660 点";
+
+/* Full screen always centers text within this width. */
+"nvP-wh-lblC.title" = "全屏时文本始终在此宽度内居中。";
+
+/* Interface colors */
+"nvP-cs-lblC.title" = "界面颜色";
+
+/* System */
+"nvP-cs-popI0.title" = "系统";
+
+/* Black & White */
+"nvP-cs-popI1.title" = "黑白";
+
+/* Low Contrast */
+"nvP-cs-popI2.title" = "低对比度";
+
+/* Custom (Fonts & Colors) */
+"nvP-cs-popI3.title" = "自定（字体与颜色）";
+
+/* System */
+"nvP-cs-popC.title" = "系统";
+
+/* Alternate note row backgrounds */
+"nvP-ar-btnC.title" = "交替显示笔记行背景";
+
+/* Show note separators */
+"nvP-gr-btnC.title" = "显示笔记分隔线";
+
+/* Use themed overlay scrollbars */
+"nvP-sb-btnC.title" = "使用主题配色的浮动滚动条";

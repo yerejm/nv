@@ -84,3 +84,60 @@
 
 /* Use System Color */
 "nvU-sc-cel.title" = "Systemfarbe verwenden";
+
+/* Show Dock icon */
+"nvD-dk-btnC.title" = "Symbol im Dock anzeigen";
+
+/* Show menu bar icon */
+"nvD-mb-btnC.title" = "Symbol in der Menüleiste anzeigen";
+
+/* Hiding the Dock icon enables the menu bar icon. Click the menu bar icon to show or hide the window; right-click for commands. */
+"nvD-ht-lblC.title" = "Wenn das Dock-Symbol ausgeblendet ist, wird das Menüleistensymbol verwendet. Klicke darauf, um das Fenster ein- oder auszublenden; klicke mit der rechten Maustaste für Befehle.";
+
+/* Pair brackets and double quotes automatically */
+"nvW-pr-btnC.title" = "Klammern und doppelte Anführungszeichen automatisch paarweise setzen";
+
+/* Edit notes from right to left */
+"nvW-rl-btnC.title" = "Notizen von rechts nach links bearbeiten";
+
+/* Use smart quotes */
+"nvW-sq-btnC.title" = "Intelligente Anführungszeichen verwenden";
+
+/* Use smart dashes */
+"nvW-sd-btnC.title" = "Intelligente Gedankenstriche verwenden";
+
+/* Adjust spaces when inserting or deleting text */
+"nvW-si-btnC.title" = "Leerzeichen beim Einfügen oder Löschen von Text anpassen";
+
+/* ⌘Return inserts a paragraph below; ⇧⌘Return inserts above. */
+"nvW-ht-lblC.title" = "⌘Zeilenschalter fügt darunter einen Absatz ein, ⇧⌘Zeilenschalter darüber.";
+
+/* Limit text width in windows */
+"nvP-lw-btnC.title" = "Textbreite in Fenstern begrenzen";
+
+/* Maximum text width: 660 pt */
+"nvP-wl-lblC.title" = "Maximale Textbreite: 660 pt";
+
+/* Full screen always centers text within this width. */
+"nvP-wh-lblC.title" = "Im Vollbildmodus wird der Text immer innerhalb dieser Breite zentriert.";
+
+/* Interface colors */
+"nvP-cs-lblC.title" = "Oberflächenfarben";
+
+/* Black & White */
+"nvP-cs-popI1.title" = "Schwarzweiß";
+
+/* Low Contrast */
+"nvP-cs-popI2.title" = "Geringer Kontrast";
+
+/* Custom (Fonts & Colors) */
+"nvP-cs-popI3.title" = "Eigene (Schriften & Farben)";
+
+/* Alternate note row backgrounds */
+"nvP-ar-btnC.title" = "Zeilenhintergründe der Notizliste abwechseln";
+
+/* Show note separators */
+"nvP-gr-btnC.title" = "Trennlinien zwischen Notizen anzeigen";
+
+/* Use themed overlay scrollbars */
+"nvP-sb-btnC.title" = "Überlagernde Rollbalken im Farbschema verwenden";

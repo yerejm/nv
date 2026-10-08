@@ -55,17 +55,15 @@
 	IBOutlet NSView *editingView, *generalView, *fontsColorsView, *databaseView, *notationPrefsView;
 	
 	GlobalPrefs *prefsController;
-    NSView *displayView;
-    NSButton *limitTextWidthButton;
-    NSSlider *textWidthSlider;
-    NSTextField *textWidthLabel;
-    NSPopUpButton *colorSchemeButton;
+    IBOutlet NSView *displayView, *writingView, *desktopView;
+    IBOutlet NSButton *limitTextWidthButton, *alternatingRowsButton, *noteListGridButton, *themedScrollbarsButton;
+    IBOutlet NSSlider *textWidthSlider;
+    IBOutlet NSTextField *textWidthLabel;
+    IBOutlet NSPopUpButton *colorSchemeButton;
     IBOutlet NSButton *systemHighlightColorButton;
-    NSView *writingView;
-    NSView *desktopView;
     NSView *paneContainer;
-    NSButton *showDockIconButton, *showMenuBarIconButton;
-    NSButton *smartQuotesButton, *smartDashesButton, *smartInsertDeleteButton;
+    IBOutlet NSButton *showDockIconButton, *showMenuBarIconButton;
+    IBOutlet NSButton *autoPairingButton, *rightToLeftButton, *smartQuotesButton, *smartDashesButton, *smartInsertDeleteButton;
 }
 - (void)showWindow:(id)sender;
 - (IBAction)changedTextWidth:(id)sender;

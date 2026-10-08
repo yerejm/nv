@@ -438,84 +438,22 @@
 }
 
 - (void)awakeFromNib {
-    desktopView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 520, 180)];
-    showDockIconButton = [NSButton checkboxWithTitle:NSLocalizedString(@"Show Dock icon", nil) target:self action:@selector(changedDesktopPresence:)];
-    [showDockIconButton setFrame:NSMakeRect(24, 125, 472, 26)];
     [showDockIconButton setState:[prefsController showDockIcon]];
-    [desktopView addSubview:showDockIconButton];
-    showMenuBarIconButton = [NSButton checkboxWithTitle:NSLocalizedString(@"Show menu bar icon", nil) target:self action:@selector(changedDesktopPresence:)];
-    [showMenuBarIconButton setFrame:NSMakeRect(24, 89, 472, 26)];
     [showMenuBarIconButton setState:[prefsController showMenuBarIcon]];
-    [desktopView addSubview:showMenuBarIconButton];
-    NSTextField *desktopHint = [NSTextField wrappingLabelWithString:NSLocalizedString(@"Hiding the Dock icon enables the menu bar icon. Click the menu bar icon to show or hide the window; right-click for commands.", nil)];
-    [desktopHint setFrame:NSMakeRect(24, 22, 472, 50)];
-    [desktopHint setTextColor:[NSColor secondaryLabelColor]];
-    [desktopView addSubview:desktopHint];
-    writingView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 520, 290)];
-    NSButton *pairing = [NSButton checkboxWithTitle:NSLocalizedString(@"Pair brackets and double quotes automatically", nil) target:self action:@selector(changedAutoPairing:)];
-    [pairing setFrame:NSMakeRect(24, 235, 472, 26)];
-    [pairing setState:[prefsController useAutoPairing]];
-    [writingView addSubview:pairing];
-    NSButton *direction = [NSButton checkboxWithTitle:NSLocalizedString(@"Edit notes from right to left", nil) target:self action:@selector(changedWritingDirection:)];
-    [direction setFrame:NSMakeRect(24, 199, 472, 26)];
-    [direction setState:[prefsController rightToLeftEditing]];
-    [writingView addSubview:direction];
-    smartQuotesButton = [NSButton checkboxWithTitle:NSLocalizedString(@"Use smart quotes", nil) target:self action:@selector(changedSmartSubstitutions:)];
-    smartDashesButton = [NSButton checkboxWithTitle:NSLocalizedString(@"Use smart dashes", nil) target:self action:@selector(changedSmartSubstitutions:)];
-    smartInsertDeleteButton = [NSButton checkboxWithTitle:NSLocalizedString(@"Adjust spaces when inserting or deleting text", nil) target:self action:@selector(changedSmartSubstitutions:)];
-    NSArray *substitutionButtons = @[smartQuotesButton, smartDashesButton, smartInsertDeleteButton];
-    for (NSUInteger index = 0; index < substitutionButtons.count; index++) {
-        NSButton *button = substitutionButtons[index];
-        [button setFrame:NSMakeRect(24, 163 - index * 36, 472, 26)];
-        [writingView addSubview:button];
-    }
+    [autoPairingButton setState:[prefsController useAutoPairing]];
+    [rightToLeftButton setState:[prefsController rightToLeftEditing]];
     [smartQuotesButton setState:[prefsController useSmartQuotes]];
     [smartDashesButton setState:[prefsController useSmartDashes]];
     [smartInsertDeleteButton setState:[prefsController useSmartInsertDelete]];
-    NSTextField *shortcutHint = [NSTextField labelWithString:NSLocalizedString(@"⌘Return inserts a paragraph below; ⇧⌘Return inserts above.", nil)];
-    [shortcutHint setFrame:NSMakeRect(24, 42, 472, 24)];
-    [shortcutHint setTextColor:[NSColor secondaryLabelColor]];
-    [writingView addSubview:shortcutHint];
-    displayView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, 520, 340)];
-    limitTextWidthButton = [NSButton checkboxWithTitle:NSLocalizedString(@"Limit text width in windows", nil) target:self action:@selector(changedTextWidthLimit:)];
-    [limitTextWidthButton setFrame:NSMakeRect(24, 292, 460, 24)];
     [limitTextWidthButton setState:[prefsController managesTextWidthInWindow]];
-    [displayView addSubview:limitTextWidthButton];
-    textWidthLabel = [NSTextField labelWithString:@""];
-    [textWidthLabel setFrame:NSMakeRect(24, 263, 460, 22)];
-    [displayView addSubview:textWidthLabel];
-    textWidthSlider = [NSSlider sliderWithValue:[prefsController maxNoteBodyWidth] minValue:240 maxValue:1200 target:self action:@selector(changedTextWidth:)];
-    [textWidthSlider setFrame:NSMakeRect(24, 232, 460, 24)];
-    [textWidthSlider setContinuous:YES];
+    [textWidthSlider setDoubleValue:[prefsController maxNoteBodyWidth]];
     [textWidthSlider setAccessibilityLabel:NSLocalizedString(@"Maximum text width", nil)];
-    [displayView addSubview:textWidthSlider];
-    NSTextField *widthHint = [NSTextField labelWithString:NSLocalizedString(@"Full screen always centers text within this width.", nil)];
-    [widthHint setFrame:NSMakeRect(24, 201, 460, 22)];
-    [widthHint setTextColor:[NSColor secondaryLabelColor]];
-    [displayView addSubview:widthHint];
     [self changedTextWidth:textWidthSlider];
-    NSTextField *schemeLabel = [NSTextField labelWithString:NSLocalizedString(@"Interface colors", nil)];
-    [schemeLabel setFrame:NSMakeRect(24, 154, 155, 22)];
-    [displayView addSubview:schemeLabel];
-    colorSchemeButton = [[[NSPopUpButton alloc] initWithFrame:NSMakeRect(190, 151, 294, 28) pullsDown:NO] autorelease];
-    for (NSString *title in @[@"System", @"Black & White", @"Low Contrast", @"Custom (Fonts & Colors)"])
-        [colorSchemeButton addItemWithTitle:NSLocalizedString(title, nil)];
     [colorSchemeButton selectItemAtIndex:[prefsController colorScheme]];
-    [colorSchemeButton setTarget:self]; [colorSchemeButton setAction:@selector(changedColorScheme:)];
     [colorSchemeButton setAccessibilityLabel:NSLocalizedString(@"Interface colors", nil)];
-    [displayView addSubview:colorSchemeButton];
-    NSButton *alternating = [NSButton checkboxWithTitle:NSLocalizedString(@"Alternate note row backgrounds", nil) target:self action:@selector(changedAlternatingRows:)];
-    [alternating setFrame:NSMakeRect(24, 115, 460, 24)];
-    [alternating setState:[prefsController alternatingRows]];
-    [displayView addSubview:alternating];
-    NSButton *grid = [NSButton checkboxWithTitle:NSLocalizedString(@"Show note separators", nil) target:self action:@selector(changedNoteListGrid:)];
-    [grid setFrame:NSMakeRect(24, 82, 460, 24)];
-    [grid setState:[prefsController showNoteListGrid]];
-    [displayView addSubview:grid];
-    NSButton *scrollbars = [NSButton checkboxWithTitle:NSLocalizedString(@"Use themed overlay scrollbars", nil) target:self action:@selector(changedThemedScrollbars:)];
-    [scrollbars setFrame:NSMakeRect(24, 49, 460, 24)];
-    [scrollbars setState:[prefsController useThemedScrollbars]];
-    [displayView addSubview:scrollbars];
+    [alternatingRowsButton setState:[prefsController alternatingRows]];
+    [noteListGridButton setState:[prefsController showNoteListGrid]];
+    [themedScrollbarsButton setState:[prefsController useThemedScrollbars]];
 	
 	[window setDelegate:self];
 	
