@@ -67,7 +67,30 @@
 	return self;
 }
 
+- (void)setDisclosed:(BOOL)disclosed collapsedLayout:(NSLayoutConstraint *)collapsed buttons:(NSView *)buttons {
+	NSView *advancedView = [view superview];
+	//a deactivated constraint is released by its view, and the nib outlet does not retain it
+	if (collapsed != collapsedLayout) {
+		[collapsedLayout release];
+		collapsedLayout = [collapsed retain];
+	}
+	if (!expandedLayout) expandedLayout = [[[buttons topAnchor] constraintEqualToAnchor:[advancedView bottomAnchor] constant:14] retain];
+	if (!disclosed) [advancedView setHidden:YES];
+	[collapsedLayout setActive:!disclosed];
+	[expandedLayout setActive:disclosed];
+	//a window grows to fit its content's constraints but does not shrink on its own, so it is sized to fit both ways
+	NSWindow *window = [advancedView window];
+	NSRect content = [window contentRectForFrameRect:[window frame]];
+	content.size.height = [[window contentView] fittingSize].height;
+	NSRect frame = [window frameRectForContentRect:content];
+	frame.origin.y = NSMaxY([window frame]) - NSHeight(frame);
+	[window setFrame:frame display:YES animate:YES];
+	if (disclosed) [advancedView setHidden:NO];
+}
+
 - (void)dealloc {
+	[collapsedLayout release];
+	[expandedLayout release];
 	[notationPrefs release];
 	[crapData release];
 	[crapSalt release];

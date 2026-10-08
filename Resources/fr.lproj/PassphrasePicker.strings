@@ -1,0 +1,20 @@
+/* Cancel */
+"399.title" = "Annuler";
+
+/* Please choose a passphrase to protect your notes. If you forget this passphrase, however, it may be impossible to recover them. */
+"400.title" = "Définissez un mot de passe pour protéger vos notes. Attention, si vous oubliez ce mot de passe, il ne sera plus possible d'accéder à vos notes.";
+
+/* Your passphrase can contain any characters and can be any length. */
+"401.title" = "Le MDP peut contenir tout caractère, sans limite de longueur";
+
+/* Passphrase: */
+"402.title" = "Mot de passe : ";
+
+/* Verify: */
+"403.title" = "Vérification :";
+
+/* Remember passphrase in Keychain */
+"407.title" = "Mémoriser dans le Trousseau";
+
+/* More Security Options */
+"409.title" = "Plus d'options de sécurité";

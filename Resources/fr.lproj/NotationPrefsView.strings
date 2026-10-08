@@ -1,0 +1,74 @@
+/* Storage */
+"7.label" = "Stockage";
+
+/* File Type */
+"14.headerCell.title" = "Type";
+
+/* Remove file extension */
+"19.ibShadowedToolTip" = "Supprimer l'extension de fichier";
+
+/* Add new file extension */
+"20.ibShadowedToolTip" = "Ajouter une nouvelle extension de fichier";
+
+/* Security */
+"22.label" = "Sécurité";
+
+/* Ask every time */
+"25.title" = "Demander à chaque fois";
+
+/* Remember in Keychain */
+"26.title" = "Mémoriser dans le Trousseau";
+
+/* Single Database (Allow Encryption) */
+"100.title" = "Dans une base de données (permet le chiffrement)";
+
+/* Formatted HTML Documents * */
+"101.title" = "Documents HTML *";
+
+/* Plain Text Files * */
+"102.title" = "Fichiers texte simple *";
+
+/* Rich Text Format Files * */
+"103.title" = "Fichiers RTF *";
+
+/* * Using separate files allows Spotlight integration, but wastes disk space. */
+"216.title" = "* Utiliser des fichiers distincts permet d'utiliser Spotlight, mais gaspille de l'espace disque.";
+
+/* Recognize individual files with attributes: */
+"218.title" = "Reconnaîtres les fichiers ayant l'extension :";
+
+/* Store and read notes on disk as: */
+"222.title" = "Enregistrer et lire les notes sur le disque comme :";
+
+/* Confirm note files removed in the Finder */
+"223.title" = "Confirmer la suppression des fichiers dans le Finder";
+
+/* Change… */
+"225.title" = "Changer…";
+
+/* Passphrase: */
+"226.title" = "Mot de passe :";
+
+/* Encryption: */
+"227.title" = "Chiffrement :";
+
+/* Turn On Note Encryption… */
+"228.title" = "Désactiver le chiffrement des notes...";
+
+/* Bits in key: */
+"229.title" = "Clé en (bits) :";
+
+/* Keyboard: */
+"232.title" = "Clavier :";
+
+/* Secure Text Entry */
+"233.title" = "Sécuriser la saisie";
+
+/* Can impede keystroke logging utilities. */
+"234.title" = "Peut entraver les utilitaires de keylogging.";
+
+/* Clear in Keychain */
+"235.title" = "Supprimer du Trousseau";
+
+/* Set as default file extension for new notes */
+"263.ibShadowedToolTip" = "Définir comme l'extension par défaut des nouvelles notes";

@@ -1,0 +1,248 @@
+/* Bring All to Front */
+"5.title" = "Trazer Todas Para Frente";
+
+/* Window */
+"19.title" = "Janela";
+
+/* Notation */
+"21.title" = "Anotações";
+
+/* Minimize */
+"23.title" = "Minimizar";
+
+/* Window */
+"24.title" = "Janela";
+
+/* About Notational Velocity */
+"58.title" = "Sobre o Notational Velocity";
+
+/* Page Setup… */
+"77.title" = "Configuração de Página…";
+
+/* Print… */
+"78.title" = "Imprimir…";
+
+/* Note */
+"81.title" = "Nota";
+
+/* Note */
+"83.title" = "Nota";
+
+/* Help */
+"103.title" = "Ajuda";
+
+/* Help */
+"106.title" = "Ajuda";
+
+/* Keyboard Shortcuts */
+"111.title" = "Atalhos de Teclado";
+
+/* Settings… */
+"129.title" = "Ajustes…";
+
+/* Services */
+"130.title" = "Serviços";
+
+/* Services */
+"131.title" = "Serviços";
+
+/* Hide Notational Velocity */
+"134.title" = "Ocultar Notational Velocity";
+
+/* Quit Notational Velocity */
+"136.title" = "Encerrar Notational Velocity";
+
+/* Hide Others */
+"145.title" = "Ocultar Outros";
+
+/* Show All */
+"150.title" = "Mostrar Todos";
+
+/* Find… */
+"154.title" = "Procurar…";
+
+/* Copy */
+"157.title" = "Copiar";
+
+/* Undo */
+"158.title" = "Desfazer";
+
+/* Find */
+"159.title" = "Procurar";
+
+/* Cut */
+"160.title" = "Recortar";
+
+/* Use Selection for Find */
+"161.title" = "Procurar utilizando texto selecionado";
+
+/* Find Previous */
+"162.title" = "Procurar Anterior";
+
+/* Edit */
+"163.title" = "Editar";
+
+/* Find Next */
+"167.title" = "Procurar Próxima";
+
+/* Find */
+"168.title" = "Procurar";
+
+/* Edit */
+"169.title" = "Editar";
+
+/* Paste */
+"171.title" = "Colar";
+
+/* Select All */
+"172.title" = "Selecionar Tudo";
+
+/* Redo */
+"173.title" = "Refazer";
+
+/* Spelling and Grammar */
+"184.title" = "Ortografia e Gramática";
+
+/* Spelling and Grammar */
+"185.title" = "Ortografia e Gramática";
+
+/* Show Spelling and Grammar */
+"187.title" = "Mostrar Ortografia e Gramática";
+
+/* Check Document Now */
+"189.title" = "Verificar Documento Agora";
+
+/* Check Spelling While Typing */
+"191.title" = "Verificar Ortografia ao Digitar";
+
+/* View */
+"382.title" = "Visualizar";
+
+/* View */
+"383.title" = "Visualizar";
+
+/* Columns */
+"386.title" = "Colunas";
+
+/* Columns */
+"387.title" = "Colunas";
+
+/* Sort By */
+"389.title" = "Organizar Por";
+
+/* Sort By */
+"390.title" = "Organizar Por";
+
+/* Rename */
+"392.title" = "Renomear";
+
+/* Delete */
+"393.title" = "Apagar";
+
+/* Import… */
+"395.title" = "Importar…";
+
+/* Export… */
+"396.title" = "Exportar…";
+
+/* Format */
+"397.title" = "Formatar";
+
+/* Format */
+"398.title" = "Formatar";
+
+/* Close */
+"489.title" = "Fechar";
+
+/* Deselect Note(s) */
+"507.title" = "Desmarcar Nota(s)";
+
+/* Next Note */
+"521.title" = "Próxima Nota";
+
+/* Previous Note */
+"522.title" = "Nota Anterior";
+
+/* Fix Text Encoding… */
+"534.title" = "Corrigir Codificação de Texto…";
+
+/* Search or Create… */
+"554.title" = "Buscar ou Criar…";
+
+/* Shift Left */
+"563.title" = "Diminuir Recuo";
+
+/* Shift Right */
+"564.title" = "Aumentar Recuo";
+
+/* Bold */
+"574.title" = "Negrito";
+
+/* Italic */
+"575.title" = "Itálico";
+
+/* Strikethrough */
+"576.title" = "Tachado";
+
+/* Clear */
+"771.title" = "Limpar";
+
+/* Plain Text Style */
+"977.title" = "Texto Simples";
+
+/* Tag */
+"994.title" = "Etiquetar";
+
+/* Bookmarks */
+"996.title" = "Marcadores";
+
+/* Bookmarks */
+"997.title" = "Marcadores";
+
+/* Paste as New Note */
+"1000.title" = "Colar como Nova Nota";
+
+/* Notational Velocity Web Site */
+"1053.title" = "Web Site do Notational Velocity";
+
+/* Acknowledgments */
+"1055.title" = "Agradecimentos (em Inglês)";
+
+/* Show Note-Previews in List */
+"1062.title" = "Mostrar Prévia de Notas no Título";
+
+/* Development Web Site */
+"1087.title" = "Web Site de Desenvolvimento";
+
+/* Transformations */
+"1093.title" = "Transformações";
+
+/* Transformations */
+"1094.title" = "Transformações";
+
+/* Make Upper Case */
+"1095.title" = "Tudo em Maiúsculas";
+
+/* Make Lower Case */
+"1096.title" = "Tudo em Minúsculas";
+
+/* Capitalize */
+"1097.title" = "Primeira Letra em Maiúsculo";
+
+/* No Note Selected */
+"1102.title" = "Nenhuma Nota Selecionada";
+
+/* Switch to Horizontal Layout */
+"1115.title" = "Alternar para Leiaute Horizontal";
+
+/* Copy URL */
+"1118.title" = "Copiar URL";
+
+/* Show in Finder */
+"1120.title" = "Mostrar no Finder";
+
+/* Edit With */
+"1123.title" = "Editar com";
+
+/* Edit With */
+"1124.title" = "Editar com";

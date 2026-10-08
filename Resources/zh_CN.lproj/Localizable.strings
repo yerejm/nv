@@ -665,8 +665,6 @@
 /* menu command to clear out custom external editors*/
 "Reset" = "重设";
 
-/* button that returns the search highlight to the system find color */
-"Use System Color" = "使用系统颜色";
 
 /* the space bar in a keyboard shortcut */
 "Space" = "空格";

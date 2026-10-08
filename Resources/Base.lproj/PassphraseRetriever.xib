@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24506" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24506"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="PassphraseRetriever">
+            <connections>
+                <outlet property="cancelButton" destination="320" id="339"/>
+                <outlet property="differentFolderButton" destination="336" id="338"/>
+                <outlet property="helpStringField" destination="318" id="327"/>
+                <outlet property="okButton" destination="319" id="326"/>
+                <outlet property="passphraseField" destination="331" id="333"/>
+                <outlet property="rememberKeychainButton" destination="332" id="334"/>
+                <outlet property="window" destination="307" id="309"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <window title="Provide the passphrase" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="307" userLabel="get passphrase" customClass="NSPanel">
+            <windowStyleMask key="styleMask" titled="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="510" y="376" width="507" height="194"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1178"/>
+            <value key="minSize" type="size" width="378" height="110"/>
+            <view key="contentView" id="308">
+                <rect key="frame" x="0.0" y="0.0" width="507" height="194"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" preferredMaxLayoutWidth="394" translatesAutoresizingMaskIntoConstraints="NO" id="318" propertyAccessControl="all">
+                        <rect key="frame" x="92" y="112" width="398" height="62"/>
+                        <constraints>
+                            <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="62" id="ddy-G5-AKf"/>
+                        </constraints>
+                        <textFieldCell key="cell" selectable="YES" sendsActionOnEndEditing="YES" title="Please enter the passphrase to access notes in BLAH BLAH BLAH BLAH PATH BLAH BLAH" id="341">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <button imageHugsTitle="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="319" propertyAccessControl="nonLocalizable">
+                        <rect key="frame" x="411" y="12" width="82" height="32"/>
+                        <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" inset="2" id="342">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent" base64-UTF8="YES">
+DQ
+</string>
+                        </buttonCell>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="68" id="ZHP-Fx-g9H"/>
+                        </constraints>
+                        <connections>
+                            <action selector="okAction:" target="-2" id="321"/>
+                        </connections>
+                    </button>
+                    <button imageHugsTitle="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="320" propertyAccessControl="nonLocalizable">
+                        <rect key="frame" x="329" y="12" width="82" height="32"/>
+                        <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="343">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent">q</string>
+                            <modifierMask key="keyEquivalentModifierMask" command="YES"/>
+                        </buttonCell>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="68" id="Bov-Nn-EWf"/>
+                        </constraints>
+                        <connections>
+                            <action selector="cancelAction:" target="-2" id="322"/>
+                        </connections>
+                    </button>
+                    <imageView translatesAutoresizingMaskIntoConstraints="NO" id="328">
+                        <rect key="frame" x="20" y="112" width="62" height="62"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="62" id="bHB-JJ-GvM"/>
+                            <constraint firstAttribute="width" constant="62" id="zGS-S7-mAY"/>
+                        </constraints>
+                        <imageCell key="cell" refusesFirstResponder="YES" alignment="left" imageScaling="axesIndependently" image="NSApplicationIcon" id="344"/>
+                    </imageView>
+                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="330" propertyAccessControl="nonLocalizable">
+                        <rect key="frame" x="42" y="82" width="114" height="19"/>
+                        <constraints>
+                            <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="19" id="Yop-tZ-gc1"/>
+                        </constraints>
+                        <textFieldCell key="cell" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Passphrase:" id="345">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField horizontalHuggingPriority="200" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="331" customClass="NSSecureTextField" propertyAccessControl="all">
+                        <rect key="frame" x="161" y="82" width="326" height="22"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="22" id="OxO-rW-MhE"/>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="150" id="vtg-hR-KgX"/>
+                        </constraints>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="346">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <button imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="332" propertyAccessControl="nonLocalizable">
+                        <rect key="frame" x="159" y="58" width="330" height="18"/>
+                        <buttonCell key="cell" type="check" title="Remember passphrase in Keychain" bezelStyle="regularSquare" imagePosition="leading" alignment="left" inset="2" id="347">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="328" id="xsj-jC-N6q"/>
+                        </constraints>
+                    </button>
+                    <button hidden="YES" imageHugsTitle="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="336" propertyAccessControl="nonLocalizable">
+                        <rect key="frame" x="14" y="12" width="164" height="32"/>
+                        <buttonCell key="cell" type="push" title="Use Different Notes" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="348">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="150" id="iKf-dZ-MRx"/>
+                        </constraints>
+                        <connections>
+                            <action selector="differentNotes:" target="-2" id="337"/>
+                        </connections>
+                    </button>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="320" firstAttribute="top" secondItem="336" secondAttribute="top" id="1mJ-Ww-nPa"/>
+                    <constraint firstItem="318" firstAttribute="top" secondItem="328" secondAttribute="top" id="1na-oE-5IG"/>
+                    <constraint firstItem="332" firstAttribute="leading" secondItem="331" secondAttribute="leading" id="44J-rz-NpR"/>
+                    <constraint firstItem="330" firstAttribute="top" secondItem="331" secondAttribute="top" constant="3" id="95e-VB-jyl"/>
+                    <constraint firstItem="319" firstAttribute="leading" secondItem="320" secondAttribute="trailing" constant="14" id="9Wy-tw-j0J"/>
+                    <constraint firstAttribute="trailing" secondItem="318" secondAttribute="trailing" constant="19" id="AKf-X6-zLK"/>
+                    <constraint firstItem="332" firstAttribute="leading" secondItem="308" secondAttribute="leading" priority="600" constant="161" id="H5V-yy-vue"/>
+                    <constraint firstItem="331" firstAttribute="leading" secondItem="308" secondAttribute="leading" priority="600" constant="161" id="HPY-0C-HJC"/>
+                    <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="320" secondAttribute="bottom" constant="12" id="LBf-t6-6fe"/>
+                    <constraint firstItem="328" firstAttribute="top" secondItem="308" secondAttribute="top" constant="20" id="Nat-54-Wz5"/>
+                    <constraint firstItem="328" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="308" secondAttribute="leading" constant="20" id="Nfl-dd-vlw"/>
+                    <constraint firstItem="331" firstAttribute="top" relation="greaterThanOrEqual" secondItem="318" secondAttribute="bottom" constant="4" id="QA2-RH-TGU"/>
+                    <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="336" secondAttribute="bottom" constant="12" id="TCv-yJ-udP"/>
+                    <constraint firstItem="332" firstAttribute="top" secondItem="331" secondAttribute="bottom" priority="600" constant="7" id="Tz6-eO-212"/>
+                    <constraint firstItem="328" firstAttribute="leading" secondItem="308" secondAttribute="leading" priority="600" constant="20" id="Uuq-ca-p4H"/>
+                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="332" secondAttribute="trailing" constant="18" id="Zcl-wK-KA5"/>
+                    <constraint firstItem="336" firstAttribute="top" secondItem="332" secondAttribute="bottom" priority="600" constant="20" id="crN-Sv-gea"/>
+                    <constraint firstItem="332" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="308" secondAttribute="leading" constant="20" id="dnp-jf-MFz"/>
+                    <constraint firstItem="319" firstAttribute="top" secondItem="336" secondAttribute="top" id="e8i-Hp-Hbe"/>
+                    <constraint firstItem="331" firstAttribute="leading" secondItem="330" secondAttribute="trailing" constant="7" id="fA9-rr-rq4"/>
+                    <constraint firstItem="318" firstAttribute="leading" secondItem="328" secondAttribute="trailing" constant="12" id="gnc-Dq-kPY"/>
+                    <constraint firstItem="336" firstAttribute="top" relation="greaterThanOrEqual" secondItem="332" secondAttribute="bottom" constant="4" id="jME-vq-TJo"/>
+                    <constraint firstAttribute="trailing" secondItem="319" secondAttribute="trailing" constant="21" id="kba-h2-WE9"/>
+                    <constraint firstItem="330" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="308" secondAttribute="leading" constant="20" id="lDA-Gs-iyP"/>
+                    <constraint firstAttribute="trailing" secondItem="331" secondAttribute="trailing" constant="20" id="msj-0O-8hW"/>
+                    <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="319" secondAttribute="bottom" constant="12" id="pEn-5y-MA6"/>
+                    <constraint firstItem="331" firstAttribute="top" relation="greaterThanOrEqual" secondItem="328" secondAttribute="bottom" constant="4" id="pKc-Ss-MTN"/>
+                    <constraint firstAttribute="bottom" secondItem="336" secondAttribute="bottom" priority="600" constant="19" id="pz0-UG-XXL"/>
+                    <constraint firstItem="332" firstAttribute="top" relation="greaterThanOrEqual" secondItem="330" secondAttribute="bottom" constant="4" id="rEo-Vy-K0z"/>
+                    <constraint firstItem="320" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="336" secondAttribute="trailing" constant="12" id="sd2-TV-wYm"/>
+                    <constraint firstItem="331" firstAttribute="top" secondItem="328" secondAttribute="bottom" priority="600" constant="8" id="sy7-Lx-7ts"/>
+                    <constraint firstItem="336" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="308" secondAttribute="leading" constant="20" id="vkQ-vA-8TY"/>
+                    <constraint firstItem="332" firstAttribute="top" relation="greaterThanOrEqual" secondItem="331" secondAttribute="bottom" constant="4" id="xeu-4q-xa3"/>
+                    <constraint firstItem="336" firstAttribute="leading" secondItem="308" secondAttribute="leading" priority="600" constant="21" id="yIJ-mV-liV"/>
+                </constraints>
+            </view>
+        </window>
+    </objects>
+    <resources>
+        <image name="NSApplicationIcon" width="32" height="32"/>
+    </resources>
+</document>

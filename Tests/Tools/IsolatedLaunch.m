@@ -13,6 +13,7 @@
 #import "FastListDataSource.h"
 #import "GlobalPrefs.h"
 #import "PrefsWindowController.h"
+#import "PassphrasePicker.h"
 #import "LinkingEditor.h"
 #import "AttributedPlainText.h"
 #import "ExternalEditorListController.h"
@@ -533,6 +534,29 @@ static void CheckShortcutRecorder(PrefsWindowController *preferences, NSWindow *
     Check(@"Delete while recording removes the shortcut", recordedBeforeDelete && !recorder.recording && prefs.appActivationKeyCode == -1 && ShortcutIsFree(kVK_ANSI_N, cmdKey | optionKey));
 }
 
+//the advanced options hang below the sheet until disclosed, when the sheet grows to show them
+static void CheckPassphraseDisclosure(NotationController *notation, NSWindow *parent) {
+    PassphrasePicker *picker = [[[PassphrasePicker alloc] initWithNotationPrefs:notation.notationPrefs] autorelease];
+    [picker showAroundWindow:parent resultDelegate:nil];
+    Pump(0.5);
+    NSWindow *sheet = parent.attachedSheet;
+    NSButton *disclosure = [picker valueForKey:@"disclosureButton"];
+    NSView *advanced = [picker valueForKey:@"advancedView"];
+    CGFloat collapsedHeight = NSHeight(sheet.frame);
+    BOOL hiddenWhileCollapsed = advanced.hidden;
+    [disclosure performClick:nil];
+    Pump(0.8);
+    NSRect shown = [sheet.contentView convertRect:advanced.bounds fromView:advanced];
+    Check(@"disclosing the passphrase sheet's advanced options grows the sheet to show them", sheet && hiddenWhileCollapsed && !advanced.hidden &&
+          NSHeight(sheet.frame) > collapsedHeight + NSHeight(advanced.bounds) && NSContainsRect(sheet.contentView.bounds, shown) && advanced.subviews.count == 1);
+    SnapshotWindow(sheet, @"passphrase-advanced.png");
+    [disclosure performClick:nil];
+    Pump(0.8);
+    Check(@"collapsing the advanced options restores the passphrase sheet", fabs(NSHeight(sheet.frame) - collapsedHeight) < 1 && advanced.hidden);
+    [NSApp endSheet:sheet returnCode:NSModalResponseCancel];
+    [sheet orderOut:nil];
+}
+
 static void CompleteDesktopAcceptance(AppController *app, NotationController *notation, NSWindow *window, LinkingEditor *editor) {
     @try {
         [NSApp hide:nil];
@@ -627,6 +651,7 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
                     Check(@"Notes Storage text renders at its control coordinates on first display", WindowSnapshotShowsControlText(storagePopup, filename));
             }
         }
+        CheckPassphraseDisclosure(notation, prefsWindow);
         Check(@"Notes Security exposes encryption controls and hides Storage", [[notesPreferences valueForKey:@"enableEncryptionButton"] window] == prefsWindow && storagePopup.window == nil);
         [prefsWindow setAppearance:nil];
         [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Display"]];

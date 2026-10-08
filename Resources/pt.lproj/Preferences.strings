@@ -1,0 +1,86 @@
+/* Preferences */
+"5.title" = "Preferências";
+
+/* Other… */
+"160.title" = "Outro…";
+
+/* Small */
+"162.title" = "Pequeno";
+
+/* Large */
+"163.title" = "Grande";
+
+/* Indent lines */
+"272.title" = "Recuar linhas";
+
+/* Move typing focus to next field */
+"273.title" = "Mover foco para próximo campo";
+
+/* List Text Size: */
+"325.title" = "Editor externo:";
+
+/* Confirm note deletion */
+"327.title" = "Confirmar ao apagar notas";
+
+/* Quit when closing window */
+"328.title" = "Encerrar NV ao fechar janela";
+
+/* Auto-select notes by title when searching */
+"329.title" = "Seleção automática por título durante busca";
+
+/* Size */
+"330.placeholderString" = "Tamanho";
+
+/* Bring-to-Front Hotkey: */
+"331.title" = "Atalho para Ativar NV:";
+
+/* Automatically selecting very long notes may affect responsiveness. */
+"335.title" = "A seleção automática de notas muito longas poderá afetar o tempo de resposta.";
+
+/* Read notes from folder: */
+"336.title" = "Ler notas da pasta:";
+
+/* Tab Key: */
+"340.title" = "Tecla Tab:";
+
+/* Option-Tab always indents and Shift-Tab always moves the focus backward. */
+"341.title" = "Option-Tab sempre recua texto e Shift-Tab move foco para campo anterior.";
+
+/* Check as you type */
+"342.title" = "Verificar ao digitar";
+
+/* Copy basic styles from other apps */
+"344.title" = "Copiar estilos de outros aplicativos";
+
+/* Styled Text: */
+"345.title" = "Estilos:";
+
+/* Spelling: */
+"346.title" = "Ortografia:";
+
+/* Suggest titles for note-links */
+"348.title" = "Sugerir títulos em links de notas";
+
+/* Soft tabs (spaces) */
+"349.title" = "Tabs suaves (espaços)";
+
+/* Make URLs clickable links */
+"350.title" = "Tornar URLs clicáveis";
+
+/* Body Font: */
+"390.title" = "Fonte:";
+
+/* Set… */
+"391.title" = "Definir…";
+
+/* Foreground Text: */
+"398.title" = "Texto:";
+
+/* Background: */
+"402.title" = "Fundo:";
+
+/* Search Highlight: */
+"416.title" = "Destacar Busca:";
+
+/* Use System Color */
+"nvU-sc-cel.title" = "Usar Cor do Sistema";

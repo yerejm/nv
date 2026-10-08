@@ -1,0 +1,68 @@
+/* Storage */
+"7.label" = "存储";
+
+/* Extension */
+"11.headerCell.title" = "扩展";
+
+/* File Type */
+"14.headerCell.title" = "文件类型";
+
+/* Security */
+"22.label" = "安全";
+
+/* Ask every time */
+"25.title" = "每次提醒";
+
+/* Remember in Keychain */
+"26.title" = "在钥匙链中保存";
+
+/* Single Database (Allow Encryption) */
+"100.title" = "单数据库 (允许加密)";
+
+/* Formatted HTML Documents * */
+"101.title" = "格式化的 HTML 文档 *";
+
+/* Plain Text Files * */
+"102.title" = "纯文本格式 *";
+
+/* Rich Text Format Files * */
+"103.title" = "多信息文本格式 *";
+
+/* * Using separate files allows Spotlight integration, but wastes disk space. */
+"216.title" = "* 使用独立的文件可以让您在 Spotlight 中搜索到笔记，但相对的要浪费一些磁盘空间。";
+
+/* Recognize individual files with attributes: */
+"218.title" = "识别下列文件类型:";
+
+/* Store and read notes on disk as: */
+"222.title" = "笔记在本地存储为:";
+
+/* Confirm note files removed in the Finder */
+"223.title" = "显示确认删除窗口";
+
+/* Change… */
+"225.title" = "修改…";
+
+/* Passphrase: */
+"226.title" = "口令:";
+
+/* Encryption: */
+"227.title" = "加密:";
+
+/* Turn On Note Encryption… */
+"228.title" = "开启笔记加密…";
+
+/* Bits in key: */
+"229.title" = "加密位数:";
+
+/* Keyboard: */
+"232.title" = "键盘:";
+
+/* Secure Text Entry */
+"233.title" = "加强文本安全";
+
+/* Can impede keystroke logging utilities. */
+"234.title" = "可防止部分键盘记录工具";
+
+/* Clear in Keychain */
+"235.title" = "从钥匙链中删除";

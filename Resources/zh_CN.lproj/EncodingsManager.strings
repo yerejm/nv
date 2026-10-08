@@ -1,0 +1,8 @@
+/* Notational Velocity should assume the file “%@” was saved with the encoding: */
+"330.title" = "Notational Velocity 假设当前文件 “%@” 以下列编码保存:";
+
+/* Looks Correct */
+"331.title" = "确认编码";
+
+/* Cancel */
+"332.title" = "取消";

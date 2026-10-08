@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24506" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24506"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="URLGetter">
+            <connections>
+                <outlet property="cancelButton" destination="334" id="338"/>
+                <outlet property="objectURLStatus" destination="332" id="337"/>
+                <outlet property="progress" destination="331" id="335"/>
+                <outlet property="progressStatus" destination="333" id="336"/>
+                <outlet property="window" destination="328" id="339"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <window title="Download Progress" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="328" userLabel="Panel" customClass="NSPanel" propertyAccessControl="nonLocalizable">
+            <windowStyleMask key="styleMask" titled="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="566" y="537" width="460" height="122"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1178"/>
+            <value key="minSize" type="size" width="213" height="107"/>
+            <view key="contentView" id="329">
+                <rect key="frame" x="0.0" y="0.0" width="460" height="122"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <progressIndicator horizontalHuggingPriority="200" verticalHuggingPriority="750" maxValue="1" bezeled="NO" style="bar" translatesAutoresizingMaskIntoConstraints="NO" id="331" propertyAccessControl="all">
+                        <rect key="frame" x="18" y="18" width="346" height="20"/>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="150" id="Ps1-lE-jIu"/>
+                            <constraint firstAttribute="height" constant="18" id="wnU-Vt-qZz"/>
+                        </constraints>
+                    </progressIndicator>
+                    <textField horizontalHuggingPriority="200" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="332" propertyAccessControl="all">
+                        <rect key="frame" x="17" y="68" width="426" height="34"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="34" id="VV9-i1-KaB"/>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="150" id="zl2-nQ-aP1"/>
+                        </constraints>
+                        <textFieldCell key="cell" truncatesLastVisibleLine="YES" sendsActionOnEndEditing="YES" id="342">
+                            <font key="font" metaFont="system"/>
+                            <string key="title">http://www.apple.com/Bacon.pdf
+another line</string>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField horizontalHuggingPriority="200" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" translatesAutoresizingMaskIntoConstraints="NO" id="333" propertyAccessControl="all">
+                        <rect key="frame" x="17" y="46" width="326" height="14"/>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="150" id="zuG-c2-Gdf"/>
+                        </constraints>
+                        <textFieldCell key="cell" lineBreakMode="truncatingTail" sendsActionOnEndEditing="YES" title="Downloading: 90KB of 25MB" id="343">
+                            <font key="font" metaFont="smallSystem"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <button imageHugsTitle="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="334" propertyAccessControl="nonLocalizable">
+                        <rect key="frame" x="364" y="12" width="82" height="32"/>
+                        <buttonCell key="cell" type="push" title="Stop" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="344">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="68" id="s8m-Zr-4Y1"/>
+                        </constraints>
+                        <connections>
+                            <action selector="cancelDownload:" target="-2" id="340"/>
+                        </connections>
+                    </button>
+                </subviews>
+                <constraints>
+                    <constraint firstItem="331" firstAttribute="leading" secondItem="329" secondAttribute="leading" priority="600" constant="18" id="1Sk-yH-6cH"/>
+                    <constraint firstItem="331" firstAttribute="top" secondItem="334" secondAttribute="top" constant="2" id="DcR-HA-DBK"/>
+                    <constraint firstAttribute="trailing" secondItem="332" secondAttribute="trailing" constant="19" id="Hao-Y2-z1p"/>
+                    <constraint firstItem="333" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="329" secondAttribute="leading" constant="19" id="HuP-k9-X1H"/>
+                    <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="334" secondAttribute="bottom" constant="12" id="Ige-wK-W2g"/>
+                    <constraint firstItem="334" firstAttribute="leading" secondItem="331" secondAttribute="trailing" constant="7" id="MiU-Rv-mmD"/>
+                    <constraint firstAttribute="trailing" secondItem="334" secondAttribute="trailing" constant="21" id="SGQ-YK-mz3"/>
+                    <constraint firstItem="332" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="329" secondAttribute="leading" constant="19" id="Upz-EF-j93"/>
+                    <constraint firstItem="334" firstAttribute="top" relation="greaterThanOrEqual" secondItem="333" secondAttribute="bottom" constant="4" id="Yij-US-x7g"/>
+                    <constraint firstItem="331" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="329" secondAttribute="leading" constant="18" id="Zl3-82-QAJ"/>
+                    <constraint firstItem="332" firstAttribute="leading" secondItem="329" secondAttribute="leading" priority="600" constant="19" id="hmX-PH-0PK"/>
+                    <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="331" secondAttribute="bottom" constant="12" id="iop-Ed-BbD"/>
+                    <constraint firstAttribute="trailing" secondItem="333" secondAttribute="trailing" constant="119" id="mZb-g4-chP"/>
+                    <constraint firstAttribute="bottom" secondItem="334" secondAttribute="bottom" priority="600" constant="19" id="qxr-OT-c4X"/>
+                    <constraint firstItem="332" firstAttribute="top" secondItem="329" secondAttribute="top" constant="20" id="tW4-7r-kr8"/>
+                    <constraint firstItem="334" firstAttribute="top" secondItem="333" secondAttribute="bottom" priority="600" constant="7" id="u6F-Qd-sSa"/>
+                    <constraint firstItem="333" firstAttribute="top" secondItem="332" secondAttribute="bottom" priority="600" constant="8" id="wLb-bW-5Dm"/>
+                    <constraint firstItem="333" firstAttribute="leading" secondItem="329" secondAttribute="leading" priority="600" constant="19" id="xhc-2f-wWc"/>
+                    <constraint firstItem="333" firstAttribute="top" relation="greaterThanOrEqual" secondItem="332" secondAttribute="bottom" constant="4" id="xnY-Pp-IJN"/>
+                </constraints>
+            </view>
+        </window>
+    </objects>
+</document>

@@ -1,0 +1,83 @@
+/* Storage */
+"7.label" = "Armazenamento";
+
+/* Extension */
+"11.headerCell.title" = "Extensão";
+
+/* File Type */
+"14.headerCell.title" = "Tipo de Arquivo";
+
+/* Add new file type */
+"16.ibShadowedToolTip" = "Remover tipo de arquivo.";
+
+/* Remove file extension */
+"19.ibShadowedToolTip" = "Remover extensão de arquivo";
+
+/* Add new file extension */
+"20.ibShadowedToolTip" = "Adicionar nova extensão de arquivo";
+
+/* Remove file type */
+"21.ibShadowedToolTip" = "Remover tipo de arquivo.";
+
+/* Security */
+"22.label" = "Segurança";
+
+/* Ask every time */
+"25.title" = "Solicitar ao iniciar NV";
+
+/* Remember in Keychain */
+"26.title" = "Armazenar nas suas Chaves";
+
+/* Single Database (Allow Encryption) */
+"100.title" = "Banco de Dados (Permite Criptografia)";
+
+/* Formatted HTML Documents * */
+"101.title" = "Documentos HTML Formatados *";
+
+/* Plain Text Files * */
+"102.title" = "Arquivos de Texto Simples *";
+
+/* Rich Text Format Files * */
+"103.title" = "Arquivos de Texto Formatados (RTF) *";
+
+/* * Using separate files allows Spotlight integration, but wastes disk space. */
+"216.title" = "* O uso de arquivos separados permite integração com Spotlight, porém utiliza mais espaço em disco.";
+
+/* Recognize individual files with attributes: */
+"218.title" = "Reconhecer arquivos conforme os atributos:";
+
+/* Store and read notes on disk as: */
+"222.title" = "Armazenar e ler notas do disco como:";
+
+/* Confirm note files removed in the Finder */
+"223.title" = "Confirmar exclusão de arquivos no Finder";
+
+/* Change… */
+"225.title" = "Alterar…";
+
+/* Passphrase: */
+"226.title" = "Frase de Segurança:";
+
+/* Encryption: */
+"227.title" = "Criptografia:";
+
+/* Turn On Note Encryption… */
+"228.title" = "Ativar Criptografia de Notas…";
+
+/* Bits in key: */
+"229.title" = "Bits na chave:";
+
+/* Keyboard: */
+"232.title" = "Teclado:";
+
+/* Secure Text Entry */
+"233.title" = "Entrada de Texto Segura";
+
+/* Can impede keystroke logging utilities. */
+"234.title" = "Pode bloquear utilitários de monitoração de teclado (keylogger).";
+
+/* Clear in Keychain */
+"235.title" = "Remover das suas Chaves";
+
+/* Set as default file extension for new notes */
+"263.ibShadowedToolTip" = "Adicionar tipo de arquivo.";

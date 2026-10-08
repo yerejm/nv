@@ -1,0 +1,11 @@
+/* The following files no longer exist in the notes folder—restore them to disk or delete them from Notational Velocity, too? */
+"343.title" = "Les fichiers suivants n'existent plus dans le dossier contenant vos notes. Voulez-vous les restaurer dans le dossier, ou faut-il également effacer leur copie dans Notational Velocity ?";
+
+/* Restore to Disk */
+"344.title" = "Restaurer dans le dossier";
+
+/* Delete */
+"345.title" = "Les supprimer";
+
+/* Do not show this message again */
+"350.title" = "Ne plus afficher ce message";

@@ -1,0 +1,86 @@
+/* Other… */
+"160.title" = "Autre…";
+
+/* Small */
+"162.title" = "Petite";
+
+/* Large */
+"163.title" = "Grande";
+
+/* Indent lines */
+"272.title" = "Indente la ligne";
+
+/* Move typing focus to next field */
+"273.title" = "Déplace le focus au champ suivant";
+
+/* List Text Size: */
+"325.title" = "Éditeur externe :";
+
+/* Confirm note deletion */
+"327.title" = "Confirmer la suppression d'une note";
+
+/* Quit when closing window */
+"328.title" = "Quitter en fermant la fenêtre";
+
+/* Auto-select notes by title when searching */
+"329.title" = "Sélection auto des titres de notes durant la recherche";
+
+/* Bring-to-Front Hotkey: */
+"331.title" = "Raccourci global pour NV : ";
+
+/* Automatically selecting very long notes may affect responsiveness. */
+"335.title" = "La sélection automatique de très longues notes peut affecter la réactivité.";
+
+/* Read notes from folder: */
+"336.title" = "Lire les notes du dossier : ";
+
+/* Tab Key: */
+"340.title" = "Tabulation :";
+
+/* Option-Tab always indents and Shift-Tab always moves the focus backward. */
+"341.title" = "Option-Tab indente toujours, tandis que Maj-Tab déplace toujours le focus en arrière.";
+
+/* Check as you type */
+"342.title" = "Vérifier lors de la frappe";
+
+/* Copy basic styles from other apps */
+"344.title" = "Copier les styles de bases des autres apps";
+
+/* Styled Text: */
+"345.title" = "Texte mis en forme :";
+
+/* Spelling: */
+"346.title" = "Orthographe :";
+
+/* Links: */
+"347.title" = "Liens :";
+
+/* Suggest titles for note-links */
+"348.title" = "Suggérer le titre comme lien vers une note";
+
+/* Soft tabs (spaces) */
+"349.title" = "Soft tabs (espaces)";
+
+/* Make URLs clickable links */
+"350.title" = "URLs cliquables";
+
+/* Body Font: */
+"390.title" = "Texte :";
+
+/* Set… */
+"391.title" = "Couleur de contraste :";
+
+/* Foreground Text: */
+"398.title" = "Couleur du texte :";
+
+/* Background: */
+"402.title" = "Arrière-plan :";
+
+/* Search Highlight: */
+"416.title" = "Définir";
+
+/* External Editor: */
+"430.title" = "Taille";
+
+/* Use System Color */
+"nvU-sc-cel.title" = "Utiliser la couleur du système";

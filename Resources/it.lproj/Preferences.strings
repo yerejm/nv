@@ -1,0 +1,92 @@
+/* Preferences */
+"5.title" = "Preferenze";
+
+/* Other… */
+"160.title" = "Altro…";
+
+/* Small */
+"162.title" = "Piccolo";
+
+/* Large */
+"163.title" = "Grande";
+
+/* Indent lines */
+"272.title" = "Rientro righe";
+
+/* Move typing focus to next field */
+"273.title" = "Porta il cursore al campo successivo";
+
+/* List Text Size: */
+"325.title" = "Editor Esterno:";
+
+/* Confirm note deletion */
+"327.title" = "Conferma cancellazione nota";
+
+/* Quit when closing window */
+"328.title" = "Esci alla chiusura della finestra";
+
+/* Auto-select notes by title when searching */
+"329.title" = "Seleziona automaticamente le note durante la ricerca";
+
+/* Size */
+"330.placeholderString" = "Dimensioni";
+
+/* Bring-to-Front Hotkey: */
+"331.title" = "Combinazione tasti per Porta tutto in primo piano:";
+
+/* Automatically selecting very long notes may affect responsiveness. */
+"335.title" = "La selezione automatica di note molto lunghe può rallentare il programma.";
+
+/* Read notes from folder: */
+"336.title" = "Leggi note dalla cartella:";
+
+/* Tab Key: */
+"340.title" = "Tasto Tab:";
+
+/* Option-Tab always indents and Shift-Tab always moves the focus backward. */
+"341.title" = "Opzione-Tab fa sempre rientrare il testo e Maiuscole-Tab sposta sempre indietro il cursore.";
+
+/* Check as you type */
+"342.title" = "Controlla durante la digitazione";
+
+/* Copy basic styles from other apps */
+"344.title" = "Copia gli stili di base da altre applicazioni";
+
+/* Styled Text: */
+"345.title" = "Testo con stili:";
+
+/* Spelling: */
+"346.title" = "Ortografia:";
+
+/* Links: */
+"347.title" = "Collegamenti:";
+
+/* Suggest titles for note-links */
+"348.title" = "Suggerisci titolo delle note con soli link";
+
+/* Soft tabs (spaces) */
+"349.title" = "Tabulatore sostituito da spazi";
+
+/* Make URLs clickable links */
+"350.title" = "Trasforma le URL in collegamenti cliccabili";
+
+/* Body Font: */
+"390.title" = "Font del corpo testo:";
+
+/* Set… */
+"391.title" = "Evidenziazione ricerca:";
+
+/* Foreground Text: */
+"398.title" = "Testo in primo piano:";
+
+/* Background: */
+"402.title" = "Sfondo:";
+
+/* Search Highlight: */
+"416.title" = "Imposta…";
+
+/* External Editor: */
+"430.title" = "Taille";
+
+/* Use System Color */
+"nvU-sc-cel.title" = "Usa colore di sistema";

@@ -1,0 +1,23 @@
+/* Select a New Passphrase */
+"343.title" = "Escolha uma Nova Frase de Segurança";
+
+/* Cancel */
+"394.title" = "Cancelar";
+
+/* Choose a new passphrase to protect your notes. */
+"395.title" = "Escolha uma nova frase de segurança para proteger suas notas.";
+
+/* New Passphrase: */
+"396.title" = "Nova Frase:";
+
+/* Verify: */
+"397.title" = "Verificação:";
+
+/* Remember new passphrase in Keychain */
+"401.title" = "Armazenar nas suas Chaves";
+
+/* Current: */
+"402.title" = "Frase Atual:";
+
+/* More Security Options */
+"405.title" = "Mais Opções de Segurança";

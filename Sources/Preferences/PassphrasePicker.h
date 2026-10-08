@@ -24,15 +24,14 @@
 
 @interface PassphrasePicker : NSObject
 {
-    IBOutlet NSButton *cancelNewButton;
     IBOutlet NSPanel *newPassphraseWindow, *window;
     IBOutlet NSSecureTextField *newPasswordField;
     IBOutlet NSButton *okNewButton;
     IBOutlet NSButton *rememberNewButton;
     IBOutlet NSSecureTextField *verifyNewPasswordField;
 	IBOutlet NSButton *disclosureButton;
-	IBOutlet NSTextField *advancedHelpField;
-	IBOutlet NSView *dismissalButtonsView, *upperButtonsView, *advancedView;
+	IBOutlet NSView *advancedView;
+	IBOutlet NSLayoutConstraint *collapsedLayout;
 	
 	KeyDerivationManager *keyDerivation;
 	NotationPrefs *notationPrefs;

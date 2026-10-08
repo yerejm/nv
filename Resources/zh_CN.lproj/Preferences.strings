@@ -1,0 +1,89 @@
+/* Preferences */
+"5.title" = "偏好设置";
+
+/* Other… */
+"160.title" = "其他…";
+
+/* Small */
+"162.title" = "小";
+
+/* Large */
+"163.title" = "大";
+
+/* Indent lines */
+"272.title" = "行缩进";
+
+/* Move typing focus to next field */
+"273.title" = "移动到下一焦点";
+
+/* List Text Size: */
+"325.title" = "外部编辑器:";
+
+/* Confirm note deletion */
+"327.title" = "删除笔记时需确认";
+
+/* Quit when closing window */
+"328.title" = "关闭窗口时退出程序";
+
+/* Auto-select notes by title when searching */
+"329.title" = "搜索时自动选择相关笔记";
+
+/* Size */
+"330.placeholderString" = "大小";
+
+/* Bring-to-Front Hotkey: */
+"331.title" = "显示主界面热键:";
+
+/* Automatically selecting very long notes may affect responsiveness. */
+"335.title" = "当笔记非常多时，自动选择相关笔记可能会影响显示速度";
+
+/* Read notes from folder: */
+"336.title" = "从该文件夹中读取笔记:";
+
+/* Tab Key: */
+"340.title" = "Tab 键:";
+
+/* Option-Tab always indents and Shift-Tab always moves the focus backward. */
+"341.title" = "Option-Tab 总是执行缩进；Shift-Tab 总是反向切换焦点";
+
+/* Check as you type */
+"342.title" = "键入时检查拼写";
+
+/* Copy basic styles from other apps */
+"344.title" = "从其他程序复制时保留基本样式";
+
+/* Styled Text: */
+"345.title" = "带样式文字:";
+
+/* Spelling: */
+"346.title" = "拼写和语法:";
+
+/* Links: */
+"347.title" = "链接:";
+
+/* Suggest titles for note-links */
+"348.title" = "输入笔记链接时提供建议";
+
+/* Soft tabs (spaces) */
+"349.title" = "软缩进 (空格)";
+
+/* Make URLs clickable links */
+"350.title" = "链接可点击";
+
+/* Body Font: */
+"390.title" = "正文字体:";
+
+/* Set… */
+"391.title" = "设置…";
+
+/* Foreground Text: */
+"398.title" = "正文:";
+
+/* Background: */
+"402.title" = "背景:";
+
+/* Search Highlight: */
+"416.title" = "搜索高亮:";
+
+/* Use System Color */
+"nvU-sc-cel.title" = "使用系统颜色";

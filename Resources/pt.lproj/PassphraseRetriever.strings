@@ -1,0 +1,17 @@
+/* Provide the passphrase */
+"307.title" = "Digite a Frase de Segurança";
+
+/* Please enter the passphrase to access notes in BLAH BLAH BLAH BLAH PATH BLAH BLAH */
+"341.title" = "Digite a frase de segurança para acessar as notas em BLAH BLAH BLAH BLAH PATH BLAH BLAH";
+
+/* Cancel */
+"343.title" = "Cancelar";
+
+/* Passphrase: */
+"345.title" = "Frase:";
+
+/* Remember passphrase in Keychain */
+"347.title" = "Armazenar nas suas Chaves";
+
+/* Use Different Notes */
+"348.title" = "Usar Outras Notas";

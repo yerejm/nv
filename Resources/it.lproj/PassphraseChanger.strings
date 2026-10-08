@@ -1,0 +1,23 @@
+/* Select a New Passphrase */
+"343.title" = "Seleziona una nuova parola d'ordine";
+
+/* Cancel */
+"394.title" = "Annulla";
+
+/* Choose a new passphrase to protect your notes. */
+"395.title" = "Scegli una nuova parola d'ordine per proteggere le tue note.";
+
+/* New Passphrase: */
+"396.title" = "Nuova parola d'ordine:";
+
+/* Verify: */
+"397.title" = "Verifica:";
+
+/* Remember new passphrase in Keychain */
+"401.title" = "Memorizza la nuova parola d'ordine nel Portachiavi";
+
+/* Current: */
+"402.title" = "Attuale:";
+
+/* More Security Options */
+"405.title" = "Altre opzioni di sicurezza";

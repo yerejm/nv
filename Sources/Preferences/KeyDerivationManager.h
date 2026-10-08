@@ -35,6 +35,7 @@
 	NSData *crapData, *crapSalt;
 	
 	NotationPrefs *notationPrefs;
+	NSLayoutConstraint *collapsedLayout, *expandedLayout;
 }
 
 - (id)initWithNotationPrefs:(NotationPrefs*)prefs;
@@ -45,4 +46,7 @@
 - (int)estimatedIterationsForDuration:(double)duration;
 - (void)mouseUpForKeyDerivationDelaySlider:(KeyDerivationDelaySlider*)aSlider;
 - (void)updateToolTip;
+
+//collapsedLayout keeps the advanced settings below the window's bottom edge; disclosing them moves the buttons below them instead
+- (void)setDisclosed:(BOOL)disclosed collapsedLayout:(NSLayoutConstraint *)collapsedLayout buttons:(NSView *)buttons;
 @end

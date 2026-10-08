@@ -1,0 +1,20 @@
+/* Cancel */
+"399.title" = "Abbrechen";
+
+/* Please choose a passphrase to protect your notes. If you forget this passphrase, however, it may be impossible to recover them. */
+"400.title" = "Bitte wähle ein Passwort zum Schützen deiner Notizen. Ein vergessenes Passwort kann nicht wiederhergestellt werden.";
+
+/* Your passphrase can contain any characters and can be any length. */
+"401.title" = "Das Passwort kann sämtliche Zeichen enthalten und beliebig lang sein";
+
+/* Passphrase: */
+"402.title" = "Passwort: ";
+
+/* Verify: */
+"403.title" = "Verifizieren:";
+
+/* Remember passphrase in Keychain */
+"407.title" = "Passwort in Schlüsselbund speichern";
+
+/* More Security Options */
+"409.title" = "Weitere Sicherheitsoptionen";

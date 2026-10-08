@@ -1,0 +1,8 @@
+/* Notational Velocity should assume the file “%@” was saved with the encoding: */
+"330.title" = "Notational Velocity deve assumir que o arquivo “%@” foi salvo com a codificação:";
+
+/* Looks Correct */
+"331.title" = "Está Correto";
+
+/* Cancel */
+"332.title" = "Cancelar";

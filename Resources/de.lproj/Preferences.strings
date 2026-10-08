@@ -1,0 +1,86 @@
+/* Other… */
+"160.title" = "Andere…";
+
+/* Small */
+"162.title" = "Klein";
+
+/* Large */
+"163.title" = "Groß";
+
+/* Indent lines */
+"272.title" = "Zeilen einrücken";
+
+/* Move typing focus to next field */
+"273.title" = "Schreibfokus auf nächstes Feld";
+
+/* List Text Size: */
+"325.title" = "Externer Editor:";
+
+/* Confirm note deletion */
+"327.title" = "Löschen einer Notiz bestätigen";
+
+/* Quit when closing window */
+"328.title" = "Programm beenden wenn Fenster geschlossen wird";
+
+/* Auto-select notes by title when searching */
+"329.title" = "Beim Suchen Notizen automatisch nach ihrem Titel wählen";
+
+/* Size */
+"330.placeholderString" = "Größe";
+
+/* Bring-to-Front Hotkey: */
+"331.title" = "Tastenkürzel zum In-den-Vordergrund holen: ";
+
+/* Automatically selecting very long notes may affect responsiveness. */
+"335.title" = "Das automatische Lesen sehr langer Notizen kann unter Umständen auch ebenso lange dauern.";
+
+/* Read notes from folder: */
+"336.title" = "Notizen aus diesem Verzeichnis lesen: ";
+
+/* Tab Key: */
+"340.title" = "Tabulatortaste:";
+
+/* Option-Tab always indents and Shift-Tab always moves the focus backward. */
+"341.title" = "Optionstaste in Verbindung dazu rückt ein und Umschalttaste bringt den Schreibfokus zurück.";
+
+/* Check as you type */
+"342.title" = "Rechtschreibprüfung während der Eingabe";
+
+/* Copy basic styles from other apps */
+"344.title" = "Kopierte Formatierungen beibehalten";
+
+/* Styled Text: */
+"345.title" = "Textformatierung:";
+
+/* Spelling: */
+"346.title" = "Orthographie:";
+
+/* Suggest titles for note-links */
+"348.title" = "Titel in Notizlinks vorschlagen";
+
+/* Soft tabs (spaces) */
+"349.title" = "Soft-Tabs (Leerzeichen)";
+
+/* Make URLs clickable links */
+"350.title" = "URLs als klickbare Links formatieren";
+
+/* Body Font: */
+"390.title" = "Schriftart Notizinhalt:";
+
+/* Set… */
+"391.title" = "Ändern...";
+
+/* Foreground Text: */
+"398.title" = "Text im Vordergrund:";
+
+/* Background: */
+"402.title" = "Hintergrund:";
+
+/* Search Highlight: */
+"416.title" = "Suche hervorheben:";
+
+/* External Editor: */
+"430.title" = "Size";
+
+/* Use System Color */
+"nvU-sc-cel.title" = "Systemfarbe verwenden";

@@ -1,0 +1,17 @@
+/* Provide the passphrase */
+"307.title" = "Passwort eingeben";
+
+/* Please enter the passphrase to access notes in BLAH BLAH BLAH BLAH PATH BLAH BLAH */
+"341.title" = "Gib bitte das Passwort ein zum Anzeigen der Notizen aus BLAH BLAH BLAH BLAH CHEMIN BLAH BLAH";
+
+/* Cancel */
+"343.title" = "Abbrechen";
+
+/* Passphrase: */
+"345.title" = "Passwort:";
+
+/* Remember passphrase in Keychain */
+"347.title" = "Passwort in Schlüsselbund speichern";
+
+/* Use Different Notes */
+"348.title" = "Andere Notizen auswählen";

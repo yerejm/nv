@@ -88,6 +88,32 @@ static inline NSString *NVFormatCount(NSString *format, NSUInteger count) {
     return [NSString stringWithFormat:wideFormat, (unsigned long)count];
 }
 
+//the container takes the view's size, which comes from the view's own constraints
+static inline void NVEmbedView(NSView *view, NSView *container) {
+    [view setTranslatesAutoresizingMaskIntoConstraints:NO];
+    [container addSubview:view];
+    [NSLayoutConstraint activateConstraints:@[
+        [[view leadingAnchor] constraintEqualToAnchor:[container leadingAnchor]],
+        [[view trailingAnchor] constraintEqualToAnchor:[container trailingAnchor]],
+        [[view topAnchor] constraintEqualToAnchor:[container topAnchor]],
+        [[view bottomAnchor] constraintEqualToAnchor:[container bottomAnchor]]]];
+}
+
+//only the selected page's constraints take part in layout, so the tab view is made large enough for every page
+static inline void NVSizeTabViewToLargestPage(NSTabView *tabView) {
+    NSSize largest = NSZeroSize;
+    for (NSTabViewItem *item in [tabView tabViewItems]) {
+        NSSize fitting = [[item view] fittingSize];
+        largest = NSMakeSize(MAX(largest.width, fitting.width), MAX(largest.height, fitting.height));
+    }
+    NSRect content = [tabView contentRect];
+    NSEdgeInsets insets = [tabView alignmentRectInsets];
+    CGFloat chromeWidth = NSWidth([tabView bounds]) - insets.left - insets.right - NSWidth(content);
+    CGFloat chromeHeight = NSHeight([tabView bounds]) - insets.top - insets.bottom - NSHeight(content);
+    [[[tabView widthAnchor] constraintGreaterThanOrEqualToConstant:largest.width + chromeWidth] setActive:YES];
+    [[[tabView heightAnchor] constraintGreaterThanOrEqualToConstant:largest.height + chromeHeight] setActive:YES];
+}
+
 //the nibs' square list buttons are bitmaps drawn for a light background; a system bezel and symbol follow the appearance
 static inline void NVUseSymbolForListButton(NSButton *button, NSString *symbolName) {
     [button setButtonType:NSButtonTypeMomentaryPushIn];

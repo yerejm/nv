@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24506" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24506"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="KeyDerivationManager">
+            <connections>
+                <outlet property="hashDurationField" destination="333" id="336"/>
+                <outlet property="iterationEstimatorProgress" destination="344" id="345"/>
+                <outlet property="slider" destination="329" id="335"/>
+                <outlet property="view" destination="328" id="334"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <customView id="328" userLabel="View" propertyAccessControl="all">
+            <rect key="frame" x="0.0" y="0.0" width="413" height="75"/>
+            <autoresizingMask key="autoresizingMask"/>
+            <subviews>
+                <progressIndicator horizontalHuggingPriority="750" verticalHuggingPriority="750" minValue="16" maxValue="100" doubleValue="16" displayedWhenStopped="NO" bezeled="NO" indeterminate="YES" controlSize="small" style="spinning" translatesAutoresizingMaskIntoConstraints="NO" id="344">
+                    <rect key="frame" x="117" y="17" width="16" height="16"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="16" id="EIh-zx-ekG"/>
+                        <constraint firstAttribute="height" constant="16" id="gNb-oX-1f5"/>
+                    </constraints>
+                </progressIndicator>
+                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="333">
+                    <rect key="frame" x="181" y="12" width="179" height="26"/>
+                    <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="center" title="672 ms" id="351">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" preferredMaxLayoutWidth="56" translatesAutoresizingMaskIntoConstraints="NO" id="332" propertyAccessControl="nonLocalizable">
+                    <rect key="frame" x="354" y="0.0" width="59" height="38"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="56" id="UyH-5N-rCj"/>
+                    </constraints>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" title="Stronger Security" id="350">
+                        <font key="font" metaFont="smallSystem"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" preferredMaxLayoutWidth="65" translatesAutoresizingMaskIntoConstraints="NO" id="331" propertyAccessControl="nonLocalizable">
+                    <rect key="frame" x="138" y="6" width="48" height="32"/>
+                    <constraints>
+                        <constraint firstAttribute="width" constant="65" id="hCs-nN-4hI"/>
+                    </constraints>
+                    <textFieldCell key="cell" sendsActionOnEndEditing="YES" alignment="center" title="Faster Startup" id="349">
+                        <font key="font" metaFont="smallSystem"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="330" propertyAccessControl="nonLocalizable">
+                    <rect key="frame" x="-3" y="53" width="139" height="22"/>
+                    <textFieldCell key="cell" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Key Derivation Time:" id="348">
+                        <font key="font" metaFont="system"/>
+                        <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                    </textFieldCell>
+                </textField>
+                <slider verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="329" customClass="KeyDerivationDelaySlider">
+                    <rect key="frame" x="141" y="46" width="272" height="25"/>
+                    <constraints>
+                        <constraint firstAttribute="height" constant="17" id="FPn-mb-JnM"/>
+                        <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="268" id="WiI-Xa-K3y"/>
+                    </constraints>
+                    <sliderCell key="cell" continuous="YES" alignment="left" minValue="0.01" maxValue="1" doubleValue="0.29999999999999999" tickMarkPosition="below" numberOfTickMarks="10" sliderType="linear" id="347">
+                        <font key="font" size="12" name="Helvetica"/>
+                    </sliderCell>
+                    <connections>
+                        <action selector="sliderChanged:" target="-2" id="337"/>
+                    </connections>
+                </slider>
+            </subviews>
+            <constraints>
+                <constraint firstItem="329" firstAttribute="top" secondItem="328" secondAttribute="top" constant="6" id="484-Cg-Vy6"/>
+                <constraint firstItem="331" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="328" secondAttribute="leading" id="Asm-4C-SJy"/>
+                <constraint firstItem="333" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="331" secondAttribute="trailing" constant="4" id="GGT-zj-Vro"/>
+                <constraint firstItem="330" firstAttribute="top" secondItem="329" secondAttribute="top" constant="-6" id="Gr4-ti-njz"/>
+                <constraint firstItem="329" firstAttribute="leading" secondItem="330" secondAttribute="trailing" constant="9" id="IhG-tr-BdM"/>
+                <constraint firstItem="329" firstAttribute="leading" secondItem="328" secondAttribute="leading" priority="600" constant="143" id="Iw2-Er-99Q"/>
+                <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="331" secondAttribute="bottom" id="O8K-X3-Kpe"/>
+                <constraint firstAttribute="bottom" secondItem="329" secondAttribute="bottom" priority="600" constant="52" id="QeW-Us-vcc"/>
+                <constraint firstItem="332" firstAttribute="top" secondItem="329" secondAttribute="bottom" constant="14" id="Rt7-il-mUd"/>
+                <constraint firstItem="331" firstAttribute="top" secondItem="329" secondAttribute="bottom" constant="14" id="UwC-Mk-bLR"/>
+                <constraint firstItem="331" firstAttribute="centerX" secondItem="329" secondAttribute="leading" constant="19" id="VHU-W0-XJa"/>
+                <constraint firstItem="330" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="328" secondAttribute="leading" id="Xzn-Pn-XMY"/>
+                <constraint firstItem="332" firstAttribute="trailing" secondItem="329" secondAttribute="trailing" id="Y4K-MA-OfX"/>
+                <constraint firstItem="333" firstAttribute="centerX" secondItem="329" secondAttribute="centerX" constant="-6.5" id="ZPZ-rU-m27"/>
+                <constraint firstItem="333" firstAttribute="top" secondItem="329" secondAttribute="bottom" constant="14" id="cG9-Ru-2wT"/>
+                <constraint firstItem="344" firstAttribute="top" secondItem="329" secondAttribute="bottom" constant="19" id="fVq-cl-zB9"/>
+                <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="332" secondAttribute="trailing" id="hAn-wV-8Vu"/>
+                <constraint firstAttribute="trailing" secondItem="329" secondAttribute="trailing" priority="600" constant="2" id="mIv-QC-tRr"/>
+                <constraint firstItem="344" firstAttribute="leading" secondItem="329" secondAttribute="leading" constant="-26" id="p5U-r7-dtd"/>
+                <constraint firstItem="332" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="333" secondAttribute="trailing" constant="4" id="rF0-qz-rtT"/>
+                <constraint firstAttribute="bottom" relation="greaterThanOrEqual" secondItem="332" secondAttribute="bottom" id="vKz-Qf-0HW"/>
+            </constraints>
+        </customView>
+    </objects>
+</document>

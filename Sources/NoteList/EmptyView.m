@@ -31,7 +31,19 @@
 - (void)awakeFromNib {
 	//the nib archives Helvetica for this label
 	[labelText setFont:[NSFont systemFontOfSize:[[labelText font] pointSize]]];
+	[self _centerLabel];
 	outletObjectAwoke(self);
+}
+
+//the label stays centred and wraps when the editor is too narrow for it, whatever its language
+- (void)_centerLabel {
+	NSRect bounds = NSInsetRect([self bounds], 10, 0);
+	NSSize size = [[labelText cell] cellSizeForBounds:NSMakeRect(0, 0, MAX(NSWidth(bounds), 0), CGFLOAT_MAX)];
+	[labelText setFrame:NSIntegralRect(NSMakeRect(NSMidX(bounds) - size.width / 2, NSMidY(bounds) - size.height / 2, size.width, size.height))];
+}
+
+- (void)resizeSubviewsWithOldSize:(NSSize)oldSize {
+	[self _centerLabel];
 }
 
 - (void)mouseDown:(NSEvent*)anEvent {
@@ -49,6 +61,7 @@
 		}
 		
 		[labelText setStringValue:statusString];
+		[self _centerLabel];
 		
 		lastNotesNumber = notesNumber;
 	}

@@ -133,6 +133,7 @@
 			NSBeep();
 			return;
 		}
+		[accessoryView setFrameSize:[accessoryView fittingSize]];
 	}
 	
 	if ([notes count] == 1) {

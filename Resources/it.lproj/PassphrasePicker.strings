@@ -1,0 +1,23 @@
+/* Choose a Passphrase */
+"343.title" = "Scegli una parola d'ordine";
+
+/* Cancel */
+"399.title" = "Annulla";
+
+/* Please choose a passphrase to protect your notes. If you forget this passphrase, however, it may be impossible to recover them. */
+"400.title" = "Per favore, scegli una parola d'ordine per proteggere le tue note. Attenzione però a non dimenticarla, perché potrebbe diventare impossibile recuperare le note.";
+
+/* Your passphrase can contain any characters and can be any length. */
+"401.title" = "La parola d'ordine può contenere qualsiasi carattere.";
+
+/* Passphrase: */
+"402.title" = "Parola d'ordine:";
+
+/* Verify: */
+"403.title" = "Verifica:";
+
+/* Remember passphrase in Keychain */
+"407.title" = "Memorizza la parola d'ordine nel Portachiavi";
+
+/* More Security Options */
+"409.title" = "Altre opzioni di sicurezza";

@@ -1,0 +1,20 @@
+/* Provide the passphrase */
+"307.title" = "提供口令";
+
+/* Please enter the passphrase to access notes in BLAH BLAH BLAH BLAH PATH BLAH BLAH */
+"341.title" = "请输入用于访问笔记 OOXX 的口令";
+
+/* OK */
+"342.title" = "确认";
+
+/* Cancel */
+"343.title" = "取消";
+
+/* Passphrase: */
+"345.title" = "口令:";
+
+/* Remember passphrase in Keychain */
+"347.title" = "在钥匙串中记住该口令";
+
+/* Use Different Notes */
+"348.title" = "使用其他笔记";

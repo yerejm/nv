@@ -1,0 +1,26 @@
+/* Choose a Passphrase */
+"343.title" = "选择一个口令";
+
+/* OK */
+"398.title" = "确认";
+
+/* Cancel */
+"399.title" = "取消";
+
+/* Please choose a passphrase to protect your notes. If you forget this passphrase, however, it may be impossible to recover them. */
+"400.title" = "请选择一个用于保护笔记的口令，如果您忘记了这个口令，将无法再次恢复，所以请牢记该口令。";
+
+/* Your passphrase can contain any characters and can be any length. */
+"401.title" = "您的口令可以包含任意字符，长度不限。";
+
+/* Passphrase: */
+"402.title" = "口令:";
+
+/* Verify: */
+"403.title" = "重新输入:";
+
+/* Remember passphrase in Keychain */
+"407.title" = "在钥匙串中记住该口令";
+
+/* More Security Options */
+"409.title" = "更多安全选项";

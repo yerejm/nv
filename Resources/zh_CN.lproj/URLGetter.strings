@@ -1,0 +1,11 @@
+/* Download Progress */
+"328.title" = "下载进度";
+
+/* http://www.apple.com/Bacon.pdf\nanother line */
+"342.title" = "http://www.apple.com/Bacon.pdf\n另一行";
+
+/* Downloading: 90KB of 25MB */
+"343.title" = "正在下载: 90KB of 25MB";
+
+/* Stop */
+"344.title" = "取消";

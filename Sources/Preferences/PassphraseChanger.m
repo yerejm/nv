@@ -84,24 +84,7 @@
 }
 
 - (IBAction)discloseAdvancedSettings:(id)sender {
-	BOOL disclosed = [disclosureButton state];
-	int heightDifference = disclosed ? 118 : -118;
-	
-	if (disclosed) {
-		[self performSelector:@selector(setAdvancedViewHidden:) 
-				   withObject:[NSNumber numberWithBool:NO] afterDelay:0.0];
-	} else {
-		[advancedView setHidden:YES];
-	}
-	
-	NSPoint origin = [changePassphraseWindow frame].origin;
-	NSRect newFrame = NSMakeRect(origin.x, origin.y - heightDifference, [changePassphraseWindow frame].size.width, 
-								 [changePassphraseWindow frame].size.height + heightDifference);
-	[changePassphraseWindow setFrame:newFrame display:YES animate:YES];
-}
-
-- (void)setAdvancedViewHidden:(NSNumber*)value {
-	[advancedView setHidden:[value boolValue]];
+	[keyDerivation setDisclosed:[disclosureButton state] == NSControlStateValueOn collapsedLayout:collapsedLayout buttons:okChangeButton];
 }
 
 - (void)showAroundWindow:(NSWindow*)window {
@@ -115,7 +98,7 @@
 	
 	if (!keyDerivation) {
 		keyDerivation = [[KeyDerivationManager alloc] initWithNotationPrefs:notationPrefs];
-		[advancedView addSubview:[keyDerivation view]];
+		NVEmbedView([keyDerivation view], advancedView);
 	}	
 		
 	[newPasswordField setStringValue:@""];

@@ -1,0 +1,20 @@
+/* Cancel */
+"394.title" = "Abbrechen";
+
+/* Choose a new passphrase to protect your notes. */
+"395.title" = "Wähle ein neues Passwort zum Schützen deiner Notizen";
+
+/* New Passphrase: */
+"396.title" = "Neues Passwort:";
+
+/* Verify: */
+"397.title" = "Verifizieren:";
+
+/* Remember new passphrase in Keychain */
+"401.title" = "Neues Passwort in Schlüsselbund speichern";
+
+/* Current: */
+"402.title" = "Aktuelles Passwort:";
+
+/* More Security Options */
+"405.title" = "Weitere Sicherheitsoptionen";

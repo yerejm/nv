@@ -60,7 +60,7 @@
     NSSlider *textWidthSlider;
     NSTextField *textWidthLabel;
     NSPopUpButton *colorSchemeButton;
-    NSButton *systemHighlightColorButton;
+    IBOutlet NSButton *systemHighlightColorButton;
     NSView *writingView;
     NSView *desktopView;
     NSView *paneContainer;
@@ -83,6 +83,7 @@
 - (IBAction)changedForegroundTextColorWell:(id)sender;
 - (IBAction)changedHighlightSearchTerms:(id)sender;	
 - (IBAction)changedSearchHighlightColorWell:(id)sender;
+- (IBAction)useSystemSearchHighlightColor:(id)sender;
 - (IBAction)changedMakeURLsClickable:(id)sender;
 - (IBAction)changedStyledTextBehavior:(id)sender;
 - (IBAction)changedAutoSuggestLinks:(id)sender;

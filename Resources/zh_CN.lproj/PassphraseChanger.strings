@@ -1,0 +1,26 @@
+/* Select a New Passphrase */
+"343.title" = "选择新口令";
+
+/* OK */
+"393.title" = "确认";
+
+/* Cancel */
+"394.title" = "取消";
+
+/* Choose a new passphrase to protect your notes. */
+"395.title" = "请选择用于保护笔记的新口令。";
+
+/* New Passphrase: */
+"396.title" = "新口令:";
+
+/* Verify: */
+"397.title" = "重新输入:";
+
+/* Remember new passphrase in Keychain */
+"401.title" = "在钥匙串中记住该口令";
+
+/* Current: */
+"402.title" = "当前口令:";
+
+/* More Security Options */
+"405.title" = "更多安全选项";

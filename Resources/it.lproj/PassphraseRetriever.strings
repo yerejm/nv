@@ -1,0 +1,14 @@
+/* Provide the passphrase */
+"307.title" = "Inserisci la parola d'ordine";
+
+/* Cancel */
+"343.title" = "Annulla";
+
+/* Passphrase: */
+"345.title" = "Parola d'ordine:";
+
+/* Remember passphrase in Keychain */
+"347.title" = "Memorizza la parola d'ordine nel Portachiavi";
+
+/* Use Different Notes */
+"348.title" = "Usa note diverse";

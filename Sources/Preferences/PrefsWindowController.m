@@ -200,31 +200,10 @@
 	[prefsController setSearchTermHighlightColor:[searchHighlightColorWell color] sender:self];
 	[systemHighlightColorButton setEnabled:YES];
 }
-- (void)useSystemSearchHighlightColor:(id)sender {
+- (IBAction)useSystemSearchHighlightColor:(id)sender {
 	[prefsController useSystemSearchTermHighlightColorFromSender:self];
 	[searchHighlightColorWell setColor:[prefsController searchTermHighlightColorRaw:YES]];
 	[systemHighlightColorButton setEnabled:NO];
-}
-//the pane comes from a nib shared by every localization, so the button is added beside the color well here
-- (void)addSystemHighlightColorButton {
-	systemHighlightColorButton = [NSButton buttonWithTitle:NSLocalizedString(@"Use System Color", @"button that returns the search highlight to the system find color")
-													target:self action:@selector(useSystemSearchHighlightColor:)];
-	[systemHighlightColorButton setControlSize:NSControlSizeSmall];
-	[systemHighlightColorButton setFont:[NSFont systemFontOfSize:[NSFont systemFontSizeForControlSize:NSControlSizeSmall]]];
-	[systemHighlightColorButton sizeToFit];
-	NSRect wellFrame = [searchHighlightColorWell frame];
-	NSRect buttonFrame = [systemHighlightColorButton frame];
-	buttonFrame.origin = NSMakePoint(NSMaxX(wellFrame) + 8, round(NSMidY(wellFrame) - NSHeight(buttonFrame) / 2));
-	[systemHighlightColorButton setFrame:buttonFrame];
-	[systemHighlightColorButton setEnabled:[prefsController searchTermHighlightColorIsCustom]];
-	[[searchHighlightColorWell superview] addSubview:systemHighlightColorButton];
-	
-	//widening only makes room for the button; the font field would otherwise stretch under its Set button
-	NSRect paneFrame = [fontsColorsView frame];
-	paneFrame.size.width = MAX(NSWidth(paneFrame), NSMaxX(buttonFrame) + 20);
-	[fontsColorsView setAutoresizesSubviews:NO];
-	[fontsColorsView setFrame:paneFrame];
-	[fontsColorsView setAutoresizesSubviews:YES];
 }
 - (IBAction)changedHighlightSearchTerms:(id)sender {
 	[prefsController setShouldHighlightSearchTerms:[highlightSearchTermsButton state] sender:self];
@@ -437,8 +416,8 @@
 }
 
 - (NSView*)databaseView {
-    if (![notationPrefsView subviews] || ![[notationPrefsView subviews] count])
-		[notationPrefsView addSubview:[[self notationPrefsViewController] view]];
+    NSView *notesView = [[self notationPrefsViewController] view];
+    if (notesView && ![notesView superview]) NVEmbedView(notesView, notationPrefsView);
 	
     return databaseView;
 }
@@ -571,7 +550,7 @@
     [self previewNoteBodyFont];
 	[appShortcutRecorder setKeyCode:[prefsController appActivationKeyCode] carbonModifiers:[prefsController appActivationModifiers]];
 	[searchHighlightColorWell setColor:[prefsController searchTermHighlightColorRaw:YES]];
-	[self addSystemHighlightColorButton];
+	[systemHighlightColorButton setEnabled:[prefsController searchTermHighlightColorIsCustom]];
 	[highlightSearchTermsButton setState:[prefsController highlightSearchTerms]];
 	[foregroundColorWell setColor:[prefsController foregroundTextColor]];
 	[backgroundColorWell setColor:[prefsController backgroundTextColor]];
@@ -603,6 +582,7 @@
         toolbarWidth += MAX(64, ceil([item.label sizeWithAttributes:labelAttributes].width) + 24);
     NSSize contentSize = NSMakeSize(MAX(640, toolbarWidth), 0);
     for (NSView *pane in @[generalView, [self databaseView], editingView, fontsColorsView, displayView, writingView, desktopView]) {
+        if ([[pane constraints] count]) [pane setFrameSize:[pane fittingSize]];
         contentSize.width = MAX(contentSize.width, NSWidth(pane.frame));
         contentSize.height = MAX(contentSize.height, NSHeight(pane.frame));
     }

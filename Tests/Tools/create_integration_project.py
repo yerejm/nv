@@ -29,6 +29,7 @@ sources.extend(ROOT / 'Tests' / filename for filename in [
     'Resources/NativeResourceTests.m', 'Application/NativeLinkRoutingTests.m',
     'Application/NativeActivationTests.m', 'Integrations/AcceptanceEditorTests.m',
     'Preferences/ShortcutRecorderTests.m', 'Notes/Model/PreviewTruncationTests.m',
+    'Resources/LocalizedLayoutTests.m', 'Support/CompiledNib.m',
     'Support/AcceptanceEditorSession.m'])
 objects = {}
 
@@ -40,7 +41,7 @@ def add(value):
 
 
 group, children, refs = file_groups(add, [str(source.relative_to(ROOT)) for source in sources]
-                                  + ['Tests/Support/TestPaths.h', 'Tests/Support/AcceptanceEditorSession.h'])
+                                  + ['Tests/Support/TestPaths.h', 'Tests/Support/AcceptanceEditorSession.h', 'Tests/Support/CompiledNib.h'])
 refs = refs[:len(sources)]
 product = add(dict(isa='PBXFileReference', path='NativeIntegrationTests.xctest',
                    sourceTree='BUILT_PRODUCTS_DIR', explicitFileType='wrapper.cfbundle'))

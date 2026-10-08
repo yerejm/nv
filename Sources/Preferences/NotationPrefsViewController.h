@@ -51,12 +51,10 @@
 	IBOutlet NSButton *removeFromKeychainButton;
     IBOutlet NSPopUpButton *storageFormatPopupButton;
     IBOutlet NSMatrix *passwordSettingsMatrix;
-    IBOutlet NSWindow *webOptionsWindow;
     
     IBOutlet NSView *view;
 
 	BOOL didAwakeFromNib;
-    BOOL didConfigureTabs;
     
 	NSInvocation *postStorageFormatInvocation;
 	int notesStorageFormatInProgress;

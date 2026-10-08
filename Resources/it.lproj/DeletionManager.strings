@@ -1,0 +1,14 @@
+/* Notes Deleted Externally */
+"328.title" = "Note cancellate esternamente";
+
+/* The following files no longer exist in the notes folder—restore them to disk or delete them from Notational Velocity, too? */
+"343.title" = "I seguenti documenti non esistono più nella cartella delle note — vuoi che siano rimesse nel disco o che siano cancellate anche da Notational Velocity?";
+
+/* Restore to Disk */
+"344.title" = "Rimettile nel disco";
+
+/* Delete */
+"345.title" = "Cancellale";
+
+/* Do not show this message again */
+"350.title" = "Non mostrare più questo messaggio";

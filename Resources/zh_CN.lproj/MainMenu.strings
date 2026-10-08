@@ -1,0 +1,260 @@
+/* Bring All to Front */
+"5.title" = "前置全部窗口";
+
+/* Window */
+"19.title" = "窗口";
+
+/* Notation */
+"21.title" = "笔记列表";
+
+/* Minimize */
+"23.title" = "最小化";
+
+/* Window */
+"24.title" = "窗口";
+
+/* About Notational Velocity */
+"58.title" = "关于 Notational Velocity";
+
+/* Page Setup… */
+"77.title" = "页面设置…";
+
+/* Print… */
+"78.title" = "打印…";
+
+/* Note */
+"81.title" = "笔记";
+
+/* Note */
+"83.title" = "笔记";
+
+/* Help */
+"103.title" = "帮助";
+
+/* Help */
+"106.title" = "帮助";
+
+/* Keyboard Shortcuts */
+"111.title" = "键盘快捷键";
+
+/* Settings… */
+"129.title" = "设置…";
+
+/* Services */
+"130.title" = "服务";
+
+/* Services */
+"131.title" = "服务";
+
+/* Hide Notational Velocity */
+"134.title" = "隐藏 Notational Velocity";
+
+/* Quit Notational Velocity */
+"136.title" = "退出 Notational Velocity";
+
+/* Hide Others */
+"145.title" = "隐藏其他";
+
+/* Show All */
+"150.title" = "显示全部";
+
+/* Find… */
+"154.title" = "查找…";
+
+/* Copy */
+"157.title" = "拷贝";
+
+/* Undo */
+"158.title" = "撤销";
+
+/* Find */
+"159.title" = "查找";
+
+/* Cut */
+"160.title" = "剪切";
+
+/* Use Selection for Find */
+"161.title" = "查找所选内容";
+
+/* Find Previous */
+"162.title" = "查找上一个";
+
+/* Edit */
+"163.title" = "编辑";
+
+/* Find Next */
+"167.title" = "查找下一个";
+
+/* Find */
+"168.title" = "查找";
+
+/* Edit */
+"169.title" = "编辑";
+
+/* Paste */
+"171.title" = "粘贴";
+
+/* Select All */
+"172.title" = "全选";
+
+/* Redo */
+"173.title" = "重做";
+
+/* Spelling and Grammar */
+"184.title" = "拼写和语法";
+
+/* Spelling and Grammar */
+"185.title" = "拼写和语法";
+
+/* Show Spelling and Grammar */
+"187.title" = "显示拼写和语法…";
+
+/* Check Document Now */
+"189.title" = "立即检查文稿";
+
+/* Check Spelling While Typing */
+"191.title" = "键入时检查拼写";
+
+/* Zoom */
+"197.title" = "缩放";
+
+/* View */
+"382.title" = "查看";
+
+/* View */
+"383.title" = "查看";
+
+/* Columns */
+"386.title" = "分栏";
+
+/* Columns */
+"387.title" = "分栏";
+
+/* Item */
+"388.title" = "项目";
+
+/* Sort By */
+"389.title" = "排列";
+
+/* Sort By */
+"390.title" = "排列";
+
+/* Item */
+"391.title" = "项目";
+
+/* Rename */
+"392.title" = "重命名";
+
+/* Delete */
+"393.title" = "删除";
+
+/* Import… */
+"395.title" = "导入…";
+
+/* Export… */
+"396.title" = "导出…";
+
+/* Format */
+"397.title" = "格式";
+
+/* Format */
+"398.title" = "格式";
+
+/* Close */
+"489.title" = "关闭";
+
+/* Deselect Note(s) */
+"507.title" = "取消选择";
+
+/* Next Note */
+"521.title" = "下一个笔记";
+
+/* Previous Note */
+"522.title" = "上一个笔记";
+
+/* Fix Text Encoding… */
+"534.title" = "修正文本编码…";
+
+/* Search or Create… */
+"554.title" = "搜索或创建…";
+
+/* Shift Left */
+"563.title" = "向左缩进";
+
+/* Shift Right */
+"564.title" = "向右缩进";
+
+/* Bold */
+"574.title" = "粗体";
+
+/* Italic */
+"575.title" = "斜体";
+
+/* Strikethrough */
+"576.title" = "加删除线";
+
+/* Clear */
+"771.title" = "清除";
+
+/* Plain Text Style */
+"977.title" = "纯文本样式";
+
+/* Tag */
+"994.title" = "标签";
+
+/* Bookmarks */
+"996.title" = "书签";
+
+/* Bookmarks */
+"997.title" = "书签";
+
+/* Item */
+"998.title" = "项目";
+
+/* Paste as New Note */
+"1000.title" = "粘贴为新笔记";
+
+/* Notational Velocity Web Site */
+"1053.title" = "Notational Velocity 网站";
+
+/* Acknowledgments */
+"1055.title" = "致谢";
+
+/* Show Note-Previews in List */
+"1062.title" = "列表中显示笔记预览";
+
+/* Development Web Site */
+"1087.title" = "开发网站";
+
+/* Transformations */
+"1093.title" = "转换";
+
+/* Transformations */
+"1094.title" = "转换";
+
+/* Make Upper Case */
+"1095.title" = "变为大写";
+
+/* Make Lower Case */
+"1096.title" = "变为小写";
+
+/* Capitalize */
+"1097.title" = "首字母大写";
+
+/* No Note Selected */
+"1102.title" = "未选择笔记";
+
+/* Switch to Horizontal Layout */
+"1115.title" = "切换为横向排版";
+
+/* Copy URL */
+"1118.title" = "拷贝 URL";
+
+/* Show in Finder */
+"1120.title" = "在 Finder 中显示";
+
+/* Edit With */
+"1123.title" = "编辑";
+
+/* Edit With */
+"1124.title" = "编辑";

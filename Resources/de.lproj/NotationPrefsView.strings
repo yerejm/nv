@@ -1,0 +1,68 @@
+/* Storage */
+"7.label" = "Speicher";
+
+/* Extension */
+"11.headerCell.title" = "Endung";
+
+/* File Type */
+"14.headerCell.title" = "Typ";
+
+/* Security */
+"22.label" = "Sicherheit";
+
+/* Ask every time */
+"25.title" = "Immer nachfragen";
+
+/* Remember in Keychain */
+"26.title" = "Im Schlüsselbund speichern";
+
+/* Single Database (Allow Encryption) */
+"100.title" = "Einzelne Datenbank (Erlaubt Verschlüsselung)";
+
+/* Formatted HTML Documents * */
+"101.title" = "Formatierte HTML Dokumente *";
+
+/* Plain Text Files * */
+"102.title" = "Einfache Textdateien TXT *";
+
+/* Rich Text Format Files * */
+"103.title" = "Formatierte Textdateien RTF *";
+
+/* * Using separate files allows Spotlight integration, but wastes disk space. */
+"216.title" = "* Das Nutzen separater Dateien erlaubt die Integration von Spotlight, benötigt jedoch auch mehr Speicherplatz.";
+
+/* Recognize individual files with attributes: */
+"218.title" = "Dateien anhand ihrer Endungen erkennen:";
+
+/* Store and read notes on disk as: */
+"222.title" = "Speichern und Lesen der Notizen in folgender Form:";
+
+/* Confirm note files removed in the Finder */
+"223.title" = "Im Finder gelöschte Notizdateien bestätigen";
+
+/* Change… */
+"225.title" = "Ändern…";
+
+/* Passphrase: */
+"226.title" = "Passwort:";
+
+/* Encryption: */
+"227.title" = "Verschlüsselung:";
+
+/* Turn On Note Encryption… */
+"228.title" = "Verschlüsselung deaktivieren...";
+
+/* Bits in key: */
+"229.title" = "Bits im Schlüssel :";
+
+/* Keyboard: */
+"232.title" = "Tastatur:";
+
+/* Secure Text Entry */
+"233.title" = "Sichere Texteingabe";
+
+/* Can impede keystroke logging utilities. */
+"234.title" = "Kann die Tätigkeit von evtl. vorhandenen Keylogger-Programme verhindern.";
+
+/* Clear in Keychain */
+"235.title" = "In Schlüsselbund löschen";

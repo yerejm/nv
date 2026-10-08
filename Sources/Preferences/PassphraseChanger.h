@@ -24,7 +24,6 @@
 
 @interface PassphraseChanger : NSObject
 {
-    IBOutlet NSButton *cancelChangedButton;
     IBOutlet NSPanel *changePassphraseWindow;
     IBOutlet NSSecureTextField *currentPasswordField;
     IBOutlet NSSecureTextField *newPasswordField;
@@ -32,8 +31,8 @@
     IBOutlet NSButton *rememberChangeButton;
     IBOutlet NSSecureTextField *verifyChangedPasswordField;
 	IBOutlet NSButton *disclosureButton;
-	IBOutlet NSTextField *advancedHelpField;
-	IBOutlet NSView *dismissalButtonsView, *upperButtonsView, *advancedView;
+	IBOutlet NSView *advancedView;
+	IBOutlet NSLayoutConstraint *collapsedLayout;
 	
 	KeyDerivationManager *keyDerivation;	
 	NotationPrefs *notationPrefs;

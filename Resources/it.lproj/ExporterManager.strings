@@ -1,0 +1,17 @@
+/* Rich Text Format */
+"344.title" = "RTF (Rich Text Format)";
+
+/* Plain Text */
+"345.title" = "Solo testo (Plain Text)";
+
+/* HTML Document */
+"346.title" = "Documento HTML";
+
+/* Microsoft Word Document */
+"348.title" = "Documento Microsoft Word";
+
+/* Microsoft Word XML Document */
+"349.title" = "Documento Microsoft Word XML";
+
+/* File Format: */
+"356.title" = "Formato documento:";

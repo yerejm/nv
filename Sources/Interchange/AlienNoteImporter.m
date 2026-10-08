@@ -180,6 +180,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 			NSBeep();
 			return nil;
 		}
+		[importAccessoryView setFrameSize:[importAccessoryView fittingSize]];
 	}
 	return importAccessoryView;
 }

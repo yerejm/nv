@@ -1,6 +1,7 @@
 import json
 import pathlib
 import plistlib
+import re
 import subprocess
 import unittest
 
@@ -8,6 +9,21 @@ ROOT = pathlib.Path(__file__).resolve().parents[2]
 
 
 class BuildPolicyTests(unittest.TestCase):
+    def test_layouts_are_base_localized(self):
+        resources = ROOT / 'Resources'
+        self.assertFalse(sorted(resources.glob('*.lproj/*.nib')))
+        self.assertFalse([path for path in resources.glob('*.lproj/*.xib') if path.parent.name != 'Base.lproj'])
+
+    def test_localized_strings_name_objects_in_their_base_layouts(self):
+        for xib in sorted((ROOT / 'Resources/Base.lproj').glob('*.xib')):
+            ids = set(re.findall(r'\bid="([^"]+)"', xib.read_text()))
+            for language in ('de', 'fr', 'it', 'pt', 'zh_CN'):
+                strings = ROOT / 'Resources' / f'{language}.lproj' / f'{xib.stem}.strings'
+                with self.subTest(xib=xib.name, language=language):
+                    keys = re.findall(r'^"([^".]+)\.[A-Za-z.]+" = ', strings.read_text(), re.M)
+                    self.assertTrue(keys)
+                    self.assertEqual(set(keys) - ids, set())
+
     def test_all_application_configurations_are_arm64_macos_15(self):
         project = json.loads(subprocess.check_output([
             '/usr/bin/plutil', '-convert', 'json', '-o', '-',

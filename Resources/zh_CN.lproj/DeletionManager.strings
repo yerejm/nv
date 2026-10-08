@@ -1,0 +1,14 @@
+/* Notes Deleted Externally */
+"328.title" = "笔记文件丢失";
+
+/* The following files no longer exist in the notes folder—restore them to disk or delete them from Notational Velocity, too? */
+"343.title" = "下列文件已经从笔记文件夹中丢失，请选择从磁盘恢复，或从 Notational Velocity 中删除。";
+
+/* Restore to Disk */
+"344.title" = "恢复到磁盘";
+
+/* Delete */
+"345.title" = "删除";
+
+/* Do not show this message again */
+"350.title" = "不再显示此信息";

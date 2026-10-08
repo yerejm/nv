@@ -1,0 +1,283 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="24506" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES">
+    <dependencies>
+        <deployment identifier="macosx"/>
+        <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="24506"/>
+        <capability name="documents saved in the Xcode 8 format" minToolsVersion="8.0"/>
+    </dependencies>
+    <objects>
+        <customObject id="-2" userLabel="File's Owner" customClass="PassphraseChangerController">
+            <connections>
+                <outlet property="advancedView" destination="383" id="390"/>
+                <outlet property="changePassphraseWindow" destination="343" id="369"/>
+                <outlet property="collapsedLayout" destination="qgL-Oz-OXn" id="lwT-D0-keW"/>
+                <outlet property="currentPasswordField" destination="374" id="375"/>
+                <outlet property="disclosureButton" destination="381" id="386"/>
+                <outlet property="newPasswordField" destination="357" id="368"/>
+                <outlet property="okChangeButton" destination="354" id="366"/>
+                <outlet property="rememberChangeButton" destination="360" id="364"/>
+                <outlet property="verifyChangedPasswordField" destination="358" id="367"/>
+            </connections>
+        </customObject>
+        <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
+        <customObject id="-3" userLabel="Application" customClass="NSObject"/>
+        <customObject id="342" userLabel="SFPasswordAssistantInspectorController" customClass="SFPasswordAssistantInspectorController">
+            <connections>
+                <outlet property="_baseWindow" destination="343" id="372"/>
+                <outlet property="_newPassword" destination="357" id="370"/>
+                <outlet property="_originalPassword" destination="374" id="376"/>
+                <outlet property="_verifyPassword" destination="358" id="371"/>
+            </connections>
+        </customObject>
+        <window title="Select a New Passphrase" allowsToolTipsWhenApplicationIsInactive="NO" autorecalculatesKeyViewLoop="NO" releasedWhenClosed="NO" visibleAtLaunch="NO" animationBehavior="default" id="343" userLabel="Select a passphrase" customClass="NSPanel" propertyAccessControl="all">
+            <windowStyleMask key="styleMask" titled="YES" closable="YES"/>
+            <windowPositionMask key="initialPositionMask" leftStrut="YES" rightStrut="YES" topStrut="YES" bottomStrut="YES"/>
+            <rect key="contentRect" x="449" y="381" width="506" height="215"/>
+            <rect key="screenRect" x="0.0" y="0.0" width="1920" height="1178"/>
+            <value key="minSize" type="size" width="213" height="107"/>
+            <view key="contentView" id="344">
+                <rect key="frame" x="0.0" y="0.0" width="506" height="215"/>
+                <autoresizingMask key="autoresizingMask"/>
+                <subviews>
+                    <customView hidden="YES" translatesAutoresizingMaskIntoConstraints="NO" id="383">
+                        <rect key="frame" x="46" y="-65" width="413" height="74"/>
+                        <constraints>
+                            <constraint firstAttribute="width" priority="250" constant="413" id="BtD-mA-lAU"/>
+                            <constraint firstAttribute="height" priority="250" constant="74" id="kLM-Fg-3Zp"/>
+                        </constraints>
+                    </customView>
+                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="382" propertyAccessControl="nonLocalizable">
+                        <rect key="frame" x="43" y="17" width="133" height="17"/>
+                        <textFieldCell key="cell" lineBreakMode="clipping" sendsActionOnEndEditing="YES" title="More Security Options" id="405">
+                            <font key="font" metaFont="smallSystem"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <button imageHugsTitle="YES" horizontalHuggingPriority="750" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="381">
+                        <rect key="frame" x="25" y="20" width="13" height="13"/>
+                        <buttonCell key="cell" type="disclosureTriangle" bezelStyle="disclosure" imagePosition="above" alignment="left" borderStyle="border" inset="2" id="404">
+                            <behavior key="behavior" pushIn="YES" changeBackground="YES" changeGray="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="13" id="JBS-iA-eBM"/>
+                            <constraint firstAttribute="width" constant="13" id="pjJ-C6-upk"/>
+                        </constraints>
+                        <connections>
+                            <action selector="discloseAdvancedSettings:" target="-2" id="391"/>
+                        </connections>
+                    </button>
+                    <textField horizontalHuggingPriority="200" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="374" customClass="NSSecureTextField">
+                        <rect key="frame" x="133" y="142" width="353" height="22"/>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="150" id="FPU-AT-baX"/>
+                            <constraint firstAttribute="height" constant="22" id="gfD-bW-zpR"/>
+                        </constraints>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="403">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                        <connections>
+                            <outlet property="nextKeyView" destination="357" id="378"/>
+                        </connections>
+                    </textField>
+                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="373" propertyAccessControl="nonLocalizable">
+                        <rect key="frame" x="50" y="139" width="78" height="22"/>
+                        <constraints>
+                            <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="22" id="PNb-fh-uL9"/>
+                        </constraints>
+                        <textFieldCell key="cell" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Current:" id="402">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <button imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="360" propertyAccessControl="nonLocalizable">
+                        <rect key="frame" x="131" y="58" width="294" height="18"/>
+                        <buttonCell key="cell" type="check" title="Remember new passphrase in Keychain" bezelStyle="regularSquare" imagePosition="leading" alignment="left" inset="2" id="401">
+                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                            <font key="font" metaFont="system"/>
+                        </buttonCell>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="292" id="HQM-xA-6Mu"/>
+                        </constraints>
+                    </button>
+                    <textField horizontalHuggingPriority="200" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="358" customClass="NSSecureTextField">
+                        <rect key="frame" x="133" y="82" width="353" height="22"/>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="150" id="cr7-1r-FHE"/>
+                            <constraint firstAttribute="height" constant="22" id="vti-lx-riA"/>
+                        </constraints>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="400">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                        <connections>
+                            <outlet property="nextKeyView" destination="374" id="380"/>
+                        </connections>
+                    </textField>
+                    <textField horizontalHuggingPriority="200" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="357" customClass="NSSecureTextField">
+                        <rect key="frame" x="133" y="112" width="326" height="22"/>
+                        <constraints>
+                            <constraint firstAttribute="height" constant="22" id="Qib-Ub-NIy"/>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="150" id="jRl-yP-bHT"/>
+                        </constraints>
+                        <textFieldCell key="cell" scrollable="YES" lineBreakMode="clipping" selectable="YES" editable="YES" sendsActionOnEndEditing="YES" state="on" borderStyle="bezel" drawsBackground="YES" id="399">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="textBackgroundColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                        <connections>
+                            <outlet property="nextKeyView" destination="358" id="379"/>
+                        </connections>
+                    </textField>
+                    <button imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="356">
+                        <rect key="frame" x="463" y="112" width="23" height="22"/>
+                        <buttonCell key="cell" type="bevel" bezelStyle="regularSquare" image="PasswordAssistantButton" imagePosition="only" alignment="center" alternateImage="PasswordAssistantButtonPressed" inset="2" id="398">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system" size="10"/>
+                        </buttonCell>
+                        <constraints>
+                            <constraint firstAttribute="width" constant="23" id="hXR-SO-SbH"/>
+                            <constraint firstAttribute="height" constant="22" id="kIJ-IF-aUu"/>
+                        </constraints>
+                        <connections>
+                            <action selector="showPasswordAssistantPanel:" target="342" id="361"/>
+                        </connections>
+                    </button>
+                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="353" propertyAccessControl="nonLocalizable">
+                        <rect key="frame" x="83" y="79" width="45" height="22"/>
+                        <constraints>
+                            <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="22" id="YMx-D2-XoL"/>
+                        </constraints>
+                        <textFieldCell key="cell" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Verify:" id="397">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="351" propertyAccessControl="nonLocalizable">
+                        <rect key="frame" x="17" y="109" width="111" height="22"/>
+                        <constraints>
+                            <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="22" id="wPX-Ms-6bJ"/>
+                        </constraints>
+                        <textFieldCell key="cell" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="New Passphrase:" id="396">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" preferredMaxLayoutWidth="468" translatesAutoresizingMaskIntoConstraints="NO" id="346" propertyAccessControl="nonLocalizable">
+                        <rect key="frame" x="17" y="172" width="472" height="23"/>
+                        <constraints>
+                            <constraint firstAttribute="height" relation="greaterThanOrEqual" constant="23" id="s5x-zx-Jpq"/>
+                        </constraints>
+                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Choose a new passphrase to protect your notes." id="395">
+                            <font key="font" metaFont="system"/>
+                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                        </textFieldCell>
+                    </textField>
+                    <button imageHugsTitle="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="355" propertyAccessControl="nonLocalizable">
+                        <rect key="frame" x="328" y="12" width="82" height="32"/>
+                        <buttonCell key="cell" type="push" title="Cancel" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="394">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent" base64-UTF8="YES">
+Gw
+</string>
+                        </buttonCell>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="68" id="yv8-yv-PaZ"/>
+                        </constraints>
+                        <connections>
+                            <action selector="cancelNewPassword:" target="-2" id="363"/>
+                        </connections>
+                    </button>
+                    <button imageHugsTitle="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="354" propertyAccessControl="nonLocalizable">
+                        <rect key="frame" x="410" y="12" width="82" height="32"/>
+                        <buttonCell key="cell" type="push" title="OK" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" inset="2" id="393">
+                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                            <font key="font" metaFont="system"/>
+                            <string key="keyEquivalent" base64-UTF8="YES">
+DQ
+</string>
+                        </buttonCell>
+                        <constraints>
+                            <constraint firstAttribute="width" relation="greaterThanOrEqual" constant="68" id="wKD-ha-ren"/>
+                        </constraints>
+                        <connections>
+                            <action selector="okNewPassword:" target="-2" id="362"/>
+                        </connections>
+                    </button>
+                </subviews>
+                <constraints>
+                    <constraint firstAttribute="bottom" secondItem="354" secondAttribute="bottom" constant="19" id="04O-EW-W1m"/>
+                    <constraint firstItem="358" firstAttribute="top" relation="greaterThanOrEqual" secondItem="351" secondAttribute="bottom" constant="4" id="1fF-Fa-Xn9"/>
+                    <constraint firstItem="383" firstAttribute="top" secondItem="382" secondAttribute="bottom" constant="8" id="3g5-UI-NEs"/>
+                    <constraint firstItem="374" firstAttribute="top" relation="greaterThanOrEqual" secondItem="346" secondAttribute="bottom" constant="4" id="637-q5-NBp"/>
+                    <constraint firstItem="360" firstAttribute="leading" secondItem="344" secondAttribute="leading" priority="600" constant="133" id="6WP-S2-Rp9"/>
+                    <constraint firstItem="354" firstAttribute="leading" secondItem="355" secondAttribute="trailing" constant="14" id="6d9-4I-mbq"/>
+                    <constraint firstItem="356" firstAttribute="top" secondItem="357" secondAttribute="top" id="8bw-3S-M3z"/>
+                    <constraint firstItem="382" firstAttribute="top" secondItem="381" secondAttribute="top" constant="-1" id="98G-wk-hko"/>
+                    <constraint firstItem="353" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="344" secondAttribute="leading" constant="20" id="Cy0-Ch-wxT"/>
+                    <constraint firstAttribute="trailing" secondItem="374" secondAttribute="trailing" constant="20" id="DXD-Dx-N40"/>
+                    <constraint firstAttribute="trailing" secondItem="354" secondAttribute="trailing" constant="21" id="F7E-Bi-x0G"/>
+                    <constraint firstItem="353" firstAttribute="trailing" secondItem="373" secondAttribute="trailing" id="Fgq-Du-ec9"/>
+                    <constraint firstItem="355" firstAttribute="top" secondItem="354" secondAttribute="top" id="GpP-Is-Nt8"/>
+                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="360" secondAttribute="trailing" constant="20" id="Gsg-gy-54T"/>
+                    <constraint firstItem="373" firstAttribute="top" secondItem="374" secondAttribute="top" constant="3" id="KNO-U6-R5C"/>
+                    <constraint firstItem="358" firstAttribute="leading" secondItem="344" secondAttribute="leading" priority="600" constant="133" id="Kff-EY-mDX"/>
+                    <constraint firstItem="353" firstAttribute="top" secondItem="358" secondAttribute="top" constant="3" id="M5X-nN-vWK"/>
+                    <constraint firstItem="357" firstAttribute="top" relation="greaterThanOrEqual" secondItem="373" secondAttribute="bottom" constant="4" id="MW5-GL-10n"/>
+                    <constraint firstItem="358" firstAttribute="leading" secondItem="353" secondAttribute="trailing" constant="7" id="MlT-kZ-9xn"/>
+                    <constraint firstItem="346" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="344" secondAttribute="leading" constant="19" id="N9j-17-1fA"/>
+                    <constraint firstItem="355" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="382" secondAttribute="trailing" constant="12" id="Nnn-vI-SmG"/>
+                    <constraint firstItem="374" firstAttribute="top" secondItem="346" secondAttribute="bottom" priority="600" constant="8" id="ODc-ed-Dus"/>
+                    <constraint firstItem="357" firstAttribute="leading" secondItem="344" secondAttribute="leading" priority="600" constant="133" id="Oal-g6-7Ce"/>
+                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="383" secondAttribute="trailing" constant="20" id="QWu-KN-mxA"/>
+                    <constraint firstItem="383" firstAttribute="leading" secondItem="344" secondAttribute="leading" constant="46" id="Sdk-gO-AMh"/>
+                    <constraint firstItem="358" firstAttribute="top" secondItem="357" secondAttribute="bottom" priority="600" constant="8" id="Sen-Jm-u8Q"/>
+                    <constraint firstItem="360" firstAttribute="top" secondItem="358" secondAttribute="bottom" priority="600" constant="7" id="UIs-bO-NZa"/>
+                    <constraint firstItem="356" firstAttribute="leading" secondItem="357" secondAttribute="trailing" constant="4" id="Uod-Xh-Xtj"/>
+                    <constraint firstAttribute="trailing" secondItem="356" secondAttribute="trailing" constant="20" id="Z1o-1r-jqi"/>
+                    <constraint firstItem="381" firstAttribute="top" secondItem="360" secondAttribute="bottom" constant="26" id="ZW2-5A-Jso"/>
+                    <constraint firstItem="358" firstAttribute="top" relation="greaterThanOrEqual" secondItem="356" secondAttribute="bottom" constant="4" id="b2O-TJ-pJr"/>
+                    <constraint firstItem="351" firstAttribute="top" secondItem="357" secondAttribute="top" constant="3" id="ddY-PX-HwY"/>
+                    <constraint firstItem="351" firstAttribute="trailing" secondItem="373" secondAttribute="trailing" id="f8W-r3-xWM"/>
+                    <constraint firstItem="346" firstAttribute="top" secondItem="344" secondAttribute="top" constant="20" id="flR-EX-6ow"/>
+                    <constraint firstItem="358" firstAttribute="top" relation="greaterThanOrEqual" secondItem="357" secondAttribute="bottom" constant="4" id="fqN-n5-crH"/>
+                    <constraint firstItem="381" firstAttribute="leading" secondItem="344" secondAttribute="leading" constant="25" id="gGl-LT-h9G"/>
+                    <constraint firstItem="360" firstAttribute="top" relation="greaterThanOrEqual" secondItem="353" secondAttribute="bottom" constant="4" id="gMp-4P-ZIm"/>
+                    <constraint firstItem="351" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="344" secondAttribute="leading" constant="19" id="gRu-vP-XrJ"/>
+                    <constraint firstItem="382" firstAttribute="leading" secondItem="381" secondAttribute="trailing" constant="7" id="hLf-yX-ukN"/>
+                    <constraint firstItem="374" firstAttribute="leading" secondItem="373" secondAttribute="trailing" constant="7" id="i2j-2P-swq"/>
+                    <constraint firstItem="357" firstAttribute="top" secondItem="374" secondAttribute="bottom" priority="600" constant="8" id="iEc-wq-EwV"/>
+                    <constraint firstItem="357" firstAttribute="leading" secondItem="374" secondAttribute="leading" id="j6c-HF-2RI"/>
+                    <constraint firstItem="360" firstAttribute="leading" secondItem="374" secondAttribute="leading" id="kc0-6o-jyE"/>
+                    <constraint firstItem="373" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="344" secondAttribute="leading" constant="20" id="mgN-5g-Qeb"/>
+                    <constraint firstAttribute="trailing" secondItem="346" secondAttribute="trailing" constant="19" id="nMF-6y-1OM"/>
+                    <constraint firstItem="346" firstAttribute="leading" secondItem="344" secondAttribute="leading" priority="600" constant="19" id="npe-8G-B5k"/>
+                    <constraint firstAttribute="trailing" secondItem="358" secondAttribute="trailing" constant="20" id="pE0-cr-ify"/>
+                    <constraint firstItem="354" firstAttribute="top" secondItem="381" secondAttribute="top" constant="-6" id="qgL-Oz-OXn"/>
+                    <constraint firstItem="357" firstAttribute="leading" secondItem="351" secondAttribute="trailing" constant="7" id="qud-KG-Vy1"/>
+                    <constraint firstItem="357" firstAttribute="top" relation="greaterThanOrEqual" secondItem="374" secondAttribute="bottom" constant="4" id="tKc-cb-f4j"/>
+                    <constraint firstItem="360" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="344" secondAttribute="leading" constant="20" id="uMl-rf-Shh"/>
+                    <constraint firstItem="358" firstAttribute="leading" secondItem="374" secondAttribute="leading" id="w5v-CA-C0L"/>
+                    <constraint firstItem="360" firstAttribute="top" relation="greaterThanOrEqual" secondItem="358" secondAttribute="bottom" constant="4" id="x2B-eC-3OX"/>
+                    <constraint firstItem="374" firstAttribute="leading" secondItem="344" secondAttribute="leading" priority="600" constant="133" id="xtZ-Fm-0t4"/>
+                </constraints>
+            </view>
+            <connections>
+                <outlet property="initialFirstResponder" destination="374" id="377"/>
+            </connections>
+        </window>
+    </objects>
+    <resources>
+        <image name="PasswordAssistantButton" width="128" height="128"/>
+        <image name="PasswordAssistantButtonPressed" width="128" height="128"/>
+    </resources>
+</document>
