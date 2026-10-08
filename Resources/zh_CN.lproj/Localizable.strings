@@ -518,8 +518,23 @@
 /* No comment provided by engineer. */
 "Plain Text Style" = "纯文本样式";
 
-/* use-text-replacement command in the edit menu */
-"Use Automatic Text Replacement" = "使用自动文本替换";
+/* Substitutions submenu title in the edit menu */
+"Substitutions" = "替换";
+
+/* Substitutions command that opens the substitutions panel */
+"Show Substitutions" = "显示替换";
+
+/* Substitutions toggle for smart copy and paste */
+"Smart Copy/Paste" = "智能拷贝/粘贴";
+
+/* Substitutions toggle for smart quotes */
+"Smart Quotes" = "智能引号";
+
+/* Substitutions toggle for smart dashes */
+"Smart Dashes" = "智能破折号";
+
+/* Substitutions toggle for text replacement */
+"Text Replacement" = "文本替换";
 
 /* new-password command in the edit menu (shows generated passwords window) */
 "New Password..." = "新密码…";

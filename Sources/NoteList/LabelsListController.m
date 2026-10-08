@@ -117,8 +117,12 @@ static CGRect NSRectToCGRect(NSRect nsrect) {
 }
 - (NSImage*)cachedLabelImageForWord:(NSString*)aWord highlighted:(BOOL)isHighlighted {
 	if (!labelImages) labelImages = [[NSMutableDictionary alloc] init];
-	
-	NSString *imgKey = [[aWord lowercaseString] stringByAppendingFormat:@", %d", isHighlighted];
+
+	//the fill follows the note list's colors in the current appearance, so it is resolved now and is part of the cache key
+	NSColor *fillColor = isHighlighted ? [NSColor alternateSelectedControlTextColor] : [[GlobalPrefs defaultPrefs] interfaceSecondaryColor];
+	fillColor = [fillColor colorUsingColorSpace:[NSColorSpace sRGBColorSpace]];
+	NSString *imgKey = [NSString stringWithFormat:@"%@, %.3f %.3f %.3f %.3f", [aWord lowercaseString],
+						[fillColor redComponent], [fillColor greenComponent], [fillColor blueComponent], [fillColor alphaComponent]];
 	NSImage *img = [labelImages objectForKey:imgKey];
 	if (!img) {
 		//generate the image and add it to labelImages under imgKey
@@ -139,7 +143,7 @@ static CGRect NSRectToCGRect(NSRect nsrect) {
 		CGContextClipToRect(context, NSRectToCGRect(wordRect));
 
 		NSBezierPath *backgroundPath = [NSBezierPath bezierPathWithRoundRectInRect:wordRect radius:2.0f];
-		[(isHighlighted ? [NSColor whiteColor] : [NSColor colorWithCalibratedWhite:0.55 alpha:1.0]) setFill];
+		[fillColor setFill];
 		[backgroundPath fill];
 		
 		[[NSGraphicsContext currentContext] setCompositingOperation:NSCompositingOperationSourceOut];

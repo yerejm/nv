@@ -518,8 +518,23 @@
 /* No comment provided by engineer. */
 "Plain Text Style" = "Estilo de Texto Simples";
 
-/* use-text-replacement command in the edit menu */
-"Use Automatic Text Replacement" = "Substituição Automática de Texto";
+/* Substitutions submenu title in the edit menu */
+"Substitutions" = "Substituições";
+
+/* Substitutions command that opens the substitutions panel */
+"Show Substitutions" = "Mostrar Substituições";
+
+/* Substitutions toggle for smart copy and paste */
+"Smart Copy/Paste" = "Copiar/Colar Inteligente";
+
+/* Substitutions toggle for smart quotes */
+"Smart Quotes" = "Aspas Inteligentes";
+
+/* Substitutions toggle for smart dashes */
+"Smart Dashes" = "Travessões Inteligentes";
+
+/* Substitutions toggle for text replacement */
+"Text Replacement" = "Substituição de Texto";
 
 /* new-password command in the edit menu (shows generated passwords window) */
 "New Password..." = "Nova Senha…";

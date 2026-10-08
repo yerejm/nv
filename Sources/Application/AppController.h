@@ -30,7 +30,6 @@
 @class DualField;
 @class RBSplitView;
 @class RBSplitSubview;
-@class LinearDividerShader;
 
 @interface AppController : NSObject
 #if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
@@ -50,7 +49,6 @@
 	
 	
 	NSImage *verticalDividerImg;
-	LinearDividerShader *dividerShader;
 	
 	NSURL *URLToInterpretOnLaunch;
 	NSMutableArray *pathsToOpenOnLaunch;

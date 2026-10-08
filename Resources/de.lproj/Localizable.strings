@@ -521,8 +521,23 @@
 /* No comment provided by engineer. */
 "Plain Text Style" = "Einfacher Text";
 
-/* use-text-replacement command in the edit menu */
-"Use Automatic Text Replacement" = "Automatische Textersetzung verwenden";
+/* Substitutions submenu title in the edit menu */
+"Substitutions" = "Ersetzungen";
+
+/* Substitutions command that opens the substitutions panel */
+"Show Substitutions" = "Ersetzungen einblenden";
+
+/* Substitutions toggle for smart copy and paste */
+"Smart Copy/Paste" = "Intelligentes Kopieren/Einsetzen";
+
+/* Substitutions toggle for smart quotes */
+"Smart Quotes" = "Intelligente Anführungszeichen";
+
+/* Substitutions toggle for smart dashes */
+"Smart Dashes" = "Intelligente Gedankenstriche";
+
+/* Substitutions toggle for text replacement */
+"Text Replacement" = "Textersetzung";
 
 /* new-password command in the edit menu (shows generated passwords window) */
 "New Password..." = "Neues Passwort...";

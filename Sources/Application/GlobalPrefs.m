@@ -162,9 +162,6 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 			NVArchiveObject([NSColor textColor]), ForegroundTextColorKey,
 			NVArchiveObject([NSColor textBackgroundColor]), BackgroundTextColorKey,
 			
-			NVArchiveObject(
-			 [NSColor colorWithCalibratedRed:0.945 green:0.702 blue:0.702 alpha:1.0f]), SearchTermHighlightColorKey,
-			
 			[NSNumber numberWithFloat:[NSFont smallSystemFontSize]], TableFontSizeKey, 
 			[NSArray arrayWithObjects:NoteTitleColumnString, NoteDateModifiedColumnString, nil], NoteAttributesVisibleKey,
 			NoteDateModifiedColumnString, TableSortColumnKey,
@@ -456,27 +453,28 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 - (NSColor*)searchTermHighlightColorRaw:(BOOL)isRaw {
 	
 	NSData *theData = [defaults dataForKey:SearchTermHighlightColorKey];
-	if (theData) {
-		NSColor *color = (NSColor *)NVUnarchivePreference(theData);
-		if (isRaw) return color;
-		if (color) {
-			//nslayoutmanager temporary attributes don't seem to like alpha components, so synthesize translucency using the bg color
-			NSColor *fauxAlphaSTHC = [[color colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]] colorWithAlphaComponent:1.0];
-			return [fauxAlphaSTHC blendedColorWithFraction:(1.0 - [color alphaComponent]) ofColor:[self backgroundTextColor]];
-		}
-	}
-
-	return nil;
+	NSColor *color = theData ? (NSColor *)NVUnarchivePreference(theData) : nil;
+	//the former fixed pink default counts as unset so that existing installs also move to the system color
+	NSColor *formerDefault = [NSColor colorWithCalibratedRed:0.945 green:0.702 blue:0.702 alpha:1.0f];
+	if (!color || ColorsEqualWith8BitChannels(color, formerDefault))
+		return [NSColor findHighlightColor];
+	if (isRaw) return color;
+	
+	//nslayoutmanager temporary attributes don't seem to like alpha components, so synthesize translucency using the bg color
+	NSColor *fauxAlphaSTHC = [[color colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]] colorWithAlphaComponent:1.0];
+	return [fauxAlphaSTHC blendedColorWithFraction:(1.0 - [color alphaComponent]) ofColor:[self backgroundTextColor]];
 }
 
 - (NSDictionary*)searchTermHighlightAttributes {
-	NSColor *highlightColor = nil;
-	
-	if (!searchTermHighlightAttributes && (highlightColor = [self searchTermHighlightColorRaw:NO])) {
-		searchTermHighlightAttributes = [[NSDictionary dictionaryWithObjectsAndKeys:highlightColor, NSBackgroundColorAttributeName, nil] retain];
+	if (!searchTermHighlightAttributes) {
+		NSColor *highlightColor = [self searchTermHighlightColorRaw:NO];
+		//the note's own text color can be unreadable on the highlight, e.g. light text on the yellow system color
+		NSColor *rgb = [highlightColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+		CGFloat brightness = rgb.redComponent * 0.299 + rgb.greenComponent * 0.587 + rgb.blueComponent * 0.114;
+		NSColor *textColor = brightness < 0.5 ? [NSColor whiteColor] : [NSColor blackColor];
+		searchTermHighlightAttributes = [@{NSBackgroundColorAttributeName: highlightColor, NSForegroundColorAttributeName: textColor} retain];
 	}
 	return searchTermHighlightAttributes;
-	
 }
 
 - (void)setSoftTabs:(BOOL)value sender:(id)sender {

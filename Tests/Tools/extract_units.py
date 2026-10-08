@@ -77,17 +77,13 @@ NSData *NVVolumeUUIDForName(NSData *name) {
 ''')
 
 source = (ROOT / 'Sources/Editor/LinkingEditor.m').read_text()
-category_start = source.index('@interface NSCursor (WhiteIBeamCursor)')
-category_end = source.index('@implementation LinkingEditor', category_start)
 unit = '\n'.join(method(source, prefix) for prefix in [
     '- (void)_fixCursorForBackgroundUpdatingMouseInside:',
     '- (void)fixCursorForBackgroundUpdatingMouseInside:'])
-for prefix in ['- (NSCursor *)editorCursor', '- (void)resetCursorRects']:
-    if prefix in source:
-        unit += '\n' + method(source, prefix)
+unit += '\n' + method(source, '- (void)resetCursorRects')
 header = (ROOT / 'Sources/Editor/LinkingEditor.h').read_text()
 declaration = header[:header.index('- (NSColor*)_insertionPointColor')]
 declaration += '\n'.join(line[:line.index('{')].strip() + ';'
                           for line in unit.splitlines() if line.startswith('- (')) + '\n@end\n'
 (OUTPUT / 'EditorCursor.m').write_text(declaration + '#import <objc/runtime.h>\n'
-    + source[category_start:category_end] + '@implementation LinkingEditor\n' + unit + '\n@end\n')
+    + '@implementation LinkingEditor\n' + unit + '\n@end\n')

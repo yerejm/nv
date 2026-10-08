@@ -1015,10 +1015,18 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	return [self _drawLabelBlocksInRect:aRect rightAlign:onRight highlighted:isHighlighted getSizeOnly:NULL];
 }
 
+static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
+	NSSize size = [img size];
+	BOOL flipped = [[NSGraphicsContext currentContext] isFlipped];
+	NSRect rect = NSMakeRect(baselinePoint.x, flipped ? baselinePoint.y - size.height : baselinePoint.y, size.width, size.height);
+	[img drawInRect:rect fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0 respectFlipped:YES hints:nil];
+}
+
 - (void)_drawLabelBlocksInRect:(NSRect)aRect rightAlign:(BOOL)onRight highlighted:(BOOL)isHighlighted getSizeOnly:(NSSize*)reqSize {
 	//used primarily by UnifiedCell, but also by LabelColumnCell, as well as to determine the width of all label-block-images for this note
 	//iterate over words in orderedLabelTitles, retrieving images via -[LabelsListController cachedLabelImageForWord:highlighted:]
 	//if right-align is enabled, then the label-images are queued on the first pass and drawn in reverse on the second
+	//aRect's origin is the bottom-left corner of the first block, as callers measure up from the baseline of the cell's last line
 	
 	float totalWidth = 0.0, height = 0.0;
 	
@@ -1040,7 +1048,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 				if (onRight) {
 					[images addObject:img];
 				} else {
-					[img drawAtPoint:nextBoxPoint fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0];
+					DrawLabelBlockAboveBaseline(img, nextBoxPoint);
 					nextBoxPoint.x += [img size].width + 4.0;
 				}
 			} else {
@@ -1056,7 +1064,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 			for (i = [images count] - 1; i>=0; i--) {
 				NSImage *img = [images objectAtIndex:i];
 				nextBoxPoint.x -= [img size].width + 4.0;
-				[img drawAtPoint:nextBoxPoint fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1.0];
+				DrawLabelBlockAboveBaseline(img, nextBoxPoint);
 			}
 		}
 	} else {

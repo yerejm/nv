@@ -44,7 +44,7 @@ enum {LAST_FIND_UNKNOWN, LAST_FIND_NO, LAST_FIND_YES};
 	NSRange changedRange;
 	BOOL isAutocompleting, wasDeleting;
 	
-	BOOL backgroundIsDark, mouseInside;
+	BOOL mouseInside;
 	BOOL updatingTextWidth;
 	
 };

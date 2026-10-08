@@ -2,15 +2,11 @@
 #import <objc/runtime.h>
 #import "LinkingEditor.h"
 
-@interface LinkingEditor (CursorTesting)
-- (NSCursor *)editorCursor;
-@end
 @interface CursorFixture : LinkingEditor
-- (void)setDarkBackground:(BOOL)dark inside:(BOOL)inside;
+- (void)setInside:(BOOL)inside;
 @end
 @implementation CursorFixture
-- (void)setDarkBackground:(BOOL)dark inside:(BOOL)inside {
-    backgroundIsDark = dark;
+- (void)setInside:(BOOL)inside {
     mouseInside = inside;
 }
 @end
@@ -18,15 +14,15 @@
 @interface CursorTests : XCTestCase
 @end
 @implementation CursorTests
-- (void)testEditorCursorDoesNotReplaceGlobalIBeam {
+- (void)testDarkBackgroundKeepsSystemIBeam {
     [NSApplication sharedApplication];
     CursorFixture *editor = [[[CursorFixture alloc] initWithFrame:NSMakeRect(0, 0, 200, 100)] autorelease];
     IMP original = method_getImplementation(class_getClassMethod([NSCursor class], @selector(IBeamCursor)));
-    [editor setDarkBackground:YES inside:YES];
+    [editor setBackgroundColor:[NSColor blackColor]];
+    [editor setInside:YES];
     [editor fixCursorForBackgroundUpdatingMouseInside:NO];
     XCTAssertEqual(method_getImplementation(class_getClassMethod([NSCursor class], @selector(IBeamCursor))), original);
-    [editor setDarkBackground:NO inside:YES];
-    XCTAssertEqualObjects([editor editorCursor], [NSCursor IBeamCursor]);
+    XCTAssertEqualObjects([NSCursor currentCursor], [NSCursor IBeamCursor]);
 }
 - (void)testCursorRectsCanRefreshAfterAppearanceAndVisibilityChanges {
     [NSApplication sharedApplication];
@@ -34,12 +30,14 @@
     NSWindow *window = [[[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 200, 100) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO] autorelease];
     [window setReleasedWhenClosed:NO];
     [window setContentView:editor];
-    [editor setDarkBackground:YES inside:YES];
+    [editor setBackgroundColor:[NSColor blackColor]];
+    [editor setInside:YES];
     XCTAssertNoThrow([editor resetCursorRects]);
     [editor setHidden:YES];
     XCTAssertNoThrow([editor fixCursorForBackgroundUpdatingMouseInside:NO]);
     [editor setHidden:NO];
-    [editor setDarkBackground:NO inside:NO];
+    [editor setBackgroundColor:[NSColor whiteColor]];
+    [editor setInside:NO];
     XCTAssertNoThrow([editor resetCursorRects]);
     [window close];
 }

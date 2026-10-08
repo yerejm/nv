@@ -30,8 +30,7 @@
 
 		//should be handled by NSParagraphStyle in our string, as it is more complex than this
 //		[self setLineBreakMode:NSLineBreakByTruncatingTail];
-		if (IsLeopardOrLater)
-			[self setTruncatesLastVisibleLine:YES];
+		[self setTruncatesLastVisibleLine:YES];
 		[self setEditable:YES];
 	}
 	return self;
@@ -115,32 +114,8 @@
 	previewIsHidden = value;
 }
 
-+ (NSColor*)dateColorForTint {
-	static NSColor *color = nil;
-	static NSControlTint lastTint = -1;
-	
-	NSControlTint tint = [NSColor currentControlTint];
-	
-	if (!color || lastTint != tint) {
-		if (tint == NSBlueControlTint) {
-			color = [NSColor colorWithCalibratedRed:0.31 green:.494 blue:0.765 alpha:1.0];
-		} else if (tint == NSGraphiteControlTint) {
-			color = [NSColor colorWithCalibratedRed:0.498 green:0.525 blue:0.573 alpha:1.0];
-		} else {
-			color = [NSColor grayColor];
-		}
-		lastTint = tint;
-		[color retain];
-	}
-	return color;
-}
-
 NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL withShadow) {
 	//used to modify the cell's attributed string before display when it is selected
-	
-	//snow leopard is stricter about applying the default highlight-attributes (e.g., no shadow unless no paragraph formatting)
-	//so add the shadow here for snow leopard on selected rows
-
 	NSRange fullRange = NSMakeRange(0, [str length]);
 	NSMutableAttributedString *colorFreeStr = [str mutableCopy];
 	[colorFreeStr removeAttribute:NSForegroundColorAttributeName range:fullRange];
@@ -188,11 +163,10 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 	//draw note date and tags
 
 	NSMutableDictionary *baseAttrs = [self baseTextAttributes];
-	BOOL isActive = (IsLeopardOrLater && [tv style] == NSTableViewStyleSourceList) ? YES : [tv isActiveStyle];
-	
-	NSColor *textColor = ([self isHighlighted] && isActive) ? [NSColor whiteColor] : (![self isHighlighted] ? [[GlobalPrefs defaultPrefs] interfaceSecondaryColor] : nil);
-	if (textColor)
-		[baseAttrs setObject:textColor forKey:NSForegroundColorAttributeName];
+	//a selected row is drawn in the accent color only while the list has focus; otherwise it is a neutral gray
+	BOOL emphasized = [self isHighlighted] && [tv isActiveStyle];
+	NSColor *textColor = emphasized ? [NSColor alternateSelectedControlTextColor] : [[GlobalPrefs defaultPrefs] interfaceSecondaryColor];
+	[baseAttrs setObject:textColor forKey:NSForegroundColorAttributeName];
 
 	float fontHeight = [tv tableFontHeight];
 	
@@ -213,7 +187,7 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 		//clip the tags image within the bounds of the cell so that narrow columns look nicer
 		[NSGraphicsContext saveGraphicsState];
 		NSRectClip(cellFrame);
-		[noteObject drawLabelBlocksInRect:rect rightAlign:!previewIsHidden highlighted:([self isHighlighted] && isActive)];
+		[noteObject drawLabelBlocksInRect:rect rightAlign:!previewIsHidden highlighted:emphasized];
 		[NSGraphicsContext restoreGraphicsState];
 	}
 	

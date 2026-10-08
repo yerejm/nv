@@ -40,7 +40,6 @@
 #import "BookmarksController.h"
 #import "MultiplePageView.h"
 #import "InvocationRecorder.h"
-#import "LinearDividerShader.h"
 #import "SecureTextEntryManager.h"
 #import "LabelsListController.h"
 #import "NSString_CustomTruncation.h"
@@ -66,9 +65,6 @@ static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
 		// Setup URL Handling
 		NSAppleEventManager *appleEventManager = [NSAppleEventManager sharedAppleEventManager];
 		[appleEventManager setEventHandler:self andSelector:@selector(handleGetURLEvent:withReplyEvent:) forEventClass:kInternetEventClass andEventID:kAEGetURL];	
-		
-		dividerShader = [[LinearDividerShader alloc] initWithStartColor:[NSColor colorWithCalibratedWhite:0.988 alpha:1.0] 
-															   endColor:[NSColor colorWithCalibratedWhite:0.875 alpha:1.0]];
 		
 		isCreatingANote = isFilteringFromTyping = typedStringIsCached = NO;
 		typedString = @"";
@@ -121,9 +117,6 @@ static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
     [window addTitlebarAccessoryViewController:titleAccessory];
 	
 	[window setShowsToolbarButton:NO];
-	
-//	if (IsLeopardOrLater)
-//		[window setCollectionBehavior:NSWindowCollectionBehaviorCanJoinAllSpaces];
 	
 
 	[NSApp setDelegate:self];
@@ -186,9 +179,6 @@ static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
 		[window setAutorecalculatesKeyViewLoop:NO];
 		
 		[self setEmptyViewState:YES];
-				
-		//this is necessary on 10.3; keep just in case
-		[splitView display];
 		
 		awakenedViews = YES;
 	}
@@ -609,7 +599,7 @@ terminateApp:
 
 - (void)tableView:(NSTableView *)table willDisplayCell:(id)cell forTableColumn:(NSTableColumn *)column row:(NSInteger)row {
     if ([cell respondsToSelector:@selector(setTextColor:)])
-        [cell setTextColor:[cell isHighlighted] && [notesTableView isActiveStyle] ? [NSColor selectedTextColor] : [prefsController foregroundTextColor]];
+        [cell setTextColor:[cell isHighlighted] && [notesTableView isActiveStyle] ? [NSColor alternateSelectedControlTextColor] : [prefsController foregroundTextColor]];
 }
 
 - (void)_configureDividerForCurrentLayout {
@@ -689,7 +679,7 @@ terminateApp:
 			[notationController removeNote:retainedDeleteObj];
 		}
 		
-		if (IsLeopardOrLater && [[alert suppressionButton] state] == NSControlStateValueOn) {
+		if ([[alert suppressionButton] state] == NSControlStateValueOn) {
 			[prefsController setConfirmNoteDeletion:NO sender:self];
 		}
 	}
@@ -711,7 +701,7 @@ terminateApp:
 			[NSString stringWithFormat:warningMultipleFormatString, [indexes count]];
 			
 			NSAlert *alert = NVMakeAlert(warnString, NSLocalizedString(@"Press Command-Z to undo this action later.", @"informational delete-this-note? text"), NSLocalizedString(@"Delete", @"name of delete button"), NSLocalizedString(@"Cancel", @"name of cancel button"), nil);
-			if (IsLeopardOrLater) [alert setShowsSuppressionButton:YES];
+			[alert setShowsSuppressionButton:YES];
 			
 			NVBeginAlertSheet(alert, window, self, @selector(deleteAlertDidEnd:returnCode:contextInfo:), (void*)deleteObj);
 		} else {
@@ -1616,8 +1606,8 @@ terminateApp:
 - (NSUndoManager *)windowWillReturnUndoManager:(NSWindow *)sender {
 	
 	if ([sender firstResponder] == textView) {
-		if ((floor(NSAppKitVersionNumber) > NSAppKitVersionNumber10_3) && currentNote) {
-			NSLog(@"windowWillReturnUndoManager should not be called when textView is first responder on Tiger or higher");
+		if (currentNote) {
+			NSLog(@"windowWillReturnUndoManager should not be called when textView is first responder");
 		}
 		
 		NSUndoManager *undoMan = [self undoManagerForTextView:textView];
@@ -2032,7 +2022,6 @@ terminateApp:
     [wordCountLabel release];
 	[previousActiveApplication release];
 	[windowUndoManager release];
-	[dividerShader release];
 	
 	[super dealloc];
 }

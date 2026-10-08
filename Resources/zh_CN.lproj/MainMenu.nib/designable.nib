@@ -461,7 +461,7 @@ cHlyaWdodCBBcHBsZSBDb21wdXRlciwgSW5jLiwgMjAwNQAAAAA</bytes>
 								</object>
 								<object class="NSMenuItem" id="586135475">
 									<reference key="NSMenu" ref="789159888"/>
-									<string key="NSTitle">偏好设置…</string>
+									<string key="NSTitle">设置…</string>
 									<string key="NSKeyEquiv">,</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>

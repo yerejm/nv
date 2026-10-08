@@ -342,13 +342,8 @@ errorReturn:
 - (void)_updateMenu:(NSMenu*)theMenu {
 	//for allowing the user to configure external editors in the preferences window
 
-	if (IsSnowLeopardOrLater) {
-		[theMenu performSelector:@selector(removeAllItems)];
-	} else {
-		while ([theMenu numberOfItems])
-			[theMenu removeItemAtIndex:0];
-	}
-	
+	[theMenu removeAllItems];
+
 	BOOL isPrefsMenu = [editorPrefsMenus containsObject:theMenu];
 	BOOL didAddItem = NO;
 	NSMutableArray *editors = [NSMutableArray arrayWithArray:[self _installedODBEditors]];

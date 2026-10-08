@@ -266,7 +266,6 @@
 				<string>00000000000000000000002B</string>
 				<string>000000000000000000000043</string>
 				<string>000000000000000000000045</string>
-				<string>00000000000000000000004D</string>
 				<string>000000000000000000000052</string>
 				<string>000000000000000000000054</string>
 				<string>000000000000000000000058</string>
@@ -952,17 +951,6 @@
 			<string>PBXFileReference</string>
 			<key>path</key>
 			<string>NVPasswordGenerator.m</string>
-			<key>sourceTree</key>
-			<string>&lt;group&gt;</string>
-			<key>lastKnownFileType</key>
-			<string>sourcecode.c.objc</string>
-		</dict>
-		<key>00000000000000000000004D</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXFileReference</string>
-			<key>path</key>
-			<string>LinearDividerShader.m</string>
 			<key>sourceTree</key>
 			<string>&lt;group&gt;</string>
 			<key>lastKnownFileType</key>
@@ -1771,13 +1759,6 @@
 			<key>fileRef</key>
 			<string>00000000000000000000004C</string>
 		</dict>
-		<key>0000000000000000000000AA</key>
-		<dict>
-			<key>isa</key>
-			<string>PBXBuildFile</string>
-			<key>fileRef</key>
-			<string>00000000000000000000004D</string>
-		</dict>
 		<key>0000000000000000000000AB</key>
 		<dict>
 			<key>isa</key>
@@ -1999,7 +1980,6 @@
 				<string>0000000000000000000000A7</string>
 				<string>0000000000000000000000A8</string>
 				<string>0000000000000000000000A9</string>
-				<string>0000000000000000000000AA</string>
 				<string>0000000000000000000000AB</string>
 				<string>0000000000000000000000AC</string>
 				<string>0000000000000000000000AD</string>

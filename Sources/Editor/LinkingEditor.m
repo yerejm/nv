@@ -38,26 +38,7 @@
 static long (*GetGetScriptManagerVariablePointer())(short);
 #endif
 
-@interface NSCursor (WhiteIBeamCursor)
-+ (NSCursor*)whiteIBeamCursor;
-@end
-
-@implementation NSCursor (WhiteIBeamCursor)
-
-+ (NSCursor*)whiteIBeamCursor {
-	static NSCursor *invertedIBeamCursor = nil;
-	if (!invertedIBeamCursor) {
-		invertedIBeamCursor = [[NSCursor alloc] initWithImage:[NSImage imageNamed:@"IBeamInverted"] hotSpot:NSMakePoint(4,5)];
-	}
-	return invertedIBeamCursor;	
-}
-
-@end
-
-
 @implementation LinkingEditor
-
-CGFloat _perceptualDarkness(NSColor*a);
 
 - (void)awakeFromNib {
 	
@@ -72,9 +53,7 @@ CGFloat _perceptualDarkness(NSColor*a);
     [self setAutomaticQuoteSubstitutionEnabled:[prefsController useSmartQuotes]];
     [self setAutomaticDashSubstitutionEnabled:[prefsController useSmartDashes]];
     [self setContinuousSpellCheckingEnabled:[prefsController checkSpellingAsYouType]];
-	if (IsSnowLeopardOrLater) {
-		[self setAutomaticTextReplacementEnabled:[prefsController useTextReplacement]];
-	}
+	[self setAutomaticTextReplacementEnabled:[prefsController useTextReplacement]];
 
     [prefsController registerWithTarget:self forChangesInSettings:
 	 @selector(setCheckSpellingAsYouType:sender:),
@@ -146,9 +125,7 @@ CGFloat _perceptualDarkness(NSColor*a);
 		
 	} else if ([selectorString isEqualToString:SEL_STR(setUseTextReplacement:sender:)]) {
 		
-		if (IsSnowLeopardOrLater) {
-			[self setAutomaticTextReplacementEnabled:[prefsController useTextReplacement]];
-		}
+		[self setAutomaticTextReplacementEnabled:[prefsController useTextReplacement]];
     } else if ([selectorString isEqualToString:SEL_STR(setNoteBodyFont:sender:)]) {
 
 		[self setTypingAttributes:[prefsController noteBodyAttributes]];
@@ -182,8 +159,6 @@ CGFloat _perceptualDarkness(NSColor*a);
 }
 
 - (BOOL)becomeFirstResponder {
-	[notesTableView setShouldUseSecondaryHighlightColor:YES];
-
 	if ([[[self window] currentEvent] type] == NSEventTypeKeyDown && [[[self window] currentEvent] firstCharacter] == '\t') {
 		//"indicate" the current cursor/selection when moving focus to this field, but only if the user did not click here
 		NSRange range = [self selectedRange];
@@ -226,14 +201,10 @@ CGFloat _perceptualDarkness(NSColor*a);
 }
 
 - (void)indicateRange:(NSValue*)rangeValue {
-	if (IsLeopardOrLater) {
-		[self showFindIndicatorForRange:[rangeValue rangeValue]];
-	}
+	[self showFindIndicatorForRange:[rangeValue rangeValue]];
 }
 
 - (BOOL)resignFirstResponder {
-	[notesTableView setShouldUseSecondaryHighlightColor:NO];
-
 	[self performSelector:@selector(_fixCursorForBackgroundUpdatingMouseInside:) withObject:[NSNumber numberWithBool:YES] afterDelay:0.0];
 
 	return [super resignFirstResponder];
@@ -244,19 +215,16 @@ CGFloat _perceptualDarkness(NSColor*a);
 	return;
 }
 
-- (void)setBackgroundColor:(NSColor*)aColor {
-	backgroundIsDark = (_perceptualDarkness([aColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]]) > 0.5);
-	[super setBackgroundColor:aColor];
-}
-
 - (void)updateTextColors {
 	NSColor *fgColor = [prefsController foregroundTextColor];
 	NSColor *bgColor = [prefsController backgroundTextColor];
 	
 	[self setInsertionPointColor:[self _insertionPointColorForForegroundColor:fgColor backgroundColor:bgColor]];
 	[self setLinkTextAttributes:[self preferredLinkAttributes]];
-	[self setSelectedTextAttributes:[NSDictionary dictionaryWithObject:[self _selectionColorForForegroundColor:fgColor backgroundColor:bgColor] 
-																forKey:NSBackgroundColorAttributeName]];
+	//system text colors get the dynamic selection color so it follows the appearance and accent color
+	NSColor *selectionColor = [prefsController colorScheme] == 0 ? [NSColor selectedTextBackgroundColor] :
+		[self _selectionColorForForegroundColor:fgColor backgroundColor:bgColor];
+	[self setSelectedTextAttributes:[NSDictionary dictionaryWithObject:selectionColor forKey:NSBackgroundColorAttributeName]];
 }
 
 #define _CM(__ch) ((__ch) * 255.0)
@@ -625,7 +593,9 @@ copyRTFType:
 }
 
 - (void)removeHighlightedTerms {
-	[[self layoutManager] removeTemporaryAttribute:NSBackgroundColorAttributeName forCharacterRange:NSMakeRange(0, [[self string] length])];
+	NSRange fullRange = NSMakeRange(0, [[self string] length]);
+	[[self layoutManager] removeTemporaryAttribute:NSBackgroundColorAttributeName forCharacterRange:fullRange];
+	[[self layoutManager] removeTemporaryAttribute:NSForegroundColorAttributeName forCharacterRange:fullRange];
 }
 
 
@@ -1104,16 +1074,12 @@ static BOOL NVFindActionSelectsNote(NSInteger action) {
     if (setMouseInside)
         mouseInside = [self mouse:[self convertPoint:[[self window] mouseLocationOutsideOfEventStream] fromView:nil] inRect:[self bounds]];
     [[self window] invalidateCursorRectsForView:self];
-    if (mouseInside && ![self isHidden]) [[self editorCursor] set];
-}
-
-- (NSCursor *)editorCursor {
-    return backgroundIsDark ? [NSCursor whiteIBeamCursor] : [NSCursor IBeamCursor];
+    if (mouseInside && ![self isHidden]) [[NSCursor IBeamCursor] set];
 }
 
 - (void)resetCursorRects {
     [super resetCursorRects];
-    [self addCursorRect:[self visibleRect] cursor:[self editorCursor]];
+    [self addCursorRect:[self visibleRect] cursor:[NSCursor IBeamCursor]];
 }
 
 //hiding or showing the view does not always produce mouseEntered/Exited events
@@ -1443,14 +1409,8 @@ static long (*GetGetScriptManagerVariablePointer())(short) {
 		id bulletIndicator = nil;
 		
 		//sometimes the temporary attributes are split across juxtaposing characters for some reason, so longest-effective-range is necessary
-		//unfortunately there is no such method on Tiger, and I'm not about to emulate its coalescing behavior here
-		if (IsLeopardOrLater) {
-			bulletIndicator = [[self layoutManager] temporaryAttribute:NVHiddenBulletIndentAttributeName atCharacterIndex:NSMaxRange(effectiveRange) 
-												 longestEffectiveRange:&effectiveRange inRange:aRange];
-		} else {
-			NSDictionary *dict = [[self layoutManager] temporaryAttributesAtCharacterIndex:NSMaxRange(effectiveRange) effectiveRange:&effectiveRange];
-			bulletIndicator = [dict objectForKey:NVHiddenBulletIndentAttributeName];
-		}
+		bulletIndicator = [[self layoutManager] temporaryAttribute:NVHiddenBulletIndentAttributeName atCharacterIndex:NSMaxRange(effectiveRange) 
+											 longestEffectiveRange:&effectiveRange inRange:aRange];
 		if (bulletIndicator && NSEqualRanges(effectiveRange, aRange)) {
 			return YES;
 		}
@@ -1565,14 +1525,8 @@ static long (*GetGetScriptManagerVariablePointer())(short) {
 		
         NSMenu *editMenu = [[NSApp mainMenu] numberOfItems] > 2 ? [[[NSApp mainMenu] itemAtIndex:2] submenu] : nil;
 		
-		if (IsSnowLeopardOrLater) {
-			theMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Use Automatic Text Replacement", "use-text-replacement command in the edit menu")
-													 action:@selector(toggleAutomaticTextReplacement:) keyEquivalent:@""];
-			[theMenuItem setTarget:self];
-			[editMenu addItem:theMenuItem];
-			[theMenuItem release];
-		}
-		
+		[self insertSubstitutionsMenuIntoEditMenu:editMenu];
+
 		[editMenu addItem:[NSMenuItem separatorItem]];
         
 #if PASSWORD_SUGGESTIONS
@@ -1594,7 +1548,36 @@ static long (*GetGetScriptManagerVariablePointer())(short) {
         [editMenu addItem:theMenuItem];
         [theMenuItem release];
     }
-	
+
+}
+
+//the standard Substitutions submenu, placed after Spelling and Grammar as in other Mac apps
+- (void)insertSubstitutionsMenuIntoEditMenu:(NSMenu *)editMenu {
+	NSMenu *substitutions = [[[NSMenu alloc] initWithTitle:NSLocalizedString(@"Substitutions", @"Substitutions submenu title in the edit menu")] autorelease];
+	[substitutions addItemWithTitle:NSLocalizedString(@"Show Substitutions", @"Substitutions command that opens the substitutions panel")
+							 action:@selector(orderFrontSubstitutionsPanel:) keyEquivalent:@""];
+	[substitutions addItem:[NSMenuItem separatorItem]];
+	[substitutions addItemWithTitle:NSLocalizedString(@"Smart Copy/Paste", @"Substitutions toggle for smart copy and paste")
+							 action:@selector(toggleSmartInsertDelete:) keyEquivalent:@""];
+	[substitutions addItemWithTitle:NSLocalizedString(@"Smart Quotes", @"Substitutions toggle for smart quotes")
+							 action:@selector(toggleAutomaticQuoteSubstitution:) keyEquivalent:@""];
+	[substitutions addItemWithTitle:NSLocalizedString(@"Smart Dashes", @"Substitutions toggle for smart dashes")
+							 action:@selector(toggleAutomaticDashSubstitution:) keyEquivalent:@""];
+	[substitutions addItemWithTitle:NSLocalizedString(@"Text Replacement", @"Substitutions toggle for text replacement")
+							 action:@selector(toggleAutomaticTextReplacement:) keyEquivalent:@""];
+
+	NSMenuItem *substitutionsItem = [[[NSMenuItem alloc] initWithTitle:[substitutions title] action:NULL keyEquivalent:@""] autorelease];
+	[substitutionsItem setSubmenu:substitutions];
+
+	NSInteger index = [editMenu numberOfItems];
+	for (NSInteger i = 0; i < [editMenu numberOfItems]; i++) {
+		NSMenu *submenu = [[editMenu itemAtIndex:i] submenu];
+		if (submenu && [submenu indexOfItemWithTarget:nil andAction:@selector(toggleContinuousSpellChecking:)] != -1) {
+			index = i + 1;
+			break;
+		}
+	}
+	[editMenu insertItem:substitutionsItem atIndex:index];
 }
 
 - (void)insertPassword:(NSString*)password

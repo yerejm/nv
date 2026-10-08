@@ -89,6 +89,15 @@ __attribute__((used, section("__DATA,__interpose"))) static struct {
 - (void)stopLoading {}
 @end
 
+static NSMenuItem *MenuItemWithAction(NSMenu *menu, SEL action) {
+    for (NSMenuItem *item in menu.itemArray) {
+        if (item.action == action) return item;
+        NSMenuItem *nested = item.submenu ? MenuItemWithAction(item.submenu, action) : nil;
+        if (nested) return nested;
+    }
+    return nil;
+}
+
 static NSMenuItem *FindMenuCommand(NSMenu *menu) {
     for (NSMenuItem *item in menu.itemArray) {
         if ((item.action == @selector(performFindPanelAction:) || item.action == @selector(performTextFinderAction:)) && item.tag == NSTextFinderActionShowFindInterface)
@@ -128,7 +137,7 @@ static void WaitForActivation(NSWindow *window) {
     }
 }
 
-static void SnapshotView(NSView *view, NSString *name) {
+static NSBitmapImageRep *SnapshotView(NSView *view, NSString *name) {
     [view.window displayIfNeeded];
     NSBitmapImageRep *bitmap = [view bitmapImageRepForCachingDisplayInRect:view.bounds];
     [view.effectiveAppearance performAsCurrentDrawingAppearance:^{
@@ -136,6 +145,7 @@ static void SnapshotView(NSView *view, NSString *name) {
     }];
     [[bitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}]
         writeToFile:[acceptanceRoot stringByAppendingPathComponent:name] atomically:YES];
+    return bitmap;
 }
 
 static void Snapshot(NSWindow *window, NSString *name) {
@@ -480,6 +490,45 @@ static void BeginFullScreenAcceptance(AppController *app, NotationController *no
     [window toggleFullScreen:nil];
 }
 
+//text drawn on the accent-colored selection should be light; dark text there is what the light appearance used to produce
+static BOOL RowHasDarkPixels(NSTableView *table, NSBitmapImageRep *bitmap, NSInteger row) {
+    CGFloat scale = bitmap.pixelsWide / NSWidth(table.bounds);
+    //the source-list style insets its rounded selection from the row edges, so only the cells are sampled
+    NSRect rect = NSInsetRect([table frameOfCellAtColumn:0 row:row], 4, 4);
+    for (NSInteger column = 1; column < table.numberOfColumns; column++)
+        rect = NSUnionRect(rect, NSInsetRect([table frameOfCellAtColumn:column row:row], 4, 4));
+    for (NSInteger y = NSMinY(rect) * scale; y < NSMaxY(rect) * scale; y++) {
+        NSInteger pixelY = table.isFlipped ? y : bitmap.pixelsHigh - 1 - y;
+        for (NSInteger x = NSMinX(rect) * scale; x < NSMaxX(rect) * scale; x++)
+            if ([[[bitmap colorAtX:x y:pixelY] colorUsingColorSpace:NSColorSpace.sRGBColorSpace] brightnessComponent] < 0.3) return YES;
+    }
+    return NO;
+}
+
+//the selected note row in each appearance, layout and focus state, so selection colors can also be compared by eye
+static void SnapshotNoteListStates(AppController *app, NSWindow *window, NotesTableView *noteTable, NSTextView *editor, NoteObject *note) {
+    GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
+    BOOL originalLayout = [prefs horizontalLayout];
+    BOOL focusedRowsAreLight = YES;
+    for (NSString *appearance in @[NSAppearanceNameAqua, NSAppearanceNameDarkAqua]) {
+        [window setAppearance:[NSAppearance appearanceNamed:appearance]];
+        for (NSInteger horizontal = 0; horizontal < 2; horizontal++) {
+            if ([prefs horizontalLayout] != horizontal) [app switchViewLayout:nil];
+            [app revealNote:note options:NVEditNoteToReveal];
+            for (NSInteger editorFocused = 0; editorFocused < 2; editorFocused++) {
+                [window makeFirstResponder:editorFocused ? editor : noteTable];
+                Pump(0.1);
+                NSBitmapImageRep *bitmap = SnapshotView(noteTable, [NSString stringWithFormat:@"list-%@-%@-%@.png", [appearance isEqualToString:NSAppearanceNameAqua] ? @"light" : @"dark",
+                                         horizontal ? @"horizontal" : @"vertical", editorFocused ? @"editor" : @"list"]);
+                if (!editorFocused && RowHasDarkPixels(noteTable, bitmap, noteTable.selectedRow)) focusedRowsAreLight = NO;
+            }
+        }
+    }
+    if ([prefs horizontalLayout] != originalLayout) [app switchViewLayout:nil];
+    [window setAppearance:nil];
+    Check(@"focused note list selection uses light text in both appearances and layouts", focusedRowsAreLight);
+}
+
 static void RunAcceptance(void) {
     checks = [[NSMutableArray alloc] init];
     @try {
@@ -817,6 +866,24 @@ static void RunAcceptance(void) {
         [app switchViewLayout:nil];
         Check(@"layout switches toggle the note list header without resizing the window", widescreenHidesHeader && noteTable.headerView &&
               NSEqualRects(window.frame, frameBeforeLayoutSwitch) && RowIsDrawnWithin([app valueForKey:@"splitView"], noteTable, 0));
+        [note setLabelString:@"alpha beta"];
+        if (!ColumnIsSet(NoteLabelsColumn, [appearancePrefs tableColumnsBitmap]))
+            [noteTable addPermanentTableColumn:[noteTable noteAttributeColumnForIdentifier:NoteLabelsColumnString]];
+        SnapshotNoteListStates(app, window, noteTable, editor, note);
+        NSDictionary *highlight = [appearancePrefs searchTermHighlightAttributes];
+        Check(@"search highlight defaults to the system find color with readable text",
+              [highlight[NSBackgroundColorAttributeName] isEqual:[NSColor findHighlightColor]] && [highlight[NSForegroundColorAttributeName] isEqual:[NSColor blackColor]]);
+        NSMenuItem *settingsItem = MenuItemWithAction(NSApp.mainMenu, @selector(showPreferencesWindow:));
+        NSMenuItem *spellingItem = nil;
+        NSMenu *editMenu = MenuItemWithAction(NSApp.mainMenu, @selector(toggleContinuousSpellChecking:)).menu.supermenu;
+        for (NSMenuItem *item in editMenu.itemArray)
+            if (item.submenu && [item.submenu indexOfItemWithTarget:nil andAction:@selector(toggleContinuousSpellChecking:)] != -1) spellingItem = item;
+        NSInteger afterSpellingIndex = spellingItem ? [editMenu indexOfItem:spellingItem] + 1 : editMenu.numberOfItems;
+        NSMenuItem *afterSpelling = afterSpellingIndex < editMenu.numberOfItems ? [editMenu itemAtIndex:afterSpellingIndex] : nil;
+        Check(@"app menu opens Settings", [settingsItem.title isEqualToString:@"Settings…"]);
+        Check(@"edit menu has Spelling and Grammar", [spellingItem.title isEqualToString:@"Spelling and Grammar"]);
+        Check(@"Substitutions follows Spelling and Grammar",
+              afterSpelling.submenu && [afterSpelling.submenu indexOfItemWithTarget:nil andAction:@selector(toggleAutomaticQuoteSubstitution:)] != -1);
         [appearancePrefs setColorScheme:2 sender:nil];
         Check(@"low contrast colors apply to editor and note list", [editor.backgroundColor isEqual:[appearancePrefs backgroundTextColor]] && [noteTable.backgroundColor isEqual:editor.backgroundColor]);
         [appearancePrefs setAlternatingRows:YES sender:nil];

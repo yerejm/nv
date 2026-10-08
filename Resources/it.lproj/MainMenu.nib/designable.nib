@@ -455,7 +455,7 @@ cHlyaWdodCBBcHBsZSBDb21wdXRlciwgSW5jLiwgMjAwNQAAAAA</bytes>
 								</object>
 								<object class="NSMenuItem" id="586135475">
 									<reference key="NSMenu" ref="789159888"/>
-									<string key="NSTitle">Preferenze…</string>
+									<string key="NSTitle">Impostazioni…</string>
 									<string key="NSKeyEquiv">,</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -910,7 +910,7 @@ cHlyaWdodCBBcHBsZSBDb21wdXRlciwgSW5jLiwgMjAwNQAAAAA</bytes>
 								</object>
 								<object class="NSMenuItem" id="787672193">
 									<reference key="NSMenu" ref="731693694"/>
-									<string key="NSTitle">Ortografia</string>
+									<string key="NSTitle">Ortografia e grammatica</string>
 									<string key="NSKeyEquiv"/>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -918,12 +918,12 @@ cHlyaWdodCBBcHBsZSBDb21wdXRlciwgSW5jLiwgMjAwNQAAAAA</bytes>
 									<reference key="NSMixedImage" ref="795901623"/>
 									<string key="NSAction">submenuAction:</string>
 									<object class="NSMenu" key="NSSubmenu" id="703441760">
-										<string key="NSTitle">Ortografia</string>
+										<string key="NSTitle">Ortografia e grammatica</string>
 										<object class="NSMutableArray" key="NSMenuItems">
 											<bool key="EncodedWithXMLCoder">YES</bool>
 											<object class="NSMenuItem" id="823222463">
 												<reference key="NSMenu" ref="703441760"/>
-												<string key="NSTitle">Ortografia…</string>
+												<string key="NSTitle">Mostra ortografia e grammatica</string>
 												<string key="NSKeyEquiv">:</string>
 												<int key="NSKeyEquivModMask">1048576</int>
 												<int key="NSMnemonicLoc">2147483647</int>
@@ -932,7 +932,7 @@ cHlyaWdodCBBcHBsZSBDb21wdXRlciwgSW5jLiwgMjAwNQAAAAA</bytes>
 											</object>
 											<object class="NSMenuItem" id="112601158">
 												<reference key="NSMenu" ref="703441760"/>
-												<string key="NSTitle">Controlla ortografia</string>
+												<string key="NSTitle">Controlla documento ora</string>
 												<string key="NSKeyEquiv">;</string>
 												<int key="NSKeyEquivModMask">1048576</int>
 												<int key="NSMnemonicLoc">2147483647</int>

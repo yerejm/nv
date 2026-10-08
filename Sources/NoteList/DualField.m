@@ -20,8 +20,6 @@
 #import "NoteObject.h"
 #import "GlobalPrefs.h"
 #import "NotationPrefs.h"
-#import "NSBezierPath_NV.h"
-#import "LinearDividerShader.h"
 #import "AppController.h"
 #import "BookmarksController.h"
 
@@ -29,6 +27,13 @@
 #define MAX_STATE_IMG_DIM 16.0
 #define CLEAR_BUTTON_IMG_DIM 16.0
 #define TEXT_LEFT_OFFSET (MAX_STATE_IMG_DIM + BORDER_LEFT_OFFSET)
+
+static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
+    NSImage *icon = [NSImage imageWithSystemSymbolName:name accessibilityDescription:nil];
+    //hierarchical rather than a single palette color keeps the glyph distinct from its circle in the filled button symbols
+    icon = [icon imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithHierarchicalColor:[[GlobalPrefs defaultPrefs] foregroundTextColor]]];
+    [icon drawInRect:rect fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:opacity respectFlipped:YES hints:nil];
+}
 
 @implementation DualFieldCell
 
@@ -176,17 +181,11 @@
     if (![(DualField *)controlView currentEditor])
         [self drawInteriorWithFrame:cellFrame inView:controlView];
 	
-	if (BUTTON_HIDDEN != clearButtonState) {
-		NSImage *clearImg = [NSImage imageNamed:(clearButtonState == BUTTON_NORMAL ? @"Clear" : @"ClearPressed") ];
-        [clearImg drawInRect:[self clearButtonRectForBounds:cellFrame] fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1 respectFlipped:YES hints:nil];
-	}
-	if (BUTTON_HIDDEN != snapbackButtonState) {
-		NSRect snRect = [self snapbackButtonRectForBounds:cellFrame];
-		NSImage *snapImg = [NSImage imageNamed:
-							[(DualField *)controlView hasFollowedLinks] ? (snapbackButtonState == BUTTON_NORMAL ? @"LinkBack" : @"LinkBackPressed") :
-							(snapbackButtonState == BUTTON_NORMAL ? @"SnapBack" : @"SnapBackPressed") ];
-        [snapImg drawInRect:snRect fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:1 respectFlipped:YES hints:nil];
-	}
+	if (BUTTON_HIDDEN != clearButtonState)
+		DrawFieldSymbol(@"xmark.circle.fill", [self clearButtonRectForBounds:cellFrame], clearButtonState == BUTTON_PRESSED ? 0.8 : 0.45);
+	if (BUTTON_HIDDEN != snapbackButtonState)
+		DrawFieldSymbol([(DualField *)controlView hasFollowedLinks] ? @"arrow.backward.circle.fill" : @"arrow.uturn.backward.circle.fill",
+						NSInsetRect([self snapbackButtonRectForBounds:cellFrame], 1, 1), snapbackButtonState == BUTTON_PRESSED ? 0.8 : 0.45);
 }
 
 
@@ -398,61 +397,11 @@
 	}
 }
 
-+ (NSImage*)snapbackImageWithString:(NSString*)string {
-	//get width of string, center rect around it,
-	//lock focus, draw rounded rect, draw text, unlock focus
-	
-	static NSDictionary *smallTextAttrs = nil;
-	static NSMutableDictionary *smallTextBackAttrs = nil;
-	if (!smallTextAttrs) {
-		smallTextAttrs = [[NSDictionary dictionaryWithObjectsAndKeys:
-						   [NSFont systemFontOfSize:[NSFont smallSystemFontSize]], NSFontAttributeName, 
-						   [NSColor whiteColor], NSForegroundColorAttributeName, nil] retain];
-		[(smallTextBackAttrs = [smallTextAttrs mutableCopy]) setObject:[NSColor colorWithCalibratedWhite:0.44 alpha:1.0] forKey:NSForegroundColorAttributeName];
-	}
-	
-	if ([string length] > 15) string = [[string substringToIndex:15] stringByAppendingString:NSLocalizedString(@"...", @"ellipsis character")];
-	NSSize stringSize = [string sizeWithAttributes:smallTextAttrs];
-	
-	NSPoint textOffset = NSMakePoint(5.0f, 2.0f);
-	NSRect wordRect = NSMakeRect(0, 0, ceilf(stringSize.width + textOffset.x * 2.0f), stringSize.height + textOffset.y * 2.0f);
-	
-	NSImage *image = [[NSImage alloc] initWithSize:wordRect.size];
-	[image lockFocus];
-
-	NSBezierPath *backgroundPath = [NSBezierPath bezierPathWithRoundRectInRect:NSInsetRect(wordRect, 1.5, 1.5) radius:1.5f];
-
-	static LinearDividerShader *snapbackShader = nil;
-	if (!snapbackShader) {
-		snapbackShader = [[LinearDividerShader alloc] initWithStartColor:[NSColor colorWithDeviceRed:0.8 green:0.386 blue:0.019 alpha:1.0]
-																endColor:[NSColor colorWithDeviceRed:1.0 green:0.486 blue:0.039 alpha:1.0]];
-	}
-
-
-	[[NSGraphicsContext currentContext] saveGraphicsState];
-	[backgroundPath addClip];
-	[snapbackShader drawDividerInRect:wordRect withDimpleRect:NSZeroRect blendVertically:YES];
-	[[NSGraphicsContext currentContext] restoreGraphicsState];
-	
-	[[NSColor colorWithDeviceRed:0.63 green:0.20 blue:0.0 alpha:1.0] set];
-	[backgroundPath stroke];
-	
-	[string drawAtPoint:NSMakePoint(textOffset.x, textOffset.y+1) withAttributes:smallTextBackAttrs];
-	[string drawAtPoint:textOffset withAttributes:smallTextAttrs];
-	
-	[image unlockFocus];
-	return [image autorelease];
-}
-
 - (void)drawRect:(NSRect)rect {
     [super drawRect:rect];
-    if (![self.cell snapbackButtonIsVisible]) {
-        NSImage *icon = [NSImage imageWithSystemSymbolName:showsDocumentIcon ? @"pencil" : @"magnifyingglass" accessibilityDescription:nil];
-        icon = [icon imageWithSymbolConfiguration:[NSImageSymbolConfiguration configurationWithPaletteColors:@[[[GlobalPrefs defaultPrefs] foregroundTextColor]]]];
-        CGFloat opacity = self.window.isMainWindow ? 0.8 : 0.45;
-        NSRect frame = NSInsetRect([self.cell snapbackButtonRectForBounds:self.bounds], 1, 1);
-        [icon drawInRect:frame fromRect:NSZeroRect operation:NSCompositingOperationSourceOver fraction:opacity respectFlipped:YES hints:nil];
-    }
+    if (![self.cell snapbackButtonIsVisible])
+        DrawFieldSymbol(showsDocumentIcon ? @"pencil" : @"magnifyingglass", NSInsetRect([self.cell snapbackButtonRectForBounds:self.bounds], 1, 1),
+                        self.window.isMainWindow ? 0.8 : 0.45);
 }
 
 @end

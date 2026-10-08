@@ -32,7 +32,6 @@
 #import "LinkingEditor.h"
 
 #define STATUS_STRING_FONT_SIZE 16.0f
-#define SET_DUAL_HIGHLIGHTS 0
 
 #define SYNTHETIC_TAGS_COLUMN_INDEX 200
 
@@ -51,12 +50,12 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 		
 	loadStatusString = NSLocalizedString(@"Loading Notes...",nil);
 	loadStatusAttributes = [[NSDictionary dictionaryWithObjectsAndKeys:
-		[NSFont fontWithName:@"Helvetica" size:STATUS_STRING_FONT_SIZE], NSFontAttributeName,
+		[NSFont systemFontOfSize:STATUS_STRING_FONT_SIZE], NSFontAttributeName,
 		[[NSColor controlTextColor] colorWithAlphaComponent:0.5f], NSForegroundColorAttributeName, nil] retain];
 	loadStatusStringWidth = [loadStatusString sizeWithAttributes:loadStatusAttributes].width;
 	
 	affinity = 0;
-	shouldUseSecondaryHighlightColor = viewMenusValid = NO;
+	viewMenusValid = NO;
 	firstRowIndexBeforeSplitResize = NSNotFound;
 	
 	headerView = [[HeaderViewWithMenu alloc] init];
@@ -219,9 +218,6 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 
 - (void)_setActiveStyleState:(BOOL)activeStyle {
 	NoteAttributeColumn *col = [self noteAttributeColumnForIdentifier:NoteTitleColumnString];
-#if SET_DUAL_HIGHLIGHTS
-	activeStyle = YES;
-#endif
 	isActiveStyle = activeStyle;
 	[col setDereferencingFunction: [globalPrefs horizontalLayout] ? ([globalPrefs tableColumnsShowPreview] ? unifiedCellForNote : unifiedCellSingleLineForNote) : 
 	 ([globalPrefs tableColumnsShowPreview] ? (activeStyle ? properlyHighlightingTableTitleOfNote : tableTitleOfNote) : titleOfNote2)];
@@ -313,8 +309,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	}
 	BOOL isOneRow = !horiz || (![globalPrefs tableColumnsShowPreview] && !ColumnIsSet(NoteLabelsColumn, [globalPrefs tableColumnsBitmap]));
 	
-	if (IsLeopardOrLater)
-		[self setStyle:isOneRow ? NSTableViewStylePlain : NSTableViewStyleSourceList];
+	[self setStyle:isOneRow ? NSTableViewStylePlain : NSTableViewStyleSourceList];
 	[self setBackgroundColor:[globalPrefs backgroundTextColor]];
     [self setUsesAlternatingRowBackgroundColors:[globalPrefs alternatingRows]];
 	
@@ -695,36 +690,12 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 }
 
 - (void)windowDidBecomeMain:(NSNotification *)aNotification  {
-	[self setShouldUseSecondaryHighlightColor:hadHighlightInForeground];
 	[self updateTitleDereferencorState];
 }
 
 - (void)windowDidResignMain:(NSNotification *)aNotification {
-	BOOL highlightBefore = shouldUseSecondaryHighlightColor;
-	[self setShouldUseSecondaryHighlightColor:YES];
-	hadHighlightInForeground = highlightBefore;
 	[self updateTitleDereferencorState];
 }
-
-- (void)setShouldUseSecondaryHighlightColor:(BOOL)value {
-#if SET_DUAL_HIGHLIGHTS
-	if (![[self window] isKeyWindow]) {
-		hadHighlightInForeground = value;
-		value = YES;
-	}		
-	shouldUseSecondaryHighlightColor = value;
-	
-	[self setNeedsDisplay:YES];
-#endif
-}
-
-#if SET_DUAL_HIGHLIGHTS
-- (BOOL)_shouldUseSecondaryHighlightColor {
-
-	return shouldUseSecondaryHighlightColor;
-}
-#endif
-
 
 - (NSDragOperation)draggingSession:(NSDraggingSession *)session sourceOperationMaskForDraggingContext:(NSDraggingContext)context {
 	return context == NSDraggingContextWithinApplication ? NSDragOperationNone : NSDragOperationCopy;
@@ -1014,9 +985,6 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 - (NSArray *)textView:(NSTextView *)aTextView completions:(NSArray *)words  forPartialWordRange:(NSRange)charRange indexOfSelectedItem:(NSInteger *)anIndex {
 
 	if (charRange.location != NSNotFound) {
-		if (!IsLeopardOrLater)
-			goto getCompletions;
-		
 		NSCharacterSet *set = [NSCharacterSet labelSeparatorCharacterSet];
 		NSString *str = [aTextView string];
 #define CharIndexIsMember(__index) ([set characterIsMember:[str characterAtIndex:(__index)]])
@@ -1029,14 +997,9 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 			(hasLChar && hasRChar && CharIndexIsMember(charRange.location - 1) && CharIndexIsMember(NSMaxRange(charRange))) ||
 			(hasLChar && NSMaxRange(charRange) == [str length] && CharIndexIsMember(charRange.location - 1)) ||
 			(hasRChar && charRange.location == 0 && CharIndexIsMember(NSMaxRange(charRange)))) {
-			
-		getCompletions:
-			{
 			NSSet *existingWordSet = [NSSet setWithArray:[[aTextView string] labelCompatibleWords]];
-			NSArray *tags = [labelsListSource labelTitlesPrefixedByString:[[aTextView string] substringWithRange:charRange] 
-													  indexOfSelectedItem:anIndex minusWordSet:existingWordSet];
-			return tags;
-			}
+			return [labelsListSource labelTitlesPrefixedByString:[[aTextView string] substringWithRange:charRange]
+											 indexOfSelectedItem:anIndex minusWordSet:existingWordSet];
 		}
 	}
 	return [NSArray array];

@@ -460,7 +460,7 @@ cHlyaWdodCBBcHBsZSBDb21wdXRlciwgSW5jLiwgMjAwNQAAAAA</bytes>
 								</object>
 								<object class="NSMenuItem" id="371777993">
 									<reference key="NSMenu" ref="94599857"/>
-									<string key="NSTitle">Préférences…</string>
+									<string key="NSTitle">Réglages…</string>
 									<string key="NSKeyEquiv">,</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -917,7 +917,7 @@ cHlyaWdodCBBcHBsZSBDb21wdXRlciwgSW5jLiwgMjAwNQAAAAA</bytes>
 								</object>
 								<object class="NSMenuItem" id="479134305">
 									<reference key="NSMenu" ref="938580667"/>
-									<string key="NSTitle">Orthographe</string>
+									<string key="NSTitle">Orthographe et grammaire</string>
 									<string key="NSKeyEquiv"/>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -925,12 +925,12 @@ cHlyaWdodCBBcHBsZSBDb21wdXRlciwgSW5jLiwgMjAwNQAAAAA</bytes>
 									<reference key="NSMixedImage" ref="853026812"/>
 									<string key="NSAction">submenuAction:</string>
 									<object class="NSMenu" key="NSSubmenu" id="788478103">
-										<string key="NSTitle">Orthographe</string>
+										<string key="NSTitle">Orthographe et grammaire</string>
 										<object class="NSMutableArray" key="NSMenuItems">
 											<bool key="EncodedWithXMLCoder">YES</bool>
 											<object class="NSMenuItem" id="210963438">
 												<reference key="NSMenu" ref="788478103"/>
-												<string key="NSTitle">Orthographe…</string>
+												<string key="NSTitle">Afficher l'orthographe et la grammaire</string>
 												<string key="NSKeyEquiv">:</string>
 												<int key="NSKeyEquivModMask">1048576</int>
 												<int key="NSMnemonicLoc">2147483647</int>
@@ -939,7 +939,7 @@ cHlyaWdodCBBcHBsZSBDb21wdXRlciwgSW5jLiwgMjAwNQAAAAA</bytes>
 											</object>
 											<object class="NSMenuItem" id="960726155">
 												<reference key="NSMenu" ref="788478103"/>
-												<string key="NSTitle">Vérifier l'orthographe</string>
+												<string key="NSTitle">Vérifier le document maintenant</string>
 												<string key="NSKeyEquiv">;</string>
 												<int key="NSKeyEquivModMask">1048576</int>
 												<int key="NSMnemonicLoc">2147483647</int>
@@ -948,7 +948,7 @@ cHlyaWdodCBBcHBsZSBDb21wdXRlciwgSW5jLiwgMjAwNQAAAAA</bytes>
 											</object>
 											<object class="NSMenuItem" id="957453383">
 												<reference key="NSMenu" ref="788478103"/>
-												<string key="NSTitle">Vérifier en cours de frappe</string>
+												<string key="NSTitle">Vérifier l'orthographe lors de la frappe</string>
 												<string key="NSKeyEquiv"/>
 												<int key="NSKeyEquivModMask">1048576</int>
 												<int key="NSMnemonicLoc">2147483647</int>

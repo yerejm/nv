@@ -461,7 +461,7 @@ cHlyaWdodCBBcHBsZSBDb21wdXRlciwgSW5jLiwgMjAwNQAAAAA</bytes>
 								</object>
 								<object class="NSMenuItem" id="868190251">
 									<reference key="NSMenu" ref="1065270565"/>
-									<string key="NSTitle">Preferências…</string>
+									<string key="NSTitle">Ajustes…</string>
 									<string key="NSKeyEquiv">,</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -916,7 +916,7 @@ cHlyaWdodCBBcHBsZSBDb21wdXRlciwgSW5jLiwgMjAwNQAAAAA</bytes>
 								</object>
 								<object class="NSMenuItem" id="724761569">
 									<reference key="NSMenu" ref="906904136"/>
-									<string key="NSTitle">Ortografia</string>
+									<string key="NSTitle">Ortografia e Gramática</string>
 									<string key="NSKeyEquiv"/>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
@@ -924,12 +924,12 @@ cHlyaWdodCBBcHBsZSBDb21wdXRlciwgSW5jLiwgMjAwNQAAAAA</bytes>
 									<reference key="NSMixedImage" ref="323189366"/>
 									<string key="NSAction">submenuAction:</string>
 									<object class="NSMenu" key="NSSubmenu" id="997336019">
-										<string key="NSTitle">Ortografia</string>
+										<string key="NSTitle">Ortografia e Gramática</string>
 										<object class="NSMutableArray" key="NSMenuItems">
 											<bool key="EncodedWithXMLCoder">YES</bool>
 											<object class="NSMenuItem" id="991790490">
 												<reference key="NSMenu" ref="997336019"/>
-												<string key="NSTitle">Ortografia…</string>
+												<string key="NSTitle">Mostrar Ortografia e Gramática</string>
 												<string key="NSKeyEquiv">:</string>
 												<int key="NSKeyEquivModMask">1048576</int>
 												<int key="NSMnemonicLoc">2147483647</int>
@@ -938,7 +938,7 @@ cHlyaWdodCBBcHBsZSBDb21wdXRlciwgSW5jLiwgMjAwNQAAAAA</bytes>
 											</object>
 											<object class="NSMenuItem" id="419655077">
 												<reference key="NSMenu" ref="997336019"/>
-												<string key="NSTitle">Verificar Ortografia</string>
+												<string key="NSTitle">Verificar Documento Agora</string>
 												<string key="NSKeyEquiv">;</string>
 												<int key="NSKeyEquivModMask">1048576</int>
 												<int key="NSMnemonicLoc">2147483647</int>

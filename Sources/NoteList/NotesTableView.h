@@ -37,8 +37,7 @@ typedef struct _ViewLocationContext {
 	NSInteger firstRowIndexBeforeSplitResize;
 	
 	BOOL viewMenusValid;
-	BOOL hadHighlightInForeground, hadHighlightInBackground;
-	BOOL shouldUseSecondaryHighlightColor, isActiveStyle;
+	BOOL isActiveStyle;
 	BOOL lastEventActivatedTagEdit, wasDeleting, isAutocompleting;
 	
 	id labelsListSource;
@@ -71,7 +70,6 @@ typedef struct _ViewLocationContext {
 - (float)tableFontHeight;
 
 - (BOOL)isActiveStyle;
-- (void)setShouldUseSecondaryHighlightColor:(BOOL)value;
 - (void)_setActiveStyleState:(BOOL)activeStyle;
 - (void)updateTitleDereferencorState;
 
@@ -101,6 +99,3 @@ typedef struct _ViewLocationContext {
 
 @end
 
-@interface NSTableView (Private)
-- (BOOL)_shouldUseSecondaryHighlightColor;
-@end
