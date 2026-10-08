@@ -244,7 +244,12 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
         while ([token hasSuffix:@"`"]) token = [token substringToIndex:[token length] - 1];
         if ([token hasSuffix:@"?"] && [token rangeOfString:@"?"].location == [token length] - 1)
             token = [token substringToIndex:[token length] - 1];
-        NSURL *url = [token length] == range.length ? [match URL] : [NSURL URLWithString:token];
+        NSURL *url = [match URL];
+        if ([token length] != range.length) {
+            NSRange tokenRange = NSMakeRange(0, [token length]);
+            NSTextCheckingResult *trimmedMatch = [detector firstMatchInString:token options:0 range:tokenRange];
+            url = trimmedMatch && NSEqualRanges([trimmedMatch range], tokenRange) ? [trimmedMatch URL] : [NSURL URLWithString:token];
+        }
         if (![token length] || !url || ([url isFileURL] && [[url absoluteString] rangeOfString:@"/.file/" options:NSLiteralSearch].location != NSNotFound)) continue;
         [self addAttribute:NSLinkAttributeName value:url range:NSMakeRange(range.location + changedRange.location, [token length])];
     }

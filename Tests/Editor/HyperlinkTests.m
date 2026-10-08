@@ -57,6 +57,17 @@
         XCTAssertEqualObjects(links.firstObject[@"url"], entry[1]);
     }
 }
+- (void)testTrimmedBareDomainsRetainBrowserScheme {
+    for (NSArray *entry in @[@[@"www.example.com/a]]next", @"www.example.com/a", @"http://www.example.com/a"],
+                             @[@"example.com/a]]next", @"example.com/a", @"http://example.com/a"]]) {
+        NSMutableAttributedString *text = [[[NSMutableAttributedString alloc] initWithString:entry[0]] autorelease];
+        [text addLinkAttributesForRange:NSMakeRange(0, text.length)];
+        NSArray *links = [self links:text];
+        XCTAssertEqual(links.count, 1U, @"%@", entry[0]);
+        XCTAssertEqualObjects(links.firstObject[@"text"], entry[1]);
+        XCTAssertEqualObjects(links.firstObject[@"url"], entry[2]);
+    }
+}
 - (void)testEncodedUUIDQueryRetainsIdentity {
     NSString *input = @"nv://find/Title/?NV=ABEiM0RVZneImaq7zN3u%2Fw%3D%3D";
     NSMutableAttributedString *text = [[[NSMutableAttributedString alloc] initWithString:input] autorelease];
