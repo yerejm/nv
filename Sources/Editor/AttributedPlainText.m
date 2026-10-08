@@ -226,6 +226,16 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
     for (NSTextCheckingResult *match in [detector matchesInString:scannedText options:0 range:scannedRange]) {
         NSRange range = [match range];
         NSString *token = [scannedText substringWithRange:range];
+        //URLs only contain square brackets around an IPv6 host, but some detectors run on past "]]" and into wiki links
+        NSInteger squareBalance = 0;
+        for (NSUInteger index = 0; index < [token length]; index++) {
+            unichar character = [token characterAtIndex:index];
+            if (character == '[') squareBalance++;
+            else if (character == ']' && --squareBalance < 0) {
+                token = [token substringToIndex:index];
+                break;
+            }
+        }
         NSInteger balance = 0;
         for (NSUInteger index = 0; index < [token length]; index++) {
             unichar character = [token characterAtIndex:index];
@@ -240,7 +250,7 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
         if ([token hasSuffix:@"?"] && [token rangeOfString:@"?"].location == [token length] - 1)
             token = [token substringToIndex:[token length] - 1];
         NSURL *url = [token length] == range.length ? [match URL] : [NSURL URLWithString:token];
-        if (!url || ([url isFileURL] && [[url absoluteString] rangeOfString:@"/.file/" options:NSLiteralSearch].location != NSNotFound)) continue;
+        if (![token length] || !url || ([url isFileURL] && [[url absoluteString] rangeOfString:@"/.file/" options:NSLiteralSearch].location != NSNotFound)) continue;
         [self addAttribute:NSLinkAttributeName value:url range:NSMakeRange(range.location + changedRange.location, [token length])];
     }
     for (NSTextCheckingResult *match in [spotifyDetector matchesInString:scannedText options:0 range:scannedRange]) {

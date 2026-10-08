@@ -811,6 +811,12 @@ static void RunAcceptance(void) {
         Check(@"expanded note list retains visible rows", noteTable.numberOfRows == 3 && !noteTable.isHiddenOrHasHiddenAncestor && noteTable.visibleRect.size.height > 60);
         Check(@"note list rows are drawn inside the split view", RowIsDrawnWithin([app valueForKey:@"splitView"], noteTable, 0));
         Check(@"sorted and unsorted note list headers share one title position", HeaderTitlesShareVerticalCentre(noteTable));
+        NSRect frameBeforeLayoutSwitch = window.frame;
+        [app switchViewLayout:nil];
+        BOOL widescreenHidesHeader = noteTable.headerView == nil;
+        [app switchViewLayout:nil];
+        Check(@"layout switches toggle the note list header without resizing the window", widescreenHidesHeader && noteTable.headerView &&
+              NSEqualRects(window.frame, frameBeforeLayoutSwitch) && RowIsDrawnWithin([app valueForKey:@"splitView"], noteTable, 0));
         [appearancePrefs setColorScheme:2 sender:nil];
         Check(@"low contrast colors apply to editor and note list", [editor.backgroundColor isEqual:[appearancePrefs backgroundTextColor]] && [noteTable.backgroundColor isEqual:editor.backgroundColor]);
         [appearancePrefs setAlternatingRows:YES sender:nil];

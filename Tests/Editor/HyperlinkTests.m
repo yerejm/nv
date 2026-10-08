@@ -46,6 +46,17 @@
     XCTAssertTrue([links[0][@"url"] hasPrefix:@"nv://find/"]);
     XCTAssertEqualObjects(links[1][@"url"], @"nv://find/Project%20Alpha");
 }
+- (void)testURLsStopAtUnbalancedSquareBrackets {
+    for (NSArray *entry in @[@[@"https://example.com] after", @"https://example.com"], @[@"https://example.com/a]]b", @"https://example.com/a"],
+                             @[@"https://[2001:db8::1]/path] after", @"https://[2001:db8::1]/path"]]) {
+        NSMutableAttributedString *text = [[[NSMutableAttributedString alloc] initWithString:entry[0]] autorelease];
+        [text addLinkAttributesForRange:NSMakeRange(0, text.length)];
+        NSArray *links = [self links:text];
+        XCTAssertEqual(links.count, 1U, @"%@", entry[0]);
+        XCTAssertEqualObjects(links.firstObject[@"text"], entry[1]);
+        XCTAssertEqualObjects(links.firstObject[@"url"], entry[1]);
+    }
+}
 - (void)testEncodedUUIDQueryRetainsIdentity {
     NSString *input = @"nv://find/Title/?NV=ABEiM0RVZneImaq7zN3u%2Fw%3D%3D";
     NSMutableAttributedString *text = [[[NSMutableAttributedString alloc] initWithString:input] autorelease];

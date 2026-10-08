@@ -103,8 +103,4 @@ typedef struct _ViewLocationContext {
 
 @interface NSTableView (Private)
 - (BOOL)_shouldUseSecondaryHighlightColor;
-- (void)_sizeRowHeaderToFitIfNecessary;
-
-//10.3 only
-- (void)_sizeToFitIfNecessary;
 @end

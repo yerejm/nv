@@ -505,28 +505,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 		//[headerView setTableView:newHeader ? self : nil];
 		[self setHeaderView:newHeader];
 		[self setCornerView:newHeader ? cornerView : nil];
-
-		if ([self respondsToSelector:@selector(_sizeRowHeaderToFitIfNecessary)]) {
-			//hopefully 10.5 has this
-			[self _sizeRowHeaderToFitIfNecessary];
-		} else if ([self respondsToSelector:@selector(_sizeToFitIfNecessary)]) {
-			//probably only on 10.3.x
-			[self _sizeToFitIfNecessary];
-			[[self enclosingScrollView] setNeedsDisplay:YES];
-		} else {
-			//anything else
-			NSWindow *win = [self window];
-			NSRect frame = [win frame];
-
-			//this is a nasty little hack
-			frame.size.height -= 2.6;
-			frame.size.width -= 2.6;
-			[win setFrame:frame display:NO];
-			frame.size.height += 2.6;
-			frame.size.width += 2.6;
-			[win setFrame:frame display:YES];
-		}
-		//[self tile];
+		[[self enclosingScrollView] tile];
 	}
 }
 
