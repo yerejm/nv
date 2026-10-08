@@ -129,8 +129,4 @@ id (*dereferencingFunction(NoteAttributeColumn *col))(id, id, NSInteger) {
 	return col->objectAttribute;
 }
 
-- (void)setResizingMaskNumber:(NSNumber*)resizingMaskNumber {
-	[self setResizingMask:[resizingMaskNumber unsignedIntValue]];
-}
-
 @end

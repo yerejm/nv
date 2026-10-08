@@ -50,6 +50,5 @@ id (*dereferencingFunction(NoteAttributeColumn *col))(id, id, NSInteger);
 - (void)setReverseSortingFunction:(NSInteger (*)(id*, id*))aFunction;
 - (NSInteger (*)(id*, id*))reverseSortFunction;
 
-- (void)setResizingMaskNumber:(NSNumber*)resizingMaskNumber;
 
 @end

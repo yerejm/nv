@@ -28,23 +28,21 @@
 	return self;
 }
 
-- (void)_resizeColumn:(NSInteger)resizedColIdx withEvent:(id)event {	
-	//use a more understandable column resizing by changing the resizing mask immediately before calling through to the private method,
-	//and reverting it back to the original at the next runloop iteration
-	NSUInteger originalResizingMask = 0;
-	int i;
-	//change all user-resizable-only columns
-	for (i=0; i<[[self tableView] numberOfColumns]; i++) {
-		NoteAttributeColumn *col = (NoteAttributeColumn *)[[[self tableView] tableColumns] objectAtIndex:i];
-		if ((originalResizingMask = [col resizingMask]) == NSTableColumnUserResizingMask) {
-			[col setResizingMask: NSTableColumnAutoresizingMask | NSTableColumnUserResizingMask];
-			[col performSelector:@selector(setResizingMaskNumber:) withObject:[NSNumber numberWithUnsignedInteger:originalResizingMask] afterDelay:0];
+//while a column edge is dragged every column absorbs the change, so the columns keep filling the list;
+//the header tracks the whole drag inside mouseDown:
+- (void)mouseDown:(NSEvent *)event {
+	NSMutableArray *userResizableColumns = [NSMutableArray array];
+	for (NSTableColumn *column in [[self tableView] tableColumns]) {
+		if ([column resizingMask] == NSTableColumnUserResizingMask) {
+			[column setResizingMask:NSTableColumnAutoresizingMask | NSTableColumnUserResizingMask];
+			[userResizableColumns addObject:column];
 		}
 	}
-	
-	[super _resizeColumn:resizedColIdx withEvent:event];
+	[super mouseDown:event];
+	for (NSTableColumn *column in userResizableColumns)
+		[column setResizingMask:NSTableColumnUserResizingMask];
 }
-	
+
 - (void)setIsReloading:(BOOL)reloading {
 	isReloading = reloading;
 }

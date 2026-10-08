@@ -268,6 +268,32 @@ static void DragDivider(NVSplitView *split, CGFloat position) {
     [split mouseDown:DividerMouseEvent(split, NSEventTypeLeftMouseDown, start, 1)];
 }
 
+static NSEvent *ViewMouseEvent(NSView *view, NSEventType type, NSPoint point) {
+    return [NSEvent mouseEventWithType:type location:[view convertPoint:point toView:nil] modifierFlags:0 timestamp:NSProcessInfo.processInfo.systemUptime
+                          windowNumber:view.window.windowNumber context:nil eventNumber:0 clickCount:1 pressure:type == NSEventTypeLeftMouseUp ? 0 : 1];
+}
+
+//the header tracks a column resize from the queued events once it receives the mouse down
+static void CheckColumnResize(AppController *app, NotesTableView *table) {
+    if ([[GlobalPrefs defaultPrefs] horizontalLayout]) [app switchViewLayout:nil];
+    Pump(0.1);
+    NSTableHeaderView *header = table.headerView;
+    BOOL ready = header.window != nil && table.numberOfColumns >= 2;
+    NSRect title = [header headerRectOfColumn:0];
+    CGFloat visibleWidth = NSWidth(table.enclosingScrollView.contentView.bounds);
+    NSPoint start = NSMakePoint(NSMaxX(title) - 1, NSMidY(title));
+    for (NSInteger step = 1; step <= 8; step++)
+        [NSApp postEvent:ViewMouseEvent(header, NSEventTypeLeftMouseDragged, NSMakePoint(start.x - 5 * step, start.y)) atStart:NO];
+    [NSApp postEvent:ViewMouseEvent(header, NSEventTypeLeftMouseUp, NSMakePoint(start.x - 40, start.y)) atStart:NO];
+    [header mouseDown:ViewMouseEvent(header, NSEventTypeLeftMouseDown, start)];
+    BOOL masksRestored = YES;
+    for (NSTableColumn *column in table.tableColumns)
+        if (column != table.tableColumns.firstObject) masksRestored &= column.resizingMask == NSTableColumnUserResizingMask;
+    Check(@"dragging a column edge resizes its neighbour and keeps the columns filling the list",
+          ready && fabs(NSWidth([header headerRectOfColumn:0]) - (NSWidth(title) - 40)) < 3 &&
+          fabs(NSMaxX([table rectOfColumn:table.numberOfColumns - 1]) - visibleWidth) < 3 && masksRestored);
+}
+
 static void SnapshotWindow(NSWindow *window, NSString *name) {
     dlopen("/System/Library/Frameworks/ScreenCaptureKit.framework/ScreenCaptureKit", RTLD_LAZY);
     __block BOOL finished = NO;
@@ -1093,6 +1119,7 @@ static void RunAcceptance(void) {
         if (!ColumnIsSet(NoteLabelsColumn, [appearancePrefs tableColumnsBitmap]))
             [noteTable addPermanentTableColumn:[noteTable noteAttributeColumnForIdentifier:NoteLabelsColumnString]];
         SnapshotNoteListStates(app, window, noteTable, editor, note);
+        CheckColumnResize(app, noteTable);
         NSDictionary *highlight = [appearancePrefs searchTermHighlightAttributes];
         Check(@"search highlight defaults to the system find color with readable text",
               [highlight[NSBackgroundColorAttributeName] isEqual:[NSColor findHighlightColor]] && [highlight[NSForegroundColorAttributeName] isEqual:[NSColor blackColor]]);
