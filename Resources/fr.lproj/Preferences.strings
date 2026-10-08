@@ -14,7 +14,7 @@
 "273.title" = "Déplace le focus au champ suivant";
 
 /* List Text Size: */
-"325.title" = "Éditeur externe :";
+"325.title" = "Taille de la liste des notes :";
 
 /* Confirm note deletion */
 "327.title" = "Confirmer la suppression d'une note";
@@ -68,7 +68,7 @@
 "390.title" = "Texte :";
 
 /* Set… */
-"391.title" = "Couleur de contraste :";
+"391.title" = "Définir";
 
 /* Foreground Text: */
 "398.title" = "Couleur du texte :";
@@ -77,10 +77,10 @@
 "402.title" = "Arrière-plan :";
 
 /* Search Highlight: */
-"416.title" = "Définir";
+"416.title" = "Couleur de contraste :";
 
 /* External Editor: */
-"430.title" = "Taille";
+"430.title" = "Éditeur externe :";
 
 /* Use System Color */
 "nvU-sc-cel.title" = "Utiliser la couleur du système";

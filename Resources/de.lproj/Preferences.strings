@@ -14,7 +14,7 @@
 "273.title" = "Schreibfokus auf nächstes Feld";
 
 /* List Text Size: */
-"325.title" = "Externer Editor:";
+"325.title" = "Textgröße der Liste:";
 
 /* Confirm note deletion */
 "327.title" = "Löschen einer Notiz bestätigen";
@@ -80,7 +80,7 @@
 "416.title" = "Suche hervorheben:";
 
 /* External Editor: */
-"430.title" = "Size";
+"430.title" = "Externer Editor:";
 
 /* Use System Color */
 "nvU-sc-cel.title" = "Systemfarbe verwenden";

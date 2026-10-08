@@ -134,10 +134,10 @@
 "396.title" = "Exporter…";
 
 /* Format */
-"397.title" = "Signets";
+"397.title" = "Format";
 
 /* Format */
-"398.title" = "Signets";
+"398.title" = "Format";
 
 /* Close */
 "489.title" = "Fermer";
@@ -176,19 +176,19 @@
 "771.title" = "Effacer";
 
 /* Plain Text Style */
-"977.title" = "Item";
+"977.title" = "Texte simple";
 
 /* Tag */
 "994.title" = "Etiquetter";
 
 /* Bookmarks */
-"996.title" = "Format";
+"996.title" = "Signets";
 
 /* Bookmarks */
-"997.title" = "Format";
+"997.title" = "Signets";
 
 /* Item */
-"998.title" = "Texte simple";
+"998.title" = "Item";
 
 /* Paste as New Note */
 "1000.title" = "Coller en tant que nouvelle note";

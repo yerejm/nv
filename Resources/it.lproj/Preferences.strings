@@ -17,7 +17,7 @@
 "273.title" = "Porta il cursore al campo successivo";
 
 /* List Text Size: */
-"325.title" = "Editor Esterno:";
+"325.title" = "Dimensione testo elenco:";
 
 /* Confirm note deletion */
 "327.title" = "Conferma cancellazione nota";
@@ -74,7 +74,7 @@
 "390.title" = "Font del corpo testo:";
 
 /* Set… */
-"391.title" = "Evidenziazione ricerca:";
+"391.title" = "Imposta…";
 
 /* Foreground Text: */
 "398.title" = "Testo in primo piano:";
@@ -83,10 +83,10 @@
 "402.title" = "Sfondo:";
 
 /* Search Highlight: */
-"416.title" = "Imposta…";
+"416.title" = "Evidenziazione ricerca:";
 
 /* External Editor: */
-"430.title" = "Taille";
+"430.title" = "Editor Esterno:";
 
 /* Use System Color */
 "nvU-sc-cel.title" = "Usa colore di sistema";

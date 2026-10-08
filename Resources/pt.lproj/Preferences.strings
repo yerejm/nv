@@ -17,7 +17,7 @@
 "273.title" = "Mover foco para próximo campo";
 
 /* List Text Size: */
-"325.title" = "Editor externo:";
+"325.title" = "Texto da lista:";
 
 /* Confirm note deletion */
 "327.title" = "Confirmar ao apagar notas";
@@ -81,6 +81,9 @@
 
 /* Search Highlight: */
 "416.title" = "Destacar Busca:";
+
+/* External Editor: */
+"430.title" = "Editor externo:";
 
 /* Use System Color */
 "nvU-sc-cel.title" = "Usar Cor do Sistema";

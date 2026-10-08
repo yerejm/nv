@@ -17,7 +17,7 @@
 "273.title" = "移动到下一焦点";
 
 /* List Text Size: */
-"325.title" = "外部编辑器:";
+"325.title" = "列表文字大小:";
 
 /* Confirm note deletion */
 "327.title" = "删除笔记时需确认";
@@ -84,6 +84,9 @@
 
 /* Search Highlight: */
 "416.title" = "搜索高亮:";
+
+/* External Editor: */
+"430.title" = "外部编辑器:";
 
 /* Use System Color */
 "nvU-sc-cel.title" = "使用系统颜色";

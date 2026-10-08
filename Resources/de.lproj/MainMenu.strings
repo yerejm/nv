@@ -143,10 +143,10 @@
 "396.title" = "Exportieren…";
 
 /* Format */
-"397.title" = "Lesezeichen";
+"397.title" = "Format";
 
 /* Format */
-"398.title" = "Lesezeichen";
+"398.title" = "Format";
 
 /* Close */
 "489.title" = "Schließen";
@@ -185,19 +185,19 @@
 "771.title" = "Löschen";
 
 /* Plain Text Style */
-"977.title" = "Item";
+"977.title" = "Einfacher Text";
 
 /* Tag */
 "994.title" = "Etikett";
 
 /* Bookmarks */
-"996.title" = "Format";
+"996.title" = "Lesezeichen";
 
 /* Bookmarks */
-"997.title" = "Format";
+"997.title" = "Lesezeichen";
 
 /* Item */
-"998.title" = "Einfacher Text";
+"998.title" = "Item";
 
 /* Paste as New Note */
 "1000.title" = "Einfügen als neue Notiz";
