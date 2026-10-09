@@ -11,6 +11,7 @@ Native macOS application, built with `Notation.xcodeproj` and the `Notation` sch
 - Find uses the system-wide find text shared with other apps and stays open when switching notes; with no note selected, Find Next and Find Previous select one first. Native spelling and substitution settings persist.
 - Desktop preferences control the Dock and menu bar icons. Click the menu bar icon to show or hide the note window; right-click for commands. Hiding the Dock enables the menu bar icon, and removing that icon restores the Dock.
 - Export format and filename are independent: filenames can use a custom extension or no extension, and changing the format only updates an extension that belongs to an export format. Installed Sublime Text 2, Byword and iA Writer are included in external editor discovery.
+- Notes in an encrypted database open in an ODB external editor from a RAM disk that NV creates for the first such edit and detaches when the last editor closes, the database changes or NV quits; notes larger than 8 MB are refused. The editor's own autosave, backup or session-restore copies are kept wherever the editor stores them and are not protected by this. Unencrypted notes use a private temporary folder.
 
 ## Repository layout
 

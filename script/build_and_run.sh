@@ -99,6 +99,10 @@ case "$RUN_MODE" in
             if ! /usr/bin/pgrep -x NVDevelopment >/dev/null; then break; fi
             sleep 1
         done
+        if /sbin/mount | /usr/bin/grep -qF " on $RUN_DATA/tmp/NVProtectedEditingSpace ("; then
+            echo "The external-editing RAM disk is still mounted after quitting." >&2
+            RUN_FAILED=1
+        fi
         /usr/bin/open -n "${RUN_ENV[@]}" --env NV_REOPEN_ACCEPTANCE=YES "$RUN_APP"
         for ((attempt=0; attempt<45; attempt++)); do
             if [[ -f "$RUN_DATA/reopen-result.json" ]]; then

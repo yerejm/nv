@@ -33,7 +33,8 @@ NSString * const ODBEditorFileName			= @"ODBEditorFileName";
 
 @interface ODBEditor(Private)
 
-- (NSString*)_nonexistingTemporaryPathForFilename:(NSString*)filename;
+- (NSString*)_nonexistingTemporaryPathForFilename:(NSString*)filename inDirectory:(NSString*)directory;
+- (void)_releaseEditingSpaceIfUnused;
 - (BOOL)_editFile:(NSString *)path inEditor:(ExternalEditor*)ed options:(NSDictionary *)options forClient:(id)client context:(NSDictionary *)context;
 - (void)handleModifiedFileEvent:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent;
 - (void)handleClosedFileEvent:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent;
@@ -74,7 +75,13 @@ static ODBEditor	*_sharedODBEditor;
 		NSAppleEventManager *appleEventManager = [NSAppleEventManager sharedAppleEventManager];
 		[appleEventManager setEventHandler: self andSelector: @selector(handleModifiedFileEvent:withReplyEvent:) forEventClass: kODBEditorSuite andEventID: kAEModifiedFile];
 		[appleEventManager setEventHandler: self andSelector: @selector(handleClosedFileEvent:withReplyEvent:) forEventClass: kODBEditorSuite andEventID: kAEClosedFile];
-				
+		
+		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationWillTerminate:) name:NSApplicationWillTerminateNotification object:nil];
+		
+		//spaces left by a crash may hold plaintext, but another running copy may still be using them
+		NSString *bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier];
+		if (!bundleIdentifier || [[NSRunningApplication runningApplicationsWithBundleIdentifier:bundleIdentifier] count] <= 1)
+			[TemporaryFileCachePreparer removeStaleEditingSpacesInDirectory:NSTemporaryDirectory()];
 	}
 	
 	return self;
@@ -84,25 +91,26 @@ static ODBEditor	*_sharedODBEditor;
 	NSAppleEventManager *appleEventManager = [NSAppleEventManager sharedAppleEventManager];
 	[appleEventManager removeEventHandlerForEventClass: kODBEditorSuite andEventID: kAEModifiedFile];
 	[appleEventManager removeEventHandlerForEventClass: kODBEditorSuite andEventID: kAEClosedFile];
+	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	[_filePathsBeingEdited release];
 	[editingSpacePreparer release];
 	[super dealloc];
 }
 
 - (void)initializeDatabase:(NotationPrefs*)prefs {
-	if (editingSpacePreparer) {
-		[editingSpacePreparer setDelegate:nil];
-		[editingSpacePreparer release];
+	TemporaryFileCachePreparer *preparer = [[TemporaryFileCachePreparer alloc] initWithNotationPrefs:prefs];
+	//settings are reapplied often; the current space is kept while its protection still matches
+	if (editingSpacePreparer && [editingSpacePreparer protectsContents] == [preparer protectsContents]) {
+		[preparer release];
+		return;
 	}
-	[(editingSpacePreparer = [[TemporaryFileCachePreparer alloc] init]) setDelegate:self];
-	[editingSpacePreparer prepEditingSpaceIfNecessaryForNotationPrefs:prefs];
+	[editingSpacePreparer releaseEditingSpaceWaiting:NO];
+	[editingSpacePreparer release];
+	editingSpacePreparer = preparer;
 }
 
-- (void)temporaryFileCachePreparerDidNotFinish:(TemporaryFileCachePreparer*)preparer {
-	NSLog(@"preparer failed");
-}
-- (void)temporaryFileCachePreparerFinished:(TemporaryFileCachePreparer*)preparer {
-	NSLog(@"finished: '%@'", [preparer preparedCachePath]);
+- (void)applicationWillTerminate:(NSNotification *)notification {
+	[editingSpacePreparer releaseEditingSpaceWaiting:YES];
 }
 
 - (void)abortAllEditingSessionsForClient:(id)client {
@@ -121,12 +129,11 @@ static ODBEditor	*_sharedODBEditor;
 	}
 	
 	[_filePathsBeingEdited removeObjectsForKeys: keysToRemove];
+	[self _releaseEditingSpaceIfUnused];
 }
 
 - (BOOL)editNote:(NoteObject*)aNote inEditor:(ExternalEditor*)ed context:(NSDictionary *)context {
 	if (!aNote) goto beepReturn;
-	
-	//see comments in -[TemporaryFileCachePreprer prepEditingSpaceIfNecessaryForNotationPrefs:]
 	
 	//let's first see if we can avoid this whole ODB protocol rigmarole altogether, and ideally even allow non-plain-text editors to be used		
 	if ([ed canEditNoteDirectly:aNote]) {
@@ -141,8 +148,8 @@ static ODBEditor	*_sharedODBEditor;
 	//weren't able to edit the note-file directly, so fall back to opening a copy of it using an ODB editor
 	//what if this editor is not an ODB editor? what if the path doesn't exist?
 	
-	if (![editingSpacePreparer preparedCachePath]) {
-		NSLog(@"not editing '%@' because temporary cache path was not initialized", aNote);
+	if (!editingSpacePreparer) {
+		NSLog(@"not editing '%@' because no database has initialized an editing space", aNote);
 		goto beepReturn;
 	}
 	if (![ed isODBEditor]) {
@@ -150,15 +157,29 @@ static ODBEditor	*_sharedODBEditor;
 		goto beepReturn;
 	}
 	
-	//now write aNote as text to path?
-	NSString *path = [self _nonexistingTemporaryPathForFilename:filenameOfNote(aNote)];	
-	NSError *error = nil;
-	if (![[[aNote contentString] string] writeToFile:path atomically:NO encoding:NSUTF8StringEncoding error:&error]) {
-		NSLog(@"not editing '%@' because it could not be written to '%@'", aNote, path);
-		goto beepReturn;
+	BOOL protectsContents = [editingSpacePreparer protectsContents];
+	if (protectsContents && [[[aNote contentString] string] lengthOfBytesUsingEncoding:NSUTF8StringEncoding] > [TemporaryFileCachePreparer largestProtectedNoteLength]) {
+		[TemporaryFileCachePreparer alertNoteTooLarge];
+		return NO;
 	}
 	
-	return [self _editFile:path inEditor:ed options:[NSDictionary dictionaryWithObject:titleOfNote(aNote) forKey:ODBEditorCustomPathKey] forClient:aNote context:context];
+	[editingSpacePreparer prepareEditingSpace:^(NSString *cachePath) {
+		if (!cachePath) {
+			if (protectsContents) [TemporaryFileCachePreparer alertProtectedSpaceUnavailable];
+			else NSBeep();
+			return;
+		}
+		NSString *path = [self _nonexistingTemporaryPathForFilename:filenameOfNote(aNote) inDirectory:cachePath];
+		NSError *error = nil;
+		if (![[[aNote contentString] string] writeToFile:path atomically:NO encoding:NSUTF8StringEncoding error:&error]) {
+			NSLog(@"not editing '%@' because it could not be written to '%@': %@", aNote, path, error);
+			NSBeep();
+			[self _releaseEditingSpaceIfUnused];
+			return;
+		}
+		[self _editFile:path inEditor:ed options:[NSDictionary dictionaryWithObject:titleOfNote(aNote) forKey:ODBEditorCustomPathKey] forClient:aNote context:context];
+	}];
+	return YES;
 beepReturn:
 	NSBeep();
 	return NO;
@@ -168,20 +189,22 @@ beepReturn:
 
 @implementation ODBEditor(Private)
 
-- (NSString*)_nonexistingTemporaryPathForFilename:(NSString*)filename {
+- (NSString*)_nonexistingTemporaryPathForFilename:(NSString*)filename inDirectory:(NSString*)directory {
 	unsigned int sTempFileSequence = 0;
 	NSString *path = nil;
 	NSString *basename = [filename stringByDeletingPathExtension];
 	NSFileManager *fileManager = [NSFileManager defaultManager];
 	
-	NSAssert([editingSpacePreparer preparedCachePath] != nil, @"cache path does not exist!");
-	
 	do {
 		path = sTempFileSequence++ ? [NSString stringWithFormat: @"%@ %03d.txt", basename, sTempFileSequence] : [basename stringByAppendingPathExtension:@"txt"];
-		path = [[editingSpacePreparer preparedCachePath] stringByAppendingPathComponent: path];
+		path = [directory stringByAppendingPathComponent: path];
 	} while ([fileManager fileExistsAtPath:path]);
 	
 	return path;
+}
+
+- (void)_releaseEditingSpaceIfUnused {
+	if (![_filePathsBeingEdited count]) [editingSpacePreparer releaseEditingSpaceWaiting:NO];
 }
 
 - (BOOL)_editFile:(NSString *)path inEditor:(ExternalEditor *)editor options:(NSDictionary *)options forClient:(id)client context:(NSDictionary *)context {
@@ -207,6 +230,8 @@ beepReturn:
         dispatch_async(dispatch_get_main_queue(), ^{
             if (error && [_filePathsBeingEdited objectForKey:path] == record) {
                 [_filePathsBeingEdited removeObjectForKey:path];
+                [[NSFileManager defaultManager] removeItemAtPath:path error:NULL];
+                [self _releaseEditingSpaceIfUnused];
                 NSLog(@"Could not open external editing session: %@", error);
                 NSBeep();
             }
@@ -263,6 +288,7 @@ beepReturn:
 	}
 	if (fileName)
 		[_filePathsBeingEdited removeObjectForKey: fileName];
+	[self _releaseEditingSpaceIfUnused];
 }
 
 @end

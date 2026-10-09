@@ -620,7 +620,6 @@ bail:
 		
 		[self synchronizeNotesFromDirectory];		
     }
-	//perform after delay because this could trigger the mounting of a RAM disk in a background  NSTask
 	[[ODBEditor sharedODBEditor] performSelector:@selector(initializeDatabase:) withObject:notationPrefs afterDelay:0.0];
 }
 

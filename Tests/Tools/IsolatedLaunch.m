@@ -27,6 +27,8 @@
 #import "TemporaryFileCachePreparer.h"
 #import "SecureTextEntryManager.h"
 #import "AcceptanceEditorSession.h"
+#import "NVAppKit.h"
+#import "ODBEditorSuite.h"
 #include <sys/mount.h>
 #include <dlfcn.h>
 #include <objc/runtime.h>
@@ -370,26 +372,86 @@ static void DeliverURLEvent(NSURL *url) {
     AEDisposeDesc(&reply);
 }
 
-static BOOL CheckEditingCache(BOOL encrypted) {
+static NSString *DeviceMountedAt(NSString *path) {
+    struct statfs volume;
+    char resolved[PATH_MAX];
+    if (!realpath(path.fileSystemRepresentation, resolved) || statfs(resolved, &volume) != 0 || strcmp(volume.f_mntonname, resolved)) return nil;
+    return [NSString stringWithFormat:@"%s:%s", volume.f_fstypename, volume.f_mntfromname];
+}
+
+static TemporaryFileCachePreparer *EditingSpacePreparer(void) {
+    return [[NSClassFromString(@"ODBEditor") sharedODBEditor] valueForKey:@"editingSpacePreparer"];
+}
+
+//editing spaces are created only when a note is edited externally
+static void CheckEditingCache(BOOL encrypted) {
     NSDate *limit = [NSDate dateWithTimeIntervalSinceNow:5];
-    TemporaryFileCachePreparer *preparer;
-    do {
-        Pump(0.05);
-        preparer = [[NSClassFromString(@"ODBEditor") sharedODBEditor] valueForKey:@"editingSpacePreparer"];
-    } while ((preparer.isPreparing || !preparer.preparedCachePath ||
-              (encrypted && ![preparer.preparedCachePath.lastPathComponent isEqualToString:@"NVProtectedEditingSpace"])) && limit.timeIntervalSinceNow > 0);
-    NSString *cache = preparer.preparedCachePath;
-    BOOL isolated = [cache hasPrefix:[acceptanceRoot stringByAppendingPathComponent:@"tmp/"]];
-    Check(@"temporary editing cache is isolated", isolated);
+    while (EditingSpacePreparer().protectsContents != encrypted && limit.timeIntervalSinceNow > 0) Pump(0.05);
+    TemporaryFileCachePreparer *preparer = EditingSpacePreparer();
+    NSString *protectedSpace = [acceptanceRoot stringByAppendingPathComponent:@"tmp/NVProtectedEditingSpace"];
     if (encrypted) {
-        struct statfs volume;
-        BOOL mounted = isolated && statfs(cache.fileSystemRepresentation, &volume) == 0 &&
-            strcmp(volume.f_mntonname, cache.stringByResolvingSymlinksInPath.fileSystemRepresentation) == 0 &&
-            strcmp(volume.f_fstypename, "hfs") == 0;
-        Check(@"encrypted external editing uses isolated RAM disk", mounted);
-        return mounted;
+        Check(@"encrypted external editing mounts no RAM disk until a note is edited", preparer.protectsContents &&
+              !preparer.preparedCachePath && !preparer.isPreparing && !DeviceMountedAt(protectedSpace));
+        return;
     }
-    return isolated;
+    __block NSString *cache = nil;
+    [preparer prepareEditingSpace:^(NSString *path) { cache = [path copy]; }];
+    Check(@"temporary editing cache is isolated", !preparer.protectsContents && [cache hasPrefix:[acceptanceRoot stringByAppendingPathComponent:@"tmp/"]]);
+    [preparer releaseEditingSpaceWaiting:YES];
+    Check(@"temporary editing cache is removed when released", cache && ![[NSFileManager defaultManager] fileExistsAtPath:cache]);
+    [cache release];
+}
+
+static void DeliverODBEvent(OSType eventID, NSString *path) {
+    NSAppleEventDescriptor *event = [NSAppleEventDescriptor appleEventWithEventClass:kODBEditorSuite eventID:eventID
+        targetDescriptor:[NSAppleEventDescriptor currentProcessDescriptor] returnID:kAutoGenerateReturnID transactionID:kAnyTransactionID];
+    [event setParamDescriptor:[NSAppleEventDescriptor descriptorWithFileURL:[NSURL fileURLWithPath:path]] forKeyword:keyDirectObject];
+    AppleEvent reply = {typeNull, NULL};
+    [[NSAppleEventManager sharedAppleEventManager] dispatchRawAppleEvent:event.aeDesc withRawReply:&reply handlerRefCon:0];
+    AEDisposeDesc(&reply);
+}
+
+//an ODB editor is stood in for by capturing the open request and answering with the editor suite's events
+static void CheckProtectedExternalEdit(NoteObject *note) {
+    NSURL *editorURL = [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:@"com.apple.TextEdit"];
+    ExternalEditor *editor = [[[NSClassFromString(@"ExternalEditor") alloc] initWithBundleID:@"com.barebones.bbedit" resolvedURL:editorURL] autorelease];
+    SEL selector = @selector(openApplicationAtURL:configuration:completionHandler:);
+    Method method = class_getInstanceMethod([NSWorkspace class], selector);
+    IMP original = method_getImplementation(method);
+    __block NSString *editedPath = nil;
+    IMP captured = imp_implementationWithBlock(^void(NSWorkspace *target, NSURL *applicationURL, NSWorkspaceOpenConfiguration *configuration,
+                                                     void (^completion)(NSRunningApplication *, NSError *)) {
+        NSAppleEventDescriptor *file = [[configuration.appleEvent paramDescriptorForKeyword:keyDirectObject] coerceToDescriptorType:typeFileURL];
+        editedPath = [[[NSURL URLWithString:[[[NSString alloc] initWithData:file.data encoding:NSUTF8StringEncoding] autorelease]] path] copy];
+    });
+    method_setImplementation(method, captured);
+    NSString *protectedSpace = [acceptanceRoot stringByAppendingPathComponent:@"tmp/NVProtectedEditingSpace"];
+    @try {
+        BOOL started = [[NSClassFromString(@"ODBEditor") sharedODBEditor] editNote:note inEditor:editor context:nil];
+        NSDate *limit = [NSDate dateWithTimeIntervalSinceNow:10];
+        while (!editedPath && limit.timeIntervalSinceNow > 0) Pump(0.05);
+        NSString *written = editedPath ? [NSString stringWithContentsOfFile:editedPath encoding:NSUTF8StringEncoding error:NULL] : nil;
+        Check(@"an encrypted note opens from an HFS RAM disk only it can read", started && editedPath &&
+              [[editedPath stringByDeletingLastPathComponent] isEqualToString:protectedSpace] &&
+              [DeviceMountedAt(protectedSpace) hasPrefix:@"hfs:"] &&
+              ([[[NSFileManager defaultManager] attributesOfItemAtPath:protectedSpace error:NULL] filePosixPermissions] & 0777) == 0700 &&
+              [written isEqualToString:note->contentString.string]);
+        if (!editedPath) return;
+        NSString *edited = [written stringByAppendingString:@"\nExternally edited while encrypted"];
+        [edited writeToFile:editedPath atomically:NO encoding:NSUTF8StringEncoding error:NULL];
+        DeliverODBEvent(kAEModifiedFile, editedPath);
+        Check(@"external edits to an encrypted note return to the note", [note->contentString.string isEqualToString:edited]);
+        DeliverODBEvent(kAEClosedFile, editedPath);
+        limit = [NSDate dateWithTimeIntervalSinceNow:10];
+        while (DeviceMountedAt(protectedSpace) && limit.timeIntervalSinceNow > 0) Pump(0.05);
+        Check(@"closing the external editor removes the note and detaches the RAM disk", editedPath &&
+              ![[NSFileManager defaultManager] fileExistsAtPath:editedPath] && !DeviceMountedAt(protectedSpace) &&
+              !EditingSpacePreparer().preparedCachePath);
+    } @finally {
+        method_setImplementation(method, original);
+        imp_removeBlock(captured);
+        [editedPath release];
+    }
 }
 
 static void RunReopenAcceptance(void) {
@@ -619,6 +681,7 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         NSDictionary *saved = @{@"keychainAccount": [NSString stringWithUTF8String:[notation.notationPrefs setKeychainIdentifier]]};
         [[NSJSONSerialization dataWithJSONObject:saved options:0 error:NULL] writeToFile:[acceptanceRoot stringByAppendingPathComponent:@"identity.json"] atomically:YES];
         CheckEditingCache(YES);
+        CheckProtectedExternalEdit(note);
         [app showPreferencesWindow:nil];
         Pump(0.1);
         Check(@"preferences window", [[NSApp windows] count] > 1);
@@ -736,6 +799,13 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         [[NSUserDefaults standardUserDefaults] setBool:YES forKey:@"FullScreenSwitchedLayout"];
         // Leaving full screen restores the frame the window was first shown with, so the size checked after reopen is set last.
         [window setFrame:NSMakeRect(window.frame.origin.x, window.frame.origin.y, 720, 520) display:YES];
+        // The runner checks that quitting detaches this space.
+        __block BOOL spaceReady = NO;
+        [EditingSpacePreparer() prepareEditingSpace:^(NSString *path) { spaceReady = path != nil; }];
+        NSDate *spaceLimit = [NSDate dateWithTimeIntervalSinceNow:10];
+        while (!spaceReady && spaceLimit.timeIntervalSinceNow > 0) Pump(0.05);
+        Check(@"an encrypted editing space can be left prepared at quit", spaceReady && EditingSpacePreparer().protectsContents &&
+              [DeviceMountedAt([acceptanceRoot stringByAppendingPathComponent:@"tmp/NVProtectedEditingSpace"]) hasPrefix:@"hfs:"]);
     } @catch (NSException *exception) {
         [checks addObject:@{@"check": @"runtime exception", @"passed": @NO, @"detail": exception.description}];
     }

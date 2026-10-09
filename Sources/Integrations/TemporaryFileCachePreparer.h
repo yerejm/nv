@@ -24,37 +24,29 @@
 
 @class NotationPrefs;
 
+//encrypted notes are edited externally only from a RAM disk, so their plaintext never reaches persistent storage;
+//other notes use a private temporary directory
 @interface TemporaryFileCachePreparer : NSObject {
-	
-	id delegate;
-
-	NotationPrefs *notationPrefs;	
-	BOOL startedPreparing;
-	NSTask *mountTask, *newfsTask, *attachTask;
+	NSString *directory;
+	BOOL protectsContents, preparing, releaseRequested;
 	NSString *deviceName, *preparedCachePath;
+	NSMutableArray *pendingCompletions;
 }
 
-- (void)prepEditingSpaceIfNecessaryForNotationPrefs:(NotationPrefs*)prefs;
-- (void)_attachRAMDiskOfCapacity:(NSUInteger)numberOfMegabytes;
-- (void)_buildHFSFileSystemOnDevice:(NSString*)aDeviceName;
-- (void)_mountHFSFileSystemOnDevice:(NSString*)aDeviceName;
-- (void)_launchTask:(NSTask*)task executable:(NSString*)path arguments:(NSArray*)arguments;
++ (NSUInteger)largestProtectedNoteLength;
++ (void)removeStaleEditingSpacesInDirectory:(NSString*)aDirectory;
++ (void)alertNoteTooLarge;
++ (void)alertProtectedSpaceUnavailable;
 
-- (BOOL)_createFolderAtPath:(NSString*)path;
+- (id)initWithNotationPrefs:(NotationPrefs*)prefs;
+- (id)initWithDirectory:(NSString*)aDirectory protectsContents:(BOOL)protects;
 
+- (BOOL)protectsContents;
 - (BOOL)isPreparing;
-- (void)_finishPreparationWithPath:(NSString*)aPath;
-- (void)_stopPreparation;
 - (NSString*)preparedCachePath;
-- (void)setDelegate:(id)aDelegate;
-- (id)delegate;
 
-@end
-
-
-@interface NSObject (TemporaryFileCachePreparerDelegate)
-
-- (void)temporaryFileCachePreparerDidNotFinish:(TemporaryFileCachePreparer*)preparer;
-- (void)temporaryFileCachePreparerFinished:(TemporaryFileCachePreparer*)preparer;
+//the completion runs on the main thread with the editing space's path, or nil if it could not be prepared
+- (void)prepareEditingSpace:(void (^)(NSString *path))completion;
+- (void)releaseEditingSpaceWaiting:(BOOL)wait;
 
 @end

@@ -573,3 +573,9 @@
 
 /* title of the alert shown when upgrading a database fails */
 "The database could not be upgraded." = "Não foi possível atualizar o banco de dados.";
+
+/* External editing of encrypted notes */
+"This note is too large to edit in an external editor." = "Esta nota é demasiado grande para ser editada num editor externo.";
+"Encrypted notes are edited from a protected space in memory, which holds notes of up to %d MB." = "As notas encriptadas são editadas a partir de um espaço protegido na memória, que aceita notas até %d MB.";
+"The protected editing space could not be created." = "Não foi possível criar o espaço de edição protegido.";
+"Encrypted notes are only edited externally from memory, so this note was not opened." = "As notas encriptadas só são editadas externamente a partir da memória, por isso esta nota não foi aberta.";

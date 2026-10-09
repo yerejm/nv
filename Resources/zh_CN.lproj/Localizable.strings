@@ -573,3 +573,9 @@
 
 /* title of the alert shown when upgrading a database fails */
 "The database could not be upgraded." = "无法升级数据库。";
+
+/* External editing of encrypted notes */
+"This note is too large to edit in an external editor." = "此笔记太大，无法在外部编辑器中编辑。";
+"Encrypted notes are edited from a protected space in memory, which holds notes of up to %d MB." = "加密笔记在内存中的受保护空间里编辑，该空间最多可容纳 %d MB 的笔记。";
+"The protected editing space could not be created." = "无法创建受保护的编辑空间。";
+"Encrypted notes are only edited externally from memory, so this note was not opened." = "加密笔记只能从内存中进行外部编辑，因此未打开此笔记。";

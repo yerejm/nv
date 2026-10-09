@@ -24,256 +24,224 @@
 #import "NotationPrefs.h"
 #include <sys/mount.h>
 
-//used to mount a RAM disk for temporary file editing
-//instances of this class are probably not useful for more than one preparation
-//(which probably wouldn't be necessary anyway as RAM disks can't be unmounted)
+static NSString *const ProtectedSpaceName = @"NVProtectedEditingSpace";
+static NSString *const PlainSpaceName = @"NVPlainTextEditingSpace";
+static const NSUInteger LargestProtectedNoteBytes = 8 * 1024 * 1024;
+//editors that save atomically briefly need a second copy, and HFS+ needs room for its own structures
+static const NSUInteger RAMDiskBytes = 2 * LargestProtectedNoteBytes + 4 * 1024 * 1024;
 
 @implementation TemporaryFileCachePreparer
 
-static BOOL MountPointExists(const char *expectedMountPath);
-static NSString *RAMDiskMountPath(void);
-static NSString *TempDirectoryPathForEditing(void);
+//mounting and detaching run in order on one queue, so a new disk is never mounted over one still being detached
+static dispatch_queue_t EditingSpaceQueue(void) {
+	static dispatch_queue_t queue;
+	static dispatch_once_t once;
+	dispatch_once(&once, ^{ queue = dispatch_queue_create("net.notational.velocity.editing-space", DISPATCH_QUEUE_SERIAL); });
+	return queue;
+}
 
-- (id)init {
-	if ((self = [super init])) {
-		
-		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskTerminated:) 
-													 name:NSTaskDidTerminateNotification object:nil];
+static NSString *RunTool(NSString *path, NSArray *arguments, int *status) {
+	NSTask *task = [[[NSTask alloc] init] autorelease];
+	NSPipe *output = [NSPipe pipe];
+	[task setExecutableURL:[NSURL fileURLWithPath:path]];
+	[task setArguments:arguments];
+	[task setStandardOutput:output];
+	[task setStandardError:[NSFileHandle fileHandleWithNullDevice]];
+	NSError *error = nil;
+	if (![task launchAndReturnError:&error]) {
+		NSLog(@"couldn't launch %@: %@", path, [error localizedDescription]);
+		*status = -1;
+		return nil;
 	}
-	
+	NSData *data = [[output fileHandleForReading] readDataToEndOfFileAndReturnError:NULL];
+	[task waitUntilExit];
+	*status = [task terminationStatus];
+	return data ? [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease] : nil;
+}
+
+static NSString *DeviceMountedAt(NSString *path) {
+	char resolved[PATH_MAX];
+	if (!realpath([path fileSystemRepresentation], resolved)) return nil;
+	struct statfs *mounts;
+	int count = getmntinfo(&mounts, MNT_NOWAIT);
+	for (int i = 0; i < count; i++) {
+		if (!strcmp(resolved, mounts[i].f_mntonname)) return [NSString stringWithUTF8String:mounts[i].f_mntfromname];
+	}
+	return nil;
+}
+
+//the volume is mounted with mount(8), outside Disk Arbitration, so hdiutil cannot eject it until it is unmounted
+static BOOL DetachDevice(NSString *device, NSString *mountPath) {
+	int status = 0;
+	if ([DeviceMountedAt(mountPath) isEqualToString:device]) {
+		RunTool(@"/sbin/umount", @[mountPath], &status);
+		if (status) RunTool(@"/sbin/umount", @[@"-f", mountPath], &status);
+	}
+	RunTool(@"/usr/bin/hdiutil", @[@"detach", device], &status);
+	if (status) RunTool(@"/usr/bin/hdiutil", @[@"detach", @"-force", device], &status);
+	if (status) NSLog(@"couldn't detach the editing RAM disk %@", device);
+	return status == 0;
+}
+
+static BOOL CreatePrivateDirectory(NSString *path) {
+	NSError *error = nil;
+	NSDictionary *privateAccess = @{NSFilePosixPermissions: @0700};
+	BOOL isDirectory = NO;
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	BOOL ready = [fileManager fileExistsAtPath:path isDirectory:&isDirectory] && isDirectory ?
+		[fileManager setAttributes:privateAccess ofItemAtPath:path error:&error] :
+		[fileManager createDirectoryAtPath:path withIntermediateDirectories:NO attributes:privateAccess error:&error];
+	if (!ready) NSLog(@"couldn't create directory '%@': %@", path, [error localizedDescription]);
+	return ready;
+}
+
+//returns the device of a newly mounted RAM disk, or nil after cleaning up a partial attempt
+static NSString *MountRAMDisk(NSString *mountPath) {
+	int status = 0;
+	NSString *output = RunTool(@"/usr/bin/hdiutil", @[@"attach", @"-nomount", @"-nobrowse",
+		[NSString stringWithFormat:@"ram://%lu", (unsigned long)(RAMDiskBytes / 512)]], &status);
+	NSString *device = [[output componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] firstObject];
+	if (status || ![device hasPrefix:@"/dev/"]) {
+		NSLog(@"couldn't attach a RAM disk for editing");
+		return nil;
+	}
+	RunTool(@"/sbin/newfs_hfs", @[@"-v", ProtectedSpaceName, device], &status);
+	if (!status && CreatePrivateDirectory(mountPath)) {
+		RunTool(@"/sbin/mount", @[@"-t", @"hfs", @"-o", @"nobrowse", device, mountPath], &status);
+		//the new volume's root replaces the mount point's permissions
+		if (!status && [DeviceMountedAt(mountPath) isEqualToString:device] && CreatePrivateDirectory(mountPath)) return device;
+	}
+	NSLog(@"couldn't prepare the editing RAM disk %@", device);
+	DetachDevice(device, mountPath);
+	return nil;
+}
+
++ (NSUInteger)largestProtectedNoteLength {
+	return LargestProtectedNoteBytes;
+}
+
++ (void)removeStaleEditingSpacesInDirectory:(NSString*)aDirectory {
+	NSString *mountPath = [aDirectory stringByAppendingPathComponent:ProtectedSpaceName];
+	dispatch_sync(EditingSpaceQueue(), ^{
+		NSString *device = DeviceMountedAt(mountPath);
+		if (device) DetachDevice(device, mountPath);
+	});
+	NSFileManager *fileManager = [NSFileManager defaultManager];
+	[fileManager removeItemAtPath:[aDirectory stringByAppendingPathComponent:PlainSpaceName] error:NULL];
+	if (!DeviceMountedAt(mountPath)) [fileManager removeItemAtPath:mountPath error:NULL];
+}
+
++ (void)alertNoteTooLarge {
+	NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"This note is too large to edit in an external editor.", @"alert title when an encrypted note exceeds the protected editing space"),
+			   NVFormatCount(NSLocalizedString(@"Encrypted notes are edited from a protected space in memory, which holds notes of up to %d MB.", @"alert message when an encrypted note exceeds the protected editing space"),
+							 [self largestProtectedNoteLength] / (1024 * 1024)), NSLocalizedString(@"OK", nil), nil, nil);
+}
+
++ (void)alertProtectedSpaceUnavailable {
+	NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"The protected editing space could not be created.", @"alert title when the RAM disk for editing encrypted notes fails"),
+			   NSLocalizedString(@"Encrypted notes are only edited externally from memory, so this note was not opened.", @"alert message when the RAM disk for editing encrypted notes fails"),
+			   NSLocalizedString(@"OK", nil), nil, nil);
+}
+
+- (id)initWithNotationPrefs:(NotationPrefs*)prefs {
+	NSAssert(prefs != nil, @"prefs are nil");
+	return [self initWithDirectory:NSTemporaryDirectory() protectsContents:[prefs notesStorageFormat] == SingleDatabaseFormat &&
+			[prefs doesEncryption] && ![[NSUserDefaults standardUserDefaults] boolForKey:@"UseInsecureTempEditing"]];
+}
+
+- (id)initWithDirectory:(NSString*)aDirectory protectsContents:(BOOL)protects {
+	if ((self = [super init])) {
+		directory = [aDirectory copy];
+		protectsContents = protects;
+		pendingCompletions = [[NSMutableArray alloc] init];
+	}
 	return self;
 }
 
 - (void)dealloc {
-	[[NSNotificationCenter defaultCenter] removeObserver:self];
+	[directory release];
+	[deviceName release];
+	[preparedCachePath release];
+	[pendingCompletions release];
 	[super dealloc];
 }
 
-static BOOL MountPointExists(const char *expectedMountPath) {
-	struct statfs *buf;
-	
-	int i, numMounts = getmntinfo(&buf, MNT_NOWAIT);
-	if (!numMounts) return NO;
-	
-	char absExpectedMountPath[PATH_MAX];	
-	if (!realpath(expectedMountPath, absExpectedMountPath)) {
-		NSLog(@"error getting realpath from path '%s': %d", expectedMountPath, errno);
-		return NO;
-	}
-	
-	for (i=0; i<numMounts; ++i) {
-		if (!strcmp(absExpectedMountPath, buf[i].f_mntonname)) {
-			return YES;
-		}
-	}
-	
-	return NO;
-}
-
-static NSString *RAMDiskMountPath(void) {
-	return [NSTemporaryDirectory() stringByAppendingPathComponent:@"NVProtectedEditingSpace"];
-}
-
-static NSString *TempDirectoryPathForEditing(void) {
-	return [NSTemporaryDirectory() stringByAppendingPathComponent:@"NVPlainTextEditingSpace"];
-}
-
-- (void)prepEditingSpaceIfNecessaryForNotationPrefs:(NotationPrefs*)prefs {
-	
-	NSAssert(prefs != nil, @"prefs are nil");
-	
-	if ([self isPreparing]) {
-		NSLog(@"prepEditingSpaceIfNecessary: already preparing");
-		return;
-	}
-	
-	[notationPrefs release];
-	notationPrefs = [prefs retain];
-	
-	/*
-		single-DB with encryption: use a mounted RAM disk
-		single-DB without encryption: use temp directory
-		plain text files: just use files directly
-		rich text files: use temp directory
-		HTML files: use temp directory
-	
-		ODBEditor will decide based on each specific file whether to open it directly
-		e.g., if it's a plain text file in plain-text-mode, or if the editor supports RTF/HTML
-	*/
-	
-	if ([prefs notesStorageFormat] != SingleDatabaseFormat || ![prefs doesEncryption] || 
-		[[NSUserDefaults standardUserDefaults] boolForKey:@"UseInsecureTempEditing"]) {
-		if ([self _createFolderAtPath:TempDirectoryPathForEditing()]) {
-			[self _finishPreparationWithPath:TempDirectoryPathForEditing()];
-		} else {
-			[self _stopPreparation];
-		}
-		return;
-	}
-	
-	if (MountPointExists([RAMDiskMountPath() fileSystemRepresentation])) {
-		[self _finishPreparationWithPath:RAMDiskMountPath()];
-		return;
-	}
-		
-	NSAssert(preparedCachePath == nil, @"preparedCachePath was already set");
-	
-	startedPreparing = YES;
-	
-	//now do a callback-chained hdiutil attach, newfs_hfs, and mount -t at RAMDiskMountPath()
-	
-	[self _attachRAMDiskOfCapacity:2];
-}
-
-- (void)_attachRAMDiskOfCapacity:(NSUInteger)numberOfMegabytes {
-	NSAssert(attachTask == nil, @"attachTask was already used!");
-	NSAssert(numberOfMegabytes > 0 && numberOfMegabytes < 100, @"unreasonable capacity requested");
-
-	attachTask = [NSTask new];
-	[attachTask setStandardOutput:[NSPipe pipe]];
-	[self _launchTask:attachTask executable:@"/usr/bin/hdiutil" arguments:[NSArray arrayWithObjects:@"attach", @"-nomount", @"-nobrowse", [NSString stringWithFormat:@"ram://%lu", (unsigned long)(2 * 1024 * numberOfMegabytes)], nil]];
-}
-
-- (void)_buildHFSFileSystemOnDevice:(NSString*)aDeviceName {
-	NSAssert(newfsTask == nil, @"newfsTask was already used!");
-	NSAssert(aDeviceName != nil, @"no device name passed");
-	
-	newfsTask = [NSTask new];
-	[self _launchTask:newfsTask executable:@"/sbin/newfs_hfs" arguments:[NSArray arrayWithObjects:@"-v", [RAMDiskMountPath() lastPathComponent], aDeviceName, nil]];
-}
-
-- (void)_mountHFSFileSystemOnDevice:(NSString*)aDeviceName {
-	NSAssert(mountTask == nil, @"mountTask was already used!");
-	NSAssert(aDeviceName != nil, @"no device name passed");
-	
-	mountTask = [NSTask new];
-	[self _launchTask:mountTask executable:@"/sbin/mount" arguments:[NSArray arrayWithObjects:@"-t", @"hfs", @"-o", @"nobrowse", aDeviceName, RAMDiskMountPath(), nil]];
-}
-
-- (void)_launchTask:(NSTask*)task executable:(NSString*)path arguments:(NSArray*)arguments {
-	[task setExecutableURL:[NSURL fileURLWithPath:path]];
-	[task setArguments:arguments];
-	
-	//balanced in taskTerminated:, which is never called for a task that did not launch
-	[self retain];
-	NSError *error = nil;
-	if (![task launchAndReturnError:&error]) {
-		NSLog(@"couldn't launch %@: %@", path, [error localizedDescription]);
-		[self autorelease];
-		[self _stopPreparation];
-	}
+- (BOOL)protectsContents {
+	return protectsContents;
 }
 
 - (BOOL)isPreparing {
-	return startedPreparing;
+	return preparing;
 }
 
 - (NSString*)preparedCachePath {
 	return preparedCachePath;
 }
 
-- (void)_finishPreparationWithPath:(NSString*)aPath {
-	//funnel for the success delegate method
-	
-	NSAssert(preparedCachePath == nil, @"preparedCachePath already set?");
-	preparedCachePath = [aPath retain];
-	
-	startedPreparing = NO;
-	
-	[delegate temporaryFileCachePreparerFinished:self];
+- (NSString*)_spacePath {
+	return [directory stringByAppendingPathComponent:protectsContents ? ProtectedSpaceName : PlainSpaceName];
 }
 
-- (void)_stopPreparation {
-
-	startedPreparing = NO;
-
-	[delegate temporaryFileCachePreparerDidNotFinish:self];
-}
-
-- (void)setDelegate:(id)aDelegate {
-	if (aDelegate) {
-		NSAssert([aDelegate respondsToSelector:@selector(temporaryFileCachePreparerDidNotFinish:)], @"delegate is bad (1)");
-		NSAssert([aDelegate respondsToSelector:@selector(temporaryFileCachePreparerFinished:)], @"delegate is bad (2)");
+- (void)prepareEditingSpace:(void (^)(NSString *path))completion {
+	if (preparedCachePath) {
+		completion(preparedCachePath);
+		return;
 	}
-	delegate = aDelegate;
-}
-- (id)delegate {
-	return delegate;
-}
-
-- (BOOL)_createFolderAtPath:(NSString*)path {
-	NSError *err = nil;
-	NSFileManager *fileMan = [NSFileManager defaultManager];
-	BOOL isDirectory = NO, didCreate = ([fileMan fileExistsAtPath:path isDirectory:&isDirectory] && isDirectory) ? YES : 
-	[fileMan createDirectoryAtPath:path withIntermediateDirectories:NO attributes:
-	 [NSDictionary dictionaryWithObject:[NSNumber numberWithUnsignedLong:0700] forKey:NSFilePosixPermissions] error:&err];
-	if (!didCreate) NSLog(@"couldn't create directory '%@': %@", path, (err ? [err localizedDescription] : @"(unknown error)"));
-	return didCreate;
-}
-
-- (void)taskTerminated:(NSNotification *)aNotification {
-
-	if (startedPreparing) {
-		NSTask *task = [aNotification object];
-		
-		if (task == attachTask || task == newfsTask || task == mountTask) {
-			//each launched task retains self, so as long as each task triggers this method, then each retain should be balanced with an autorelease
-			[self autorelease];
-			
-			if ([task terminationStatus]) {
-				//assume an exit status of 0 means success
-				[self _stopPreparation];
-				return;
-			}
-		}
-		
-		if (task == attachTask) {
-			//read deviceName and store in ivar
-			//start newfs task
-			
-			NSData	*outData = [[[attachTask standardOutput] fileHandleForReading] readDataToEndOfFileAndReturnError:NULL];
-			if (outData) {
-				NSString *outString = [[[NSString alloc] initWithData:outData encoding:NSUTF8StringEncoding] autorelease];
-				
-				[[NSScanner scannerWithString:outString] scanUpToCharactersFromSet:
-				 [NSCharacterSet whitespaceAndNewlineCharacterSet] intoString:&deviceName];
-				if (!deviceName) deviceName = [outString retain];
-			}
-			if (![deviceName length]) {
-				NSLog(@"couldn't get device name from hdiutil attach");
-				[self _stopPreparation];
-			} else {
-				[self _buildHFSFileSystemOnDevice:deviceName];
-			}
-		}
-		
-		if (task == newfsTask) {
-			//make directory and set permissions
-			if (![self _createFolderAtPath:RAMDiskMountPath()]) {
-				[self _stopPreparation];
-			} else {
-				//start mount task
-				[self _mountHFSFileSystemOnDevice:deviceName];
-			}
-		}
-
-		if (task == mountTask) {
-			//return newly initialized path to delegate, after verifying
-			
-			NSString *path = RAMDiskMountPath();
-			if (MountPointExists([path fileSystemRepresentation])) {
-				[self _finishPreparationWithPath:path];
-			} else {
-				NSLog(@"the RAM disk somehow does not exist!");
-				[self _stopPreparation];
-			}
-		}
-		
-	} else {
-		//don't bother doing anything unless we're actually expecting one of this instance's tasks to complete
+	if (!protectsContents) {
+		if (CreatePrivateDirectory([self _spacePath])) preparedCachePath = [[self _spacePath] retain];
+		completion(preparedCachePath);
+		return;
 	}
+	[pendingCompletions addObject:[[completion copy] autorelease]];
+	releaseRequested = NO;
+	if (preparing) return;
+	preparing = YES;
+	NSString *mountPath = [self _spacePath];
+	dispatch_async(EditingSpaceQueue(), ^{
+		NSString *device = MountRAMDisk(mountPath);
+		dispatch_async(dispatch_get_main_queue(), ^{
+			[self _finishPreparationWithDevice:device];
+		});
+	});
 }
 
+- (void)_finishPreparationWithDevice:(NSString*)device {
+	preparing = NO;
+	if (releaseRequested) {
+		//edits requested before the release are abandoned along with the space
+		[pendingCompletions removeAllObjects];
+		NSString *mountPath = [self _spacePath];
+		if (device) dispatch_async(EditingSpaceQueue(), ^{
+			if (DetachDevice(device, mountPath)) [[NSFileManager defaultManager] removeItemAtPath:mountPath error:NULL];
+		});
+		return;
+	}
+	if (device) {
+		deviceName = [device copy];
+		preparedCachePath = [[self _spacePath] retain];
+	}
+	NSArray *completions = [[pendingCompletions copy] autorelease];
+	[pendingCompletions removeAllObjects];
+	for (void (^completion)(NSString *) in completions) completion(preparedCachePath);
+}
 
+- (void)releaseEditingSpaceWaiting:(BOOL)wait {
+	if (preparing) releaseRequested = YES;
+	[preparedCachePath release];
+	preparedCachePath = nil;
+	if (!protectsContents) {
+		[[NSFileManager defaultManager] removeItemAtPath:[self _spacePath] error:NULL];
+		return;
+	}
+	NSString *device = [deviceName autorelease];
+	deviceName = nil;
+	NSString *mountPath = [self _spacePath];
+	//with no disk of its own, waiting still lets an abandoned preparation finish detaching
+	void (^detach)(void) = ^{
+		if (device && DetachDevice(device, mountPath)) [[NSFileManager defaultManager] removeItemAtPath:mountPath error:NULL];
+	};
+	if (wait) dispatch_sync(EditingSpaceQueue(), detach);
+	else dispatch_async(EditingSpaceQueue(), detach);
+}
 
 @end
