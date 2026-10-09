@@ -292,9 +292,6 @@ static void *NVEffectiveAppearanceContext = &NVEffectiveAppearanceContext;
 
 - (void)applicationDidFinishLaunching:(NSNotification*)aNote {
 	
-	//on tiger dualfield is often not ready to add tracking tracks until this point:
-	[field setTrackingRect];
-	
     NSDate *before = [NSDate date];
 	prefsWindowController = [[PrefsWindowController alloc] init];
 	

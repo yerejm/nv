@@ -309,16 +309,23 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 	followedLinks = [[NSMutableArray alloc] init];
 }
 
-- (void)setTrackingRect {
-	if (!docIconRectTag)
-		docIconRectTag = [self addTrackingRect:[[self cell] snapbackButtonRectForBounds:[self bounds]] 
-										 owner:self userData:NULL assumeInside:NO];	
+- (void)updateTrackingAreas {
+	if (docIconTrackingArea) {
+		[self removeTrackingArea:docIconTrackingArea];
+		[docIconTrackingArea release];
+	}
+	docIconTrackingArea = [[NSTrackingArea alloc] initWithRect:[[self cell] snapbackButtonRectForBounds:[self bounds]]
+													   options:NSTrackingMouseEnteredAndExited | NSTrackingActiveInKeyWindow
+														 owner:self userInfo:nil];
+	[self addTrackingArea:docIconTrackingArea];
+	[super updateTrackingAreas];
 }
 
 - (void)dealloc {
 	[snapbackString release];
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	[followedLinks release];
+	[docIconTrackingArea release];
 	
 	[super dealloc];
 }
@@ -352,15 +359,17 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 }
 
 - (void)mouseEntered:(NSEvent *)theEvent {
-	if ([theEvent trackingNumber] == docIconRectTag) {
+	if ([theEvent trackingArea] == docIconTrackingArea) {
 		[[self cell] setShowsSnapbackButton:[self showsDocumentIcon]];
 	} else {
-		NSLog(@"got mouse entered on a different tracking number: %ld", (long)[theEvent trackingNumber]);
+		[super mouseEntered:theEvent];
 	}
 }
 - (void)mouseExited:(NSEvent *)theEvent {
-	if ([theEvent trackingNumber] == docIconRectTag) {
+	if ([theEvent trackingArea] == docIconTrackingArea) {
 		[[self cell] setShowsSnapbackButton:NO];
+	} else {
+		[super mouseExited:theEvent];
 	}
 }
 

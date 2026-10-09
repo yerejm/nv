@@ -48,7 +48,7 @@ enum { BUTTON_HIDDEN, BUTTON_NORMAL, BUTTON_PRESSED };
 	NSString *snapbackString;
 	
 	NSToolTipTag docIconTag, textAreaTag, clearButtonTag;
-	NSTrackingRectTag docIconRectTag;
+	NSTrackingArea *docIconTrackingArea;
 	
 	BOOL showsDocumentIcon;
 	
@@ -57,8 +57,6 @@ enum { BUTTON_HIDDEN, BUTTON_NORMAL, BUTTON_PRESSED };
 	
 	NSCursor *IBeamCursor;
 }
-
-- (void)setTrackingRect;
 
 - (void)setShowsDocumentIcon:(BOOL)showsIcon;
 - (BOOL)showsDocumentIcon;
