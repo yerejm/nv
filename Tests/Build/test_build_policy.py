@@ -80,8 +80,10 @@ class BuildPolicyTests(unittest.TestCase):
         with (ROOT / 'Configuration/Info.plist').open('rb') as source:
             info = plistlib.load(source)
         self.assertEqual(info['LSMinimumSystemVersion'], '15.0')
-        self.assertEqual(info.get('LSArchitecturePriority'), ['arm64'])
-        self.assertNotIn('LSMinimumSystemVersionByArchitecture', info)
+        self.assertEqual(info['CFBundleDevelopmentRegion'], 'en')
+        for key in ['LSArchitecturePriority', 'LSMinimumSystemVersionByArchitecture', 'CFBundleGetInfoString',
+                    'CFBundleSignature', 'SmartCrashReports_CompanyName', 'SmartCrashReports_EmailTicket']:
+            self.assertNotIn(key, info)
 
     def test_no_openssl_build_dependency(self):
         project = (ROOT / 'Notation.xcodeproj/project.pbxproj').read_text()

@@ -26,7 +26,7 @@
 @implementation UnifiedCell
 
 - (id)init {
-	if ([super init]) {
+	if ((self = [super init])) {
 
 		[self setTruncatesLastVisibleLine:YES];
 		[self setEditable:YES];

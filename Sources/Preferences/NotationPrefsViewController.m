@@ -56,7 +56,7 @@
 }
 
 - (id)init {
-    if ([super init]) {
+    if ((self = [super init])) {
 		didAwakeFromNib = NO;
 		notationPrefs = [[[GlobalPrefs defaultPrefs] notationPrefs] retain];
 		

@@ -11,6 +11,7 @@
 - (BOOL)isActive { return self.active; }
 - (void)hide:(id)sender { self.hides++; }
 - (void)activateIgnoringOtherApps:(BOOL)force { self.activations++; }
+- (void)activate { self.activations++; }
 @end
 @interface ActivationWindow : NSObject
 @property(nonatomic) BOOL main;

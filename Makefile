@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := debug
-.PHONY: debug release test clean
+.PHONY: debug release test deprecations clean
 .NOTPARALLEL:
 
 XCODEBUILD ?= /usr/bin/xcodebuild
@@ -19,6 +19,9 @@ test:
 	./script/test.sh
 	./script/test_native.sh
 	/usr/bin/python3 Tests/Build/test_build_policy.py
+
+deprecations:
+	./script/check_deprecations.sh
 
 clean:
 	rm -rf -- build

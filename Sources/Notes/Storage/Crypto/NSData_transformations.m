@@ -250,7 +250,7 @@ static NSURL *NVResolveBookmark(NSData *data, NSURLBookmarkResolutionOptions opt
 
 + (NSData*)uncachedDataFromFile:(NSString*)filename {
 			
-	return [NSData dataWithContentsOfFile:filename options:NSUncachedRead error:NULL];
+	return [NSData dataWithContentsOfFile:filename options:NSDataReadingUncached error:NULL];
 }
 
 + (NSData *)aliasDataForFSRef:(NVFileReference *)ref {

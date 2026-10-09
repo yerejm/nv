@@ -35,15 +35,16 @@
 }
 
 - (id)initWithCoder:(id)decoder {
-	[super init];
+	if (!(self = [super init]))
+		return nil;
 	
 	//the window fields are only read past to reach the dates
 	int windowFlags, windowColor;
 	NSRect32 windowFrame;
 	mRTFDData = [[decoder decodeObject] retain];
-	[decoder decodeValueOfObjCType:@encode(int) at:&windowFlags];
-	[decoder decodeValueOfObjCType:"{_NSRect={_NSPoint=ff}{_NSSize=ff}}" at:&windowFrame];
-	[decoder decodeValueOfObjCType:@encode(int) at:&windowColor];
+	[decoder decodeValueOfObjCType:@encode(int) at:&windowFlags size:sizeof(windowFlags)];
+	[decoder decodeValueOfObjCType:"{_NSRect={_NSPoint=ff}{_NSSize=ff}}" at:&windowFrame size:sizeof(windowFrame)];
+	[decoder decodeValueOfObjCType:@encode(int) at:&windowColor size:sizeof(windowColor)];
 	mCreationDate = [[decoder decodeObject] retain];
 	mModificationDate = [[decoder decodeObject] retain];
 	

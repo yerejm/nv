@@ -51,7 +51,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 
 
 - (id)init {
-    if ([super init]) {
+    if ((self = [super init])) {
 		allowedTypes = NULL;
 		
 		unsigned int i;
@@ -88,7 +88,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 }
 
 - (id)initWithCoder:(NSCoder*)decoder {
-    if ([super init]) {
+    if ((self = [super init])) {
 		NSAssert([decoder allowsKeyedCoding], @"Keyed decoding only!");
 		
 		//if we're initializing from an archive, we've obviously been run at least once before

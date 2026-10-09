@@ -438,8 +438,8 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 + (NSString*)reasonStringFromCarbonFSError:(OSStatus)err {
 	static NSDictionary *reasons = nil;
 	if (!reasons) {
-		NSString *path = [[NSBundle mainBundle] pathForResource:@"CarbonErrorStrings" ofType:@"plist"];
-		reasons = [[NSDictionary dictionaryWithContentsOfFile:path] retain];
+		NSURL *url = [[NSBundle mainBundle] URLForResource:@"CarbonErrorStrings" withExtension:@"plist"];
+		if (url) reasons = [[NSDictionary dictionaryWithContentsOfURL:url error:NULL] retain];
 	}
 	
 	NSString *reason = [reasons objectForKey:[[NSNumber numberWithInt:(int)err] stringValue]];
@@ -496,7 +496,7 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 + (NSMutableString*)newShortLivedStringFromFile:(NSString*)filename {
 	NSStringEncoding anEncoding = NSMacOSRomanStringEncoding; //won't use this, doesn't matter
 	
-	return [self newShortLivedStringFromData:[NSMutableData dataWithContentsOfFile:filename options:NSUncachedRead error:NULL] 
+	return [self newShortLivedStringFromData:[NSMutableData dataWithContentsOfFile:filename options:NSDataReadingUncached error:NULL] 
 						   ofGuessedEncoding:&anEncoding withPath:[filename fileSystemRepresentation] orWithFSRef:NULL];
 }
 

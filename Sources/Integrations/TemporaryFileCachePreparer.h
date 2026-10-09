@@ -38,6 +38,7 @@
 - (void)_attachRAMDiskOfCapacity:(NSUInteger)numberOfMegabytes;
 - (void)_buildHFSFileSystemOnDevice:(NSString*)aDeviceName;
 - (void)_mountHFSFileSystemOnDevice:(NSString*)aDeviceName;
+- (void)_launchTask:(NSTask*)task executable:(NSString*)path arguments:(NSArray*)arguments;
 
 - (BOOL)_createFolderAtPath:(NSString*)path;
 

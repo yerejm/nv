@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
-	<string>English</string>
+	<string>en</string>
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
@@ -131,8 +131,6 @@
 	</array>
 	<key>CFBundleExecutable</key>
 	<string>Notational Velocity</string>
-	<key>CFBundleGetInfoString</key>
-	<string>Based on 2.0 β5, Copyright © 2011 Zachary Schneirov, All Rights Reserved.</string>
 	<key>CFBundleIconFile</key>
 	<string>Notality</string>
 	<key>CFBundleIdentifier</key>
@@ -143,8 +141,6 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
-	<key>CFBundleSignature</key>
-	<string>N†l√</string>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -160,10 +156,6 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
-	<key>LSArchitecturePriority</key>
-	<array>
-		<string>arm64</string>
-	</array>
 	<key>LSMinimumSystemVersion</key>
 	<string>15.0</string>
 	<key>NSAppleEventsUsageDescription</key>
@@ -205,9 +197,5 @@
 	</array>
 	<key>OSAScriptingDefinition</key>
 	<string>Notation.sdef</string>
-	<key>SmartCrashReports_CompanyName</key>
-	<string>Notational.net</string>
-	<key>SmartCrashReports_EmailTicket</key>
-	<string>SCR-51ED0F7B2A</string>
 </dict>
 </plist>

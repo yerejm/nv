@@ -26,7 +26,7 @@
 
 
 - (id)init {
-	if ([super init]) {
+	if ((self = [super init])) {
 		[self setNumberOfTickMarks:10];
 		[self setMinValue:0.05];
 		[self setMaxValue:4.0];
@@ -67,7 +67,7 @@
 }
 
 - (id)initWithCoder:(NSCoder *)decoder {
-	if ([super initWithCoder:decoder]) {
+	if ((self = [super initWithCoder:decoder])) {
 		[KeyDerivationDelaySlider setCellClass:[KeyDerivationDelaySliderCell class]];
 		NSCell *myCell = [[[KeyDerivationDelaySliderCell alloc] init] autorelease];
 		[myCell setAction:[[self cell] action]];

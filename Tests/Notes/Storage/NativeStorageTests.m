@@ -15,6 +15,7 @@
 #import "BlorPasswordRetriever.h"
 #import "ODBEditor.h"
 #import "ODBEditorSuite.h"
+#import "AlienNoteImporter.h"
 
 @interface ODBEditor (Acceptance)
 - (void)handleModifiedFileEvent:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)reply;
@@ -27,6 +28,73 @@ static NSData *NVArchiveLegacyObject(id object) {
     return [NSArchiver archivedDataWithRootObject:object];
 #pragma clang diagnostic pop
 }
+
+static NSData *NVArchiveLegacyObjectAs(id object, NSString *className, NSString *archivedClassName) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    NSMutableData *data = [NSMutableData data];
+    NSArchiver *archiver = [[[NSArchiver alloc] initForWritingWithMutableData:data] autorelease];
+    [archiver encodeClassName:className intoClassName:archivedClassName];
+    [archiver encodeRootObject:object];
+    return data;
+#pragma clang diagnostic pop
+}
+
+//written field by field with the types a 32-bit build archived, independently of NoteObject's own coder
+@interface NVPositionalNoteArchive : NSObject <NSCoding>
+@end
+@implementation NVPositionalNoteArchive
+- (void)encodeWithCoder:(NSCoder *)coder {
+    CFAbsoluteTime modified = 700000000.5, created = 600000000.25;
+    UInt32 range[2] = {3, 4};
+    float scrolledProportion = 1.0f;
+    unsigned int logSequenceNumber = 9, encoding = NSUTF8StringEncoding, serverModifiedTime = 0;
+    int format = PlainTextFormat;
+    UInt32 nodeID = 0xAABBCCDD, lowSeconds = 0x01020304;
+    UInt16 highSeconds = 5, fraction = 6;
+    CFUUIDBytes uuid = [@"00112233-4455-6677-8899-AABBCCDDEEFF" uuidBytes];
+    [coder encodeValueOfObjCType:@encode(CFAbsoluteTime) at:&modified];
+    [coder encodeValueOfObjCType:@encode(CFAbsoluteTime) at:&created];
+    [coder encodeValueOfObjCType:"{_NSRange=II}" at:range];
+    [coder encodeValueOfObjCType:@encode(float) at:&scrolledProportion];
+    [coder encodeValueOfObjCType:@encode(unsigned int) at:&logSequenceNumber];
+    [coder encodeValueOfObjCType:@encode(int) at:&format];
+    [coder encodeValueOfObjCType:"L" at:&nodeID];
+    [coder encodeValueOfObjCType:@encode(UInt16) at:&highSeconds];
+    [coder encodeValueOfObjCType:"L" at:&lowSeconds];
+    [coder encodeValueOfObjCType:@encode(UInt16) at:&fraction];
+    [coder encodeValueOfObjCType:"I" at:&encoding];
+    [coder encodeValueOfObjCType:@encode(CFUUIDBytes) at:&uuid];
+    [coder encodeValueOfObjCType:@encode(unsigned int) at:&serverModifiedTime];
+    [coder encodeObject:@"Positional title"];
+    [coder encodeObject:@"alpha beta"];
+    [coder encodeObject:[[[NSAttributedString alloc] initWithString:@"Positional body"] autorelease]];
+    [coder encodeObject:@"Positional title.txt"];
+}
+- (id)initWithCoder:(NSCoder *)coder {
+    return [super init];
+}
+@end
+
+//the layout of a document in the Stickies database written by Mac OS X 10.0-10.14
+@interface NVStickiesDocumentArchive : NSObject <NSCoding>
+@end
+@implementation NVStickiesDocumentArchive
+- (void)encodeWithCoder:(NSCoder *)coder {
+    NSAttributedString *text = [[[NSAttributedString alloc] initWithString:@"Sticky title\nSticky body"] autorelease];
+    int flags = 1, color = 2;
+    float frame[4] = {10, 20, 300, 200};
+    [coder encodeObject:[text RTFDFromRange:NSMakeRange(0, text.length) documentAttributes:@{}]];
+    [coder encodeValueOfObjCType:@encode(int) at:&flags];
+    [coder encodeValueOfObjCType:"{_NSRect={_NSPoint=ff}{_NSSize=ff}}" at:frame];
+    [coder encodeValueOfObjCType:@encode(int) at:&color];
+    [coder encodeObject:[NSDate dateWithTimeIntervalSinceReferenceDate:500000000]];
+    [coder encodeObject:[NSDate dateWithTimeIntervalSinceReferenceDate:510000000]];
+}
+- (id)initWithCoder:(NSCoder *)coder {
+    return [super init];
+}
+@end
 
 static BOOL NVUnexpectedObjectWasDecoded = NO;
 
@@ -734,6 +802,39 @@ static BOOL NVUnexpectedObjectWasDecoded = NO;
 }
 - (void)testPassphraseChangeDerivesNewKeysWithSHA256OnceUpgraded {
     [self checkPassphraseChangeAfterUpgrading:YES derivesWith:kCCPRFHmacAlgSHA256];
+}
+- (void)testThirtyTwoBitPositionalNoteArchive {
+    NoteObject *note = NVUnarchiveLegacyObject(NVArchiveLegacyObjectAs([[[NVPositionalNoteArchive alloc] init] autorelease], @"NVPositionalNoteArchive", @"NoteObject"));
+    XCTAssertTrue([note isKindOfClass:[NoteObject class]]);
+    XCTAssertEqual(note->modifiedDate, 700000000.5);
+    XCTAssertEqual(note->createdDate, 600000000.25);
+    XCTAssertTrue(NSEqualRanges(note->selectedRange, NSMakeRange(3, 4)));
+    XCTAssertTrue(note->contentsWere7Bit);
+    XCTAssertEqual(note->logSequenceNumber, 9U);
+    XCTAssertEqual(note->currentFormatID, PlainTextFormat);
+    XCTAssertEqual(note->nodeID, 0xAABBCCDDU);
+    XCTAssertEqual(note->fileModifiedDate.highSeconds, 5);
+    XCTAssertEqual(note->fileModifiedDate.lowSeconds, 0x01020304U);
+    XCTAssertEqual(note->fileModifiedDate.fraction, 6);
+    XCTAssertEqual(note->fileEncoding, NSUTF8StringEncoding);
+    CFUUIDBytes expectedUUID = [@"00112233-4455-6677-8899-AABBCCDDEEFF" uuidBytes];
+    XCTAssertEqual(memcmp(&note->uniqueNoteIDBytes, &expectedUUID, sizeof(CFUUIDBytes)), 0);
+    XCTAssertEqualObjects(note->titleString, @"Positional title");
+    XCTAssertEqualObjects(note->labelString, @"alpha beta");
+    XCTAssertEqualObjects(note->contentString.string, @"Positional body");
+    XCTAssertEqualObjects(note->filename, @"Positional title.txt");
+}
+- (void)testStickiesDatabaseImport {
+    NSString *filename = [self.temporaryDirectory stringByAppendingPathComponent:@"StickiesDatabase"];
+    NSMutableArray *documents = [NSMutableArray arrayWithObject:[[[NVStickiesDocumentArchive alloc] init] autorelease]];
+    XCTAssertTrue([NVArchiveLegacyObjectAs(documents, @"NVStickiesDocumentArchive", @"Document") writeToFile:filename atomically:YES]);
+    NSArray *notes = [[[[AlienNoteImporter alloc] init] autorelease] notesWithPaths:@[filename]];
+    XCTAssertEqual(notes.count, 1U);
+    NoteObject *note = notes.firstObject;
+    XCTAssertEqualObjects(note->titleString, @"Sticky title");
+    XCTAssertEqualObjects(note->contentString.string, @"Sticky body");
+    XCTAssertEqual(note->createdDate, 500000000);
+    XCTAssertEqual(note->modifiedDate, 510000000);
 }
 - (void)testFixedLegacyIDEAImport {
     NSString *filename = [self.temporaryDirectory stringByAppendingPathComponent:@"Sanitized.blor"];

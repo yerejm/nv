@@ -32,7 +32,7 @@
 @implementation PrefsWindowController
 
 - (id)init {
-    if ([super init]) {
+    if ((self = [super init])) {
 		prefsController = [GlobalPrefs defaultPrefs];
 		fontPanelWasOpen = NO;
 		
@@ -511,8 +511,7 @@
     [window setToolbarStyle:NSWindowToolbarStylePreference];
     [window setToolbar:toolbar];
     [toolbar release];  //setToolbar retains the toolbar we pass, so release the one we used.
-	
-	[window setShowsToolbarButton:NO];
+
 
     CGFloat toolbarWidth = 40;
     NSDictionary *labelAttributes = @{NSFontAttributeName: [NSFont systemFontOfSize:12]};

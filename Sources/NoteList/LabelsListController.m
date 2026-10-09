@@ -32,7 +32,7 @@
 @implementation LabelsListController
 
 - (id)init {
-	if ([super init]) {
+	if ((self = [super init])) {
 	    
 	    allLabels = [[NSCountedSet alloc] init];
 	}
@@ -98,26 +98,24 @@
 		//peter hosey's suggestion, rather than doing setWindingRule: and appendBezierPath: as before:
 		//http://stackoverflow.com/questions/4742773/why-wont-helvetica-neue-bold-glyphs-draw-as-a-normal-subpath-in-nsbezierpath
 		
-		img = [[NSImage alloc] initWithSize:wordRect.size];
-		[img lockFocus];
+		img = [NSImage imageWithSize:wordRect.size flipped:NO drawingHandler:^BOOL(NSRect dstRect) {
+			CGContextRef context = [[NSGraphicsContext currentContext] CGContext];
+			CGContextBeginTransparencyLayer(context, NULL);
 
-		CGContextRef context = (CGContextRef)([[NSGraphicsContext currentContext] CGContext]);
-		CGContextBeginTransparencyLayer(context, NULL);
+			CGContextClipToRect(context, NSRectToCGRect(wordRect));
 
-		CGContextClipToRect(context, NSRectToCGRect(wordRect));
-
-		NSBezierPath *backgroundPath = [NSBezierPath bezierPathWithRoundRectInRect:wordRect radius:2.0f];
-		[fillColor setFill];
-		[backgroundPath fill];
+			NSBezierPath *backgroundPath = [NSBezierPath bezierPathWithRoundRectInRect:wordRect radius:2.0f];
+			[fillColor setFill];
+			[backgroundPath fill];
+			
+			[[NSGraphicsContext currentContext] setCompositingOperation:NSCompositingOperationSourceOut];
+			[aWord drawWithRect:(NSRect){{2.0, 3.0}, wordRect.size} options:NSStringDrawingUsesFontLeading attributes:attrs];
+			
+			CGContextEndTransparencyLayer(context);
+			return YES;
+		}];
 		
-		[[NSGraphicsContext currentContext] setCompositingOperation:NSCompositingOperationSourceOut];
-		[aWord drawWithRect:(NSRect){{2.0, 3.0}, wordRect.size} options:NSStringDrawingUsesFontLeading attributes:attrs];
-		
-		CGContextEndTransparencyLayer(context);
-		
-		[img unlockFocus];
-		
-		[labelImages setObject:[img autorelease] forKey:imgKey];
+		[labelImages setObject:img forKey:imgKey];
 	}
 	return img;
 }

@@ -31,7 +31,7 @@
 }
 
 - (id)initWithExistingObject:(id<SynchronizedNote>)note {
-    if ([super init]) {
+    if ((self = [super init])) {
 		CFUUIDBytes *bytes = [note uniqueNoteIDBytes];
 		uniqueNoteIDBytes = *bytes;
 		syncServicesMD = [[note syncServicesMD] mutableCopy];
@@ -47,7 +47,7 @@
 }
 
 - (id)initWithCoder:(NSCoder*)decoder {
-    if ([super init]) {
+    if ((self = [super init])) {
 		
 		if ([decoder allowsKeyedCoding]) {
 			NSUInteger decodedByteCount;
@@ -56,9 +56,9 @@
 			syncServicesMD = [NVDecodeObjectOfClasses(decoder, NVPropertyListClasses(), [NSDictionary class], VAR_STR(syncServicesMD)) mutableCopy];
 			logSequenceNumber = [decoder decodeInt32ForKey:VAR_STR(logSequenceNumber)];
 		} else {
-			[decoder decodeValueOfObjCType:@encode(CFUUIDBytes) at:&uniqueNoteIDBytes];
+			[decoder decodeValueOfObjCType:@encode(CFUUIDBytes) at:&uniqueNoteIDBytes size:sizeof(uniqueNoteIDBytes)];
 			syncServicesMD = [[decoder decodeObject] retain];
-			[decoder decodeValueOfObjCType:@encode(unsigned int) at:&logSequenceNumber];
+			[decoder decodeValueOfObjCType:@encode(unsigned int) at:&logSequenceNumber size:sizeof(logSequenceNumber)];
 		}
     }
     return self;

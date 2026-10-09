@@ -758,6 +758,24 @@ static void BeginFullScreenAcceptance(AppController *app, NotationController *no
     [window toggleFullScreen:nil];
 }
 
+static CGFloat LuminanceInAppearance(NSColor *color, NSAppearance *appearance) {
+    __block CGFloat luminance = -1;
+    [appearance performAsCurrentDrawingAppearance:^{
+        NSColor *rgb = [color colorUsingColorSpace:NSColorSpace.sRGBColorSpace];
+        if (rgb) luminance = 0.2126 * rgb.redComponent + 0.7152 * rgb.greenComponent + 0.0722 * rgb.blueComponent;
+    }];
+    return luminance;
+}
+
+//links and the insertion point must stand out from the editor background in the editor's current appearance
+static BOOL EditorColorsContrastWithBackground(NSTextView *editor) {
+    NSAppearance *appearance = editor.effectiveAppearance;
+    CGFloat background = LuminanceInAppearance(editor.backgroundColor, appearance);
+    CGFloat link = LuminanceInAppearance(editor.linkTextAttributes[NSForegroundColorAttributeName], appearance);
+    CGFloat insertionPoint = LuminanceInAppearance(editor.insertionPointColor, appearance);
+    return background >= 0 && link >= 0 && insertionPoint >= 0 && fabs(link - background) > 0.25 && fabs(insertionPoint - background) > 0.4;
+}
+
 //text drawn on the accent-colored selection should be light; dark text there is what the light appearance used to produce
 static BOOL RowHasDarkPixels(NSTableView *table, NSBitmapImageRep *bitmap, NSInteger row) {
     CGFloat scale = bitmap.pixelsWide / NSWidth(table.bounds);
@@ -1274,6 +1292,7 @@ static void RunAcceptance(void) {
         [appearancePrefs setBackgroundTextColor:[NSColor colorWithCalibratedWhite:0.12 alpha:1] sender:nil];
         Snapshot(window, @"custom-dark.png");
         Check(@"fixed dark custom colors use the dark appearance", [window.appearance.name isEqualToString:NSAppearanceNameDarkAqua]);
+        Check(@"editor links and insertion point stand out from fixed dark custom colors", EditorColorsContrastWithBackground(editor));
         NSBitmapImageRep *listBitmap = [noteTable bitmapImageRepForCachingDisplayInRect:noteTable.bounds];
         [noteTable cacheDisplayInRect:noteTable.bounds toBitmapImageRep:listBitmap];
         [[listBitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}] writeToFile:[acceptanceRoot stringByAppendingPathComponent:@"note-list.png"] atomically:YES];
@@ -1296,6 +1315,7 @@ static void RunAcceptance(void) {
         [appearancePrefs setShowNoteListGrid:YES sender:nil];
         [window makeFirstResponder:editor];
         [window setAppearance:[NSAppearance appearanceNamed:NSAppearanceNameAqua]];
+        BOOL lightEditorColorsContrast = EditorColorsContrastWithBackground(editor);
         Snapshot(window, @"light.png");
         [app searchForString:@"jjjj"];
         [searchField.currentEditor setSelectedRange:NSMakeRange(4, 0)];
@@ -1331,6 +1351,8 @@ static void RunAcceptance(void) {
         SnapshotWindow(window, @"compact-window-dark.png");
         [app searchForString:@""];
         [app revealNote:note options:NVEditNoteToReveal];
+        Check(@"system colors give the editor the system link color", [editor.linkTextAttributes[NSForegroundColorAttributeName] isEqual:[NSColor linkColor]]);
+        Check(@"editor links and insertion point stand out in both appearances", lightEditorColorsContrast && EditorColorsContrastWithBackground(editor));
         Snapshot(window, @"dark.png");
         Check(@"light and dark rendering", [[NSFileManager defaultManager] fileExistsAtPath:[acceptanceRoot stringByAppendingPathComponent:@"dark.png"]]);
         [NSApp activateIgnoringOtherApps:YES];

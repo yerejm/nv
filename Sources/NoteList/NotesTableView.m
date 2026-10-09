@@ -700,7 +700,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	
 	//this seems like it should happen automatically, but it does not.
 	if (![NSApp isActive]) {
-		[NSApp activateIgnoringOtherApps:YES];
+		[NSApp activate];
 	}
 	if (![[self window] isKeyWindow]) {
 		[[self window] makeKeyAndOrderFront:self];

@@ -79,7 +79,7 @@ const char WALAuthenticatedJournalMagic[8] = {'N', 'V', 'W', 'A', 'L', 0, 0, 5};
 @implementation WALController
 
 - (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key {
-    if ([super init]) {
+    if ((self = [super init])) {
 		logFD = -1;
 		
 		char filename[] = "Interim Note-Changes";
@@ -194,7 +194,7 @@ const char WALAuthenticatedJournalMagic[8] = {'N', 'V', 'W', 'A', 'L', 0, 0, 5};
 }
 
 - (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key authenticated:(BOOL)authenticated {
-    if ([super initWithParentFSRep:path encryptionKey:key]) {
+    if ((self = [super initWithParentFSRep:path encryptionKey:key])) {
 	authenticatedRecords = authenticated;
 	
 	//we could make parent dir writable just in case, but that might be a security hazard depending on ownership
@@ -446,7 +446,7 @@ const char WALAuthenticatedJournalMagic[8] = {'N', 'V', 'W', 'A', 'L', 0, 0, 5};
 }
 
 - (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key acceptingUnauthenticatedRecords:(BOOL)acceptsUnauthenticated {
-    if ([super initWithParentFSRep:path encryptionKey:key]) {
+    if ((self = [super initWithParentFSRep:path encryptionKey:key])) {
 	fileLength = totalBytesRead = 0;
 	acceptsUnauthenticatedRecords = acceptsUnauthenticated;
 	

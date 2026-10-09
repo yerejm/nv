@@ -1,6 +1,6 @@
 #import "NVHotKey.h"
 
-static const OSType NVHotKeySignature = 'NVhk';
+static const OSType NVHotKeySignature = ('N' << 24) | ('V' << 16) | ('h' << 8) | 'k';
 
 BOOL NVHotKeyIsFunctionKey(NSInteger keyCode) {
 	switch (keyCode) {

@@ -32,16 +32,16 @@
 @implementation BlorPasswordRetriever
 
 - (id)initWithBlor:(NSString*)blorPath {
-	if ([super init]) {
+	if ((self = [super init])) {
 		path = [blorPath retain];
 		
 		couldRetrieveFromKeychain = NO;
 		
 		//read hash (first 20 bytes) of file
 		NSFileHandle *handle = [NSFileHandle fileHandleForReadingAtPath:path];
-		hashData = [[handle readDataOfLength:20] retain];
+		hashData = [[handle readDataUpToLength:20 error:NULL] retain];
 		
-		[handle closeFile];
+		[handle closeAndReturnError:NULL];
 		
 		if (!hashData || [hashData length] < 20)
 			return nil;
@@ -164,7 +164,7 @@
 @implementation BlorNoteEnumerator
 
 - (id)initWithBlor:(NSString*)blorPath passwordHashData:(NSData*)passwordHashData {
-	if ([super init]) {
+	if ((self = [super init])) {
 		path = [blorPath retain];
 		
 		if (!(keyData = [passwordHashData retain]))

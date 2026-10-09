@@ -206,15 +206,23 @@
 }
 
 - (void)updateTextColors {
-	NSColor *fgColor = [prefsController foregroundTextColor];
-	NSColor *bgColor = [prefsController backgroundTextColor];
-	
-	[self setInsertionPointColor:[self _insertionPointColorForForegroundColor:fgColor backgroundColor:bgColor]];
-	[self setLinkTextAttributes:[self preferredLinkAttributes]];
-	//system text colors get the dynamic selection color so it follows the appearance and accent color
-	NSColor *selectionColor = [prefsController colorScheme] == 0 ? [NSColor selectedTextBackgroundColor] :
-		[self _selectionColorForForegroundColor:fgColor backgroundColor:bgColor];
-	[self setSelectedTextAttributes:[NSDictionary dictionaryWithObject:selectionColor forKey:NSBackgroundColorAttributeName]];
+	//derived colors resolve dynamic preference colors in the editor's own appearance
+	[[self effectiveAppearance] performAsCurrentDrawingAppearance:^{
+		NSColor *fgColor = [prefsController foregroundTextColor];
+		NSColor *bgColor = [prefsController backgroundTextColor];
+		
+		[self setInsertionPointColor:[self _insertionPointColorForForegroundColor:fgColor backgroundColor:bgColor]];
+		[self setLinkTextAttributes:[self preferredLinkAttributes]];
+		//system text colors get the dynamic selection color so it follows the appearance and accent color
+		NSColor *selectionColor = [prefsController colorScheme] == 0 ? [NSColor selectedTextBackgroundColor] :
+			[self _selectionColorForForegroundColor:fgColor backgroundColor:bgColor];
+		[self setSelectedTextAttributes:[NSDictionary dictionaryWithObject:selectionColor forKey:NSBackgroundColorAttributeName]];
+	}];
+}
+
+- (void)viewDidChangeEffectiveAppearance {
+	[super viewDidChangeEffectiveAppearance];
+	if (prefsController) [self updateTextColors];
 }
 
 #define _CM(__ch) ((__ch) * 255.0)
@@ -313,11 +321,16 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 	if (![prefsController URLsAreClickable])
 		return [NSDictionary dictionary];
 	
+	NSColor *fgColor = [prefsController foregroundTextColor];
+	NSColor *bgColor = [prefsController backgroundTextColor];
+	//dynamic system text colors get the system link color, which follows the appearance by itself
+	NSColor *linkColor = [fgColor type] == NSColorTypeCatalog && [bgColor type] == NSColorTypeCatalog ? [NSColor linkColor] :
+		[self _linkColorForForegroundColor:fgColor backgroundColor:bgColor];
+	
 	return [NSDictionary dictionaryWithObjectsAndKeys:
 			[NSCursor pointingHandCursor], NSCursorAttributeName,
 			[NSNumber numberWithInt:NSUnderlineStyleSingle], NSUnderlineStyleAttributeName,
-			[self _linkColorForForegroundColor:[prefsController foregroundTextColor] backgroundColor:[prefsController backgroundTextColor]],
-			NSForegroundColorAttributeName, nil];
+			linkColor, NSForegroundColorAttributeName, nil];
 }
 
 

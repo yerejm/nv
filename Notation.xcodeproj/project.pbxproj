@@ -1613,8 +1613,6 @@
 				OTHER_CFLAGS = (
 				);
 				OTHER_LDFLAGS = (
-					"-weak_framework",
-					PDFKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = net.notational.velocity;
 				PRODUCT_NAME = "Notational Velocity";
@@ -1779,8 +1777,6 @@
 				OTHER_CFLAGS = (
 				);
 				OTHER_LDFLAGS = (
-					"-weak_framework",
-					PDFKit,
 				);
 				PRODUCT_BUNDLE_IDENTIFIER = net.notational.velocity;
 				PRODUCT_NAME = "Notational Velocity";

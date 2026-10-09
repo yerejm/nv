@@ -73,7 +73,7 @@ static void NVUseMenuFontForStyledTitles(NSMenu *menu) {
 static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
 
 - (id)init {
-    if ([super init]) {
+    if ((self = [super init])) {
 		
 		windowUndoManager = [[NSUndoManager alloc] init];
 
@@ -130,9 +130,6 @@ static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
     titleAccessory.layoutAttribute = NSLayoutAttributeRight;
     window.titleVisibility = NSWindowTitleHidden;
     [window addTitlebarAccessoryViewController:titleAccessory];
-	
-	[window setShowsToolbarButton:NO];
-	
 
 	[NSApp setDelegate:self];
 	[notesTableView setDelegate:self];
@@ -1044,7 +1041,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
             return;
         }
         if (wasActive) {
-            [NSApp activateIgnoringOtherApps:YES];
+            [NSApp activate];
             if (window.visible) [window makeKeyAndOrderFront:nil];
         }
     }
@@ -1697,6 +1694,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 			//for external url-handling, often the app will already have been brought to the foreground
 			if (![NSApp isActive]) {
 				[self captureActivationOrigin];
+				//nv: links and scripts reveal notes from other apps, where cooperative activation can leave focus behind
 				[NSApp activateIgnoringOtherApps:YES];
 			}
 			if (![window isKeyWindow])
@@ -2037,6 +2035,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 	
 	if (![NSApp isActive]) {
 		[self captureActivationOrigin];
+		//the hot key and menu bar icon must take focus from the frontmost app, which cooperative activation can decline
 		[NSApp activateIgnoringOtherApps:YES];
 	}
 	if (![window isMainWindow]) [window makeKeyAndOrderFront:sender];

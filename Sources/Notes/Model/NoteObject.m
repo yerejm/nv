@@ -53,7 +53,7 @@ static void setAttrModifiedDate(NoteObject *note, UTCDateTime *dateTime);
 static void setCatalogNodeID(NoteObject *note, UInt32 cnid);
 
 - (id)init {
-    if ([super init]) {
+    if ((self = [super init])) {
 	
 		perDiskInfoGroups = calloc(1, sizeof(PerDiskInfo));
 		perDiskInfoGroups[0].diskIDIndex = -1;
@@ -312,7 +312,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 }
 
 - (id)initWithCoder:(NSCoder*)decoder {
-	if ([self init]) {
+	if ((self = [self init])) {
 		
 		if ([decoder allowsKeyedCoding]) {
 			//(hopefully?) no versioning necessary here
@@ -359,26 +359,29 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
             NSRange32 range32;
 			unsigned int serverModifiedTime = 0;
 			float scrolledProportion = 0.0;
-            unsigned long longTemp;
-			[decoder decodeValueOfObjCType:@encode(CFAbsoluteTime) at:&modifiedDate];
-			[decoder decodeValueOfObjCType:@encode(CFAbsoluteTime) at:&createdDate];
-			[decoder decodeValueOfObjCType:"{_NSRange=II}" at:&range32];
-			[decoder decodeValueOfObjCType:@encode(float) at:&scrolledProportion];
+			//32-bit builds wrote "L" as a 4-byte unsigned long; the size passed must match the encoded type
+            UInt32 longTemp;
+            unsigned int encodingTemp;
+			[decoder decodeValueOfObjCType:@encode(CFAbsoluteTime) at:&modifiedDate size:sizeof(modifiedDate)];
+			[decoder decodeValueOfObjCType:@encode(CFAbsoluteTime) at:&createdDate size:sizeof(createdDate)];
+			[decoder decodeValueOfObjCType:"{_NSRange=II}" at:&range32 size:sizeof(range32)];
+			[decoder decodeValueOfObjCType:@encode(float) at:&scrolledProportion size:sizeof(scrolledProportion)];
 			
-			[decoder decodeValueOfObjCType:@encode(unsigned int) at:&logSequenceNumber];
+			[decoder decodeValueOfObjCType:@encode(unsigned int) at:&logSequenceNumber size:sizeof(logSequenceNumber)];
 			
-			[decoder decodeValueOfObjCType:@encode(int) at:&currentFormatID];
-            [decoder decodeValueOfObjCType:"L" at:&longTemp];
-            nodeID = (UInt32)longTemp;
-			[decoder decodeValueOfObjCType:@encode(UInt16) at:&fileModifiedDate.highSeconds];
-			[decoder decodeValueOfObjCType:"L" at:&longTemp];
-            fileModifiedDate.lowSeconds = (UInt32)longTemp;
-			[decoder decodeValueOfObjCType:@encode(UInt16) at:&fileModifiedDate.fraction];	
+			[decoder decodeValueOfObjCType:@encode(int) at:&currentFormatID size:sizeof(currentFormatID)];
+            [decoder decodeValueOfObjCType:"L" at:&longTemp size:sizeof(longTemp)];
+            nodeID = longTemp;
+			[decoder decodeValueOfObjCType:@encode(UInt16) at:&fileModifiedDate.highSeconds size:sizeof(fileModifiedDate.highSeconds)];
+			[decoder decodeValueOfObjCType:"L" at:&longTemp size:sizeof(longTemp)];
+            fileModifiedDate.lowSeconds = longTemp;
+			[decoder decodeValueOfObjCType:@encode(UInt16) at:&fileModifiedDate.fraction size:sizeof(fileModifiedDate.fraction)];
             
-            [decoder decodeValueOfObjCType:"I" at:&fileEncoding];
+            [decoder decodeValueOfObjCType:"I" at:&encodingTemp size:sizeof(encodingTemp)];
+            fileEncoding = encodingTemp;
 			
-			[decoder decodeValueOfObjCType:@encode(CFUUIDBytes) at:&uniqueNoteIDBytes];
-			[decoder decodeValueOfObjCType:@encode(unsigned int) at:&serverModifiedTime];
+			[decoder decodeValueOfObjCType:@encode(CFUUIDBytes) at:&uniqueNoteIDBytes size:sizeof(uniqueNoteIDBytes)];
+			[decoder decodeValueOfObjCType:@encode(unsigned int) at:&serverModifiedTime size:sizeof(serverModifiedTime)];
 			
 			titleString = [[decoder decodeObject] retain];
 			labelString = [[decoder decodeObject] retain];
@@ -439,7 +442,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 
 - (id)initWithNoteBody:(NSAttributedString*)bodyText title:(NSString*)aNoteTitle delegate:(id)aDelegate format:(int)formatID labels:(NSString*)aLabelString {
 	//delegate optional here
-    if ([self init]) {
+    if ((self = [self init])) {
 		
 		if (!bodyText || !aNoteTitle) {
 			return nil;
@@ -483,7 +486,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 
 - (id)initWithCatalogEntry:(NoteCatalogEntry*)entry delegate:(id)aDelegate {
 	NSAssert(aDelegate != nil, @"must supply a delegate");
-    if ([self init]) {
+    if ((self = [self init])) {
 		delegate = aDelegate;
 		filename = [(NSString*)entry->filename copy];
 		currentFormatID = [delegate currentNoteStorageFormat];
@@ -1538,7 +1541,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 	
 	//can't use updateFromCatalogEntry because it would assign ownership via various metadata
 	
-	if ([self updateFromData:[NSMutableData dataWithContentsOfFile:path options:NSUncachedRead error:NULL] inFormat:PlainTextFormat]) {
+	if ([self updateFromData:[NSMutableData dataWithContentsOfFile:path options:NSDataReadingUncached error:NULL] inFormat:PlainTextFormat]) {
 		[self makeNoteDirtyUpdateTime:YES updateFile:YES];
 		
 		[delegate note:self attributeChanged:NotePreviewString];

@@ -35,7 +35,7 @@ static NSString *RAMDiskMountPath(void);
 static NSString *TempDirectoryPathForEditing(void);
 
 - (id)init {
-	if ([super init]) {
+	if ((self = [super init])) {
 		
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(taskTerminated:) 
 													 name:NSTaskDidTerminateNotification object:nil];
@@ -129,31 +129,39 @@ static NSString *TempDirectoryPathForEditing(void) {
 	NSAssert(attachTask == nil, @"attachTask was already used!");
 	NSAssert(numberOfMegabytes > 0 && numberOfMegabytes < 100, @"unreasonable capacity requested");
 
-	[self retain];
-	[(attachTask = [NSTask new]) setLaunchPath:@"/usr/bin/hdiutil"];
-	[attachTask setArguments:[NSArray arrayWithObjects:@"attach", @"-nomount", @"-nobrowse", [NSString stringWithFormat:@"ram://%lu", (unsigned long)(2 * 1024 * numberOfMegabytes)], nil]];
+	attachTask = [NSTask new];
 	[attachTask setStandardOutput:[NSPipe pipe]];
-	[attachTask launch];
+	[self _launchTask:attachTask executable:@"/usr/bin/hdiutil" arguments:[NSArray arrayWithObjects:@"attach", @"-nomount", @"-nobrowse", [NSString stringWithFormat:@"ram://%lu", (unsigned long)(2 * 1024 * numberOfMegabytes)], nil]];
 }
 
 - (void)_buildHFSFileSystemOnDevice:(NSString*)aDeviceName {
 	NSAssert(newfsTask == nil, @"newfsTask was already used!");
 	NSAssert(aDeviceName != nil, @"no device name passed");
 	
-	[self retain];
-	[(newfsTask = [NSTask new]) setLaunchPath:@"/sbin/newfs_hfs"];
-	[newfsTask setArguments:[NSArray arrayWithObjects:@"-v", [RAMDiskMountPath() lastPathComponent], aDeviceName, nil]];
-	[newfsTask launch];
+	newfsTask = [NSTask new];
+	[self _launchTask:newfsTask executable:@"/sbin/newfs_hfs" arguments:[NSArray arrayWithObjects:@"-v", [RAMDiskMountPath() lastPathComponent], aDeviceName, nil]];
 }
 
 - (void)_mountHFSFileSystemOnDevice:(NSString*)aDeviceName {
 	NSAssert(mountTask == nil, @"mountTask was already used!");
 	NSAssert(aDeviceName != nil, @"no device name passed");
 	
+	mountTask = [NSTask new];
+	[self _launchTask:mountTask executable:@"/sbin/mount" arguments:[NSArray arrayWithObjects:@"-t", @"hfs", @"-o", @"nobrowse", aDeviceName, RAMDiskMountPath(), nil]];
+}
+
+- (void)_launchTask:(NSTask*)task executable:(NSString*)path arguments:(NSArray*)arguments {
+	[task setExecutableURL:[NSURL fileURLWithPath:path]];
+	[task setArguments:arguments];
+	
+	//balanced in taskTerminated:, which is never called for a task that did not launch
 	[self retain];
-	[(mountTask = [NSTask new]) setLaunchPath:@"/sbin/mount"];
-	[mountTask setArguments:[NSArray arrayWithObjects:@"-t", @"hfs", @"-o", @"nobrowse", aDeviceName, RAMDiskMountPath(), nil]];
-	[mountTask launch];
+	NSError *error = nil;
+	if (![task launchAndReturnError:&error]) {
+		NSLog(@"couldn't launch %@: %@", path, [error localizedDescription]);
+		[self autorelease];
+		[self _stopPreparation];
+	}
 }
 
 - (BOOL)isPreparing {
@@ -223,7 +231,7 @@ static NSString *TempDirectoryPathForEditing(void) {
 			//read deviceName and store in ivar
 			//start newfs task
 			
-			NSData	*outData = [[[attachTask standardOutput] fileHandleForReading] readDataToEndOfFile];
+			NSData	*outData = [[[attachTask standardOutput] fileHandleForReading] readDataToEndOfFileAndReturnError:NULL];
 			if (outData) {
 				NSString *outString = [[[NSString alloc] initWithData:outData encoding:NSUTF8StringEncoding] autorelease];
 				
