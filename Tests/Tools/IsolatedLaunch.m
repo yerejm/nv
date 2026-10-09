@@ -1094,7 +1094,11 @@ static void RunAcceptance(void) {
         NVFileReference exportDirectory;
         NVPathMakeReference((const UInt8 *)acceptanceRoot.fileSystemRepresentation, &exportDirectory, NULL);
         Check(@"text export", [note exportToDirectoryRef:&exportDirectory withFilename:@"Exported acceptance.txt" usingFormat:PlainTextFormat overwrite:NO] == noErr);
-        Check(@"text import", [notation openFiles:@[[acceptanceRoot stringByAppendingPathComponent:@"Exported acceptance.txt"]]]);
+        NSPasteboard *droppedFile = [NSPasteboard pasteboardWithUniqueName];
+        [droppedFile clearContents];
+        [droppedFile writeObjects:@[[NSURL fileURLWithPath:[acceptanceRoot stringByAppendingPathComponent:@"Exported acceptance.txt"]]]];
+        Check(@"text import from a dropped file URL", [app addNotesFromPasteboard:droppedFile]);
+        [droppedFile releaseGlobally];
         ExporterManager *exporter = [ExporterManager sharedManager];
         for (NSString *exportName in @[@"Export without extension", @"Custom export.log"]) {
             [exporter exportNotes:@[note] forWindow:window];

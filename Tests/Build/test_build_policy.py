@@ -110,6 +110,16 @@ class BuildPolicyTests(unittest.TestCase):
                 localized = plistlib.loads(subprocess.check_output(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', str(strings)]))
                 self.assertLessEqual(names, set(localized))
 
+    def test_services_send_uniform_types(self):
+        with (ROOT / 'Configuration/Info.plist').open('rb') as source:
+            info = plistlib.load(source)
+        for service in info['NSServices']:
+            for send_type in service['NSSendTypes']:
+                with self.subTest(send_type=send_type):
+                    self.assertRegex(send_type, r'^[a-z]+(\.[a-z0-9-]+)+$')
+        prefix = (ROOT / 'Configuration/Notation_Prefix.pch').read_text()
+        self.assertNotIn('PasteboardType', prefix)
+
     def test_no_openssl_build_dependency(self):
         project = (ROOT / 'Notation.xcodeproj/project.pbxproj').read_text()
         self.assertNotIn('/opt/openssl/', project)

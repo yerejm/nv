@@ -46,18 +46,16 @@
 	NSData *data = nil;
 	BOOL pbHasPlainText = [types containsObject:NSPasteboardTypeString];
 
-	if ([types containsObject:NVFilenamesPasteboardType]) {
-		NSArray *files = [pasteboard propertyListForType:NVFilenamesPasteboardType];
-		if ([files isKindOfClass:[NSArray class]]) {
-			if ([notationController openFiles:files]) return YES;
-		}
+	if ([types containsObject:NSPasteboardTypeFileURL]) {
+		NSArray *files = NVFilePathsOnPasteboard(pasteboard);
+		if ([files count] && [notationController openFiles:files]) return YES;
 	}
 
 	NSString *sourceIdentifierString = nil;
 
 	//webkit URL!
-	if ([types containsObject:NVWebArchivePasteboardType]) {
-		sourceIdentifierString = [[pasteboard dataForType:NVWebArchivePasteboardType] pathURLFromWebArchive];
+	if ([types containsObject:UTTypeWebArchive.identifier]) {
+		sourceIdentifierString = [[pasteboard dataForType:UTTypeWebArchive.identifier] pathURLFromWebArchive];
 		//gecko URL!
 	} else if ([types containsObject:[NSString customPasteboardTypeOfCode:0x4D5A0003]]) {
 		//lazilly use syntheticTitle to get first line, even though that's not how our API is documented
@@ -74,7 +72,7 @@
 		NSString *potentialURLString = pbHasPlainText ? [pasteboard stringForType:NSPasteboardTypeString] : nil;
 		if (potentialURLString && [[url absoluteString] isEqualToString:potentialURLString]) {
 			//only begin downloading if we know that there's no other useful string data
-			//because we've already checked NVFilenamesPasteboardType
+			//because we've already checked for file URLs
 			
 			if ([[url scheme] caseInsensitiveCompare:@"http"] == NSOrderedSame || 
 				[[url scheme] caseInsensitiveCompare:@"https"] == NSOrderedSame ||
@@ -109,8 +107,8 @@
 		if ((data = [pasteboard dataForType:NSPasteboardTypeRTFD]))
 			newString = [[NSMutableAttributedString alloc] initWithRTFD:data documentAttributes:NULL];
 		hasRTFData = YES;
-	} else if ([types containsObject:NVWebArchivePasteboardType] && !shallUsePlainTextFallback) {
-		if ((data = [pasteboard dataForType:NVWebArchivePasteboardType])) {
+	} else if ([types containsObject:UTTypeWebArchive.identifier] && !shallUsePlainTextFallback) {
+		if ((data = [pasteboard dataForType:UTTypeWebArchive.identifier])) {
 			//set a timeout because -[NSHTMLReader _loadUsingWebKit] can sometimes hang
 			newString = [[NSMutableAttributedString alloc] initWithData:data options:[NSDictionary optionsDictionaryWithTimeout:10.0] 
 													 documentAttributes:NULL error:NULL];
@@ -261,8 +259,8 @@
 	
 	NSMutableString *allURLsString = [NSMutableString string];
 	
-	NSArray *files = [pboard propertyListForType:NVFilenamesPasteboardType];
-	if ([files isKindOfClass:[NSArray class]]) {
+	NSArray *files = NVFilePathsOnPasteboard(pboard);
+	if ([files count]) {
 		NSArray *unknownPaths = files;
 		NSUInteger i;
 		

@@ -83,6 +83,11 @@ static inline NSModalResponse NVRunOpenPanel(NSOpenPanel *panel, NSString *direc
     return [panel runModal];
 }
 
+static inline NSArray *NVFilePathsOnPasteboard(NSPasteboard *pasteboard) {
+    NSArray *urls = [pasteboard readObjectsForClasses:@[[NSURL class]] options:@{NSPasteboardURLReadingFileURLsOnlyKey: @YES}];
+    return [urls valueForKey:@"path"];
+}
+
 static inline NSString *NVFormatCount(NSString *format, NSUInteger count) {
     NSString *wideFormat = [format stringByReplacingOccurrencesOfString:@"%d" withString:@"%lu"];
     return [NSString stringWithFormat:wideFormat, (unsigned long)count];

@@ -12,8 +12,6 @@
 #import <Cocoa/Cocoa.h>
 #import "NVArchive.h"
 #import "NVAppKit.h"
-#define NVFilenamesPasteboardType @"NSFilenamesPboardType"
-#define NVWebArchivePasteboardType @"Apple Web Archive pasteboard type"
 #endif
 
 //plain C sources do not import Foundation, so they get its integer types here

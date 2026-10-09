@@ -381,7 +381,7 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 
 - (BOOL)readSelectionFromPasteboard:(NSPasteboard *)pboard type:(NSString *)type {
 	
-	if ([type isEqualToString:NVFilenamesPasteboardType]) {
+	if ([type isEqualToString:NSPasteboardTypeFileURL]) {
 		//paste as a file:// URL, so that it can be linked
 		NSString *allURLsString = [(AppController *)[NSApp delegate] stringWithNoteURLsOnPasteboard:pboard];
 		
@@ -433,7 +433,7 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 }
 
 - (NSArray *)readablePasteboardTypes {
-	NSMutableArray *types = [NSMutableArray arrayWithObjects:NVFilenamesPasteboardType, NVPTFPboardType, NSPasteboardTypeString, nil];
+	NSMutableArray *types = [NSMutableArray arrayWithObjects:NSPasteboardTypeFileURL, NVPTFPboardType, NSPasteboardTypeString, nil];
 	
 	if ([prefsController pastePreservesStyle]) {
 		[types insertObject:NSPasteboardTypeRTF atIndex:2];

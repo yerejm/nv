@@ -136,12 +136,11 @@
 			<string>Notational Velocity</string>
 			<key>NSSendTypes</key>
 			<array>
-				<string>NSRTFDPboardType</string>
-				<string>NSRTFPboardType</string>
-				<string>NSStringPboardType</string>
-				<string>NSURLPboardType</string>
-				<string>NSFilenamesPboardType</string>
-				<string>Apple Web Archive pasteboard type</string>
+				<string>com.apple.flat-rtfd</string>
+				<string>public.rtf</string>
+				<string>public.utf8-plain-text</string>
+				<string>public.url</string>
+				<string>public.file-url</string>
 				<string>com.apple.webarchive</string>
 			</array>
 		</dict>

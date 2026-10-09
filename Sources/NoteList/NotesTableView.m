@@ -166,7 +166,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
      @selector(setForegroundTextColor:sender:), @selector(setBackgroundTextColor:sender:),
      @selector(setAlternatingRows:sender:), @selector(setShowNoteListGrid:sender:), nil];
 	
-	[self registerForDraggedTypes:[NSArray arrayWithObjects:NVFilenamesPasteboardType, NSPasteboardTypeRTF, NSPasteboardTypeRTFD, NSPasteboardTypeString, nil]];
+	[self registerForDraggedTypes:[NSArray arrayWithObjects:NSPasteboardTypeFileURL, NSPasteboardTypeRTF, NSPasteboardTypeRTFD, NSPasteboardTypeString, nil]];
 	
 	NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
 	[center addObserver:self selector:@selector(_fieldEditorTextDidChange:) name:NSTextDidChangeNotification object:nil];
