@@ -360,6 +360,16 @@ static void FinishAcceptance(NSString *filename) {
     [NSApp terminate:nil];
 }
 
+//delivered the way Launch Services delivers an nv: link, so AppKit routes it to application:openURLs:
+static void DeliverURLEvent(NSURL *url) {
+    NSAppleEventDescriptor *event = [NSAppleEventDescriptor appleEventWithEventClass:kInternetEventClass eventID:kAEGetURL
+        targetDescriptor:[NSAppleEventDescriptor currentProcessDescriptor] returnID:kAutoGenerateReturnID transactionID:kAnyTransactionID];
+    [event setParamDescriptor:[NSAppleEventDescriptor descriptorWithString:url.absoluteString] forKeyword:keyDirectObject];
+    AppleEvent reply = {typeNull, NULL};
+    [[NSAppleEventManager sharedAppleEventManager] dispatchRawAppleEvent:event.aeDesc withRawReply:&reply handlerRefCon:0];
+    AEDisposeDesc(&reply);
+}
+
 static BOOL CheckEditingCache(BOOL encrypted) {
     NSDate *limit = [NSDate dateWithTimeIntervalSinceNow:5];
     TemporaryFileCachePreparer *preparer;
@@ -1052,8 +1062,8 @@ static void RunAcceptance(void) {
         CFUUIDBytes uuid = *[note uniqueNoteIDBytes];
         NSURL *identityLink = note.uniqueNoteLink;
         [note setTitleString:@"Renamed acceptance note"];
-        [app interpretNVURL:identityLink];
-        Check(@"UUID routing after rename", [app valueForKey:@"currentNote"] == note && [notation noteForUUIDBytes:&uuid] == note);
+        DeliverURLEvent(identityLink);
+        Check(@"nv: link event routes by UUID after rename", [app valueForKey:@"currentNote"] == note && [notation noteForUUIDBytes:&uuid] == note);
         NSPasteboard *pasteboard = [NSPasteboard pasteboardWithUniqueName];
         [pasteboard declareTypes:@[NSPasteboardTypeString] owner:nil];
         [pasteboard setString:@"Service acceptance\nSanitized selection" forType:NSPasteboardTypeString];

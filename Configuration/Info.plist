@@ -146,8 +146,6 @@
 		<dict>
 			<key>CFBundleURLName</key>
 			<string>net.notational.velocity</string>
-		</dict>
-		<dict>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>nv</string>

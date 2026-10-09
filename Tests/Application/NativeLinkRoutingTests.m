@@ -7,8 +7,13 @@
 @interface RoutingStorage : NSObject
 @property(nonatomic) NSUInteger lookups;
 @property(nonatomic, retain) NSData *identity;
+@property(nonatomic, retain) NSArray *openedPaths;
 @end
 @implementation RoutingStorage
+- (BOOL)openFiles:(NSArray *)paths {
+    self.openedPaths = [(self.openedPaths ?: @[]) arrayByAddingObjectsFromArray:paths];
+    return YES;
+}
 - (id)noteForUUIDBytes:(CFUUIDBytes *)bytes {
     self.lookups++;
     if (bytes) self.identity = [NSData dataWithBytes:bytes length:16];
@@ -45,5 +50,21 @@
         XCTAssertTrue([controller interpretNVURL:[NSURL URLWithString:[@"nv://find/title/?NV=" stringByAppendingString:value]]]);
     }
     XCTAssertEqual(storage.lookups, 0U);
+}
+- (void)testOpenURLsRoutesNVLinksAndFiles {
+    RoutingStorage *storage = [[[RoutingStorage alloc] init] autorelease];
+    RoutingController *controller = [[[RoutingController alloc] initWithStorage:storage] autorelease];
+    [controller application:NSApp openURLs:@[[NSURL URLWithString:@"NV://find/title/?NV=AAAAAAAAAAAAAAAAAAAAAA%3D%3D"],
+                                             [NSURL fileURLWithPath:@"/tmp/a.txt"], [NSURL fileURLWithPath:@"/tmp/b.rtf"]]];
+    XCTAssertEqual(storage.lookups, 1U);
+    XCTAssertEqualObjects(storage.openedPaths, (@[@"/tmp/a.txt", @"/tmp/b.rtf"]));
+}
+- (void)testOpenURLsBeforeLaunchAreKeptForLaunch {
+    RoutingController *controller = [[[RoutingController alloc] initWithStorage:nil] autorelease];
+    NSURL *link = [NSURL URLWithString:@"nv://find/title"];
+    [controller application:NSApp openURLs:@[[NSURL fileURLWithPath:@"/tmp/a.txt"]]];
+    [controller application:NSApp openURLs:@[link, [NSURL fileURLWithPath:@"/tmp/b.txt"]]];
+    XCTAssertEqualObjects([controller valueForKey:@"pathsToOpenOnLaunch"], (@[@"/tmp/a.txt", @"/tmp/b.txt"]));
+    XCTAssertEqualObjects([controller valueForKey:@"URLToInterpretOnLaunch"], link);
 }
 @end

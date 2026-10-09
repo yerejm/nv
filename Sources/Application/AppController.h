@@ -75,7 +75,6 @@
 void outletObjectAwoke(id sender);
 
 - (void)setNotationController:(NotationController*)newNotation;
-- (void)handleGetURLEvent:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent;
 
 - (void)setupViewsAfterAppAwakened;
 - (void)runDelayedUIActionsAfterLaunch;

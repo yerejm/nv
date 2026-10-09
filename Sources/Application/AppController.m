@@ -76,10 +76,6 @@ static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
     if ((self = [super init])) {
 		
 		windowUndoManager = [[NSUndoManager alloc] init];
-
-		// Setup URL Handling
-		NSAppleEventManager *appleEventManager = [NSAppleEventManager sharedAppleEventManager];
-		[appleEventManager setEventHandler:self andSelector:@selector(handleGetURLEvent:withReplyEvent:) forEventClass:kInternetEventClass andEventID:kAEGetURL];	
 		
 		isCreatingANote = isFilteringFromTyping = typedStringIsCached = NO;
 		typedString = @"";
@@ -391,15 +387,30 @@ terminateApp:
 	[NSApp terminate:self];
 }
 
-- (void)handleGetURLEvent:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
-	
-	NSURL *fullURL = [NSURL URLWithString:[[event paramDescriptorForKeyword:keyDirectObject] stringValue]];
+- (void)application:(NSApplication *)application openURLs:(NSArray<NSURL *> *)urls {
+	NSMutableArray *paths = [NSMutableArray array];
+	for (NSURL *url in urls) {
+		if ([url isFileURL]) {
+			[paths addObject:[url path]];
+		} else if ([[url scheme] caseInsensitiveCompare:@"nv"] == NSOrderedSame) {
+			if (notationController) {
+				if (![self interpretNVURL:url])
+					NSBeep();
+			} else {
+				[URLToInterpretOnLaunch release];
+				URLToInterpretOnLaunch = [url retain];
+			}
+		} else {
+			NSBeep();
+		}
+	}
+	if (![paths count]) return;
 	
 	if (notationController) {
-		if (![self interpretNVURL:fullURL])
-			NSBeep();
+		[notationController openFiles:paths];
 	} else {
-		URLToInterpretOnLaunch = [fullURL retain];
+		if (!pathsToOpenOnLaunch) pathsToOpenOnLaunch = [[NSMutableArray alloc] init];
+		[pathsToOpenOnLaunch addObjectsFromArray:paths];
 	}
 }
 
@@ -966,16 +977,6 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 		default:
 			NSBeep();
 	}
-}
-
-- (void)application:(NSApplication *)sender openFiles:(NSArray *)filenames {
-	
-	if (notationController)
-		[notationController openFiles:filenames];
-	else
-		pathsToOpenOnLaunch = [filenames mutableCopyWithZone:nil];
-	
-	[NSApp replyToOpenOrPrint:[filenames count] ? NSApplicationDelegateReplySuccess : NSApplicationDelegateReplyFailure];
 }
 
 - (void)applicationWillBecomeActive:(NSNotification *)aNotification {
