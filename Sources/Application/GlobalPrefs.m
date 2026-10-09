@@ -68,6 +68,7 @@ static NSString *AppActivationKeyCodeKey = @"AppActivationKeyCode";
 static NSString *AppActivationModifiersKey = @"AppActivationModifiers";
 static NSString *HorizontalLayoutKey = @"HorizontalLayout";
 static NSString *KeepsMaxTextWidthKey = @"KeepsMaxTextWidth";
+static NSString *LegacyArchivedPreferencesMigratedKey = @"LegacyArchivedPreferencesMigrated";
 static NSString *NoteBodyMaxWidthKey = @"NoteBodyMaxWidth";
 static NSString *ColorSchemeKey = @"InterfaceColorScheme";
 static NSString *AlternatingRowsKey = @"AlternatingRows";
@@ -162,9 +163,34 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 			NoteDateModifiedColumnString, TableSortColumnKey,
 			[NSNumber numberWithBool:YES], TableIsReverseSortedKey, nil]];
 		
+		NVMigrateLegacyArchivedPreferences(defaults);
+		
 		autoCompleteSearches = [defaults boolForKey:AutoCompleteSearchesKey];
 	}
 	return self;
+}
+
+//fonts and colors saved by versions before keyed archiving are converted once, so positional archives are never read again
+void NVMigrateLegacyArchivedPreferences(NSUserDefaults *defaults) {
+	if ([defaults boolForKey:LegacyArchivedPreferencesMigratedKey]) return;
+	
+	NSDictionary *expectedClasses = @{NoteBodyFontKey: [NSFont class], ForegroundTextColorKey: [NSColor class],
+									  BackgroundTextColorKey: [NSColor class], SearchTermHighlightColorKey: [NSColor class]};
+	for (NSString *key in expectedClasses) {
+		Class expectedClass = expectedClasses[key];
+		NSData *data = [defaults dataForKey:key];
+		if (!data || NVUnarchivePreference(data, expectedClass)) continue;
+		
+		id value = nil;
+		@try {
+			value = NVUnarchiveLegacyObject(data);
+		} @catch (NSException *e) {
+			NSLog(@"Unable to read legacy preference %@ (%@, %@)", key, [e name], [e reason]);
+		}
+		if ([value isKindOfClass:expectedClass]) [defaults setObject:NVArchiveObject(value) forKey:key];
+		else [defaults removeObjectForKey:key];
+	}
+	[defaults setBool:YES forKey:LegacyArchivedPreferencesMigratedKey];
 }
 
 + (GlobalPrefs *)defaultPrefs {
@@ -452,8 +478,7 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 }
 
 - (NSColor*)customSearchTermHighlightColor {
-	NSData *theData = [defaults dataForKey:SearchTermHighlightColorKey];
-	NSColor *color = theData ? (NSColor *)NVUnarchivePreference(theData) : nil;
+	NSColor *color = NVUnarchivePreference([defaults dataForKey:SearchTermHighlightColorKey], [NSColor class]);
 	//the former fixed pink default counts as unset so that existing installs also move to the system color
 	NSColor *formerDefault = [NSColor colorWithCalibratedRed:0.945 green:0.702 blue:0.702 alpha:1.0f];
 	return color && !ColorsEqualWith8BitChannels(color, formerDefault) ? color : nil;
@@ -566,20 +591,12 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 }
 
 - (NSFont*)noteBodyFont {
-	BOOL triedOnce = NO;
-	
 	if (!noteBodyFont) {
-		retry:
-		@try {
-			noteBodyFont = [NVUnarchivePreference([defaults objectForKey:NoteBodyFontKey]) retain];
-		} @catch (NSException *e) {
-			NSLog(@"Error trying to unarchive default note body font (%@, %@)", [e name], [e reason]);
-		}
-		
-		if ((!noteBodyFont || ![noteBodyFont isKindOfClass:[NSFont class]]) && !triedOnce) {
-			triedOnce = YES;
+		noteBodyFont = [NVUnarchivePreference([defaults dataForKey:NoteBodyFontKey], [NSFont class]) retain];
+		if (!noteBodyFont) {
+			NSLog(@"Unable to unarchive the note body font; using the default");
 			[defaults removeObjectForKey:NoteBodyFontKey];
-			goto retry;
+			noteBodyFont = [NVUnarchivePreference([defaults dataForKey:NoteBodyFontKey], [NSFont class]) retain];
 		}
 	}
 	
@@ -661,9 +678,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
         case 1: return [NSColor colorWithCalibratedWhite:0.02 alpha:1];
         case 2: return [NSColor colorWithCalibratedWhite:0.243 alpha:1];
     }
-	NSData *theData = [defaults dataForKey:ForegroundTextColorKey];
-	if (theData) return (NSColor *)NVUnarchivePreference(theData);
-	return nil;
+	return NVUnarchivePreference([defaults dataForKey:ForegroundTextColorKey], [NSColor class]);
 }
 
 - (void)setBackgroundTextColor:(NSColor*)aColor sender:(id)sender {
@@ -689,10 +704,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
     }
 	//don't need to cache the unarchived color, as it's not used in a random-access pattern
 	
-	NSData *theData = [defaults dataForKey:BackgroundTextColorKey];
-	if (theData) return (NSColor *)NVUnarchivePreference(theData);
-
-	return nil;	
+	return NVUnarchivePreference([defaults dataForKey:BackgroundTextColorKey], [NSColor class]);
 }
 
 - (BOOL)tableColumnsShowPreview {

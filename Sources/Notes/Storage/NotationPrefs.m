@@ -32,12 +32,17 @@
 #import "DiskUUIDEntry.h"
 #include <CoreServices/CoreServices.h>
 #include <Security/Security.h>
+#include <CommonCrypto/CommonCryptor.h>
+#include <CommonCrypto/CommonHMAC.h>
 #include <ApplicationServices/ApplicationServices.h>
 
 #define DEFAULT_HASH_ITERATIONS 8000
 #define DEFAULT_KEY_LENGTH 256
 
 #define KEYCHAIN_SERVICENAME "Notational Velocity"
+
+#define DATA_ENCRYPTION_PURPOSE "Notational Velocity database encryption"
+#define DATA_AUTHENTICATION_PURPOSE "Notational Velocity database authentication"
 
 
 NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotification";
@@ -63,6 +68,9 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 		notesStorageFormat = SingleDatabaseFormat;
 		hashIterationCount = DEFAULT_HASH_ITERATIONS;
 		keyLengthInBits = DEFAULT_KEY_LENGTH;
+		keyDerivationPRF = kCCPRFHmacAlgSHA256;
+		formatEpoch = EPOC_ITERATION;
+		authenticatesData = YES;
 		baseBodyFont = [[[GlobalPrefs defaultPrefs] noteBodyFont] retain];
 		foregroundColor = [[[GlobalPrefs defaultPrefs] foregroundTextColor] retain];
 		epochIteration = 0;
@@ -73,6 +81,10 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 		
     }
     return self;
+}
+
++ (BOOL)supportsSecureCoding {
+	return YES;
 }
 
 - (id)initWithCoder:(NSCoder*)decoder {
@@ -94,9 +106,13 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 			hashIterationCount = DEFAULT_HASH_ITERATIONS;
 		if (!(keyLengthInBits = [decoder decodeIntForKey:VAR_STR(keyLengthInBits)]))
 			keyLengthInBits = DEFAULT_KEY_LENGTH;
+		keyDerivationPRF = [decoder containsValueForKey:VAR_STR(keyDerivationPRF)] ?
+			(CCPseudoRandomAlgorithm)[decoder decodeInt32ForKey:VAR_STR(keyDerivationPRF)] : kCCPRFHmacAlgSHA1;
+		authenticatesData = epochIteration >= FIRST_AUTHENTICATED_EPOCH;
+		formatEpoch = authenticatesData ? EPOC_ITERATION : LAST_COMPATIBLE_EPOCH;
 		
 		@try {
-			baseBodyFont = [[decoder decodeObjectForKey:VAR_STR(baseBodyFont)] retain];
+			baseBodyFont = [[decoder decodeObjectOfClass:[NSFont class] forKey:VAR_STR(baseBodyFont)] retain];
 		} @catch (NSException *e) {
 			NSLog(@"Error trying to unarchive default base body font (%@, %@)", [e name], [e reason]);
 		}
@@ -108,7 +124,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 		//foregroundColor does not receive the same treatment as basebodyfont; in the event of a discrepancy between global and per-db settings,
 		//the former is applied to the notes in the database, while the latter is restored from the database itself
 		@try {
-			foregroundColor = [[decoder decodeObjectForKey:VAR_STR(foregroundColor)] retain];
+			foregroundColor = [[decoder decodeObjectOfClass:[NSColor class] forKey:VAR_STR(foregroundColor)] retain];
 		} @catch (NSException *e) {
 			NSLog(@"Error trying to unarchive foreground text color (%@, %@)", [e name], [e reason]);
 		}
@@ -121,23 +137,23 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 		
 		unsigned int i;
 		for (i=0; i<4; i++) {
-			if (!(typeStrings[i] = [[decoder decodeObjectForKey:[VAR_STR(typeStrings) stringByAppendingFormat:@".%d",i]] retain]))
+			if (!(typeStrings[i] = [[decoder decodeArrayOfObjectsOfClass:[NSString class] forKey:[VAR_STR(typeStrings) stringByAppendingFormat:@".%d",i]] mutableCopy]))
 				typeStrings[i] = [[NotationPrefs defaultTypeStringsForFormat:i] retain];
-			if (!(pathExtensions[i] = [[decoder decodeObjectForKey:[VAR_STR(pathExtensions) stringByAppendingFormat:@".%d",i]] retain]))
+			if (!(pathExtensions[i] = [[decoder decodeArrayOfObjectsOfClass:[NSString class] forKey:[VAR_STR(pathExtensions) stringByAppendingFormat:@".%d",i]] mutableCopy]))
 				pathExtensions[i] = [[NotationPrefs defaultPathExtensionsForFormat:i] retain];
 			chosenExtIndices[i] = [decoder decodeIntForKey:[VAR_STR(chosenExtIndices) stringByAppendingFormat:@".%d",i]];
 		}
 		
-		if (!(syncServiceAccounts = [[decoder decodeObjectForKey:VAR_STR(syncServiceAccounts)] retain]))
+		if (!(syncServiceAccounts = [NVDecodeObjectOfClasses(decoder, NVPropertyListClasses(), [NSDictionary class], VAR_STR(syncServiceAccounts)) mutableCopy]))
 			syncServiceAccounts = [[NSMutableDictionary alloc] init];
-		keychainDatabaseIdentifier = [[decoder decodeObjectForKey:VAR_STR(keychainDatabaseIdentifier)] retain];
+		keychainDatabaseIdentifier = [[decoder decodeObjectOfClass:[NSString class] forKey:VAR_STR(keychainDatabaseIdentifier)] retain];
 		
-		if (!(seenDiskUUIDEntries = [[decoder decodeObjectForKey:VAR_STR(seenDiskUUIDEntries)] retain]))
+		if (!(seenDiskUUIDEntries = [[decoder decodeArrayOfObjectsOfClass:[DiskUUIDEntry class] forKey:VAR_STR(seenDiskUUIDEntries)] mutableCopy]))
 			seenDiskUUIDEntries = [[NSMutableArray alloc] init];
 		
-		masterSalt = [[decoder decodeObjectForKey:VAR_STR(masterSalt)] retain];
-		dataSessionSalt = [[decoder decodeObjectForKey:VAR_STR(dataSessionSalt)] retain];
-		verifierKey = [[decoder decodeObjectForKey:VAR_STR(verifierKey)] retain];
+		masterSalt = [[decoder decodeObjectOfClass:[NSData class] forKey:VAR_STR(masterSalt)] retain];
+		dataSessionSalt = [[decoder decodeObjectOfClass:[NSData class] forKey:VAR_STR(dataSessionSalt)] retain];
+		verifierKey = [[decoder decodeObjectOfClass:[NSData class] forKey:VAR_STR(verifierKey)] retain];
 		
 		doesEncryption = doesEncryption && verifierKey && masterSalt;
 		
@@ -156,14 +172,18 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	 2: First NSKeyedArchiver
 	 3: First syncServicesMD and date created/modified syncing to files
 	 4: tracking of file size and attribute mod dates, font foreground colors, openmeta labels
+	 5: encrypt-then-MAC for notes and journal records; PBKDF2-SHA256 for passphrases set from now on
+	    (new databases only; existing ones stay at 4 until the user upgrades them)
 	 */
-	[coder encodeInt32:EPOC_ITERATION forKey:VAR_STR(epochIteration)];
+	[coder encodeInt32:formatEpoch forKey:VAR_STR(epochIteration)];
 	
 	[coder encodeInt:notesStorageFormat forKey:VAR_STR(notesStorageFormat)];
 	[coder encodeBool:doesEncryption forKey:VAR_STR(doesEncryption)];
 	[coder encodeBool:storesPasswordInKeychain forKey:VAR_STR(storesPasswordInKeychain)];
 	[coder encodeInt:hashIterationCount forKey:VAR_STR(hashIterationCount)];
 	[coder encodeInt:keyLengthInBits forKey:VAR_STR(keyLengthInBits)];
+	if ([self usesAuthenticatedFormat])
+		[coder encodeInt32:(int32_t)keyDerivationPRF forKey:VAR_STR(keyDerivationPRF)];
 	[coder encodeBool:secureTextEntry forKey:VAR_STR(secureTextEntry)];
 	
 	[coder encodeBool:confirmFileDeletion forKey:VAR_STR(confirmFileDeletion)];
@@ -309,6 +329,19 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	return epochIteration;
 }
 
+- (UInt32)formatEpoch {
+	return formatEpoch;
+}
+
+- (BOOL)usesAuthenticatedFormat {
+	return formatEpoch >= FIRST_AUTHENTICATED_EPOCH;
+}
+
+- (void)setUsesAuthenticatedFormat:(BOOL)value {
+	formatEpoch = value ? EPOC_ITERATION : LAST_COMPATIBLE_EPOCH;
+	preferencesChanged = YES;
+}
+
 - (BOOL)firstTimeUsed {
 	return firstTimeUsed;
 }
@@ -408,11 +441,11 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	int keyLength = keyLengthInBits/8;
 	
 	//compute master key given stored salt and # of iterations
-	NSData *computedMasterKey = [passData derivedKeyOfLength:keyLength salt:masterSalt iterations:hashIterationCount];
+	NSData *computedMasterKey = [passData derivedKeyOfLength:keyLength salt:masterSalt iterations:hashIterationCount PRF:keyDerivationPRF];
 
 	//compute verify key given "verify" salt and 1 iteration
 	NSData *verifySalt = [NSData dataWithBytesNoCopy:VERIFY_SALT length:sizeof(VERIFY_SALT) freeWhenDone:NO];
-	NSData *computedVerifyKey = [computedMasterKey derivedKeyOfLength:keyLength salt:verifySalt iterations:1];
+	NSData *computedVerifyKey = [computedMasterKey derivedKeyOfLength:keyLength salt:verifySalt iterations:1 PRF:keyDerivationPRF];
 	
 	//check against verify key data
 	if ([computedVerifyKey isEqualToData:verifierKey]) {
@@ -438,16 +471,42 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	//create new dataSessionSalt and key here
 	[dataSessionSalt release];
 	dataSessionSalt = [[NSData randomDataOfLength:256] retain];
+	authenticatesData = [self usesAuthenticatedFormat];
 	
-	NSData *dataSessionKey = [masterKey derivedKeyOfLength:keyLengthInBits/8 salt:dataSessionSalt iterations:1];
+	NSData *iv = [dataSessionSalt subdataWithRange:NSMakeRange(0, kCCBlockSizeAES128)];
+	if (!authenticatesData)
+		return [data encryptAESDataWithKey:[masterKey derivedKeyOfLength:keyLengthInBits/8 salt:dataSessionSalt iterations:1] iv:iv];
 	
-	return [data encryptAESDataWithKey:dataSessionKey iv:[dataSessionSalt subdataWithRange:NSMakeRange(0, 16)]];
+	if (![data encryptAESDataWithKey:[masterKey subkeyForPurpose:DATA_ENCRYPTION_PURPOSE salt:dataSessionSalt] iv:iv])
+		return NO;
+	
+	//encrypt-then-MAC: the tag covers the IV and ciphertext and is appended to the ciphertext
+	[data appendData:NVHMACSHA256([masterKey subkeyForPurpose:DATA_AUTHENTICATION_PURPOSE salt:dataSessionSalt], iv, data)];
+	return YES;
 }
-- (BOOL)decryptDataWithCurrentSettings:(NSMutableData*)data {
+
+- (OSStatus)decryptAndVerifyData:(NSMutableData*)data {
+	if (!masterKey || [dataSessionSalt length] < kCCBlockSizeAES128) return kNoAuthErr;
+	NSData *iv = [dataSessionSalt subdataWithRange:NSMakeRange(0, kCCBlockSizeAES128)];
 	
-	NSData *dataSessionKey = [masterKey derivedKeyOfLength:keyLengthInBits/8 salt:dataSessionSalt iterations:1];
+	if (!authenticatesData) {
+		NSData *dataSessionKey = [masterKey derivedKeyOfLength:keyLengthInBits/8 salt:dataSessionSalt iterations:1];
+		return [data decryptAESDataWithKey:dataSessionKey iv:iv] ? noErr : kNoAuthErr;
+	}
 	
-	return [data decryptAESDataWithKey:dataSessionKey iv:[dataSessionSalt subdataWithRange:NSMakeRange(0, 16)]];
+	if ([data length] < CC_SHA256_DIGEST_LENGTH) return kDataIntegrityErr;
+	NSUInteger ciphertextLength = [data length] - CC_SHA256_DIGEST_LENGTH;
+	NSData *ciphertext = [NSData dataWithBytesNoCopy:[data mutableBytes] length:ciphertextLength freeWhenDone:NO];
+	NSData *tag = [NSData dataWithBytesNoCopy:(char*)[data mutableBytes] + ciphertextLength length:CC_SHA256_DIGEST_LENGTH freeWhenDone:NO];
+	NSData *expectedTag = NVHMACSHA256([masterKey subkeyForPurpose:DATA_AUTHENTICATION_PURPOSE salt:dataSessionSalt], iv, ciphertext);
+	if (!NVTimingSafeEqualData(tag, expectedTag)) return kDataIntegrityErr;
+	
+	[data setLength:ciphertextLength];
+	return [data decryptAESDataWithKey:[masterKey subkeyForPurpose:DATA_ENCRYPTION_PURPOSE salt:dataSessionSalt] iv:iv] ? noErr : kDataIntegrityErr;
+}
+
+- (BOOL)acceptsUnauthenticatedJournal {
+	return ![self usesAuthenticatedFormat];
 }
 
 - (void)setPassphraseData:(NSData*)passData inKeychain:(BOOL)inKeychain {
@@ -457,6 +516,8 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 - (void)setPassphraseData:(NSData*)passData inKeychain:(BOOL)inKeychain withIterations:(int)iterationCount {
 	
 	hashIterationCount = iterationCount;
+	//older versions can only verify passphrases derived with SHA-1
+	keyDerivationPRF = [self usesAuthenticatedFormat] ? kCCPRFHmacAlgSHA256 : kCCPRFHmacAlgSHA1;
 	int keyLength = keyLengthInBits/8;
 	
 	//generate and set random salt
@@ -465,12 +526,12 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 
 	//compute and set master key given salt and # of iterations
 	[masterKey release];
-	masterKey = [[passData derivedKeyOfLength:keyLength salt:masterSalt iterations:hashIterationCount] retain];
+	masterKey = [[passData derivedKeyOfLength:keyLength salt:masterSalt iterations:hashIterationCount PRF:keyDerivationPRF] retain];
 	
 	//compute and set verify key from master key
 	[verifierKey release];
 	NSData *verifySalt = [NSData dataWithBytesNoCopy:VERIFY_SALT length:sizeof(VERIFY_SALT) freeWhenDone:NO];
-	verifierKey = [[masterKey derivedKeyOfLength:keyLength salt:verifySalt iterations:1] retain];
+	verifierKey = [[masterKey derivedKeyOfLength:keyLength salt:verifySalt iterations:1 PRF:keyDerivationPRF] retain];
 
 	//update keychain
 	[self setStoresPasswordInKeychain:inKeychain];
@@ -791,10 +852,10 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	if ([filename characterAtIndex:0] == '.') {
 		return NO;
 	}
-	if ([filename isEqualToString:NotesDatabaseFileName]) {
+	if ([filename isEqualToString:NotesDatabaseFileName] || [filename isEqualToString:PreUpgradeDatabaseFileName]) {
 		return NO;
 	}
-	if ([filename isEqualToString:@"Interim Note-Changes"]) {
+	if ([filename isEqualToString:@"Interim Note-Changes"] || [filename isEqualToString:UnverifiedJournalFileName]) {
 		return NO;
 	}
 	

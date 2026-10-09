@@ -25,6 +25,7 @@
 #import "NotationPrefsViewController.h"
 #import "InvocationRecorder.h"
 #import "NotationPrefs.h"
+#import "NotationFileManager.h"
 #import "NSString_NV.h"
 #import "NSCollection_utils.h"
 #import "PassphrasePicker.h"
@@ -167,7 +168,40 @@
     [keyLengthField setEnabled:encryptionState];
     [keyLengthStepper setEnabled:encryptionState];
 	
+	[self updateDatabaseSecurityControls];
+	
 
+}
+
+- (void)updateDatabaseSecurityControls {
+	BOOL upgraded = [notationPrefs usesAuthenticatedFormat];
+	[upgradeSecurityButton setHidden:upgraded];
+	[upgradeSecurityText setHidden:upgraded];
+	[upgradeSecurityStatus setHidden:!upgraded];
+	//the upgrade protects encrypted notes, so it is offered once encryption is on
+	[upgradeSecurityButton setEnabled:[notationPrefs doesEncryption]];
+}
+
+- (IBAction)upgradeDatabaseSecurity:(id)sender {
+	NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+	[alert setMessageText:NSLocalizedString(@"Upgrade the security of this database?", nil)];
+	[alert setInformativeText:[NSString stringWithFormat:NSLocalizedString(@"Notes will be protected against tampering. Older versions of Notational Velocity won’t be able to open this database afterwards. A copy of the database as it is now will be kept in your notes folder as “%@”.", nil), PreUpgradeDatabaseFileName]];
+	//older versions lose access to the upgraded database, so Return must not confirm it:
+	//listed first, Cancel takes Escape and leaves no button with Return
+	[alert addButtonWithTitle:NSLocalizedString(@"Cancel", nil)];
+	[alert addButtonWithTitle:NSLocalizedString(@"Upgrade", nil)];
+	[alert beginSheetModalForWindow:[view window] completionHandler:^(NSModalResponse response) {
+		if (response != NSAlertSecondButtonReturn) return;
+		id controller = [notationPrefs delegate];
+		if (![controller respondsToSelector:@selector(upgradeToAuthenticatedFormat)] || ![controller upgradeToAuthenticatedFormat]) {
+			NSAlert *failure = [[[NSAlert alloc] init] autorelease];
+			[failure setMessageText:NSLocalizedString(@"The database could not be upgraded.", nil)];
+			[failure setInformativeText:NSLocalizedString(@"Open Console in /Applications/Utilities/ for more information.", nil)];
+			[failure addButtonWithTitle:NSLocalizedString(@"OK", nil)];
+			[failure beginSheetModalForWindow:[view window] completionHandler:nil];
+		}
+		[self updateDatabaseSecurityControls];
+	}];
 }
 
 - (void)setSeparateFileControlsState:(BOOL)separateFileControlsState {

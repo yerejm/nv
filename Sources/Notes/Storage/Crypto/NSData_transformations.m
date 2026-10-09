@@ -16,9 +16,24 @@
 #include <zlib.h>
 #include <CommonCrypto/CommonCryptor.h>
 #include <CommonCrypto/CommonKeyDerivation.h>
+#include <CommonCrypto/CommonHMAC.h>
 #include <CommonCrypto/CommonRandom.h>
 
 #import <WebKit/WebKit.h>
+
+NSData *NVHMACSHA256(NSData *key, NSData *first, NSData *second) {
+	CCHmacContext context;
+	NSMutableData *tag = [NSMutableData dataWithLength:CC_SHA256_DIGEST_LENGTH];
+	CCHmacInit(&context, kCCHmacAlgSHA256, [key bytes], [key length]);
+	CCHmacUpdate(&context, [first bytes], [first length]);
+	if (second) CCHmacUpdate(&context, [second bytes], [second length]);
+	CCHmacFinal(&context, [tag mutableBytes]);
+	return tag;
+}
+
+BOOL NVTimingSafeEqualData(NSData *a, NSData *b) {
+	return a && b && [a length] == [b length] && !timingsafe_bcmp([a bytes], [b bytes], [a length]);
+}
 
 @implementation NSData (NVUtilities)
 
@@ -140,11 +155,22 @@
 }
 
 - (NSMutableData*)derivedKeyOfLength:(NSUInteger)len salt:(NSData*)salt iterations:(int)count {
+	return [self derivedKeyOfLength:len salt:salt iterations:count PRF:kCCPRFHmacAlgSHA1];
+}
+
+- (NSMutableData*)derivedKeyOfLength:(NSUInteger)len salt:(NSData*)salt iterations:(int)count PRF:(CCPseudoRandomAlgorithm)prf {
 	NSMutableData *derivedKey = [NSMutableData dataWithLength:len];
-	if (CCKeyDerivationPBKDF(kCCPBKDF2, [self bytes], [self length], [salt bytes], [salt length], kCCPRFHmacAlgSHA1,
+	if (CCKeyDerivationPBKDF(kCCPBKDF2, [self bytes], [self length], [salt bytes], [salt length], prf,
 							 (unsigned)count, [derivedKey mutableBytes], len) != kCCSuccess)
 		return nil;
 	return derivedKey;
+}
+
+//separates the keys that one secret yields for different uses, such as encryption and authentication
+- (NSMutableData*)subkeyForPurpose:(const char*)purpose salt:(NSData*)salt {
+	NSMutableData *labelledSalt = [NSMutableData dataWithBytes:purpose length:strlen(purpose)];
+	if (salt) [labelledSalt appendData:salt];
+	return [self derivedKeyOfLength:kCCKeySizeAES256 salt:labelledSalt iterations:1 PRF:kCCPRFHmacAlgSHA256];
 }
 
 - (unsigned long)CRC32 {

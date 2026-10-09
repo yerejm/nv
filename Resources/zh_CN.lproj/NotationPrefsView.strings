@@ -66,3 +66,15 @@
 
 /* Clear in Keychain */
 "235.title" = "从钥匙链中删除";
+
+/* Database: */
+"Upg-db-LbC.title" = "数据库：";
+
+/* Upgrade Database Security… */
+"Upg-db-BtC.title" = "升级数据库安全性…";
+
+/* Protects your notes against tampering. Older versions of Notational Velocity won’t be able to open this database after the upgrade. */
+"Upg-db-TxC.title" = "保护您的笔记不被篡改。升级后，旧版本的 Notational Velocity 将无法打开此数据库。";
+
+/* This database uses the latest security format. */
+"Upg-db-StC.title" = "此数据库使用最新的安全格式。";

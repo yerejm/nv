@@ -37,6 +37,28 @@
     NSData *embeddedNul = [[NSData dataWithBytes:"pass\0word" length:9] derivedKeyOfLength:16 salt:[NSData dataWithBytes:"sa\0lt" length:5] iterations:4096];
     XCTAssertEqualObjects([self hex:embeddedNul], @"56fa6aa75548099dcc37d7f03425e0c3");
 }
+- (void)testPBKDF2SHA256AndHMACPublishedVectors {
+    NSData *password = [self utf8:@"password"], *salt = [self utf8:@"salt"];
+    XCTAssertEqualObjects([self hex:[password derivedKeyOfLength:32 salt:salt iterations:1 PRF:kCCPRFHmacAlgSHA256]],
+                          @"120fb6cffcf8b32c43e7225256c4f837a86548c92ccc35480805987cb70be17b");
+    XCTAssertEqualObjects([self hex:[password derivedKeyOfLength:32 salt:salt iterations:4096 PRF:kCCPRFHmacAlgSHA256]],
+                          @"c5e478d59288c841aa530db6845c4c8d962893a001ce4e11a4963873aa98134a");
+    XCTAssertEqualObjects([self hex:NVHMACSHA256([self utf8:@"Jefe"], [self utf8:@"what do ya "], [self utf8:@"want for nothing?"])],
+                          @"5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843");
+}
+- (void)testPurposeSubkeysMatchIndependentDerivation {
+    NSData *key = [NSMutableData dataWithLength:32];
+    XCTAssertEqualObjects([self hex:[key subkeyForPurpose:"Notational Velocity journal encryption" salt:nil]],
+                          @"cf8504d6f5131d825c1ed9d79eb3ce593ed30cf8f706b54afc44b6510cef0f5f");
+    XCTAssertEqualObjects([self hex:[key subkeyForPurpose:"Notational Velocity database authentication" salt:[self utf8:@"salt"]]],
+                          @"49f12573852e71b73a00a981def41fb58d4e5925270576dab19ed9988678c91b");
+}
+- (void)testTimingSafeComparison {
+    XCTAssertTrue(NVTimingSafeEqualData([self utf8:@"tag"], [self utf8:@"tag"]));
+    XCTAssertFalse(NVTimingSafeEqualData([self utf8:@"tag"], [self utf8:@"taG"]));
+    XCTAssertFalse(NVTimingSafeEqualData([self utf8:@"tag"], [self utf8:@"tags"]));
+    XCTAssertFalse(NVTimingSafeEqualData(nil, nil));
+}
 - (void)testPBKDF2RejectsZeroIterations {
     XCTAssertNil([[self utf8:@"password"] derivedKeyOfLength:32 salt:[self utf8:@"salt"] iterations:0]);
 }

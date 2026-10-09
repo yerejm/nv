@@ -23,17 +23,22 @@
 
 #import <Cocoa/Cocoa.h>
 #import "NotationController.h"
+#include <CommonCrypto/CommonKeyDerivation.h>
 
 /* this class is responsible for managing all preferences specific to a notational database,
 including encryption, file formats, password management, and others */
 
-#define EPOC_ITERATION 4
+#define EPOC_ITERATION 5
+//databases from this epoch on authenticate their notes and journal records
+#define FIRST_AUTHENTICATED_EPOCH 5
+//existing databases keep writing this epoch, which older versions can still open, until the user opts in to the newer one
+#define LAST_COMPATIBLE_EPOCH 4
 
 enum { SingleDatabaseFormat = 0, PlainTextFormat, RTFTextFormat, HTMLFormat, WordDocFormat, WordXMLFormat };
 
 extern NSString *NotationPrefsDidChangeNotification;
 
-@interface NotationPrefs : NSObject {
+@interface NotationPrefs : NSObject <NSSecureCoding> {
 	BOOL doesEncryption, storesPasswordInKeychain, secureTextEntry;
 	NSString *keychainDatabaseIdentifier;
 	
@@ -41,6 +46,7 @@ extern NSString *NotationPrefsDidChangeNotification;
 	NSMutableDictionary *syncServiceAccounts;
 	
 	unsigned int hashIterationCount, keyLengthInBits;
+	CCPseudoRandomAlgorithm keyDerivationPRF;
 	
 	NSColor *foregroundColor;
 	NSFont *baseBodyFont;
@@ -55,7 +61,7 @@ extern NSString *NotationPrefsDidChangeNotification;
 	
 	NSMutableArray *seenDiskUUIDEntries;
 	
-	UInt32 epochIteration;
+	UInt32 epochIteration, formatEpoch;
 	BOOL firstTimeUsed;
 	BOOL preferencesChanged;
 	id delegate;
@@ -63,6 +69,8 @@ extern NSString *NotationPrefsDidChangeNotification;
 	@private 
 	//masterKey is not to be stored anywhere
 	NSData *masterKey;
+	//whether the notes data currently held for this database carries an authentication tag
+	BOOL authenticatesData;
 }
 
 NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serviceName);
@@ -84,6 +92,9 @@ NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serv
 - (unsigned int)keyLengthInBits;
 - (unsigned int)hashIterationCount;
 - (UInt32)epochIteration;
+- (UInt32)formatEpoch;
+- (BOOL)usesAuthenticatedFormat;
+- (void)setUsesAuthenticatedFormat:(BOOL)value;
 - (BOOL)firstTimeUsed;
 - (BOOL)secureTextEntry;
 
@@ -101,7 +112,8 @@ NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serv
 - (void)setPassphraseData:(NSData*)passData inKeychain:(BOOL)inKeychain;
 - (void)setPassphraseData:(NSData*)passData inKeychain:(BOOL)inKeychain withIterations:(int)iterationCount;
 - (BOOL)encryptDataInNewSession:(NSMutableData*)data;
-- (BOOL)decryptDataWithCurrentSettings:(NSMutableData*)data;
+- (OSStatus)decryptAndVerifyData:(NSMutableData*)data;
+- (BOOL)acceptsUnauthenticatedJournal;
 - (NSData*)WALSessionKey;
 
 - (void)setNotesStorageFormat:(int)formatID;

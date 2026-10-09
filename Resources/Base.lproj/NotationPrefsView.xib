@@ -25,6 +25,9 @@
                 <outlet property="removeTypeButton" destination="21" id="63"/>
                 <outlet property="secureTextEntryButton" destination="129" id="131"/>
                 <outlet property="storageFormatPopupButton" destination="98" id="104"/>
+                <outlet property="upgradeSecurityButton" destination="Upg-db-Btn" id="Upg-db-OtB"/>
+                <outlet property="upgradeSecurityStatus" destination="Upg-db-Sts" id="Upg-db-OtS"/>
+                <outlet property="upgradeSecurityText" destination="Upg-db-Txt" id="Upg-db-OtT"/>
                 <outlet property="view" destination="5" id="71"/>
             </connections>
         </customObject>
@@ -502,6 +505,46 @@
                                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                         </textFieldCell>
                                     </textField>
+                                    <textField verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Upg-db-Lbl">
+                                        <rect key="frame" x="43" y="78" width="75" height="16"/>
+                                        <textFieldCell key="cell" lineBreakMode="clipping" sendsActionOnEndEditing="YES" alignment="right" title="Database:" id="Upg-db-LbC">
+                                            <font key="font" metaFont="system"/>
+                                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                    </textField>
+                                    <button imageHugsTitle="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="Upg-db-Btn">
+                                        <rect key="frame" x="117" y="68" width="211" height="32"/>
+                                        <buttonCell key="cell" type="push" title="Upgrade Database Security…" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="Upg-db-BtC">
+                                            <behavior key="behavior" pushIn="YES" lightByBackground="YES" lightByGray="YES"/>
+                                            <font key="font" metaFont="system"/>
+                                        </buttonCell>
+                                        <connections>
+                                            <action selector="upgradeDatabaseSecurity:" target="-2" id="Upg-db-Act"/>
+                                        </connections>
+                                    </button>
+                                    <textField verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" preferredMaxLayoutWidth="229" translatesAutoresizingMaskIntoConstraints="NO" id="Upg-db-Txt">
+                                        <rect key="frame" x="121" y="30" width="229" height="42"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="229" id="Upg-db-cW0"/>
+                                        </constraints>
+                                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="Protects your notes against tampering. Older versions of Notational Velocity won’t be able to open this database after the upgrade." id="Upg-db-TxC">
+                                            <font key="font" metaFont="smallSystem"/>
+                                            <color key="textColor" name="secondaryLabelColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                    </textField>
+                                    <textField hidden="YES" verticalHuggingPriority="750" horizontalCompressionResistancePriority="250" preferredMaxLayoutWidth="229" translatesAutoresizingMaskIntoConstraints="NO" id="Upg-db-Sts">
+                                        <rect key="frame" x="121" y="78" width="229" height="16"/>
+                                        <constraints>
+                                            <constraint firstAttribute="width" constant="229" id="Upg-db-cW1"/>
+                                        </constraints>
+                                        <textFieldCell key="cell" sendsActionOnEndEditing="YES" title="This database uses the latest security format." id="Upg-db-StC">
+                                            <font key="font" metaFont="system"/>
+                                            <color key="textColor" name="controlTextColor" catalog="System" colorSpace="catalog"/>
+                                            <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
+                                        </textFieldCell>
+                                    </textField>
                                     <button hidden="YES" imageHugsTitle="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="133">
                                         <rect key="frame" x="117" y="42" width="149" height="32"/>
                                         <buttonCell key="cell" type="push" title="Clear in Keychain" bezelStyle="rounded" alignment="center" enabled="NO" borderStyle="border" inset="2" id="235">
@@ -553,9 +596,9 @@
                                     <constraint firstItem="110" firstAttribute="trailing" secondItem="32" secondAttribute="trailing" id="bzw-E7-t2H"/>
                                     <constraint firstItem="133" firstAttribute="leading" secondItem="34" secondAttribute="leading" id="cz2-Ml-5Qj"/>
                                     <constraint firstItem="24" firstAttribute="leading" secondItem="23" secondAttribute="leading" priority="600" constant="121" id="fzH-c0-RYi"/>
-                                    <constraint firstItem="133" firstAttribute="top" relation="greaterThanOrEqual" secondItem="130" secondAttribute="bottom" constant="4" id="gJm-QS-CCQ"/>
+                                    <constraint firstItem="133" firstAttribute="top" relation="greaterThanOrEqual" secondItem="Upg-db-Txt" secondAttribute="bottom" constant="4" id="gJm-QS-CCQ"/>
                                     <constraint firstItem="133" firstAttribute="leading" secondItem="23" secondAttribute="leading" priority="600" constant="124" id="gsO-nb-6iP"/>
-                                    <constraint firstItem="133" firstAttribute="top" secondItem="130" secondAttribute="bottom" priority="600" constant="39" id="huw-qR-7AZ"/>
+                                    <constraint firstItem="133" firstAttribute="top" secondItem="Upg-db-Txt" secondAttribute="bottom" priority="600" constant="12" id="huw-qR-7AZ"/>
                                     <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="34" secondAttribute="trailing" constant="20" id="iMJ-F7-Ec9"/>
                                     <constraint firstItem="30" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="23" secondAttribute="leading" constant="20" id="iw0-wS-dUD"/>
                                     <constraint firstItem="34" firstAttribute="leading" secondItem="32" secondAttribute="trailing" constant="8" id="jBD-jY-VY2"/>
@@ -584,6 +627,18 @@
                                     <constraint firstItem="111" firstAttribute="leading" secondItem="112" secondAttribute="trailing" constant="3" id="wM8-6E-33P"/>
                                     <constraint firstItem="34" firstAttribute="leading" secondItem="23" secondAttribute="leading" priority="600" constant="124" id="wxf-Ht-zRW"/>
                                     <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="111" secondAttribute="trailing" constant="20" id="xJR-IU-jDe"/>
+                                    <constraint firstItem="Upg-db-Btn" firstAttribute="leading" secondItem="34" secondAttribute="leading" id="Upg-db-c01"/>
+                                    <constraint firstItem="Upg-db-Btn" firstAttribute="top" secondItem="130" secondAttribute="bottom" priority="600" constant="16" id="Upg-db-c02"/>
+                                    <constraint firstItem="Upg-db-Btn" firstAttribute="top" relation="greaterThanOrEqual" secondItem="130" secondAttribute="bottom" constant="4" id="Upg-db-c03"/>
+                                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="Upg-db-Btn" secondAttribute="trailing" constant="20" id="Upg-db-c04"/>
+                                    <constraint firstItem="Upg-db-Lbl" firstAttribute="trailing" secondItem="32" secondAttribute="trailing" id="Upg-db-c05"/>
+                                    <constraint firstItem="Upg-db-Lbl" firstAttribute="firstBaseline" secondItem="Upg-db-Btn" secondAttribute="firstBaseline" id="Upg-db-c06"/>
+                                    <constraint firstItem="Upg-db-Lbl" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="23" secondAttribute="leading" constant="20" id="Upg-db-c07"/>
+                                    <constraint firstItem="Upg-db-Txt" firstAttribute="leading" secondItem="Upg-db-Btn" secondAttribute="leading" constant="4" id="Upg-db-c08"/>
+                                    <constraint firstItem="Upg-db-Txt" firstAttribute="top" secondItem="Upg-db-Btn" secondAttribute="bottom" constant="6" id="Upg-db-c09"/>
+                                    <constraint firstAttribute="trailing" relation="greaterThanOrEqual" secondItem="Upg-db-Txt" secondAttribute="trailing" constant="20" id="Upg-db-c10"/>
+                                    <constraint firstItem="Upg-db-Sts" firstAttribute="leading" secondItem="Upg-db-Txt" secondAttribute="leading" id="Upg-db-c11"/>
+                                    <constraint firstItem="Upg-db-Sts" firstAttribute="firstBaseline" secondItem="Upg-db-Lbl" secondAttribute="firstBaseline" id="Upg-db-c12"/>
                                 </constraints>
                             </view>
                         </tabViewItem>

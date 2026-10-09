@@ -42,6 +42,10 @@
     return self;
 }
 
++ (BOOL)supportsSecureCoding {
+	return YES;
+}
+
 - (id)initWithCoder:(NSCoder*)decoder {
     if ([super init]) {
 		
@@ -49,7 +53,7 @@
 			NSUInteger decodedByteCount;
 			const uint8_t *decodedBytes = [decoder decodeBytesForKey:VAR_STR(uniqueNoteIDBytes) returnedLength:&decodedByteCount];
 			memcpy(&uniqueNoteIDBytes, decodedBytes, MIN(decodedByteCount, sizeof(CFUUIDBytes)));
-			syncServicesMD = [[decoder decodeObjectForKey:VAR_STR(syncServicesMD)] retain];
+			syncServicesMD = [NVDecodeObjectOfClasses(decoder, NVPropertyListClasses(), [NSDictionary class], VAR_STR(syncServicesMD)) mutableCopy];
 			logSequenceNumber = [decoder decodeInt32ForKey:VAR_STR(logSequenceNumber)];
 		} else {
 			[decoder decodeValueOfObjCType:@encode(CFUUIDBytes) at:&uniqueNoteIDBytes];

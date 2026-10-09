@@ -1,4 +1,9 @@
 #import <Foundation/Foundation.h>
+#include <CommonCrypto/CommonKeyDerivation.h>
+
+//HMAC-SHA256 over the concatenation of first and second; second may be nil
+NSData *NVHMACSHA256(NSData *key, NSData *first, NSData *second);
+BOOL NVTimingSafeEqualData(NSData *a, NSData *b);
 
 @interface NSData (NVUtilities)
 
@@ -9,6 +14,8 @@
 
 + (NSMutableData *)randomDataOfLength:(int)len;
 - (NSMutableData*)derivedKeyOfLength:(NSUInteger)len salt:(NSData*)salt iterations:(int)count;
+- (NSMutableData*)derivedKeyOfLength:(NSUInteger)len salt:(NSData*)salt iterations:(int)count PRF:(CCPseudoRandomAlgorithm)prf;
+- (NSMutableData*)subkeyForPurpose:(const char*)purpose salt:(NSData*)salt;
 - (unsigned long)CRC32;
 - (NSData*)SHA1Digest;
 - (NSData*)BrokenMD5Digest;

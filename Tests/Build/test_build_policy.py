@@ -57,6 +57,25 @@ class BuildPolicyTests(unittest.TestCase):
                 self.assertNotIn('-pg', str(settings))
                 self.assertNotIn('-whatsloaded', str(settings))
 
+    def test_application_uses_hardened_runtime_with_apple_events_only(self):
+        project = json.loads(subprocess.check_output([
+            '/usr/bin/plutil', '-convert', 'json', '-o', '-',
+            str(ROOT / 'Notation.xcodeproj/project.pbxproj')]))
+        targets = [item['buildSettings'] for item in project['objects'].values()
+                   if item.get('isa') == 'XCBuildConfiguration'
+                   and item['buildSettings'].get('INFOPLIST_FILE') == 'Configuration/Info.plist']
+        self.assertEqual(len(targets), 3)
+        for settings in targets:
+            self.assertEqual(settings.get('ENABLE_HARDENED_RUNTIME'), 'YES')
+            self.assertEqual(settings.get('CODE_SIGN_ENTITLEMENTS'), 'Configuration/Notation.entitlements')
+        with (ROOT / 'Configuration/Notation.entitlements').open('rb') as source:
+            self.assertEqual(plistlib.load(source), {'com.apple.security.automation.apple-events': True})
+        with (ROOT / 'Configuration/Info.plist').open('rb') as source:
+            self.assertTrue(plistlib.load(source).get('NSAppleEventsUsageDescription'))
+        for strings in (ROOT / 'Resources').glob('*.lproj/InfoPlist.strings'):
+            with self.subTest(strings=strings.parent.name):
+                self.assertIn('NSAppleEventsUsageDescription = "', strings.read_bytes().decode('utf-16'))
+
     def test_bundle_minimum_and_architecture_match(self):
         with (ROOT / 'Configuration/Info.plist').open('rb') as source:
             info = plistlib.load(source)

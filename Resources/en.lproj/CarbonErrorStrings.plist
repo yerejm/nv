@@ -92,6 +92,8 @@
 	<string>the data could not be formatted appropriately</string>
 	<key>-825</key>
 	<string>notes had mis-matching values after decoding</string>
+	<key>-826</key>
+	<string>the notes data failed its integrity check and may have been altered</string>
 	<key>-1300</key>
 	<string>the specified file ID was not found on the file system</string>
 	<key>-1301</key>

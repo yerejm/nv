@@ -130,7 +130,8 @@
 
 - (double)delayForHashIterations:(int)count {
 	NSDate *before = [NSDate date];
-	[crapData derivedKeyOfLength:[notationPrefs keyLengthInBits]/8 salt:crapSalt iterations:count];
+	//new passphrases are derived with SHA-256, so that is what the iteration count is calibrated against
+	[crapData derivedKeyOfLength:[notationPrefs keyLengthInBits]/8 salt:crapSalt iterations:count PRF:kCCPRFHmacAlgSHA256];
 	return [[NSDate date] timeIntervalSinceDate:before];
 }
 

@@ -22,13 +22,13 @@
     XCTAssertNil([note originalNote]);
 }
 - (void)testLegacyKeyedDeletionArchive {
-    [self assertDeletion:NVUnarchiveObject([self fixture:@"deleted-keyed.archive"])];
+    [self assertDeletion:NVUnarchiveObject([self fixture:@"deleted-keyed.archive"], [DeletedNoteObject class])];
 }
 - (void)testLegacyPositionalDeletionArchive {
     [self assertDeletion:NVUnarchiveLegacyObject([self fixture:@"deleted-positional.archive"])];
 }
 - (void)testDeletionIdentityHashAndJournalSequence {
-    DeletedNoteObject *first = NVUnarchiveObject([self fixture:@"deleted-keyed.archive"]);
+    DeletedNoteObject *first = NVUnarchiveObject([self fixture:@"deleted-keyed.archive"], [DeletedNoteObject class]);
     DeletedNoteObject *second = NVUnarchiveLegacyObject([self fixture:@"deleted-positional.archive"]);
     XCTAssertEqualObjects(first, second);
     XCTAssertEqual(first.hash, second.hash);

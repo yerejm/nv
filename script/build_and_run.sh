@@ -37,7 +37,9 @@ mv "$RUN_APP/Contents/MacOS/Notational Velocity" "$RUN_EXECUTABLE"
 /usr/libexec/PlistBuddy -c 'Set :CFBundleExecutable NVDevelopment' "$RUN_APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Delete :CFBundleURLTypes' "$RUN_APP/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c 'Delete :NSServices' "$RUN_APP/Contents/Info.plist"
-/usr/bin/codesign --force --sign - --identifier "$RUN_BUNDLE_ID" "$RUN_APP"
+# The hardened runtime matches release builds; the extra entitlements only admit the injected isolation library.
+/usr/bin/codesign --force --sign - --options runtime --entitlements "$RUN_ROOT/Tests/Tools/IsolatedLaunch.entitlements" \
+    --identifier "$RUN_BUNDLE_ID" "$RUN_APP"
 RUN_INCLUDE_FLAGS=()
 while IFS= read -r RUN_INCLUDE_DIRECTORY; do
     RUN_INCLUDE_FLAGS+=(-I "$RUN_INCLUDE_DIRECTORY")

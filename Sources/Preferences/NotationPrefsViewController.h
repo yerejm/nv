@@ -51,6 +51,8 @@
 	IBOutlet NSButton *removeFromKeychainButton;
     IBOutlet NSPopUpButton *storageFormatPopupButton;
     IBOutlet NSMatrix *passwordSettingsMatrix;
+	IBOutlet NSButton *upgradeSecurityButton;
+	IBOutlet NSTextField *upgradeSecurityText, *upgradeSecurityStatus;
     
     IBOutlet NSView *view;
 
@@ -82,6 +84,8 @@
 - (IBAction)changedSecureTextEntry:(id)sender;
 - (IBAction)removeFromKeychain:(id)sender;
 - (void)updateRemoveKeychainItemStatus;
+- (void)updateDatabaseSecurityControls;
+- (IBAction)upgradeDatabaseSecurity:(id)sender;
 - (void)notesStorageFormatDidChange;
 - (int)notesStorageFormatInProgress;
 - (void)runQueuedStorageFormatChangeInvocation;

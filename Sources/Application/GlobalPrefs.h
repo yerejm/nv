@@ -33,6 +33,8 @@ extern NSString *NotePreviewString;
 
 extern NSString *NVPTFPboardType;
 
+void NVMigrateLegacyArchivedPreferences(NSUserDefaults *defaults);
+
 @class NotesTableView;
 @class BookmarksController;
 @class NotationPrefs;

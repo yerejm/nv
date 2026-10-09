@@ -555,3 +555,21 @@
 "Clear Search" = "清除搜索";
 
 "Back to Search" = "返回搜索";
+
+/* title of the warning shown when unsaved changes in the journal fail verification */
+"Some unsaved note changes could not be verified and were not restored." = "部分未保存的笔记更改无法验证，因此未被恢复。";
+
+/* explanation of the warning shown when unsaved changes in the journal fail verification; %@ is the file name */
+"The Interim Note-Changes file may have been damaged or altered. It was kept in your notes folder as “%@”." = "临时文件 Interim Note-Changes 可能已损坏或被篡改。它已作为“%@”保留在您的笔记文件夹中。";
+
+/* title of the confirmation before upgrading a database to the authenticated format */
+"Upgrade the security of this database?" = "要升级此数据库的安全性吗？";
+
+/* explanation in the confirmation before upgrading a database; %@ is the name of the copy kept */
+"Notes will be protected against tampering. Older versions of Notational Velocity won’t be able to open this database afterwards. A copy of the database as it is now will be kept in your notes folder as “%@”." = "笔记将受到防篡改保护。之后，旧版本的 Notational Velocity 将无法打开此数据库。数据库当前状态的副本将作为“%@”保留在您的笔记文件夹中。";
+
+/* button that confirms upgrading a database */
+"Upgrade" = "升级";
+
+/* title of the alert shown when upgrading a database fails */
+"The database could not be upgraded." = "无法升级数据库。";

@@ -72,3 +72,15 @@
 
 /* Set as default file extension for new notes */
 "263.ibShadowedToolTip" = "Définir comme l'extension par défaut des nouvelles notes";
+
+/* Database: */
+"Upg-db-LbC.title" = "Base de données :";
+
+/* Upgrade Database Security… */
+"Upg-db-BtC.title" = "Améliorer la sécurité de la base…";
+
+/* Protects your notes against tampering. Older versions of Notational Velocity won’t be able to open this database after the upgrade. */
+"Upg-db-TxC.title" = "Protège vos notes contre toute altération. Les versions antérieures de Notational Velocity ne pourront plus ouvrir cette base de données après la mise à niveau.";
+
+/* This database uses the latest security format. */
+"Upg-db-StC.title" = "Cette base de données utilise le format de sécurité le plus récent.";

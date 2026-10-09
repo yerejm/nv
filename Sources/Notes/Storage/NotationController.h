@@ -108,12 +108,14 @@ typedef struct _NoteCatalogEntry {
 - (NSData*)aliasDataForNoteDirectory;
 - (OSStatus)_readAndInitializeSerializedNotes;
 - (void)processRecoveredNotes:(NSDictionary*)dict;
+- (void)reportUnverifiedJournal;
 - (BOOL)initializeJournaling;
 - (void)handleJournalError;
 - (void)checkJournalExistence;
 - (void)closeJournal;
 - (BOOL)flushAllNoteChanges;
-- (void)flushEverything;
+- (BOOL)flushEverything;
+- (BOOL)upgradeToAuthenticatedFormat;
 
 - (void)upgradeDatabaseIfNecessary;
 

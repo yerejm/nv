@@ -27,6 +27,8 @@
 #import "BufferUtils.h"
 
 extern NSString *NotesDatabaseFileName;
+extern NSString *UnverifiedJournalFileName;
+extern NSString *PreUpgradeDatabaseFileName;
 
 typedef union VolumeUUID {
 	u_int32_t value[2];

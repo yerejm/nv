@@ -555,3 +555,21 @@
 "Clear Search" = "Suche löschen";
 
 "Back to Search" = "Zurück zur Suche";
+
+/* title of the warning shown when unsaved changes in the journal fail verification */
+"Some unsaved note changes could not be verified and were not restored." = "Einige ungesicherte Notizänderungen konnten nicht überprüft werden und wurden nicht wiederhergestellt.";
+
+/* explanation of the warning shown when unsaved changes in the journal fail verification; %@ is the file name */
+"The Interim Note-Changes file may have been damaged or altered. It was kept in your notes folder as “%@”." = "Die Interim Note-Changes Datei wurde möglicherweise beschädigt oder verändert. Sie wurde in deinem Notizordner als „%@“ aufbewahrt.";
+
+/* title of the confirmation before upgrading a database to the authenticated format */
+"Upgrade the security of this database?" = "Sicherheit dieser Datenbank aktualisieren?";
+
+/* explanation in the confirmation before upgrading a database; %@ is the name of the copy kept */
+"Notes will be protected against tampering. Older versions of Notational Velocity won’t be able to open this database afterwards. A copy of the database as it is now will be kept in your notes folder as “%@”." = "Notizen werden vor Manipulation geschützt. Ältere Versionen von Notational Velocity können diese Datenbank danach nicht mehr öffnen. Eine Kopie der Datenbank im jetzigen Zustand wird in deinem Notizordner als „%@“ aufbewahrt.";
+
+/* button that confirms upgrading a database */
+"Upgrade" = "Aktualisieren";
+
+/* title of the alert shown when upgrading a database fails */
+"The database could not be upgraded." = "Die Datenbank konnte nicht aktualisiert werden.";

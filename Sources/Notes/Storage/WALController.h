@@ -39,10 +39,27 @@ typedef union {
 	char recordBuffer[(sizeof(u_int32_t) * 3) + RECORD_SALT_LEN];
 } WALRecordHeader;
 
+#define RECORD_IV_LEN 16
+#define RECORD_TAG_LEN 32
+
+//journals that begin with WALAuthenticatedJournalMagic hold only these records;
+//the tag is an HMAC-SHA256 over the lengths, the IV and the ciphertext
+typedef union {
+	struct {
+		u_int32_t originalDataLength;
+		u_int32_t dataLength;
+		char iv[RECORD_IV_LEN];
+		char tag[RECORD_TAG_LEN];
+	};
+	char recordBuffer[(sizeof(u_int32_t) * 2) + RECORD_IV_LEN + RECORD_TAG_LEN];
+} WALAuthenticatedRecordHeader;
+
+extern const char WALAuthenticatedJournalMagic[8];
+
 @interface WALController : NSObject {
 	int logFD;
 	char *journalFile;
-	NSData *logSessionKey;
+	NSData *logSessionKey, *recordEncryptionKey, *recordAuthenticationKey;
 	id delegate;
 	
 	z_stream compressionStream;
@@ -53,13 +70,18 @@ typedef union {
 - (void)setDelegate:(id)aDelegate;
 - (BOOL)logFileStillExists;
 - (BOOL)destroyLogFile;
+- (BOOL)retireLogFileWithName:(NSString*)filename;
 
 @end
 
 @interface WALStorageController : WALController {
     NSMutableData *unwrittenData;
+	BOOL authenticatedRecords;
 }
+//writes authenticated records
 - (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key;
+//unauthenticated records are the format that versions before epoch 5 read
+- (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key authenticated:(BOOL)authenticated;
 - (BOOL)writeEstablishedNote:(id<SynchronizedNote>)aNoteObject;
 - (BOOL)writeRemovalForNote:(id<SynchronizedNote>)aNoteObject;
 - (BOOL)writeNoteObject:(id<SynchronizedNote>)aNoteObject;
@@ -76,9 +98,15 @@ typedef union {
     off_t fileLength, totalBytesRead;
     //to ensure we don't mistakenly allocate more memory
     //than there exists data in what we have yet to read
+	
+	BOOL authenticatedJournal, acceptsUnauthenticatedRecords, rejectedUnverifiedRecords;
 }
 
+//unauthenticated (pre-epoch-5) journals are refused
 - (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key;
+- (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key acceptingUnauthenticatedRecords:(BOOL)acceptsUnauthenticated;
+//records that failed authentication, or unauthenticated records that were refused, stop recovery
+- (BOOL)rejectedUnverifiedRecords;
 - (id <SynchronizedNote>)recoverNextObject;
 - (NSDictionary*)recoveredNotes;
 

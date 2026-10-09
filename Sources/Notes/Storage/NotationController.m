@@ -177,8 +177,8 @@
 			[allNotes makeObjectsPerformSelector:@selector(_resanitizeContent)];
 		}
 		
-		if (epochIteration < EPOC_ITERATION) {
-			NSLog(@"epochIteration was upgraded from %u to %u", epochIteration, EPOC_ITERATION);
+		if (epochIteration < [notationPrefs formatEpoch]) {
+			NSLog(@"epochIteration was upgraded from %u to %u", epochIteration, [notationPrefs formatEpoch]);
 			notesChanged = YES;
 			[self flushEverything];
 		} else if ([notationPrefs epochIteration] > EPOC_ITERATION) {
@@ -210,7 +210,7 @@
 	}
 	NSData *archivedNotation = [[[NSData alloc] initWithBytesNoCopy:notesData length:fileSize freeWhenDone:NO] autorelease];
 	@try {
-		frozenNotation = NVUnarchiveObject(archivedNotation);
+		frozenNotation = NVUnarchiveObject(archivedNotation, [FrozenNotation class]);
 	} @catch (NSException *e) {
 		NSLog(@"(VERIFY) Error unarchiving notes and preferences from data (%@, %@)", [e name], [e reason]);
 		result = kCoderErr;
@@ -260,7 +260,7 @@ returnResult:
 	if (fileSize > 0) {
 		NSData *archivedNotation = [[NSData alloc] initWithBytesNoCopy:notesData length:fileSize freeWhenDone:NO];
 		@try {
-			frozenNotation = NVUnarchiveObject(archivedNotation);
+			frozenNotation = NVUnarchiveObject(archivedNotation, [FrozenNotation class]);
 		} @catch (NSException *e) {
 			NSLog(@"Error unarchiving notes and preferences from data (%@, %@)", [e name], [e reason]);
 			
@@ -323,9 +323,10 @@ returnResult:
 	
     if ((err = NVReferenceMakePath(&noteDirectoryRef, convertedPath, maxPathSize)) == noErr) {
 		//initialize the journal if necessary
-		if (!(walWriter = [[WALStorageController alloc] initWithParentFSRep:(char*)convertedPath encryptionKey:walSessionKey])) {
+		if (!(walWriter = [[WALStorageController alloc] initWithParentFSRep:(char*)convertedPath encryptionKey:walSessionKey authenticated:[notationPrefs usesAuthenticatedFormat]])) {
 			//journal file probably already exists, so try to recover it
-			WALRecoveryController *walReader = [[[WALRecoveryController alloc] initWithParentFSRep:(char*)convertedPath encryptionKey:walSessionKey] autorelease];
+			WALRecoveryController *walReader = [[[WALRecoveryController alloc] initWithParentFSRep:(char*)convertedPath encryptionKey:walSessionKey
+																		acceptingUnauthenticatedRecords:[notationPrefs acceptsUnauthenticatedJournal]] autorelease];
 			if (walReader) {
 				
 				BOOL databaseCouldNotBeFlushed = NO;
@@ -346,13 +347,20 @@ returnResult:
 				
 				//there could be other issues, too (1)
 				
-				if (![walReader destroyLogFile]) {
+				if ([walReader rejectedUnverifiedRecords]) {
+					//the notes recovered before the first unverified record are kept; the rest stays on disk for inspection
+					if (![walReader retireLogFileWithName:UnverifiedJournalFileName]) {
+						NSLog(@"Unable to move aside the unverified write-ahead-log file");
+						goto bail;
+					}
+					[self performSelector:@selector(reportUnverifiedJournal) withObject:nil afterDelay:0.0];
+				} else if (![walReader destroyLogFile]) {
 					//couldn't delete the log file, so we can't create a new one
 					NSLog(@"Unable to delete the old write-ahead-log file");
 					goto bail;
 				}
 				
-				if (!(walWriter = [[WALStorageController alloc] initWithParentFSRep:(char*)convertedPath encryptionKey:walSessionKey])) {
+				if (!(walWriter = [[WALStorageController alloc] initWithParentFSRep:(char*)convertedPath encryptionKey:walSessionKey authenticated:[notationPrefs usesAuthenticatedFormat]])) {
 					//couldn't create a journal after recovering the old one
 					//if databaseCouldNotBeFlushed is true here, then we've potentially lost notes; perhaps exchangeobjects would be better here?
 					NSLog(@"Unable to create a new write-ahead-log after deleting the old one");
@@ -386,6 +394,14 @@ returnResult:
 bail:
 		free(convertedPath);	
     return NO;
+}
+
+- (void)reportUnverifiedJournal {
+	NSLog(@"Unsaved changes in the write-ahead-log failed verification; the log was kept as \"%@\"", UnverifiedJournalFileName);
+	if (delegate)
+		NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"Some unsaved note changes could not be verified and were not restored.", nil),
+				   [NSString stringWithFormat:NSLocalizedString(@"The Interim Note-Changes file may have been damaged or altered. It was kept in your notes folder as “%@”.", nil), UnverifiedJournalFileName],
+				   NSLocalizedString(@"OK", nil), nil, nil);
 }
 
 //stick the newest unique recovered notes into allNotes
@@ -470,10 +486,11 @@ bail:
 	[self performSelector:@selector(handleJournalError) withObject:nil afterDelay:0.0];
 }
 
-- (void)flushEverything {
+- (BOOL)flushEverything {
 	
 	//if we could flush the database and there was a journal, then close it
-	if ([self flushAllNoteChanges] && walWriter) {
+	BOOL flushed = [self flushAllNoteChanges];
+	if (flushed && walWriter) {
 		[self closeJournal];
 		
 		//re-start the journal if we had one
@@ -481,6 +498,33 @@ bail:
 			[self performSelector:@selector(handleJournalError) withObject:nil afterDelay:0.0];
 		}
 	}
+	return flushed;
+}
+
+//only on the user's request, as older versions cannot open the upgraded database
+- (BOOL)upgradeToAuthenticatedFormat {
+	if ([notationPrefs usesAuthenticatedFormat]) return YES;
+	
+	//save pending changes in the current format first, so the copy kept for going back is complete
+	if (![self flushAllNoteChanges]) return NO;
+	
+	UInt8 directoryPath[PATH_MAX];
+	if (NVReferenceMakePath(&noteDirectoryRef, directoryPath, sizeof(directoryPath)) != noErr) return NO;
+	NSString *directory = [[NSFileManager defaultManager] stringWithFileSystemRepresentation:(const char*)directoryPath length:strlen((const char*)directoryPath)];
+	NSString *backup = [directory stringByAppendingPathComponent:PreUpgradeDatabaseFileName];
+	NSError *error = nil;
+	[[NSFileManager defaultManager] removeItemAtPath:backup error:NULL];
+	if (![[NSFileManager defaultManager] copyItemAtPath:[directory stringByAppendingPathComponent:NotesDatabaseFileName] toPath:backup error:&error]) {
+		NSLog(@"Unable to keep a copy of the database before upgrading it: %@", error);
+		return NO;
+	}
+	
+	[notationPrefs setUsesAuthenticatedFormat:YES];
+	if (![self flushEverything]) {
+		[notationPrefs setUsesAuthenticatedFormat:NO];
+		return NO;
+	}
+	return YES;
 }
 
 - (BOOL)flushAllNoteChanges {

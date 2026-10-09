@@ -26,9 +26,11 @@
 #include <fcntl.h>
 #include <stdlib.h>
 #include <sys/stat.h>
+#include <CommonCrypto/CommonCryptor.h>
 #import "NSData_transformations.h"
 #import "WALController.h"
 #import "DeletedNoteObject.h"
+#import "NoteObject.h"
 #import "NSCollection_utils.h"
 #import "NSString_NV.h"
 
@@ -59,6 +61,13 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
 
 #undef ELF_STEP
 
+#define JOURNAL_ENCRYPTION_PURPOSE "Notational Velocity journal encryption"
+#define JOURNAL_AUTHENTICATION_PURPOSE "Notational Velocity journal authentication"
+//the lengths and IV of an authenticated record header, which its tag covers along with the ciphertext
+#define AUTHENTICATED_HEADER_LEN (sizeof(u_int32_t) * 2 + RECORD_IV_LEN)
+
+const char WALAuthenticatedJournalMagic[8] = {'N', 'V', 'W', 'A', 'L', 0, 0, 5};
+
 //file descriptor based for lower level access
 
 //also used as an ad-hoc lock file;
@@ -84,6 +93,8 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
 		//for simplicity's sake the log file is always compressed and encrypted with the key for the current database
 		//if the database has no encryption, it should have passed some constant known key to us instead
 		logSessionKey = [key retain];
+		recordEncryptionKey = [[key subkeyForPurpose:JOURNAL_ENCRYPTION_PURPOSE salt:nil] retain];
+		recordAuthenticationKey = [[key subkeyForPurpose:JOURNAL_AUTHENTICATION_PURPOSE salt:nil] retain];
 		
     }
     return self;
@@ -133,10 +144,32 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
     return YES;
 }
 
+//keeps a journal that cannot be trusted next to the notes instead of deleting it
+- (BOOL)retireLogFileWithName:(NSString*)filename {
+	char currentPath[MAXPATHLEN];
+	if (fcntl(logFD, F_GETPATH, currentPath) < 0) {
+		NSLog(@"retireLogFileWithName: fcntl F_GETPATH error: %s", strerror(errno));
+		strlcpy(currentPath, journalFile, sizeof(currentPath));
+	}
+	if (close(logFD) < 0) {
+		NSLog(@"retireLogFileWithName: close error: %s", strerror(errno));
+	}
+	logFD = -1;
+	
+	NSString *retiredPath = [[[NSString stringWithUTF8String:currentPath] stringByDeletingLastPathComponent] stringByAppendingPathComponent:filename];
+	if (rename(currentPath, [retiredPath fileSystemRepresentation]) < 0) {
+		NSLog(@"retireLogFileWithName: rename error: %s", strerror(errno));
+		return NO;
+	}
+	return YES;
+}
+
 - (void)dealloc {
 	if (journalFile)
 		free(journalFile);
 	[logSessionKey release];
+	[recordEncryptionKey release];
+	[recordAuthenticationKey release];
 	
 	[super dealloc];
 }
@@ -157,7 +190,12 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
 
 
 - (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key {
+	return [self initWithParentFSRep:path encryptionKey:key authenticated:YES];
+}
+
+- (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key authenticated:(BOOL)authenticated {
     if ([super initWithParentFSRep:path encryptionKey:key]) {
+	authenticatedRecords = authenticated;
 	
 	//we could make parent dir writable just in case, but that might be a security hazard depending on ownership
 	
@@ -173,6 +211,12 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
 	}
 	if (fcntl(logFD, F_NOCACHE, 1) < 0) {
 		NSLog(@"Unable to disable disk caching for writing: %s", strerror(errno));
+	}
+	if (authenticatedRecords && write(logFD, WALAuthenticatedJournalMagic, sizeof(WALAuthenticatedJournalMagic)) != sizeof(WALAuthenticatedJournalMagic)) {
+		NSLog(@"WALStorageController: unable to write the journal header to %s: %s", journalFile, strerror(errno));
+		close(logFD);
+		unlink(journalFile);
+		return nil;
 	}
 		
 	//this will grow as necessary
@@ -198,7 +242,7 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
 - (BOOL)writeNoteObject:(id<SynchronizedNote>)aNoteObject {
 	//this method serializes a note object, encrypts it, and writes it to the log
     NSMutableData *noteData = [NSMutableData data];
-	NSKeyedArchiver *archiver = [[[NSKeyedArchiver alloc] initRequiringSecureCoding:NO] autorelease];
+	NSKeyedArchiver *archiver = [[[NSKeyedArchiver alloc] initRequiringSecureCoding:YES] autorelease];
 	[archiver encodeObject:aNoteObject forKey:@"aNote"];
 	[archiver finishEncoding];
         [noteData setData:[archiver encodedData]];
@@ -254,11 +298,42 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
     return ([unwrittenData length] == 0);
 }
 
-- (BOOL)_encryptAndWriteData:(NSMutableData*)data {
-    WALRecordHeader record = {{0}};
+//encrypts compressed record data in place and returns the header that precedes it
+- (NSData*)_sealUnauthenticatedRecord:(NSMutableData*)data originalLength:(u_int32_t)originalLength {
+	WALRecordHeader record = {{0}};
+	record.originalDataLength = CFSwapInt32HostToBig(originalLength);
 	
+	NSData *recordSalt = [NSData randomDataOfLength:RECORD_SALT_LEN];
+	NSData *recordKey = [logSessionKey derivedKeyOfLength:[logSessionKey length] salt:recordSalt iterations:1];
+	if (!recordSalt || ![data encryptAESDataWithKey:recordKey iv:[recordSalt subdataWithRange:NSMakeRange(0, 16)]])
+		return nil;
+	if ([data length] > UINT32_MAX) return nil;
+	
+	record.dataLength = CFSwapInt32HostToBig((uint32_t)[data length]);
+	record.checksum = CFSwapInt32HostToBig((uint32_t)[data CRC32]);
+	memcpy(record.saltBuffer, [recordSalt bytes], RECORD_SALT_LEN);
+	return [NSData dataWithBytes:record.recordBuffer length:sizeof(record.recordBuffer)];
+}
+
+- (NSData*)_sealAuthenticatedRecord:(NSMutableData*)data originalLength:(u_int32_t)originalLength {
+	WALAuthenticatedRecordHeader record = {{0}};
+	record.originalDataLength = CFSwapInt32HostToBig(originalLength);
+	
+	NSData *iv = [NSData randomDataOfLength:RECORD_IV_LEN];
+	if (!iv || ![data encryptAESDataWithKey:recordEncryptionKey iv:iv])
+		return nil;
+	if ([data length] > UINT32_MAX) return nil;
+	
+	record.dataLength = CFSwapInt32HostToBig((uint32_t)[data length]);
+	memcpy(record.iv, [iv bytes], RECORD_IV_LEN);
+	NSData *authenticatedHeader = [NSData dataWithBytesNoCopy:record.recordBuffer length:AUTHENTICATED_HEADER_LEN freeWhenDone:NO];
+	memcpy(record.tag, [NVHMACSHA256(recordAuthenticationKey, authenticatedHeader, data) bytes], RECORD_TAG_LEN);
+	return [NSData dataWithBytes:record.recordBuffer length:sizeof(record.recordBuffer)];
+}
+
+- (BOOL)_encryptAndWriteData:(NSMutableData*)data {
 	if ([data length] > UINT32_MAX - 32) return NO;
-    record.originalDataLength = CFSwapInt32HostToBig((uint32_t)[data length]);
+	u_int32_t originalLength = (u_int32_t)[data length];
 	
 	size_t compressedDataBufferSize = [data length] + (( [data length] + 99 ) / 100 ) + 12;
 	if (compressedDataBufferSize > UINT_MAX) return NO;
@@ -291,28 +366,19 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
 	memcpy([data mutableBytes], compressedDataBuffer, zlibAfterBufLen);
 	free(compressedDataBuffer);
     
-	//encrypt nsdata here using record salt and record key
-	NSData *recordSalt = [NSData randomDataOfLength:RECORD_SALT_LEN];
-	NSData *recordKey = [logSessionKey derivedKeyOfLength:[logSessionKey length] salt:recordSalt iterations:1];
-	
-	if (![data encryptAESDataWithKey:recordKey iv:[recordSalt subdataWithRange:NSMakeRange(0, 16)]]) {
+	NSData *header = authenticatedRecords ? [self _sealAuthenticatedRecord:data originalLength:originalLength] :
+		[self _sealUnauthenticatedRecord:data originalLength:originalLength];
+	if (!header) {
 		NSLog(@"Couldn't encrypt WAL record data!");
 		return NO;
 	}
-	
-	//write length, checksum of data, record salt, then data itself
     
-    if ([data length] > UINT32_MAX) return NO;
-    record.dataLength = CFSwapInt32HostToBig((uint32_t)[data length]);
-    record.checksum = CFSwapInt32HostToBig((uint32_t)[data CRC32]);
-	memcpy(record.saltBuffer, [recordSalt bytes], RECORD_SALT_LEN);
-    
-    //pack all the data to avoid multiple writes
-    size_t dataChunkSize = sizeof(record) + [data length];
+    //pack the header and ciphertext to avoid multiple writes
+    size_t dataChunkSize = [header length] + [data length];
     char *dataChunk = (char*)malloc(dataChunkSize);
     
-    memcpy(dataChunk, record.recordBuffer, sizeof(record.recordBuffer));
-    memcpy(dataChunk + sizeof(record.recordBuffer), [data bytes], [data length]);
+    memcpy(dataChunk, [header bytes], [header length]);
+    memcpy(dataChunk + [header length], [data bytes], [data length]);
     
     ssize_t bytesWritten = 0;
     
@@ -376,8 +442,13 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
 //if that works, then remove the log file
 
 - (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key {
+	return [self initWithParentFSRep:path encryptionKey:key acceptingUnauthenticatedRecords:NO];
+}
+
+- (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key acceptingUnauthenticatedRecords:(BOOL)acceptsUnauthenticated {
     if ([super initWithParentFSRep:path encryptionKey:key]) {
 	fileLength = totalBytesRead = 0;
+	acceptsUnauthenticatedRecords = acceptsUnauthenticated;
 	
 	//make file readable just in case
 	chmod(journalFile, S_IRUSR);
@@ -401,6 +472,18 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
 	
 	fileLength = sb.st_size;
 	
+	char magic[sizeof(WALAuthenticatedJournalMagic)];
+	if (read(logFD, magic, sizeof(magic)) == sizeof(magic) && !memcmp(magic, WALAuthenticatedJournalMagic, sizeof(magic))) {
+		authenticatedJournal = YES;
+		totalBytesRead = sizeof(magic);
+	} else if (lseek(logFD, 0, SEEK_SET) < 0) {
+		NSLog(@"WALRecoveryController: lseek error for file %s: %s", journalFile, strerror(errno));
+		return nil;
+	} else if (!acceptsUnauthenticatedRecords && fileLength > 0) {
+		NSLog(@"WALRecoveryController: refusing unauthenticated journal %s", journalFile);
+		rejectedUnverifiedRecords = YES;
+	}
+	
 	//initialize decompression context
 	compressionStream.total_in = 0;
 	compressionStream.total_out = 0;
@@ -417,19 +500,13 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
     return self;
 }
 
-//log enumerating method
-- (id <SynchronizedNote>)recoverNextObject {
+- (BOOL)rejectedUnverifiedRecords {
+	return rejectedUnverifiedRecords;
+}
+
+//returns the decrypted, still-compressed data of the next record written before epoch 5
+- (NSMutableData*)_readUnauthenticatedRecordReturningOriginalLength:(u_int32_t*)originalLength {
     WALRecordHeader record = {{0}};
-    
-    //attempt to read size of log record and checksum
-    //if it's smaller than the remaining bytes to read
-    //allocate enough memory, try to read data in, and checksum it
-    //if checksum matches, attempt to deserialize
-    //if deserialization was successful, then return a new object!
-    
-    //if any of these fail, return nil
-	
-    //adapt reads to read from decompression stream
     
     ssize_t readBytes = read(logFD, &record, sizeof(WALRecordHeader));
     totalBytesRead += MAX(0, readBytes);
@@ -448,22 +525,17 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
 		return nil;
     }
     
-    char *presumablySerializedBytes = (char*)malloc(record.dataLength);
-    
-    readBytes = read(logFD, presumablySerializedBytes, record.dataLength);
+    NSMutableData *data = [NSMutableData dataWithLength:record.dataLength];
+    readBytes = read(logFD, [data mutableBytes], record.dataLength);
     totalBytesRead += MAX(0, readBytes);
     
     if (readBytes < (ssize_t)record.dataLength) {
 		NSLog(@"recoverNextObject can't read all serialized bytes: %s", strerror(errno));
-		free(presumablySerializedBytes);
 		return nil;
     }
     
-    NSMutableData *presumablySerializedData = [[NSMutableData alloc] initWithBytesNoCopy:presumablySerializedBytes 
-																				  length:record.dataLength freeWhenDone:YES];
-    if ([presumablySerializedData CRC32] != record.checksum) {
+    if ([data CRC32] != record.checksum) {
 		NSLog(@"recoverNextObject: checksum of read data does not match that of record header");
-		[presumablySerializedData release];
 		return nil;
     }
 	    
@@ -471,52 +543,121 @@ CFHashCode CFHashBytes(const uint8_t *bytes, CFIndex length) {
 	NSData *recordSalt = [NSData dataWithBytesNoCopy:record.saltBuffer length:RECORD_SALT_LEN freeWhenDone:NO];
 	NSData *recordKey = [logSessionKey derivedKeyOfLength:[logSessionKey length] salt:recordSalt iterations:1];
 	
-	if (!([presumablySerializedData decryptAESDataWithKey:recordKey iv:[recordSalt subdataWithRange:NSMakeRange(0, 16)]])) {
+	if (!([data decryptAESDataWithKey:recordKey iv:[recordSalt subdataWithRange:NSMakeRange(0, 16)]])) {
 		NSLog(@"Record decryption failed!");
 		return nil;
 	}
 	
+	*originalLength = record.originalDataLength;
+	return data;
+}
+
+//returns the decrypted, still-compressed data of the next record, but only once its tag is verified
+- (NSMutableData*)_readAuthenticatedRecordReturningOriginalLength:(u_int32_t*)originalLength {
+	WALAuthenticatedRecordHeader record = {{0}};
+	
+	ssize_t readBytes = read(logFD, &record, sizeof(record));
+	totalBytesRead += MAX(0, readBytes);
+	
+	if (readBytes < (ssize_t)sizeof(record)) {
+		if (readBytes != 0) NSLog(@"recoverNextObject can't read (entire) log record header: %s", strerror(errno));
+		return nil;
+	}
+	
+	u_int32_t dataLength = CFSwapInt32BigToHost(record.dataLength);
+	if (!dataLength || dataLength % kCCBlockSizeAES128) {
+		NSLog(@"recoverNextObject: journal record length %u is not a whole number of cipher blocks", dataLength);
+		rejectedUnverifiedRecords = YES;
+		return nil;
+	}
+	if (dataLength > fileLength - totalBytesRead) {
+		NSLog(@"recoverNextObject can't continue because the size of this record is larger than the rest of the file!");
+		return nil;
+	}
+	
+	NSMutableData *data = [NSMutableData dataWithLength:dataLength];
+	readBytes = read(logFD, [data mutableBytes], dataLength);
+	totalBytesRead += MAX(0, readBytes);
+	
+	if (readBytes < (ssize_t)dataLength) {
+		NSLog(@"recoverNextObject can't read all serialized bytes: %s", strerror(errno));
+		return nil;
+	}
+	
+	NSData *authenticatedHeader = [NSData dataWithBytesNoCopy:record.recordBuffer length:AUTHENTICATED_HEADER_LEN freeWhenDone:NO];
+	NSData *tag = [NSData dataWithBytesNoCopy:record.tag length:RECORD_TAG_LEN freeWhenDone:NO];
+	if (!NVTimingSafeEqualData(tag, NVHMACSHA256(recordAuthenticationKey, authenticatedHeader, data))) {
+		NSLog(@"recoverNextObject: journal record failed authentication");
+		rejectedUnverifiedRecords = YES;
+		return nil;
+	}
+	
+	if (![data decryptAESDataWithKey:recordEncryptionKey iv:[NSData dataWithBytesNoCopy:record.iv length:RECORD_IV_LEN freeWhenDone:NO]]) {
+		NSLog(@"Record decryption failed!");
+		rejectedUnverifiedRecords = YES;
+		return nil;
+	}
+	
+	*originalLength = CFSwapInt32BigToHost(record.originalDataLength);
+	return data;
+}
+
+//log enumerating method
+- (id <SynchronizedNote>)recoverNextObject {
+    //read, verify and decrypt the next record, then decompress and deserialize it
+    //if any of these fail, return nil
+	
+	u_int32_t originalDataLength = 0;
+	NSMutableData *presumablySerializedData = nil;
+	if (authenticatedJournal)
+		presumablySerializedData = [self _readAuthenticatedRecordReturningOriginalLength:&originalDataLength];
+	else if (acceptsUnauthenticatedRecords)
+		presumablySerializedData = [self _readUnauthenticatedRecordReturningOriginalLength:&originalDataLength];
+	if (!presumablySerializedData)
+		return nil;
+	
 	//decompress here
-	Bytef *uncompressedDataBuffer = (Bytef *)malloc(record.originalDataLength);
+	Bytef *uncompressedDataBuffer = (Bytef *)malloc(originalDataLength);
 	
 	compressionStream.avail_in = (uInt)[presumablySerializedData length];
 	compressionStream.next_in = (Bytef*)[presumablySerializedData bytes];
-	compressionStream.avail_out = record.originalDataLength;
+	compressionStream.avail_out = originalDataLength;
 	compressionStream.next_out = uncompressedDataBuffer;
 	compressionStream.data_type = Z_BINARY;
 	
 	int inflateResult = inflate(&compressionStream, Z_SYNC_FLUSH);
 	if (inflateResult == Z_STREAM_ERROR) {
 		NSLog(@"zlib inflate error: %s", compressionStream.msg);
+		free(uncompressedDataBuffer);
 		return nil;
 	}
 	if (inflateResult == Z_NEED_DICT || inflateResult == Z_DATA_ERROR || 
 		inflateResult == Z_MEM_ERROR) {
 		NSLog(@"err: inflateResult = %d", inflateResult);
+		free(uncompressedDataBuffer);
 		return nil;
 	}
 	
 	if (compressionStream.avail_out != 0) {
 		NSLog(@"recoverNextObject: compressionStream.avail_out(%d) != 0", compressionStream.avail_out);
+		free(uncompressedDataBuffer);
 		return nil;
 	}
 	
-	[presumablySerializedData setLength:record.originalDataLength];
-	memcpy([presumablySerializedData mutableBytes], uncompressedDataBuffer, record.originalDataLength);
+	[presumablySerializedData setLength:originalDataLength];
+	memcpy([presumablySerializedData mutableBytes], uncompressedDataBuffer, originalDataLength);
 	free(uncompressedDataBuffer);
 	
     
     id <SynchronizedNote> object = nil;
 	@try {
 		NSKeyedUnarchiver *unarchiver = NVUnarchiverForData(presumablySerializedData);
-		object = [unarchiver decodeObjectForKey:@"aNote"];
+		object = [unarchiver decodeObjectOfClasses:[NSSet setWithObjects:[NoteObject class], [DeletedNoteObject class], nil] forKey:@"aNote"];
 		[unarchiver release];	
     } @catch (NSException *e) {
 		NSLog(@"recoverNextObject got an exception while unarchiving object: %@; returning NSNull to skip", [e reason]);
 		object = (id<SynchronizedNote>)[NSNull null];
     }
-    
-    [presumablySerializedData release];
     
     return object;
 }

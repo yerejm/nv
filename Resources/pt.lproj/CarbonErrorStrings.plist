@@ -92,6 +92,8 @@
 	<string>os dados não puderam ser formatados de maneira apropriada</string>
 	<key>-825</key>
 	<string>as notas apresentaram valores discordantes após a decodificação</string>
+	<key>-826</key>
+	<string>os dados das notas falharam na verificação de integridade e podem ter sido alterados</string>
 	<key>-1300</key>
 	<string>o ID do arquivo especificado não foi encontrado no sistema de arquivos</string>
 	<key>-1301</key>

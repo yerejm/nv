@@ -307,6 +307,10 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 
 //make notationcontroller should send setDelegate: and setLabelString: (if necessary) to each note when unarchiving this way
 
++ (BOOL)supportsSecureCoding {
+	return YES;
+}
+
 - (id)initWithCoder:(NSCoder*)decoder {
 	if ([self init]) {
 		
@@ -342,12 +346,14 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 			const uint8_t *decodedUUIDBytes = [decoder decodeBytesForKey:VAR_STR(uniqueNoteIDBytes) returnedLength:&decodedUUIDByteCount];
 			if (decodedUUIDBytes) memcpy(&uniqueNoteIDBytes, decodedUUIDBytes, MIN(decodedUUIDByteCount, sizeof(CFUUIDBytes)));
 			
-			syncServicesMD = [[decoder decodeObjectForKey:VAR_STR(syncServicesMD)] retain];
+			syncServicesMD = [NVDecodeObjectOfClasses(decoder, NVPropertyListClasses(), [NSDictionary class], VAR_STR(syncServicesMD)) mutableCopy];
 			
-			titleString = [[decoder decodeObjectForKey:VAR_STR(titleString)] retain];
-			labelString = [[decoder decodeObjectForKey:VAR_STR(labelString)] retain];
-			contentString = [[decoder decodeObjectForKey:VAR_STR(contentString)] mutableCopy];
-			filename = [[decoder decodeObjectForKey:VAR_STR(filename)] retain];
+			titleString = [[decoder decodeObjectOfClass:[NSString class] forKey:VAR_STR(titleString)] retain];
+			labelString = [[decoder decodeObjectOfClass:[NSString class] forKey:VAR_STR(labelString)] retain];
+			//done tags and heading markers are stored as NSNull attribute values
+			NSSet *contentClasses = [NVPropertyListClasses() setByAddingObjectsFromArray:@[[NSAttributedString class], [NSNull class], [NSURL class]]];
+			contentString = [NVDecodeObjectOfClasses(decoder, contentClasses, [NSAttributedString class], VAR_STR(contentString)) mutableCopy];
+			filename = [[decoder decodeObjectOfClass:[NSString class] forKey:VAR_STR(filename)] retain];
 			
 		} else {
             NSRange32 range32;

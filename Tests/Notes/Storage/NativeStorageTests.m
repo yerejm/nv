@@ -21,6 +21,29 @@
 - (void)handleClosedFileEvent:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)reply;
 @end
 
+static NSData *NVArchiveLegacyObject(id object) {
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated-declarations"
+    return [NSArchiver archivedDataWithRootObject:object];
+#pragma clang diagnostic pop
+}
+
+static BOOL NVUnexpectedObjectWasDecoded = NO;
+
+@interface NVUnexpectedArchiveObject : NSObject <NSSecureCoding>
+@end
+@implementation NVUnexpectedArchiveObject
++ (BOOL)supportsSecureCoding {
+    return YES;
+}
+- (void)encodeWithCoder:(NSCoder *)coder {
+}
+- (id)initWithCoder:(NSCoder *)coder {
+    NVUnexpectedObjectWasDecoded = YES;
+    return [super init];
+}
+@end
+
 @interface NativeStorageTests : XCTestCase
 @property(nonatomic, retain) NSString *temporaryDirectory;
 @end
@@ -49,11 +72,45 @@
     NSAttributedString *immutable = [[NSAttributedString alloc] initWithString:@"Archived styled text" attributes:@{NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle)}];
     [note->contentString release];
     note->contentString = (id)immutable;
-    NoteObject *decoded = NVUnarchiveObject(NVArchiveObject(note));
+    NoteObject *decoded = NVUnarchiveObject(NVArchiveObject(note), [NoteObject class]);
     XCTAssertTrue([decoded->contentString isKindOfClass:[NSMutableAttributedString class]]);
     [decoded->contentString.mutableString appendString:@" edited"];
     XCTAssertEqualObjects(decoded->contentString.string, @"Archived styled text edited");
     XCTAssertEqualObjects([decoded->contentString attribute:NSUnderlineStyleAttributeName atIndex:0 effectiveRange:NULL], @(NSUnderlineStyleSingle));
+}
+- (void)testDoneTagsAndLinksSurviveSecureDecoding {
+    NoteObject *note = [self sampleNote];
+    [note->contentString addAttributes:@{@"NVDoneTag": [NSNull null], NSStrikethroughStyleAttributeName: @1,
+                                         NSLinkAttributeName: [NSURL URLWithString:@"https://example.com"]} range:NSMakeRange(0, 8)];
+    NoteObject *decoded = NVUnarchiveObject(NVArchiveObject(note), [NoteObject class]);
+    NSDictionary *attributes = [decoded->contentString attributesAtIndex:0 effectiveRange:NULL];
+    XCTAssertEqualObjects(attributes[@"NVDoneTag"], [NSNull null]);
+    XCTAssertEqualObjects(attributes[NSLinkAttributeName], [NSURL URLWithString:@"https://example.com"]);
+    XCTAssertEqualObjects(attributes[NSStrikethroughStyleAttributeName], @1);
+}
+- (void)testArchivesCarryingUnexpectedClassesAreRejected {
+    NVUnexpectedObjectWasDecoded = NO;
+    NVUnexpectedArchiveObject *unexpected = [[[NVUnexpectedArchiveObject alloc] init] autorelease];
+    NotationPrefs *prefs = [[[NotationPrefs alloc] init] autorelease];
+    NSData *deletions = [FrozenNotation frozenDataWithExistingNotes:[NSMutableArray arrayWithObject:[self sampleNote]] deletedNotes:[NSMutableSet setWithObject:unexpected] prefs:prefs];
+    XCTAssertNotNil(deletions);
+    XCTAssertThrows(NVUnarchiveObject(deletions, [FrozenNotation class]));
+    NSData *notes = [FrozenNotation frozenDataWithExistingNotes:[NSMutableArray arrayWithObject:unexpected] deletedNotes:[NSMutableSet set] prefs:prefs];
+    FrozenNotation *frozen = NVUnarchiveObject(notes, [FrozenNotation class]);
+    OSStatus error = noErr;
+    XCTAssertNil([frozen unpackedNotesWithPrefs:[frozen notationPrefs] returningError:&error]);
+    XCTAssertEqual(error, kCoderErr);
+    NoteObject *note = [self sampleNote];
+    [note->contentString addAttribute:@"unexpected" value:unexpected range:NSMakeRange(0, 1)];
+    XCTAssertThrows(NVUnarchiveObject(NVArchiveObject(note), [NoteObject class]));
+    XCTAssertNil(NVUnarchivePreference(NVArchiveObject(unexpected), [NSFont class]));
+    NSData *key = [NSMutableData dataWithLength:32];
+    WALStorageController *writer = [[[WALStorageController alloc] initWithParentFSRep:self.temporaryDirectory.fileSystemRepresentation encryptionKey:key] autorelease];
+    XCTAssertTrue([writer writeNoteObject:(id)unexpected]);
+    XCTAssertTrue([writer synchronize]);
+    WALRecoveryController *reader = [[[WALRecoveryController alloc] initWithParentFSRep:self.temporaryDirectory.fileSystemRepresentation encryptionKey:key] autorelease];
+    XCTAssertEqual([reader recoveredNotes].count, 0U);
+    XCTAssertFalse(NVUnexpectedObjectWasDecoded);
 }
 - (void)testFileReferenceTracksRenameAndRejectsReplacement {
     NSString *path = [self.temporaryDirectory stringByAppendingPathComponent:@"original.txt"];
@@ -243,7 +300,7 @@
     XCTAssertFalse([prefs canLoadPassphrase:@"wrong password"]);
     [prefs setDoesEncryption:YES];
     NSData *archive = [FrozenNotation frozenDataWithExistingNotes:[NSMutableArray arrayWithObject:[self sampleNote]] deletedNotes:[NSMutableSet set] prefs:prefs];
-    FrozenNotation *frozen = NVUnarchiveObject(archive);
+    FrozenNotation *frozen = NVUnarchiveObject(archive, [FrozenNotation class]);
     XCTAssertTrue([[frozen notationPrefs] canLoadPassphrase:@"sanitized fixture password"]);
     OSStatus error;
     NSArray *notes = [frozen unpackedNotesWithPrefs:[frozen notationPrefs] returningError:&error];
@@ -320,7 +377,7 @@
     return data;
 }
 - (void)checkLegacyDatabase:(NSString *)name encrypted:(BOOL)encrypted {
-    FrozenNotation *frozen = NVUnarchiveObject([self fixture:name]);
+    FrozenNotation *frozen = NVUnarchiveObject([self fixture:name], [FrozenNotation class]);
     NotationPrefs *prefs = [frozen notationPrefs];
     XCTAssertEqual([prefs doesEncryption], encrypted);
     if (encrypted) {
@@ -348,8 +405,88 @@
 - (void)testFixedLegacyEncryptedDatabase {
     [self checkLegacyDatabase:@"legacy-encrypted.database" encrypted:YES];
 }
+- (void)testDerivedEarlierEpochDatabases {
+    for (NSNumber *epoch in @[@2, @3]) {
+        for (NSString *kind in @[@"plain", @"encrypted"]) {
+            NSString *name = [NSString stringWithFormat:@"legacy-epoch%@-%@.database", epoch, kind];
+            [self checkLegacyDatabase:name encrypted:[kind isEqualToString:@"encrypted"]];
+            FrozenNotation *frozen = NVUnarchiveObject([self fixture:name], [FrozenNotation class]);
+            XCTAssertEqual([[frozen notationPrefs] epochIteration], epoch.unsignedIntValue, @"%@", name);
+        }
+    }
+}
+- (NSString *)databaseFromFixture:(NSString *)name {
+    NSString *database = [self.temporaryDirectory stringByAppendingPathComponent:@"Notes & Settings"];
+    [[NSFileManager defaultManager] removeItemAtPath:database error:NULL];
+    XCTAssertTrue([[self fixture:name] writeToFile:database atomically:YES]);
+    return database;
+}
+- (NotationPrefs *)savedPrefsAt:(NSString *)database {
+    return [NVUnarchiveObject([NSData dataWithContentsOfFile:database], [FrozenNotation class]) notationPrefs];
+}
+- (NSData *)journalHeader {
+    NSData *journal = [NSData dataWithContentsOfFile:[self.temporaryDirectory stringByAppendingPathComponent:@"Interim Note-Changes"]];
+    return [journal subdataWithRange:NSMakeRange(0, MIN(journal.length, sizeof(WALAuthenticatedJournalMagic)))];
+}
+- (NSData *)authenticatedJournalMagic {
+    return [NSData dataWithBytes:WALAuthenticatedJournalMagic length:sizeof(WALAuthenticatedJournalMagic)];
+}
+- (void)testEarlierEpochDatabasesUpgradeOnlyToTheLastCompatibleEpochOnOpen {
+    for (NSNumber *epoch in @[@2, @3]) {
+        NSString *name = [NSString stringWithFormat:@"legacy-epoch%@-plain.database", epoch];
+        NSString *database = [self databaseFromFixture:name];
+        NotationController *controller = [self controller];
+        NoteObject *note = [controller noteForUUIDBytes:&(CFUUIDBytes){0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88, 0x99, 0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF}];
+        XCTAssertEqualObjects(note->titleString, @"Sanitized legacy note", @"%@", name);
+        [controller closeAllResources];
+        XCTAssertEqual([[self savedPrefsAt:database] epochIteration], (UInt32)LAST_COMPATIBLE_EPOCH, @"%@", name);
+    }
+}
+- (void)testExistingDatabaseKeepsItsCompatibleFormat {
+    NSString *database = [self databaseFromFixture:@"legacy-plain.database"];
+    NotationController *controller = [self controller];
+    XCTAssertFalse([[controller notationPrefs] usesAuthenticatedFormat]);
+    XCTAssertNotEqualObjects([self journalHeader], [self authenticatedJournalMagic]);
+    [controller addNewNote:[[[NoteObject alloc] initWithNoteBody:[[[NSAttributedString alloc] initWithString:@"Added later"] autorelease] title:@"Added" delegate:nil format:SingleDatabaseFormat labels:nil] autorelease]];
+    XCTAssertTrue([controller flushAllNoteChanges]);
+    [controller closeAllResources];
+    NSDictionary *plist = [NSPropertyListSerialization propertyListWithData:[NSData dataWithContentsOfFile:database] options:0 format:NULL error:NULL];
+    for (NSDictionary *object in plist[@"$objects"])
+        if ([object isKindOfClass:[NSDictionary class]] && object[@"epochIteration"]) {
+            XCTAssertEqualObjects(object[@"epochIteration"], @(LAST_COMPATIBLE_EPOCH));
+            XCTAssertNil(object[@"keyDerivationPRF"]);
+        }
+}
+- (void)testNewDatabaseUsesTheAuthenticatedFormat {
+    NotationController *controller = [self controller];
+    XCTAssertTrue([[controller notationPrefs] usesAuthenticatedFormat]);
+    XCTAssertEqualObjects([self journalHeader], [self authenticatedJournalMagic]);
+    [controller addNewNote:[self sampleNote]];
+    XCTAssertTrue([controller flushAllNoteChanges]);
+    [controller closeAllResources];
+    XCTAssertEqual([[self savedPrefsAt:[self.temporaryDirectory stringByAppendingPathComponent:@"Notes & Settings"]] epochIteration], (UInt32)EPOC_ITERATION);
+}
+- (void)testUpgradeToAuthenticatedFormatKeepsACopyOfTheOriginal {
+    NSString *database = [self databaseFromFixture:@"legacy-plain.database"];
+    NotationController *controller = [self controller];
+    XCTAssertTrue([controller flushAllNoteChanges]);
+    NSData *original = [NSData dataWithContentsOfFile:database];
+    XCTAssertTrue([controller upgradeToAuthenticatedFormat]);
+    XCTAssertTrue([[controller notationPrefs] usesAuthenticatedFormat]);
+    XCTAssertEqualObjects([self journalHeader], [self authenticatedJournalMagic]);
+    NSString *backup = [self.temporaryDirectory stringByAppendingPathComponent:@"Notes & Settings (before security upgrade)"];
+    XCTAssertEqualObjects([NSData dataWithContentsOfFile:backup], original);
+    XCTAssertEqual([[self savedPrefsAt:backup] epochIteration], (UInt32)LAST_COMPATIBLE_EPOCH);
+    XCTAssertEqual([[self savedPrefsAt:database] epochIteration], (UInt32)EPOC_ITERATION);
+    [controller closeAllResources];
+    NotationController *reopened = [self controller];
+    XCTAssertTrue([[reopened notationPrefs] usesAuthenticatedFormat]);
+    XCTAssertEqual([reopened totalNoteCount], 1U);
+    XCTAssertFalse([[reopened notationPrefs] catalogEntryAllowed:&(NoteCatalogEntry){.filename = (CFMutableStringRef)@"Notes & Settings (before security upgrade)"}]);
+    [reopened closeAllResources];
+}
 - (void)testRetiredMetadataSurvivesArchiveAndLocalIdentityLinks {
-    FrozenNotation *frozen = NVUnarchiveObject([self fixture:@"legacy-plain.database"]);
+    FrozenNotation *frozen = NVUnarchiveObject([self fixture:@"legacy-plain.database"], [FrozenNotation class]);
     NotationPrefs *prefs = [frozen notationPrefs];
     NSDictionary *accounts = [[prefs.syncServiceAccounts copy] autorelease];
     XCTAssertTrue([accounts[@"Simplenote"][@"enabled"] boolValue]);
@@ -362,22 +499,241 @@
         if ([item.name isEqualToString:@"NV"]) identity = item.value;
     XCTAssertEqualObjects([identity decodeBase64WithNewlines:NO], [NSData dataWithBytes:note.uniqueNoteIDBytes length:16]);
     NSData *saved = [FrozenNotation frozenDataWithExistingNotes:notes deletedNotes:[frozen deletedNotes] prefs:prefs];
-    FrozenNotation *reloaded = NVUnarchiveObject(saved);
+    FrozenNotation *reloaded = NVUnarchiveObject(saved, [FrozenNotation class]);
     NSArray *loaded = [reloaded unpackedNotesWithPrefs:[reloaded notationPrefs] returningError:&error];
     XCTAssertEqualObjects([[reloaded notationPrefs] syncServiceAccounts], accounts);
     XCTAssertEqualObjects([(NoteObject *)loaded.firstObject syncServicesMD], metadata);
     XCTAssertEqualObjects(prefs.syncServiceAccounts, accounts);
 }
-- (void)testFixedLegacyJournalDeletion {
+- (FrozenNotation *)frozenNotationWithPositionalNotesAtEpoch:(UInt32)epoch {
+    NotationPrefs *prefs = [[[NotationPrefs alloc] init] autorelease];
+    NSData *archive = [FrozenNotation frozenDataWithExistingNotes:[NSMutableArray arrayWithObject:[self sampleNote]] deletedNotes:[NSMutableSet set] prefs:prefs];
+    FrozenNotation *frozen = NVUnarchiveObject(archive, [FrozenNotation class]);
+    [[frozen notationPrefs] setValue:@(epoch) forKey:@"epochIteration"];
+    NSData *positional = NVArchiveLegacyObject([NSMutableArray arrayWithObject:@"positional note"]);
+    [frozen setValue:[positional compressedData] forKey:@"notesData"];
+    return frozen;
+}
+- (void)testPositionalNotesLoadOnlyBeforeKeyedEpoch {
+    OSStatus error;
+    NSArray *notes = [[self frozenNotationWithPositionalNotesAtEpoch:1] unpackedNotesReturningError:&error];
+    XCTAssertEqual(error, noErr);
+    XCTAssertEqualObjects(notes, @[@"positional note"]);
+    XCTAssertNil([[self frozenNotationWithPositionalNotesAtEpoch:2] unpackedNotesReturningError:&error]);
+    XCTAssertEqual(error, kCoderErr);
+}
+- (void)testLegacyPreferenceArchivesMigrateOnce {
+    NSString *suite = [@"net.notational.velocity.tests." stringByAppendingString:[[NSUUID UUID] UUIDString]];
+    NSUserDefaults *defaults = [[[NSUserDefaults alloc] initWithSuiteName:suite] autorelease];
+    NSColor *red = [NSColor colorWithCalibratedRed:1 green:0 blue:0 alpha:1];
+    NSData *legacyColor = NVArchiveLegacyObject(red);
+    NSData *keyedColor = NVArchiveObject([NSColor blueColor]);
+    [defaults setObject:NVArchiveLegacyObject([NSFont fontWithName:@"Helvetica" size:15]) forKey:@"NoteBodyFont"];
+    [defaults setObject:legacyColor forKey:@"ForegroundTextColor"];
+    [defaults setObject:NVArchiveLegacyObject(@"not a color") forKey:@"BackgroundTextColor"];
+    [defaults setObject:keyedColor forKey:@"SearchTermHighlightColor"];
+    NVMigrateLegacyArchivedPreferences(defaults);
+    NSFont *font = NVUnarchivePreference([defaults dataForKey:@"NoteBodyFont"], [NSFont class]);
+    XCTAssertEqualObjects(font.fontName, @"Helvetica");
+    XCTAssertEqual(font.pointSize, 15);
+    XCTAssertEqualObjects(NVUnarchivePreference([defaults dataForKey:@"ForegroundTextColor"], [NSColor class]), red);
+    XCTAssertNil([defaults persistentDomainForName:suite][@"BackgroundTextColor"]);
+    XCTAssertEqualObjects([defaults dataForKey:@"SearchTermHighlightColor"], keyedColor);
+    XCTAssertTrue([defaults boolForKey:@"LegacyArchivedPreferencesMigrated"]);
+    [defaults setObject:legacyColor forKey:@"ForegroundTextColor"];
+    NVMigrateLegacyArchivedPreferences(defaults);
+    XCTAssertEqualObjects([defaults dataForKey:@"ForegroundTextColor"], legacyColor);
+    XCTAssertNil(NVUnarchivePreference(legacyColor, [NSColor class]));
+    [defaults removePersistentDomainForName:suite];
+}
+- (WALRecoveryController *)readerForJournalFixture:(NSString *)name acceptingUnauthenticatedRecords:(BOOL)acceptsUnauthenticated {
     NSString *journal = [self.temporaryDirectory stringByAppendingPathComponent:@"Interim Note-Changes"];
-    XCTAssertTrue([[self fixture:@"legacy-deletion.journal"] writeToFile:journal atomically:YES]);
-    WALRecoveryController *reader = [[[WALRecoveryController alloc] initWithParentFSRep:self.temporaryDirectory.fileSystemRepresentation encryptionKey:[NSMutableData dataWithLength:32]] autorelease];
-    NSDictionary *recovered = [reader recoveredNotes];
+    [[NSFileManager defaultManager] removeItemAtPath:journal error:NULL];
+    XCTAssertTrue([[self fixture:name] writeToFile:journal atomically:YES]);
+    return [[[WALRecoveryController alloc] initWithParentFSRep:self.temporaryDirectory.fileSystemRepresentation encryptionKey:[NSMutableData dataWithLength:32]
+                                acceptingUnauthenticatedRecords:acceptsUnauthenticated] autorelease];
+}
+- (void)checkJournalDeletion:(NSDictionary *)recovered {
     XCTAssertEqual(recovered.count, 1U);
     DeletedNoteObject *deletion = recovered.allValues.firstObject;
     XCTAssertTrue([deletion isKindOfClass:[DeletedNoteObject class]]);
     XCTAssertEqual([deletion logSequenceNumber], 9U);
     XCTAssertEqualObjects([NSString uuidStringWithBytes:*[deletion uniqueNoteIDBytes]], @"00112233-4455-6677-8899-AABBCCDDEEFF");
+}
+- (void)testFixedLegacyJournalDeletion {
+    WALRecoveryController *reader = [self readerForJournalFixture:@"legacy-deletion.journal" acceptingUnauthenticatedRecords:YES];
+    [self checkJournalDeletion:[reader recoveredNotes]];
+    XCTAssertFalse([reader rejectedUnverifiedRecords]);
+}
+- (void)testUnauthenticatedJournalIsRefusedOnceAuthenticated {
+    WALRecoveryController *reader = [self readerForJournalFixture:@"legacy-deletion.journal" acceptingUnauthenticatedRecords:NO];
+    XCTAssertEqual([reader recoveredNotes].count, 0U);
+    XCTAssertTrue([reader rejectedUnverifiedRecords]);
+}
+- (void)testCompatibleJournalIsReadableByEarlierEpochs {
+    NSData *key = [NSMutableData dataWithLength:32];
+    NoteObject *note = [self sampleNote];
+    WALStorageController *writer = [[[WALStorageController alloc] initWithParentFSRep:self.temporaryDirectory.fileSystemRepresentation encryptionKey:key authenticated:NO] autorelease];
+    XCTAssertTrue([writer writeEstablishedNote:note]);
+    XCTAssertTrue([writer synchronize]);
+    XCTAssertNotEqualObjects([self journalHeader], [self authenticatedJournalMagic]);
+    WALRecoveryController *reader = [[[WALRecoveryController alloc] initWithParentFSRep:self.temporaryDirectory.fileSystemRepresentation encryptionKey:key acceptingUnauthenticatedRecords:YES] autorelease];
+    NSDictionary *recovered = [reader recoveredNotes];
+    XCTAssertEqual(recovered.count, 1U);
+    XCTAssertEqualObjects(((NoteObject *)recovered.allValues.firstObject)->titleString, note->titleString);
+}
+- (void)testFixedAuthenticatedJournalDeletion {
+    for (NSNumber *acceptsUnauthenticated in @[@NO, @YES]) {
+        WALRecoveryController *reader = [self readerForJournalFixture:@"epoch5-deletion.journal" acceptingUnauthenticatedRecords:acceptsUnauthenticated.boolValue];
+        [self checkJournalDeletion:[reader recoveredNotes]];
+        XCTAssertFalse([reader rejectedUnverifiedRecords]);
+    }
+}
+- (NSString *)journalWithNotes:(NSArray *)notes key:(NSData *)key {
+    WALStorageController *writer = [[[WALStorageController alloc] initWithParentFSRep:self.temporaryDirectory.fileSystemRepresentation encryptionKey:key] autorelease];
+    for (NoteObject *note in notes) XCTAssertTrue([writer writeEstablishedNote:note]);
+    XCTAssertTrue([writer synchronize]);
+    return [self.temporaryDirectory stringByAppendingPathComponent:@"Interim Note-Changes"];
+}
+- (void)flipByteAtOffset:(off_t)offset ofFile:(NSString *)path {
+    NSMutableData *data = [NSMutableData dataWithContentsOfFile:path];
+    if (offset < 0) offset += data.length;
+    ((unsigned char *)data.mutableBytes)[offset] ^= 0x01;
+    XCTAssertEqual(chmod(path.fileSystemRepresentation, 0600), 0);
+    XCTAssertTrue([data writeToFile:path atomically:NO]);
+}
+- (void)testTamperedJournalRecordsAreRejected {
+    NSData *key = [NSMutableData dataWithLength:32];
+    NoteObject *first = [self sampleNote];
+    NoteObject *second = [[[NoteObject alloc] initWithNoteBody:[[[NSAttributedString alloc] initWithString:@"Second journal note"] autorelease] title:@"Second" delegate:nil format:SingleDatabaseFormat labels:nil] autorelease];
+    NSString *journal = [self journalWithNotes:@[first, second] key:key];
+    [self flipByteAtOffset:-1 ofFile:journal];
+    WALRecoveryController *reader = [[[WALRecoveryController alloc] initWithParentFSRep:self.temporaryDirectory.fileSystemRepresentation encryptionKey:key] autorelease];
+    NSDictionary *recovered = [reader recoveredNotes];
+    XCTAssertEqual(recovered.count, 1U);
+    XCTAssertEqualObjects(((NoteObject *)recovered.allValues.firstObject)->titleString, first->titleString);
+    XCTAssertTrue([reader rejectedUnverifiedRecords]);
+    XCTAssertTrue([reader destroyLogFile]);
+    
+    for (NSNumber *offset in @[@8, @(8 + 7), @(8 + 8), @(8 + 8 + 16), @(8 + 8 + 16 + 32)]) {
+        journal = [self journalWithNotes:@[first] key:key];
+        [self flipByteAtOffset:offset.longLongValue ofFile:journal];
+        reader = [[[WALRecoveryController alloc] initWithParentFSRep:self.temporaryDirectory.fileSystemRepresentation encryptionKey:key] autorelease];
+        XCTAssertEqual([reader recoveredNotes].count, 0U, @"offset %@", offset);
+        XCTAssertTrue([reader rejectedUnverifiedRecords], @"offset %@", offset);
+        XCTAssertTrue([reader destroyLogFile]);
+    }
+}
+- (void)testStartupKeepsTamperedJournalAside {
+    NotationController *controller = [self controller];
+    NoteObject *edited = [self sampleNote];
+    [controller addNewNote:edited];
+    XCTAssertTrue([controller flushAllNoteChanges]);
+    NSData *key = [[controller notationPrefs] WALSessionKey];
+    CFUUIDBytes editedID = *[edited uniqueNoteIDBytes];
+    [controller closeAllResources];
+    [edited->contentString replaceCharactersInRange:NSMakeRange(0, edited->contentString.length) withString:@"Tampered unsaved edit"];
+    NSString *journal = [self journalWithNotes:@[edited] key:key];
+    [self flipByteAtOffset:-1 ofFile:journal];
+    NotationController *reopened = [self controller];
+    NoteObject *loaded = [reopened noteForUUIDBytes:&editedID];
+    XCTAssertEqualObjects(loaded->contentString.string, @"Retained content: café 日本語 😀\n[[Project Alpha]]\nhttps://example.com");
+    NSString *retired = [self.temporaryDirectory stringByAppendingPathComponent:@"Interim Note-Changes (unverified)"];
+    XCTAssertTrue([[NSFileManager defaultManager] fileExistsAtPath:retired]);
+    XCTAssertTrue([[NSFileManager defaultManager] fileExistsAtPath:journal]);
+    [reopened closeAllResources];
+}
+- (NSData *)archive:(NSData *)archive settingPreference:(NSString *)key to:(id)value {
+    NSMutableDictionary *plist = [NSPropertyListSerialization propertyListWithData:archive options:NSPropertyListMutableContainers format:NULL error:NULL];
+    for (NSMutableDictionary *object in plist[@"$objects"])
+        if ([object isKindOfClass:[NSDictionary class]] && object[@"epochIteration"]) object[key] = value;
+    return [NSPropertyListSerialization dataWithPropertyList:plist format:NSPropertyListBinaryFormat_v1_0 options:0 error:NULL];
+}
+- (OSStatus)unpackArchive:(NSData *)archive password:(NSString *)password tampering:(void (^)(FrozenNotation *frozen))tamper {
+    FrozenNotation *frozen = NVUnarchiveObject(archive, [FrozenNotation class]);
+    XCTAssertTrue([[frozen notationPrefs] canLoadPassphrase:password]);
+    if (tamper) tamper(frozen);
+    OSStatus error = noErr;
+    NSArray *notes = [frozen unpackedNotesWithPrefs:[frozen notationPrefs] returningError:&error];
+    XCTAssertEqual(notes == nil, error != noErr);
+    return error;
+}
+- (void)checkAuthenticatedArchive:(NSData *)archive password:(NSString *)password {
+    XCTAssertEqual([self unpackArchive:archive password:password tampering:nil], noErr);
+    XCTAssertEqual([self unpackArchive:archive password:password tampering:^(FrozenNotation *frozen) {
+        ((unsigned char *)[[frozen valueForKey:@"notesData"] mutableBytes])[0] ^= 0x01;
+    }], kDataIntegrityErr);
+    XCTAssertEqual([self unpackArchive:archive password:password tampering:^(FrozenNotation *frozen) {
+        NSMutableData *data = [frozen valueForKey:@"notesData"];
+        ((unsigned char *)data.mutableBytes)[data.length - 1] ^= 0x01;
+    }], kDataIntegrityErr);
+    XCTAssertEqual([self unpackArchive:archive password:password tampering:^(FrozenNotation *frozen) {
+        [(NSMutableData *)[frozen valueForKey:@"notesData"] setLength:16];
+    }], kDataIntegrityErr);
+    XCTAssertEqual([self unpackArchive:archive password:password tampering:^(FrozenNotation *frozen) {
+        NSMutableData *salt = [[[[frozen notationPrefs] valueForKey:@"dataSessionSalt"] mutableCopy] autorelease];
+        ((unsigned char *)salt.mutableBytes)[0] ^= 0x01;
+        [[frozen notationPrefs] setValue:salt forKey:@"dataSessionSalt"];
+    }], kDataIntegrityErr);
+    XCTAssertNotEqual([self unpackArchive:[self archive:archive settingPreference:@"epochIteration" to:@4] password:password tampering:nil], noErr);
+}
+- (void)testEncryptedDatabaseIsAuthenticatedAndRejectsTampering {
+    NotationPrefs *prefs = [[[NotationPrefs alloc] init] autorelease];
+    [prefs setPassphraseData:[@"sanitized fixture password" dataUsingEncoding:NSUTF8StringEncoding] inKeychain:NO];
+    [prefs setDoesEncryption:YES];
+    NSData *archive = [FrozenNotation frozenDataWithExistingNotes:[NSMutableArray arrayWithObject:[self sampleNote]] deletedNotes:[NSMutableSet set] prefs:prefs];
+    FrozenNotation *frozen = NVUnarchiveObject(archive, [FrozenNotation class]);
+    XCTAssertEqual([[frozen notationPrefs] epochIteration], 5U);
+    XCTAssertEqualObjects([[frozen notationPrefs] valueForKey:@"keyDerivationPRF"], @(kCCPRFHmacAlgSHA256));
+    [self checkAuthenticatedArchive:archive password:@"sanitized fixture password"];
+}
+- (void)testFixedAuthenticatedDatabases {
+    for (NSString *name in @[@"epoch5-upgraded-encrypted.database", @"epoch5-sha256-encrypted.database"]) {
+        [self checkLegacyDatabase:name encrypted:YES];
+        [self checkAuthenticatedArchive:[self fixture:name] password:@"sanitized fixture password"];
+    }
+}
+- (NSData *)resavedLegacyEncryptedDatabaseUpgrading:(BOOL)upgrade {
+    FrozenNotation *legacy = NVUnarchiveObject([self fixture:@"legacy-encrypted.database"], [FrozenNotation class]);
+    NotationPrefs *prefs = [legacy notationPrefs];
+    XCTAssertTrue([prefs canLoadPassphrase:@"sanitized fixture password"]);
+    OSStatus error;
+    NSMutableArray *notes = [legacy unpackedNotesWithPrefs:prefs returningError:&error];
+    XCTAssertEqual(error, noErr);
+    if (upgrade) [prefs setUsesAuthenticatedFormat:YES];
+    return [FrozenNotation frozenDataWithExistingNotes:notes deletedNotes:[legacy deletedNotes] prefs:prefs];
+}
+- (void)testLegacyEncryptedDatabaseKeepsItsFormatWhenSaved {
+    NSData *saved = [self resavedLegacyEncryptedDatabaseUpgrading:NO];
+    FrozenNotation *resaved = NVUnarchiveObject(saved, [FrozenNotation class]);
+    XCTAssertEqual([[resaved notationPrefs] epochIteration], (UInt32)LAST_COMPATIBLE_EPOCH);
+    XCTAssertFalse([[resaved notationPrefs] usesAuthenticatedFormat]);
+    XCTAssertEqual([self unpackArchive:saved password:@"sanitized fixture password" tampering:nil], noErr);
+}
+- (void)testLegacyEncryptedDatabaseUpgradesToAuthenticatedFormatOnRequest {
+    NSData *saved = [self resavedLegacyEncryptedDatabaseUpgrading:YES];
+    FrozenNotation *upgraded = NVUnarchiveObject(saved, [FrozenNotation class]);
+    XCTAssertEqual([[upgraded notationPrefs] epochIteration], 5U);
+    XCTAssertEqualObjects([[upgraded notationPrefs] valueForKey:@"keyDerivationPRF"], @(kCCPRFHmacAlgSHA1));
+    [self checkAuthenticatedArchive:saved password:@"sanitized fixture password"];
+}
+- (void)checkPassphraseChangeAfterUpgrading:(BOOL)upgrade derivesWith:(CCPseudoRandomAlgorithm)prf {
+    FrozenNotation *legacy = NVUnarchiveObject([self fixture:@"legacy-encrypted.database"], [FrozenNotation class]);
+    NotationPrefs *prefs = [legacy notationPrefs];
+    NSData *oldSalt = [[[prefs valueForKey:@"masterSalt"] retain] autorelease];
+    XCTAssertTrue([prefs canLoadPassphrase:@"sanitized fixture password"]);
+    if (upgrade) [prefs setUsesAuthenticatedFormat:YES];
+    [prefs setPassphraseData:[@"changed fixture password" dataUsingEncoding:NSUTF8StringEncoding] inKeychain:NO];
+    XCTAssertEqualObjects([prefs valueForKey:@"keyDerivationPRF"], @(prf));
+    XCTAssertNotEqualObjects([prefs valueForKey:@"masterSalt"], oldSalt);
+    XCTAssertTrue([prefs canLoadPassphrase:@"changed fixture password"]);
+    XCTAssertFalse([prefs canLoadPassphrase:@"sanitized fixture password"]);
+}
+- (void)testPassphraseChangeKeepsCompatibleKeysUntilUpgraded {
+    [self checkPassphraseChangeAfterUpgrading:NO derivesWith:kCCPRFHmacAlgSHA1];
+}
+- (void)testPassphraseChangeDerivesNewKeysWithSHA256OnceUpgraded {
+    [self checkPassphraseChangeAfterUpgrading:YES derivesWith:kCCPRFHmacAlgSHA256];
 }
 - (void)testFixedLegacyIDEAImport {
     NSString *filename = [self.temporaryDirectory stringByAppendingPathComponent:@"Sanitized.blor"];

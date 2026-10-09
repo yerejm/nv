@@ -25,6 +25,7 @@
 #import "AugmentedScrollView.h"
 #import "NVSplitView.h"
 #import "TemporaryFileCachePreparer.h"
+#import "SecureTextEntryManager.h"
 #import "AcceptanceEditorSession.h"
 #include <sys/mount.h>
 #include <dlfcn.h>
@@ -94,6 +95,15 @@ static id FirstSubviewOfClass(NSView *view, Class viewClass) {
     if ([view isKindOfClass:viewClass]) return view;
     for (NSView *subview in view.subviews) {
         id found = FirstSubviewOfClass(subview, viewClass);
+        if (found) return found;
+    }
+    return nil;
+}
+
+static NSButton *ButtonWithKeyEquivalent(NSView *view, NSString *key) {
+    if ([view isKindOfClass:[NSButton class]] && [[(NSButton *)view keyEquivalent] isEqualToString:key]) return (NSButton *)view;
+    for (NSView *subview in view.subviews) {
+        NSButton *found = ButtonWithKeyEquivalent(subview, key);
         if (found) return found;
     }
     return nil;
@@ -580,6 +590,11 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         Check(@"a shortcut another hot key owns is refused", !ShortcutIsFree(kVK_F20, cmdKey | optionKey | controlKey));
         [hotkey unregister];
         Check(@"an unregistered shortcut is released", ShortcutIsFree(kVK_F20, cmdKey | optionKey | controlKey));
+        BOOL secureInputBefore = IsSecureEventInputEnabled();
+        [[SecureTextEntryManager sharedInstance] enableSecureTextEntry];
+        BOOL secureInputDuring = IsSecureEventInputEnabled();
+        [[SecureTextEntryManager sharedInstance] disableSecureTextEntry];
+        Check(@"secure text entry enables and releases secure event input", NSApp.isActive && secureInputDuring && (secureInputBefore || !IsSecureEventInputEnabled()));
         NoteObject *note = [app valueForKey:@"currentNote"];
         CheckExternalEditor(note);
         [notation.notationPrefs setNotesStorageFormat:SingleDatabaseFormat];
@@ -652,6 +667,31 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
             }
         }
         CheckPassphraseDisclosure(notation, prefsWindow);
+        [notesTabs selectTabViewItemWithIdentifier:@"security"];
+        Pump(0.2);
+        NSButton *upgradeButton = [notesPreferences valueForKey:@"upgradeSecurityButton"];
+        NSTextField *upgradeText = [notesPreferences valueForKey:@"upgradeSecurityText"];
+        NSTextField *upgradeStatus = [notesPreferences valueForKey:@"upgradeSecurityStatus"];
+        Check(@"an existing encrypted database offers the security upgrade with its warning", ![notation.notationPrefs usesAuthenticatedFormat] &&
+              upgradeButton.window == prefsWindow && !upgradeButton.hiddenOrHasHiddenAncestor && upgradeButton.isEnabled && !upgradeText.hidden && upgradeStatus.hidden);
+        SnapshotWindow(prefsWindow, @"settings-security-upgrade-offered.png");
+        [upgradeButton performClick:nil];
+        Pump(0.5);
+        NSWindow *confirmation = prefsWindow.attachedSheet;
+        NSButton *cancel = ButtonWithKeyEquivalent(confirmation.contentView, @"\e");
+        Check(@"the upgrade confirmation cancels with Escape and does not confirm with Return", confirmation &&
+              [cancel.title isEqualToString:@"Cancel"] && !ButtonWithKeyEquivalent(confirmation.contentView, @"\r"));
+        if (confirmation) SnapshotWindow(confirmation, @"settings-security-upgrade-confirmation.png");
+        [cancel performClick:nil];
+        Pump(0.5);
+        Check(@"cancelling the confirmation leaves the database compatible", !prefsWindow.attachedSheet && ![notation.notationPrefs usesAuthenticatedFormat]);
+        NSString *preUpgradeCopy = [[acceptanceRoot stringByAppendingPathComponent:@"notes"] stringByAppendingPathComponent:@"Notes & Settings (before security upgrade)"];
+        Check(@"opting in upgrades the database security and keeps a copy", [notation upgradeToAuthenticatedFormat] &&
+              [notation.notationPrefs usesAuthenticatedFormat] && [[NSFileManager defaultManager] fileExistsAtPath:preUpgradeCopy]);
+        [notesPreferences updateDatabaseSecurityControls];
+        Pump(0.2);
+        Check(@"an upgraded database shows its security status instead of the upgrade", upgradeButton.hidden && upgradeText.hidden && !upgradeStatus.hidden);
+        SnapshotWindow(prefsWindow, @"settings-security-upgraded.png");
         Check(@"Notes Security exposes encryption controls and hides Storage", [[notesPreferences valueForKey:@"enableEncryptionButton"] window] == prefsWindow && storagePopup.window == nil);
         [prefsWindow setAppearance:nil];
         [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Display"]];

@@ -24,7 +24,7 @@
 
 @class NotationPrefs;
 
-@interface FrozenNotation : NSObject <NSCoding> {
+@interface FrozenNotation : NSObject <NSSecureCoding> {
 	NSMutableArray *allNotes;
 	NSMutableSet *deletedNoteSet;
 	NSMutableData *notesData;

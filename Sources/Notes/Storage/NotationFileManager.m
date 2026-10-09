@@ -34,6 +34,8 @@
 #include "NVMD5.h"
 
 NSString *NotesDatabaseFileName = @"Notes & Settings";
+NSString *UnverifiedJournalFileName = @"Interim Note-Changes (unverified)";
+NSString *PreUpgradeDatabaseFileName = @"Notes & Settings (before security upgrade)";
 
 @implementation NotationController (NotationFileManager)
 

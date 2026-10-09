@@ -4,14 +4,17 @@
 #import <Foundation/Foundation.h>
 
 static inline NSData *NVArchiveObject(id object) {
-    return [NSKeyedArchiver archivedDataWithRootObject:object requiringSecureCoding:NO error:NULL];
+    NSError *error = nil;
+    NSData *data = [NSKeyedArchiver archivedDataWithRootObject:object requiringSecureCoding:YES error:&error];
+    if (!data) NSLog(@"Unable to archive %@: %@", [object class], error);
+    return data;
 }
 
 static inline NSKeyedUnarchiver *NVUnarchiverForData(NSData *data) {
     NSError *error = nil;
     NSKeyedUnarchiver *coder = [[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error];
     if (!coder) [NSException raise:NSInvalidUnarchiveOperationException format:@"%@", error];
-    [coder setRequiresSecureCoding:NO];
+    [coder setRequiresSecureCoding:YES];
     [coder setDecodingFailurePolicy:NSDecodingFailurePolicyRaiseException];
     return coder;
 }
@@ -36,12 +39,45 @@ static inline id NVUnarchiveLegacyStickies(NSData *data) {
 }
 #pragma clang diagnostic pop
 
-static inline id NVUnarchiveObject(NSData *data) {
+static inline NSSet *NVPropertyListClasses(void) {
+    static NSSet *classes = nil;
+    if (!classes) classes = [[NSSet alloc] initWithObjects:[NSDictionary class], [NSArray class], [NSString class],
+                             [NSNumber class], [NSDate class], [NSData class], nil];
+    return classes;
+}
+
+//nested values may be any of the allowed classes, but the value itself must be a rootClass
+static inline id NVDecodeObjectOfClasses(NSCoder *decoder, NSSet *classes, Class rootClass, NSString *key) {
+    id object = [decoder decodeObjectOfClasses:classes forKey:key];
+    if (object && ![object isKindOfClass:rootClass]) {
+        NSString *reason = [NSString stringWithFormat:@"value for key '%@' is not a %@", key, rootClass];
+        [decoder failWithError:[NSError errorWithDomain:NSCocoaErrorDomain code:NSCoderReadCorruptError
+                                               userInfo:@{NSDebugDescriptionErrorKey: reason}]];
+        return nil;
+    }
+    return object;
+}
+
+//unlike -decodeArrayOfObjectsOfClass:forKey:, this permits elements that themselves hold nested collections
+static inline NSArray *NVDecodeArrayOfObjectsOfClass(NSCoder *decoder, Class elementClass, NSString *key) {
+    NSArray *array = NVDecodeObjectOfClasses(decoder, [NSSet setWithObjects:[NSArray class], elementClass, nil], [NSArray class], key);
+    for (id element in array) {
+        if (![element isKindOfClass:elementClass]) {
+            NSString *reason = [NSString stringWithFormat:@"array for key '%@' holds a %@ instead of a %@", key, [element class], elementClass];
+            [decoder failWithError:[NSError errorWithDomain:NSCocoaErrorDomain code:NSCoderReadCorruptError
+                                                   userInfo:@{NSDebugDescriptionErrorKey: reason}]];
+            return nil;
+        }
+    }
+    return array;
+}
+
+static inline id NVUnarchiveObject(NSData *data, Class rootClass) {
     if (!data) return nil;
     NSKeyedUnarchiver *coder = NVUnarchiverForData(data);
     id object = nil;
     @try {
-        object = [coder decodeObjectForKey:NSKeyedArchiveRootObjectKey];
+        object = [coder decodeObjectOfClass:rootClass forKey:NSKeyedArchiveRootObjectKey];
         [coder finishDecoding];
         [[object retain] autorelease];
     } @finally {
@@ -50,9 +86,8 @@ static inline id NVUnarchiveObject(NSData *data) {
     return object;
 }
 
-static inline id NVUnarchivePreference(NSData *data) {
-    @try { return NVUnarchiveObject(data); }
-    @catch (NSException *exception) { return NVUnarchiveLegacyObject(data); }
+static inline id NVUnarchivePreference(NSData *data, Class expectedClass) {
+    return data ? [NSKeyedUnarchiver unarchivedObjectOfClass:expectedClass fromData:data error:NULL] : nil;
 }
 
 #endif

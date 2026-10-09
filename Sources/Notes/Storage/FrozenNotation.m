@@ -25,14 +25,21 @@
 #import "PassphraseRetriever.h"
 #import "NSData_transformations.h"
 #import "NotationPrefs.h"
+#import "NoteObject.h"
+#import "DeletedNoteObject.h"
 
 @implementation FrozenNotation
 
++ (BOOL)supportsSecureCoding {
+	return YES;
+}
+
 - (id)initWithCoder:(NSCoder*)decoder {
 	if ([decoder containsValueForKey:VAR_STR(prefs)]) {
-		prefs = [[decoder decodeObjectForKey:VAR_STR(prefs)] retain];
-		notesData = [[decoder decodeObjectForKey:VAR_STR(notesData)] retain];
-		deletedNoteSet = [[decoder decodeObjectForKey:VAR_STR(deletedNoteSet)] retain];
+		prefs = [[decoder decodeObjectOfClass:[NotationPrefs class] forKey:VAR_STR(prefs)] retain];
+		notesData = [[decoder decodeObjectOfClass:[NSMutableData class] forKey:VAR_STR(notesData)] retain];
+		deletedNoteSet = [NVDecodeObjectOfClasses(decoder, [NSSet setWithObjects:[NSSet class], [DeletedNoteObject class], nil],
+												  [NSSet class], VAR_STR(deletedNoteSet)) mutableCopy];
 	} else {
 		NSLog(@"FrozenNotation: decoding legacy %@", decoder);
 		prefs = [[decoder decodeObject] retain];
@@ -59,7 +66,7 @@
 	if ([super init]) {
 
 		notesData = [[NSMutableData alloc] init];
-		NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initRequiringSecureCoding:NO];
+		NSKeyedArchiver *archiver = [[NSKeyedArchiver alloc] initRequiringSecureCoding:YES];
 		[archiver encodeObject:notes forKey:@"notes"];
         [archiver finishEncoding];
         [notesData setData:[archiver encodedData]];
@@ -122,12 +129,9 @@
 	*err = noErr;
 	
 	@try {
-		if ([somePrefs doesEncryption]) {
-			if (![somePrefs decryptDataWithCurrentSettings:notesData]) {
-				NSLog(@"Error decrypting data!");
-				*err = kNoAuthErr;
-				return nil;
-			}
+		if ([somePrefs doesEncryption] && (*err = [somePrefs decryptAndVerifyData:notesData]) != noErr) {
+			NSLog(@"Error decrypting data: %d", (int)*err);
+			return nil;
 		}
 		
 		NSMutableData *oldNotesData = notesData;
@@ -140,7 +144,7 @@
 			return nil;
 		}
 		NSKeyedUnarchiver *unarchiver = NVUnarchiverForData(notesData);
-		allNotes = [[unarchiver decodeObjectForKey:@"notes"] retain];
+		allNotes = [NVDecodeArrayOfObjectsOfClass(unarchiver, [NoteObject class], @"notes") mutableCopy];
 		[unarchiver autorelease];
 		
 	} @catch (NSException *e) {
@@ -179,9 +183,8 @@
 					}
 					//if result is 1, passphrase should already be loaded
 				}
-				if (![prefs decryptDataWithCurrentSettings:notesData]) {
-					NSLog(@"Error decrypting data!");
-					*err = kNoAuthErr;
+				if ((*err = [prefs decryptAndVerifyData:notesData]) != noErr) {
+					NSLog(@"Error decrypting data: %d", (int)*err);
 					return(nil);
 				}
 			}
@@ -196,17 +199,15 @@
 				NSLog(@"Error decompressing data");
 				return(nil);
 			}
-            BOOL keyedArchiveFailed = NO;
             @try {
                 NSKeyedUnarchiver *unarchiver = NVUnarchiverForData(notesData);
-                allNotes = [[unarchiver decodeObjectForKey:@"notes"] retain];
+                allNotes = [NVDecodeArrayOfObjectsOfClass(unarchiver, [NoteObject class], @"notes") mutableCopy];
                 [unarchiver autorelease];
             } @catch (NSException *e) {
-                keyedArchiveFailed = YES;
-            }
-            
-            if (keyedArchiveFailed)
+                //only databases from before the first keyed format (epoch 2) can hold positional archives
+                if ([prefs epochIteration] >= 2) @throw;
                 allNotes = [NVUnarchiveLegacyObject(notesData) retain];
+            }
 		} @catch (NSException *e) {
 			*err = kCoderErr;
 			NSLog(@"Error unarchiving notes from data (%@, %@)", [e name], [e reason]);
