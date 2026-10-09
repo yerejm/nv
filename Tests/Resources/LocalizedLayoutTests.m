@@ -29,12 +29,6 @@ static void CollectClippedText(NSView *view, NSString *path, NSMutableOrderedSet
     if ((label || button) && [ControlText((NSControl *)view) length] && CellOverflows([(NSControl *)view cell], [view bounds].size))
         [problems addObject:[NSString stringWithFormat:@"%@ \"%@\" needs %@ in %@", here, ControlText((NSControl *)view),
                              NSStringFromSize([[(NSControl *)view cell] cellSize]), NSStringFromSize([view bounds].size)]];
-    if ([view isKindOfClass:[NSMatrix class]]) {
-        NSMatrix *matrix = (NSMatrix *)view;
-        for (NSCell *cell in [matrix cells])
-            if ([[cell title] length] && CellOverflows(cell, [matrix cellSize]))
-                [problems addObject:[NSString stringWithFormat:@"%@ cell \"%@\" needs %@ in %@", here, [cell title], NSStringFromSize([cell cellSize]), NSStringFromSize([matrix cellSize])]];
-    }
     if (![view translatesAutoresizingMaskIntoConstraints] && ![NSStringFromClass([view class]) hasPrefix:@"_"] && [view hasAmbiguousLayout])
         [problems addObject:[NSString stringWithFormat:@"%@ has an ambiguous layout", here]];
     for (NSView *subview in [view subviews]) CollectClippedText(subview, here, problems);

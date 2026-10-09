@@ -28,7 +28,7 @@
 {
     IBOutlet NSPopUpButton *folderLocationsMenuButton;
     IBOutlet NSTextField *bodyTextFontField;
-    IBOutlet NSMatrix *tabKeyRadioMatrix;
+    IBOutlet NSButton *tabKeyIndentsButton, *tabKeyMovesFocusButton;
     IBOutlet NSPopUpButton *tableTextMenuButton;
 	IBOutlet NSPopUpButton *externalEditorMenuButton;
     IBOutlet NSTextField *tableTextSizeField;

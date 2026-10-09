@@ -637,6 +637,16 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         Check(@"settings pane changes keep the window frame constant", stableFrame);
         Check(@"settings minimum width fits the toolbar", prefsWindow.contentMinSize.width >= 640 && NSWidth(prefsWindow.contentView.bounds) >= prefsWindow.contentMinSize.width);
         CheckShortcutRecorder(preferences, prefsWindow);
+        [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Editing"]];
+        GlobalPrefs *tabPrefs = [GlobalPrefs defaultPrefs];
+        NSButton *indentsRadio = [preferences valueForKey:@"tabKeyIndentsButton"], *focusRadio = [preferences valueForKey:@"tabKeyMovesFocusButton"];
+        BOOL tabIndentedBefore = [tabPrefs tabKeyIndents];
+        [focusRadio performClick:nil];
+        BOOL focusChosen = ![tabPrefs tabKeyIndents] && focusRadio.state == NSControlStateValueOn && indentsRadio.state == NSControlStateValueOff;
+        [indentsRadio performClick:nil];
+        Check(@"Tab key radio buttons select one behaviour and save it", indentsRadio.window == prefsWindow && focusChosen && [tabPrefs tabKeyIndents] &&
+              indentsRadio.state == NSControlStateValueOn && focusRadio.state == NSControlStateValueOff);
+        [(tabIndentedBefore ? indentsRadio : focusRadio) performClick:nil];
         [preferences switchViews:[[preferences valueForKey:@"items"] objectForKey:@"Fonts & Colors"]];
         NSView *fontsColorsPane = [preferences valueForKey:@"fontsColorsView"];
         NSButton *systemHighlightButton = [preferences valueForKey:@"systemHighlightColorButton"];
@@ -679,6 +689,16 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         CheckPassphraseDisclosure(notation, prefsWindow);
         [notesTabs selectTabViewItemWithIdentifier:@"security"];
         Pump(0.2);
+        NSButton *keychainRadio = [notesPreferences valueForKey:@"keychainPasswordButton"], *askRadio = [notesPreferences valueForKey:@"askPasswordButton"];
+        NSData *storedPassword = [notation.notationPrefs passwordDataFromKeychain];
+        BOOL keychainShown = storedPassword && keychainRadio.enabled && askRadio.enabled &&
+            keychainRadio.state == NSControlStateValueOn && askRadio.state == NSControlStateValueOff;
+        [askRadio performClick:nil];
+        BOOL askChosen = ![notation.notationPrefs storesPasswordInKeychain] && ![notation.notationPrefs passwordDataFromKeychain] && keychainRadio.state == NSControlStateValueOff;
+        [keychainRadio performClick:nil];
+        Check(@"passphrase radio buttons select Keychain or asking each time", keychainRadio.window == prefsWindow && keychainShown && askChosen &&
+              [notation.notationPrefs storesPasswordInKeychain] && askRadio.state == NSControlStateValueOff);
+        if (storedPassword) [notation.notationPrefs setKeychainData:storedPassword];
         NSButton *upgradeButton = [notesPreferences valueForKey:@"upgradeSecurityButton"];
         NSTextField *upgradeText = [notesPreferences valueForKey:@"upgradeSecurityText"];
         NSTextField *upgradeStatus = [notesPreferences valueForKey:@"upgradeSecurityStatus"];

@@ -160,10 +160,10 @@
 - (void)setEncryptionControlsState:(BOOL)encryptionState {
     [enableEncryptionButton setTitle:(encryptionState ? disableEncryptionString : enableEncryptionString)];
     [changePasswordButton setEnabled:encryptionState];
-	[passwordSettingsMatrix setEnabled:encryptionState];
+	[keychainPasswordButton setEnabled:encryptionState];
+	[askPasswordButton setEnabled:encryptionState];
 	
-	[passwordSettingsMatrix setState:[notationPrefs storesPasswordInKeychain] atRow:0 column:0];
-	[passwordSettingsMatrix setState:![notationPrefs storesPasswordInKeychain] atRow:1 column:0];
+	[([notationPrefs storesPasswordInKeychain] ? keychainPasswordButton : askPasswordButton) setState:NSControlStateValueOn];
 	
     [keyLengthField setEnabled:encryptionState];
     [keyLengthStepper setEnabled:encryptionState];
@@ -299,12 +299,7 @@
 }
 
 - (IBAction)changedKeychainSettings:(id)sender {
-	//matrix does not change until the next runloop iteration, apparently
-	if (sender != self)
-		[self performSelector:@selector(changedKeychainSettings:) withObject:self afterDelay:0.0];
-	else
-		[notationPrefs setStoresPasswordInKeychain:[[passwordSettingsMatrix cellAtRow:0 column:0] state]];
-		
+	[notationPrefs setStoresPasswordInKeychain:sender == keychainPasswordButton];
 }
 
 - (IBAction)changedFileDeletionWarningSettings:(id)sender {

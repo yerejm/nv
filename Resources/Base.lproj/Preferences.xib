@@ -42,7 +42,8 @@
                 <outlet property="softTabsButton" destination="307" id="309"/>
                 <outlet property="styledTextButton" destination="278" id="300"/>
                 <outlet property="systemHighlightColorButton" destination="nvU-sc-btn" id="er5-N5-ayo"/>
-                <outlet property="tabKeyRadioMatrix" destination="271" id="294"/>
+                <outlet property="tabKeyIndentsButton" destination="nvT-ab-ind" id="out-nvT-ab-ind"/>
+                <outlet property="tabKeyMovesFocusButton" destination="nvT-ab-foc" id="out-nvT-ab-foc"/>
                 <outlet property="tableTextMenuButton" destination="158" id="249"/>
                 <outlet property="tableTextSizeField" destination="178" id="246"/>
                 <outlet property="textWidthLabel" destination="nvP-wl-lbl" id="out-nvP-wl-lbl"/>
@@ -469,35 +470,41 @@
                         <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                     </textFieldCell>
                 </textField>
-                <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" translatesAutoresizingMaskIntoConstraints="NO" id="271">
+                <customView translatesAutoresizingMaskIntoConstraints="NO" id="271">
                     <rect key="frame" x="100" y="142" width="289" height="38"/>
+                    <subviews>
+                        <button imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nvT-ab-ind">
+                            <rect key="frame" x="0.0" y="20" width="289" height="18"/>
+                            <buttonCell key="cell" type="radio" title="Indent lines" bezelStyle="regularSquare" imagePosition="leading" alignment="left" inset="2" id="272">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="changedTabBehavior:" target="-2" id="act-nvT-ab-ind"/>
+                            </connections>
+                        </button>
+                        <button imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nvT-ab-foc">
+                            <rect key="frame" x="0.0" y="0" width="289" height="18"/>
+                            <buttonCell key="cell" type="radio" title="Move typing focus to next field" bezelStyle="regularSquare" imagePosition="leading" alignment="left" state="on" inset="2" id="273">
+                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                <font key="font" metaFont="system"/>
+                            </buttonCell>
+                            <connections>
+                                <action selector="changedTabBehavior:" target="-2" id="act-nvT-ab-foc"/>
+                            </connections>
+                        </button>
+                    </subviews>
                     <constraints>
                         <constraint firstAttribute="height" constant="38" id="A0D-HN-KXR"/>
                         <constraint firstAttribute="width" constant="289" id="Q7c-8R-coy"/>
+                        <constraint firstItem="nvT-ab-ind" firstAttribute="top" secondItem="271" secondAttribute="top" id="top-nvT-ab-ind"/>
+                        <constraint firstItem="nvT-ab-foc" firstAttribute="top" secondItem="nvT-ab-ind" secondAttribute="bottom" constant="6" id="top-nvT-ab-foc"/>
+                        <constraint firstItem="nvT-ab-ind" firstAttribute="leading" secondItem="271" secondAttribute="leading" id="lead-nvT-ab-ind"/>
+                        <constraint firstItem="nvT-ab-foc" firstAttribute="leading" secondItem="271" secondAttribute="leading" id="lead-nvT-ab-foc"/>
+                        <constraint firstAttribute="trailing" secondItem="nvT-ab-ind" secondAttribute="trailing" id="trail-nvT-ab-ind"/>
+                        <constraint firstAttribute="trailing" secondItem="nvT-ab-foc" secondAttribute="trailing" id="trail-nvT-ab-foc"/>
                     </constraints>
-                    <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                    <size key="cellSize" width="289" height="18"/>
-                    <size key="intercellSpacing" width="4" height="2"/>
-                    <buttonCell key="prototype" type="radio" title="Radio" imagePosition="leading" alignment="left" inset="2" id="351">
-                        <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                        <font key="font" metaFont="system"/>
-                    </buttonCell>
-                    <cells>
-                        <column>
-                            <buttonCell type="radio" title="Indent lines" bezelStyle="regularSquare" imagePosition="leading" alignment="left" inset="2" id="272">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                            <buttonCell type="radio" title="Move typing focus to next field" bezelStyle="regularSquare" imagePosition="leading" alignment="left" state="on" tag="1" inset="2" id="273">
-                                <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                <font key="font" metaFont="system"/>
-                            </buttonCell>
-                        </column>
-                    </cells>
-                    <connections>
-                        <action selector="changedTabBehavior:" target="-2" id="297"/>
-                    </connections>
-                </matrix>
+                </customView>
             </subviews>
             <constraints>
                 <constraint firstItem="283" firstAttribute="top" secondItem="311" secondAttribute="bottom" priority="600" constant="8" id="0ze-fa-dpv"/>
@@ -520,7 +527,7 @@
                 <constraint firstAttribute="trailing" secondItem="278" secondAttribute="trailing" priority="600" constant="22" id="HHX-A6-cSv"/>
                 <constraint firstItem="271" firstAttribute="top" relation="greaterThanOrEqual" secondItem="276" secondAttribute="bottom" constant="4" id="JOw-KS-b4j"/>
                 <constraint firstItem="275" firstAttribute="leading" secondItem="268" secondAttribute="leading" priority="600" constant="120" id="Kar-Ku-XUN"/>
-                <constraint firstItem="271" firstAttribute="leading" secondItem="278" secondAttribute="leading" constant="-2" id="Kmj-cO-nqo"/>
+                <constraint firstItem="271" firstAttribute="leading" secondItem="278" secondAttribute="leading" id="Kmj-cO-nqo"/>
                 <constraint firstItem="276" firstAttribute="top" relation="greaterThanOrEqual" secondItem="279" secondAttribute="bottom" constant="3" id="Lwe-e0-32N"/>
                 <constraint firstItem="283" firstAttribute="leading" relation="greaterThanOrEqual" secondItem="268" secondAttribute="leading" constant="20" id="NOI-bH-il8"/>
                 <constraint firstAttribute="bottom" secondItem="283" secondAttribute="bottom" priority="600" constant="19" id="PcO-W6-5on"/>

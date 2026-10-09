@@ -50,7 +50,7 @@
 	IBOutlet NSButton *secureTextEntryButton;
 	IBOutlet NSButton *removeFromKeychainButton;
     IBOutlet NSPopUpButton *storageFormatPopupButton;
-    IBOutlet NSMatrix *passwordSettingsMatrix;
+    IBOutlet NSButton *keychainPasswordButton, *askPasswordButton;
 	IBOutlet NSButton *upgradeSecurityButton;
 	IBOutlet NSTextField *upgradeSecurityText, *upgradeSecurityStatus;
     

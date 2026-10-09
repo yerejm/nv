@@ -237,10 +237,7 @@
 
 
 - (IBAction)changedTabBehavior:(id)sender {
-    if (sender != self)
-	[self performSelector:@selector(changedTabBehavior:) withObject:self afterDelay:0.0];
-    else
-	[prefsController setTabIndenting:[[tabKeyRadioMatrix cellAtRow:0 column:0] state] sender:self];
+	[prefsController setTabIndenting:sender == tabKeyIndentsButton sender:self];
 }
 
 - (IBAction)changedExternalEditorsMenu:(id)sender {
@@ -460,8 +457,7 @@
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(changedTableText:)
 												 name:NSControlTextDidEndEditingNotification object:tableTextSizeField];
     
-    [tabKeyRadioMatrix setState:[prefsController tabKeyIndents] atRow:0 column:0];
-    [tabKeyRadioMatrix setState:![prefsController tabKeyIndents] atRow:1 column:0];
+    [([prefsController tabKeyIndents] ? tabKeyIndentsButton : tabKeyMovesFocusButton) setState:NSControlStateValueOn];
     
     float fontSize = [prefsController tableFontSize];
     int fontButtonIndex = 3;

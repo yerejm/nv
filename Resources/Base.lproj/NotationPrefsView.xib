@@ -19,7 +19,8 @@
                 <outlet property="makeDefaultExtensionButton" destination="263" id="266"/>
                 <outlet property="newExtensionButton" destination="20" id="60"/>
                 <outlet property="newTypeButton" destination="16" id="62"/>
-                <outlet property="passwordSettingsMatrix" destination="24" id="65"/>
+                <outlet property="keychainPasswordButton" destination="nvK-ch-rem" id="out-nvK-ch-rem"/>
+                <outlet property="askPasswordButton" destination="nvK-ch-ask" id="out-nvK-ch-ask"/>
                 <outlet property="removeExtensionButton" destination="19" id="61"/>
                 <outlet property="removeFromKeychainButton" destination="133" id="134"/>
                 <outlet property="removeTypeButton" destination="21" id="63"/>
@@ -369,35 +370,41 @@
                                             <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
                                         </textFieldCell>
                                     </textField>
-                                    <matrix verticalHuggingPriority="750" allowsEmptySelection="NO" autosizesCells="NO" translatesAutoresizingMaskIntoConstraints="NO" id="24">
+                                    <customView translatesAutoresizingMaskIntoConstraints="NO" id="24">
                                         <rect key="frame" x="121" y="170" width="231" height="38"/>
+                                        <subviews>
+                                            <button imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nvK-ch-rem">
+                                                <rect key="frame" x="0.0" y="20" width="231" height="18"/>
+                                                <buttonCell key="cell" type="radio" title="Remember in Keychain" bezelStyle="regularSquare" imagePosition="leading" alignment="left" state="on" inset="2" id="26">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="changedKeychainSettings:" target="-2" id="act-nvK-ch-rem"/>
+                                                </connections>
+                                            </button>
+                                            <button imageHugsTitle="YES" translatesAutoresizingMaskIntoConstraints="NO" id="nvK-ch-ask">
+                                                <rect key="frame" x="0.0" y="0" width="231" height="18"/>
+                                                <buttonCell key="cell" type="radio" title="Ask every time" bezelStyle="regularSquare" imagePosition="leading" alignment="left" inset="2" id="25">
+                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
+                                                    <font key="font" metaFont="system"/>
+                                                </buttonCell>
+                                                <connections>
+                                                    <action selector="changedKeychainSettings:" target="-2" id="act-nvK-ch-ask"/>
+                                                </connections>
+                                            </button>
+                                        </subviews>
                                         <constraints>
                                             <constraint firstAttribute="width" constant="231" id="802-hg-pGE"/>
                                             <constraint firstAttribute="height" constant="38" id="TOx-AJ-Yug"/>
+                                            <constraint firstItem="nvK-ch-rem" firstAttribute="top" secondItem="24" secondAttribute="top" id="top-nvK-ch-rem"/>
+                                            <constraint firstItem="nvK-ch-ask" firstAttribute="top" secondItem="nvK-ch-rem" secondAttribute="bottom" constant="6" id="top-nvK-ch-ask"/>
+                                            <constraint firstItem="nvK-ch-rem" firstAttribute="leading" secondItem="24" secondAttribute="leading" id="lead-nvK-ch-rem"/>
+                                            <constraint firstItem="nvK-ch-ask" firstAttribute="leading" secondItem="24" secondAttribute="leading" id="lead-nvK-ch-ask"/>
+                                            <constraint firstAttribute="trailing" secondItem="nvK-ch-rem" secondAttribute="trailing" id="trail-nvK-ch-rem"/>
+                                            <constraint firstAttribute="trailing" secondItem="nvK-ch-ask" secondAttribute="trailing" id="trail-nvK-ch-ask"/>
                                         </constraints>
-                                        <color key="backgroundColor" name="controlColor" catalog="System" colorSpace="catalog"/>
-                                        <size key="cellSize" width="231" height="18"/>
-                                        <size key="intercellSpacing" width="4" height="2"/>
-                                        <buttonCell key="prototype" type="radio" title="Radio" imagePosition="leading" alignment="left" inset="2" id="248">
-                                            <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                            <font key="font" metaFont="system"/>
-                                        </buttonCell>
-                                        <cells>
-                                            <column>
-                                                <buttonCell type="radio" title="Remember in Keychain" imagePosition="leading" alignment="left" state="on" inset="2" id="26">
-                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                    <font key="font" metaFont="system"/>
-                                                </buttonCell>
-                                                <buttonCell type="radio" title="Ask every time" imagePosition="leading" alignment="left" tag="1" inset="2" id="25">
-                                                    <behavior key="behavior" changeContents="YES" doesNotDimImage="YES" lightByContents="YES"/>
-                                                    <font key="font" metaFont="system"/>
-                                                </buttonCell>
-                                            </column>
-                                        </cells>
-                                        <connections>
-                                            <action selector="changedKeychainSettings:" target="-2" id="81"/>
-                                        </connections>
-                                    </matrix>
+                                    </customView>
                                     <button imageHugsTitle="YES" verticalHuggingPriority="750" translatesAutoresizingMaskIntoConstraints="NO" id="34">
                                         <rect key="frame" x="117" y="268" width="211" height="32"/>
                                         <buttonCell key="cell" type="push" title="Turn On Note Encryption…" bezelStyle="rounded" alignment="center" borderStyle="border" inset="2" id="228">
