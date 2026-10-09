@@ -85,6 +85,31 @@ class BuildPolicyTests(unittest.TestCase):
                     'CFBundleSignature', 'SmartCrashReports_CompanyName', 'SmartCrashReports_EmailTicket']:
             self.assertNotIn(key, info)
 
+    def test_document_types_are_declared_by_uti_with_localized_names(self):
+        with (ROOT / 'Configuration/Info.plist').open('rb') as source:
+            info = plistlib.load(source)
+        imported = {item['UTTypeIdentifier']: item for item in info['UTImportedTypeDeclarations']}
+        extensions = {ext for item in imported.values() for ext in item['UTTypeTagSpecification']['public.filename-extension']}
+        self.assertEqual(extensions, {'blor', 'rtx', 'utf8', 'utxt'})
+        names = set()
+        for document in info['CFBundleDocumentTypes']:
+            with self.subTest(document=document['CFBundleTypeName']):
+                self.assertEqual(set(document), {'CFBundleTypeName', 'CFBundleTypeRole', 'LSItemContentTypes'})
+                self.assertNotIn('PboardType', document['CFBundleTypeName'])
+                names.add(document['CFBundleTypeName'])
+                for uti in document['LSItemContentTypes']:
+                    if uti.startswith('net.notational.velocity.'):
+                        self.assertIn(uti, imported)
+        word = next(d for d in info['CFBundleDocumentTypes'] if 'com.microsoft.word.doc' in d['LSItemContentTypes'])
+        self.assertIn('org.openxmlformats.wordprocessingml.document', word['LSItemContentTypes'])
+        names |= {item['UTTypeDescription'] for item in imported.values()}
+        for strings in (ROOT / 'Resources').glob('*.lproj/InfoPlist.strings'):
+            if strings.parent.name == 'en.lproj':
+                continue
+            with self.subTest(strings=strings.parent.name):
+                localized = plistlib.loads(subprocess.check_output(['/usr/bin/plutil', '-convert', 'xml1', '-o', '-', str(strings)]))
+                self.assertLessEqual(names, set(localized))
+
     def test_no_openssl_build_dependency(self):
         project = (ROOT / 'Notation.xcodeproj/project.pbxproj').read_text()
         self.assertNotIn('/opt/openssl/', project)

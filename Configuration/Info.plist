@@ -7,35 +7,18 @@
 	<key>CFBundleDocumentTypes</key>
 	<array>
 		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>rtfd</string>
-			</array>
 			<key>CFBundleTypeName</key>
-			<string>NSRTFDPboardType</string>
-			<key>CFBundleTypeOSTypes</key>
-			<array>
-				<string>RTFD</string>
-			</array>
+			<string>RTFD Document</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>com.apple.rtfd</string>
 			</array>
-			<key>LSTypeIsPackage</key>
-			<true/>
 		</dict>
 		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>htm</string>
-				<string>html</string>
-			</array>
-			<key>CFBundleTypeOSTypes</key>
-			<array>
-				<string>HTML</string>
-			</array>
+			<key>CFBundleTypeName</key>
+			<string>HTML Document</string>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
 			<key>LSItemContentTypes</key>
@@ -44,14 +27,8 @@
 			</array>
 		</dict>
 		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>pdf</string>
-			</array>
-			<key>CFBundleTypeOSTypes</key>
-			<array>
-				<string>PDF </string>
-			</array>
+			<key>CFBundleTypeName</key>
+			<string>PDF Document</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
@@ -60,73 +37,49 @@
 			</array>
 		</dict>
 		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>rtf</string>
-				<string>rtx</string>
-			</array>
 			<key>CFBundleTypeName</key>
-			<string>NSRTFPboardType</string>
-			<key>CFBundleTypeOSTypes</key>
-			<array>
-				<string>RTF </string>
-			</array>
+			<string>RTF Document</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>public.rtf</string>
+				<string>net.notational.velocity.rtx</string>
 			</array>
 		</dict>
 		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>doc</string>
-				<string>docx</string>
-			</array>
 			<key>CFBundleTypeName</key>
-			<string>Imported Microsoft Word Document</string>
-			<key>CFBundleTypeOSTypes</key>
-			<array>
-				<string>W8BN</string>
-				<string>W6BN</string>
-			</array>
+			<string>Microsoft Word Document</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>com.microsoft.word.doc</string>
+				<string>org.openxmlformats.wordprocessingml.document</string>
+			</array>
 		</dict>
 		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>txt</string>
-				<string>text</string>
-				<string>utf8</string>
-				<string>utxt</string>
-			</array>
 			<key>CFBundleTypeName</key>
-			<string>NSStringPboardType</string>
-			<key>CFBundleTypeOSTypes</key>
-			<array>
-				<string>TEXT</string>
-				<string>sEXT</string>
-				<string>ttro</string>
-			</array>
+			<string>Plain Text Document</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
 			<key>LSItemContentTypes</key>
 			<array>
 				<string>public.text</string>
 				<string>public.plain-text</string>
+				<string>net.notational.velocity.utf8-text</string>
+				<string>net.notational.velocity.utf16-text</string>
 			</array>
 		</dict>
 		<dict>
-			<key>CFBundleTypeExtensions</key>
-			<array>
-				<string>blor</string>
-			</array>
 			<key>CFBundleTypeName</key>
-			<string>Notational Velocity BLOR</string>
+			<string>Notational Velocity BLOR Database</string>
 			<key>CFBundleTypeRole</key>
 			<string>Viewer</string>
+			<key>LSItemContentTypes</key>
+			<array>
+				<string>net.notational.velocity.blor</string>
+			</array>
 		</dict>
 	</array>
 	<key>CFBundleExecutable</key>
@@ -195,5 +148,76 @@
 	</array>
 	<key>OSAScriptingDefinition</key>
 	<string>Notation.sdef</string>
+	<key>UTImportedTypeDeclarations</key>
+	<array>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.data</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Notational Velocity BLOR Database</string>
+			<key>UTTypeIdentifier</key>
+			<string>net.notational.velocity.blor</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>blor</string>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.rtf</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>RTF Document</string>
+			<key>UTTypeIdentifier</key>
+			<string>net.notational.velocity.rtx</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>rtx</string>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.utf8-plain-text</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Plain Text Document</string>
+			<key>UTTypeIdentifier</key>
+			<string>net.notational.velocity.utf8-text</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>utf8</string>
+				</array>
+			</dict>
+		</dict>
+		<dict>
+			<key>UTTypeConformsTo</key>
+			<array>
+				<string>public.utf16-plain-text</string>
+			</array>
+			<key>UTTypeDescription</key>
+			<string>Plain Text Document</string>
+			<key>UTTypeIdentifier</key>
+			<string>net.notational.velocity.utf16-text</string>
+			<key>UTTypeTagSpecification</key>
+			<dict>
+				<key>public.filename-extension</key>
+				<array>
+					<string>utxt</string>
+				</array>
+			</dict>
+		</dict>
+	</array>
 </dict>
 </plist>
