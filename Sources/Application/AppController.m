@@ -897,7 +897,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 		NoteAttributeColumn *newSortCol = [notesTableView noteAttributeColumnForIdentifier:[prefsController sortedTableColumnKey]];
 		BOOL changedColumns = oldSortCol != newSortCol;
 		
-		ViewLocationContext ctx;
+		ViewLocationContext ctx = {0};
 		if (changedColumns) {
 			ctx = [notesTableView viewingLocation];
 			ctx.pivotRowWasEdge = NO;

@@ -57,6 +57,24 @@ class BuildPolicyTests(unittest.TestCase):
                 self.assertNotIn('-pg', str(settings))
                 self.assertNotIn('-whatsloaded', str(settings))
 
+    def test_project_uses_current_format_without_obsolete_settings(self):
+        project = json.loads(subprocess.check_output([
+            '/usr/bin/plutil', '-convert', 'json', '-o', '-',
+            str(ROOT / 'Notation.xcodeproj/project.pbxproj')]))
+        self.assertEqual(project['objectVersion'], '77')
+        root = project['objects'][project['rootObject']]
+        self.assertNotIn('compatibilityVersion', root)
+        self.assertEqual(root['preferredProjectObjectVersion'], '77')
+        obsolete = {'GCC_VERSION', 'GCC_VERSION[sdk=macosx*]', 'GCC_DEBUGGING_SYMBOLS', 'ZERO_LINK',
+                    'GCC_PFE_FILE_C_DIALECTS', 'FRAMEWORK_SEARCH_PATHS_QUOTED_1', 'LIBRARY_SEARCH_PATHS'}
+        for configuration in project['objects'].values():
+            if configuration.get('isa') != 'XCBuildConfiguration':
+                continue
+            with self.subTest(configuration=configuration['name']):
+                settings = configuration['buildSettings']
+                self.assertEqual(set(settings) & obsolete, set())
+                self.assertNotEqual(settings.get('ENABLE_STRICT_OBJC_MSGSEND'), 'NO')
+
     def test_application_uses_hardened_runtime_with_apple_events_only(self):
         project = json.loads(subprocess.check_output([
             '/usr/bin/plutil', '-convert', 'json', '-o', '-',
