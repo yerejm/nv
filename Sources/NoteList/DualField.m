@@ -163,7 +163,7 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 }
 
 - (DualFieldButtonElement *)_accessibilityButtonClearing:(BOOL)clears {
-	DualFieldButtonElement *element = [[[DualFieldButtonElement alloc] init] autorelease];
+	DualFieldButtonElement *element = [[DualFieldButtonElement alloc] init];
 	[element setFieldCell:self];
 	[element setClears:clears];
 	[element setAccessibilityRole:NSAccessibilityButtonRole];
@@ -182,12 +182,6 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 	return copy;
 }
 
-- (void)dealloc {
-	[clearButtonElement release];
-	[snapbackButtonElement release];
-	[super dealloc];
-}
-
 - (NSAccessibilitySubrole)accessibilitySubrole {
 	return NSAccessibilitySearchFieldSubrole;
 }
@@ -202,7 +196,7 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 
 - (id)accessibilityClearButton {
 	if (![self clearButtonIsVisible]) return nil;
-	if (!clearButtonElement) clearButtonElement = [[self _accessibilityButtonClearing:YES] retain];
+	if (!clearButtonElement) clearButtonElement = [self _accessibilityButtonClearing:YES];
 	return clearButtonElement;
 }
 
@@ -210,7 +204,7 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 - (id)accessibilitySearchButton {
 	DualField *field = (DualField *)[self controlView];
 	if (![field showsDocumentIcon] && ![field hasFollowedLinks]) return nil;
-	if (!snapbackButtonElement) snapbackButtonElement = [[self _accessibilityButtonClearing:NO] retain];
+	if (!snapbackButtonElement) snapbackButtonElement = [self _accessibilityButtonClearing:NO];
 	return snapbackButtonElement;
 }
 
@@ -289,7 +283,7 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 
 - (void)awakeFromNib {
 	
-	NSCell *dualFieldCell = [[[DualFieldCell alloc] init] autorelease];
+	NSCell *dualFieldCell = [[DualFieldCell alloc] init];
 	[dualFieldCell setAction:[[self cell] action]];
 	[dualFieldCell setTarget:[[self cell] target]];
 	[self setCell:dualFieldCell];
@@ -304,7 +298,7 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 	[myCell setLineBreakMode:NSLineBreakByCharWrapping];
 	
 	//remember this now to make sure we always use the same one, in case +IBeamCursor just happens to return a different object later (hint hint)
-	IBeamCursor = [[NSCursor IBeamCursor] retain];
+	IBeamCursor = [NSCursor IBeamCursor];
 	
 	followedLinks = [[NSMutableArray alloc] init];
 }
@@ -312,7 +306,6 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 - (void)updateTrackingAreas {
 	if (docIconTrackingArea) {
 		[self removeTrackingArea:docIconTrackingArea];
-		[docIconTrackingArea release];
 	}
 	docIconTrackingArea = [[NSTrackingArea alloc] initWithRect:[[self cell] snapbackButtonRectForBounds:[self bounds]]
 													   options:NSTrackingMouseEnteredAndExited | NSTrackingActiveInKeyWindow
@@ -322,12 +315,7 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 }
 
 - (void)dealloc {
-	[snapbackString release];
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
-	[followedLinks release];
-	[docIconTrackingArea release];
-	
-	[super dealloc];
 }
 
 - (NSString *)view:(NSView *)view stringForToolTip:(NSToolTipTag)tag point:(NSPoint)point userData:(void *)userData {
@@ -420,14 +408,14 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 
 - (NoteBookmark*)popLastFollowedLink {
 	
-	NoteBookmark *aBookmark = [[followedLinks lastObject] retain];
+	NoteBookmark *aBookmark = [followedLinks lastObject];
 	[followedLinks removeLastObject];
 	 
 	[(AppController *)[NSApp delegate] searchForString:[aBookmark searchString]];
 	[(AppController *)[NSApp delegate] revealNote:[aBookmark noteObject] options:0];
 	[NSObject cancelPreviousPerformRequestsWithTarget:self selector:@selector(clearFollowedLinks) object:nil];
 
-	return [aBookmark autorelease];
+	return aBookmark;
 }
 
 - (void)clearFollowedLinks {
@@ -439,7 +427,6 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 	NSString *proposedString = string ? [string stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] : nil;
 	
 	if (proposedString != snapbackString /*the nil == nil case*/ && ![proposedString isEqualToString:snapbackString]) {
-		[snapbackString release];
 		snapbackString = [proposedString copy];		
 	}
 	if (![proposedString length]) {

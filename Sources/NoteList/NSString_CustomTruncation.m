@@ -35,11 +35,11 @@ static NSUInteger PreviewCharacterLimitForWidth(CGFloat width);
 	//an empty range would still return the first composed character
 	if (!characterCount || ![self length]) return @"";
 	NSRange range = [self rangeOfComposedCharacterSequencesForRange:NSMakeRange(0, MIN(characterCount, [self length]))];
-	NSMutableString *preview = [[[self substringWithRange:range] mutableCopy] autorelease];
+	NSMutableString *preview = [[self substringWithRange:range] mutableCopy];
 	static NSCharacterSet *breaks = nil;
 	if (!breaks) {
 		const unichar breakCharacters[] = { '\t', '\n', '\r', '\f', 0x0003, 0x2028, 0x2029 };
-		breaks = [[NSCharacterSet characterSetWithCharactersInString:[NSString stringWithCharacters:breakCharacters length:sizeof(breakCharacters) / sizeof(*breakCharacters)]] retain];
+		breaks = [NSCharacterSet characterSetWithCharactersInString:[NSString stringWithCharacters:breakCharacters length:sizeof(breakCharacters) / sizeof(*breakCharacters)]];
 	}
 	NSRange found = NSMakeRange(0, 0);
 	while ((found = [preview rangeOfCharacterFromSet:breaks options:NSLiteralSearch range:NSMakeRange(NSMaxRange(found), [preview length] - NSMaxRange(found))]).location != NSNotFound)
@@ -50,7 +50,6 @@ static NSUInteger PreviewCharacterLimitForWidth(CGFloat width);
 static NSMutableDictionary *titleTruncAttrs = nil;
 
 void ResetFontRelatedTableAttributes(void) {
-	[titleTruncAttrs release];
 	titleTruncAttrs = nil;
 }
 
@@ -66,13 +65,13 @@ static NSMutableParagraphStyle *LineBreakingStyle(void) {
 
 static NSDictionary *GrayTextAttributes(void) {
 	static NSDictionary *grayTextAttributes = nil;
-	if (!grayTextAttributes) grayTextAttributes = [[NSDictionary dictionaryWithObjectsAndKeys:[NSColor secondaryLabelColor], NSForegroundColorAttributeName, nil] retain];
+	if (!grayTextAttributes) grayTextAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[NSColor secondaryLabelColor], NSForegroundColorAttributeName, nil];
 	return grayTextAttributes;
 }
 
 static NSDictionary *LineTruncAttributes(void) {
 	static NSDictionary *lineTruncAttributes = nil;
-	if (!lineTruncAttributes) lineTruncAttributes = [[NSDictionary dictionaryWithObjectsAndKeys:LineBreakingStyle(), NSParagraphStyleAttributeName, nil] retain];
+	if (!lineTruncAttributes) lineTruncAttributes = [NSDictionary dictionaryWithObjectsAndKeys:LineBreakingStyle(), NSParagraphStyleAttributeName, nil];
 	return lineTruncAttributes;
 }
 
@@ -84,8 +83,8 @@ NSDictionary *LineTruncAttributesForTitle(void) {
 		BOOL usesBold = ColumnIsSet(NoteLabelsColumn, bitmap) || ColumnIsSet(NoteDateCreatedColumn, bitmap) ||
 		ColumnIsSet(NoteDateModifiedColumn, bitmap) || [prefs tableColumnsShowPreview];
 		
-		titleTruncAttrs = [[NSMutableDictionary dictionaryWithObjectsAndKeys:[[LineBreakingStyle() mutableCopy] autorelease], NSParagraphStyleAttributeName,
-							(usesBold ? [NSFont boldSystemFontOfSize:fontSize] : [NSFont systemFontOfSize:fontSize]), NSFontAttributeName, nil] retain];
+		titleTruncAttrs = [NSMutableDictionary dictionaryWithObjectsAndKeys:[LineBreakingStyle() mutableCopy], NSParagraphStyleAttributeName,
+							(usesBold ? [NSFont boldSystemFontOfSize:fontSize] : [NSFont systemFontOfSize:fontSize]), NSFontAttributeName, nil];
 		
 		if (ColumnIsSet(NoteDateCreatedColumn, bitmap) || ColumnIsSet(NoteDateModifiedColumn, bitmap)) {
 			//account for right-"aligned" date string, which will be relatively constant, so this can be cached
@@ -121,7 +120,7 @@ static NSUInteger PreviewCharacterLimitForWidth(CGFloat width) {
 	//title is black (no added colors) and truncated with LineTruncAttributesForTitle()
 	//body is gray and truncated with a variable tail indent, depending on intruding tags
 	
-	NSDictionary *bodyTruncDict = [NSDictionary dictionaryWithObjectsAndKeys:[[LineBreakingStyle() mutableCopy] autorelease], 
+	NSDictionary *bodyTruncDict = [NSDictionary dictionaryWithObjectsAndKeys:[LineBreakingStyle() mutableCopy], 
 								   NSParagraphStyleAttributeName, [[GlobalPrefs defaultPrefs] interfaceSecondaryColor], NSForegroundColorAttributeName, nil];
 	//set word-wrapping to let -[NSCell setTruncatesLastVisibleLine:] work
 	[[bodyTruncDict objectForKey:NSParagraphStyleAttributeName] setLineBreakMode:NSLineBreakByWordWrapping];
@@ -134,9 +133,7 @@ static NSUInteger PreviewCharacterLimitForWidth(CGFloat width) {
 	[attributedStringPreview addAttributes:LineTruncAttributesForTitle() range:NSMakeRange(0, [self length])];
 	[attributedStringPreview addAttributes:bodyTruncDict range:NSMakeRange([self length] + 1, [unattributedPreview length] - ([self length] + 1))];
 	
-	[unattributedPreview release];
-	
-	return [attributedStringPreview autorelease];
+	return attributedStringPreview;
 }
 
 - (NSAttributedString*)attributedSingleLineTitle {
@@ -146,7 +143,7 @@ static NSUInteger PreviewCharacterLimitForWidth(CGFloat width) {
 	
 	NSMutableAttributedString *titleStr = [[NSMutableAttributedString alloc] initWithString:self attributes:LineTruncAttributesForTitle()];
 
-	return [titleStr autorelease];
+	return titleStr;
 }
 
 
@@ -163,9 +160,7 @@ static NSUInteger PreviewCharacterLimitForWidth(CGFloat width) {
 	NSMutableAttributedString *attributedStringPreview = [[NSMutableAttributedString alloc] initWithString:unattributedPreview attributes:LineTruncAttributes()];
 	[attributedStringPreview addAttributes:GrayTextAttributes() range:NSMakeRange([self length], [unattributedPreview length] - [self length])];
 	
-	[unattributedPreview release];
-	
-	return [attributedStringPreview autorelease];
+	return attributedStringPreview;
 }
 
 

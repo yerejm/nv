@@ -744,7 +744,6 @@ bail:
 			}
 		} while (isAPrefix && ++j<count);
 	}
-
 }
 
 - (void)addNewNote:(NoteObject*)note {

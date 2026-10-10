@@ -34,10 +34,6 @@
 	return self;
 }
 
-- (void)dealloc {
-	[super dealloc];
-}
-
 - (void)selectWithFrame:(NSRect)aRect inView:(NSView *)controlView editor:(NSText *)textObj 
 			   delegate:(id)anObject start:(NSInteger)selStart length:(NSInteger)selLength {
 	
@@ -77,8 +73,7 @@
 }
 
 - (void)setNoteObject:(NoteObject*)obj {
-	[noteObject autorelease];
-	noteObject = [obj retain];
+	noteObject = obj;
 }
 
 - (void)setPreviewIsHidden:(BOOL)value {
@@ -91,7 +86,7 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 	NSMutableAttributedString *colorFreeStr = [str mutableCopy];
 	[colorFreeStr removeAttribute:NSForegroundColorAttributeName range:fullRange];
 	[colorFreeStr removeAttribute:NSShadowAttributeName range:fullRange];
-	return [colorFreeStr autorelease];
+	return colorFreeStr;
 }
 
 - (NSString *)dateString {
@@ -132,9 +127,9 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 	
 	NotesTableView *tv = (NotesTableView *)controlView;
 	
-    NSMutableAttributedString *title = [[self.attributedStringValue mutableCopy] autorelease];
+    NSMutableAttributedString *title = [self.attributedStringValue mutableCopy];
     if (title.length) {
-        NSMutableParagraphStyle *style = [[([title attribute:NSParagraphStyleAttributeName atIndex:0 effectiveRange:NULL] ?: [NSParagraphStyle defaultParagraphStyle]) mutableCopy] autorelease];
+        NSMutableParagraphStyle *style = [([title attribute:NSParagraphStyleAttributeName atIndex:0 effectiveRange:NULL] ?: [NSParagraphStyle defaultParagraphStyle]) mutableCopy];
         style.tailIndent = -[self dateWidthForFrame:cellFrame] - 8;
         [title addAttribute:NSParagraphStyleAttributeName value:style range:NSMakeRange(0, MIN(title.length, titleOfNote(noteObject).length))];
         [self setAttributedStringValue:title];
@@ -180,7 +175,6 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 		[cloneStr addAttributes:LineTruncAttributesForTitle() range:NSMakeRange(0, [titleOfNote(noteObject) length])];
 		
 		[cloneStr drawWithRect:NSInsetRect([self titleRectForBounds:cellFrame], 2., 0.) options: NSStringDrawingTruncatesLastVisibleLine | NSStringDrawingUsesLineFragmentOrigin];
-		[cloneStr release];
 		
 		//draw a slightly different focus ring than what would have been drawn
 		NSRect rect = [tv lastEventActivatedTagEdit] ? [self nv_tagsRectForFrame:cellFrame] : [self nv_titleRectForFrame:cellFrame];

@@ -46,7 +46,7 @@
         titleRect.size.width = MAX(0.0, NSMinX([self sortIndicatorRectForBounds:frame]) - 4 - NSMinX(titleRect));
     }
     NSFont *font = indicator ? [NSFont systemFontOfSize:[[self font] pointSize] weight:NSFontWeightSemibold] : [self font];
-    NSMutableParagraphStyle *style = [[[NSMutableParagraphStyle alloc] init] autorelease];
+    NSMutableParagraphStyle *style = [[NSMutableParagraphStyle alloc] init];
     [style setLineBreakMode:NSLineBreakByTruncatingTail];
     [[self stringValue] drawWithRect:titleRect options:NSStringDrawingUsesLineFragmentOrigin | NSStringDrawingTruncatesLastVisibleLine
                           attributes:@{NSFontAttributeName: font, NSParagraphStyleAttributeName: style,
@@ -84,8 +84,8 @@
 + (NSDictionary*)standardDictionary {
 	static NSDictionary *standardDictionary = nil;
 	if (!standardDictionary)
-		standardDictionary = [[NSDictionary dictionaryWithObjectsAndKeys:
-			[NSFont systemFontOfSize:[NSFont smallSystemFontSize]], NSFontAttributeName, nil] retain];	
+		standardDictionary = [NSDictionary dictionaryWithObjectsAndKeys:
+			[NSFont systemFontOfSize:[NSFont smallSystemFontSize]], NSFontAttributeName, nil];
 
 	return standardDictionary;
 }

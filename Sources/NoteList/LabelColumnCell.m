@@ -46,8 +46,7 @@
 }
 
 - (void)setNoteObject:(NoteObject*)obj {
-	[noteObject autorelease];
-	noteObject = [obj retain];
+	noteObject = obj;
 }
 
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {	

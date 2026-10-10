@@ -40,31 +40,24 @@
 	return self;
 }
 
-- (void)dealloc {
-	
-	[labelImages release];
-	[allLabels release];
-	[super dealloc];
-}
-
 - (NSArray*)labelTitlesPrefixedByString:(NSString*)prefixString indexOfSelectedItem:(NSInteger *)anIndex minusWordSet:(NSSet*)antiSet {
 	
-	NSMutableArray *objs = [[[allLabels allObjects] mutableCopy] autorelease];
+	NSMutableArray *objs = [[allLabels allObjects] mutableCopy];
 	NSMutableArray *titles = [NSMutableArray arrayWithCapacity:[allLabels count]];
 
 	[objs sortUnstableUsingFunction:(NSInteger (*)(id *, id *))compareLabel];
 	
-	CFStringRef prefix = (CFStringRef)prefixString;
+	CFStringRef prefix = (__bridge CFStringRef)prefixString;
 	NSUInteger i, titleLen, j = 0, shortestTitleLen = UINT_MAX;
 	
 	for (i=0; i<[objs count]; i++) {
-		CFStringRef title = (CFStringRef)titleOfLabel((LabelObject*)[objs objectAtIndex:i]);
+		NSString *title = titleOfLabel((LabelObject*)[objs objectAtIndex:i]);
 		
-		if (CFStringFindWithOptions(title, prefix, CFRangeMake(0, CFStringGetLength(prefix)), kCFCompareAnchored | kCFCompareCaseInsensitive, NULL)) {
+		if (CFStringFindWithOptions((__bridge CFStringRef)title, prefix, CFRangeMake(0, CFStringGetLength(prefix)), kCFCompareAnchored | kCFCompareCaseInsensitive, NULL)) {
 			
-			if (![antiSet containsObject:(id)title]) {
-				[titles addObject:(id)title];
-				if (anIndex && (titleLen = CFStringGetLength(title)) < shortestTitleLen) {
+			if (![antiSet containsObject:title]) {
+				[titles addObject:title];
+				if (anIndex && (titleLen = [title length]) < shortestTitleLen) {
 					*anIndex = j;
 					shortestTitleLen = titleLen;
 				}
@@ -141,7 +134,7 @@
 	[notesOfLabels unionSet:[objects[labelIndex] noteSet]];
     }
     
-    return [notesOfLabels autorelease];
+    return notesOfLabels;
 }
 
 

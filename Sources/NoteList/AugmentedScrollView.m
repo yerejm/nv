@@ -49,7 +49,7 @@ void NVConfigureScrolling(NSScrollView *scrollView) {
     BOOL themed = [[GlobalPrefs defaultPrefs] useThemedScrollbars];
     Class scrollerClass = themed ? [NVOverlayScroller class] : [NSScroller class];
     if ([scrollView.verticalScroller class] != scrollerClass) {
-        NSScroller *scroller = [[[scrollerClass alloc] initWithFrame:scrollView.verticalScroller.frame] autorelease];
+        NSScroller *scroller = [[scrollerClass alloc] initWithFrame:scrollView.verticalScroller.frame];
         [scrollView setVerticalScroller:scroller];
     }
     [scrollView setScrollerStyle:themed ? NSScrollerStyleOverlay : [NSScroller preferredScrollerStyle]];

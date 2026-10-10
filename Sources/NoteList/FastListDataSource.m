@@ -72,7 +72,7 @@
 		}
 	}
 	
-    return [objectsInIndexSet autorelease];
+    return objectsInIndexSet;
 }
 
 //as long as this class is only used for temporary display, we probably do not need to uncomment the retains and releases
@@ -85,10 +85,10 @@
 	
 	count = CFArrayGetCount((CFArrayRef)array);	
 	if (count > oldArraySize) {
-	    objects = (id*)realloc(objects, count * sizeof(id));
+	    objects = (__unsafe_unretained id *)realloc(objects, count * sizeof(id));
 	}
 
-	CFArrayGetValues((CFArrayRef)array, CFRangeMake(0, count), (const void **)objects);
+	CFArrayGetValues((__bridge CFArrayRef)array, CFRangeMake(0, count), (const void **)(void *)objects);
 	
 }
 
@@ -124,7 +124,8 @@
 	//allow the tableview to override the selector destination for this object value
 	SEL colAttributeMutator = [(NotesTableView*)aTableView attributeSetterForColumn:(NoteAttributeColumn*)aTableColumn];
 	
-	[objects[rowIndex] performSelector:colAttributeMutator ? colAttributeMutator : columnAttributeMutator((NoteAttributeColumn*)aTableColumn) withObject:anObject];
+	SEL mutator = colAttributeMutator ? colAttributeMutator : columnAttributeMutator((NoteAttributeColumn*)aTableColumn);
+	((void (*)(id, SEL, id))objc_msgSend)(objects[rowIndex], mutator, anObject);
 }
 
 
