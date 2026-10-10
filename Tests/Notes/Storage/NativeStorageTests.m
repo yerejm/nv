@@ -16,6 +16,7 @@
 #import "ODBEditor.h"
 #import "ODBEditorSuite.h"
 #import "AlienNoteImporter.h"
+#import "DeletionManager.h"
 
 @interface ODBEditor (Acceptance)
 - (void)handleModifiedFileEvent:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)reply;
@@ -450,6 +451,21 @@ static BOOL NVUnexpectedObjectWasDecoded = NO;
     NoteCatalogEntry entry = {info.contentModificationDate, info.attributeModificationDate, (UInt32)info.logicalSize, info.fileType, (UInt32)info.nodeID, name};
     XCTAssertFalse([controller modifyNoteIfNecessary:decoded usingCatalogEntry:&entry]);
     CFRelease(name);
+    [controller closeAllResources];
+}
+- (void)testEmptiedNotesFolderOffersToDeleteEveryNote {
+    NotationController *controller = [self controller];
+    [[controller notationPrefs] setNotesStorageFormat:PlainTextFormat];
+    NoteObject *note = [self sampleNote];
+    [controller addNewNote:note];
+    XCTAssertTrue([controller flushAllNoteChanges]);
+    XCTAssertTrue([controller synchronizeNotesFromDirectory]);
+    DeletionManager *deletions = [controller valueForKey:@"deletionManager"];
+    XCTAssertFalse([deletions noteFileIsAlreadyDeleted:note]);
+    for (NSString *name in [[NSFileManager defaultManager] contentsOfDirectoryAtPath:self.temporaryDirectory error:NULL])
+        XCTAssertTrue([[NSFileManager defaultManager] removeItemAtPath:[self.temporaryDirectory stringByAppendingPathComponent:name] error:NULL]);
+    XCTAssertTrue([controller synchronizeNotesFromDirectory]);
+    XCTAssertTrue([deletions noteFileIsAlreadyDeleted:note]);
     [controller closeAllResources];
 }
 - (void)testJournalEditAndDeletionRecovery {

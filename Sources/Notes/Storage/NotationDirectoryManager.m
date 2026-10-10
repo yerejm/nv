@@ -218,7 +218,8 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
     if (!filenameArray) filenameArray = (CFStringRef *)calloc(kMaxFileIteratorCount, sizeof(CFStringRef));
 	
     if ((status = NVOpenIterator(&noteDirectoryRef, &dirIterator)) == noErr) {
-		
+		catEntriesCount = 0;
+
         do {
             // Grab a batch of source files to process from the source directory
             status = NVIterateFiles(dirIterator, kMaxFileIteratorCount, &dirObjectCount, fileInfoArray, NULL, filenameArray);
