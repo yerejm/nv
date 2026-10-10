@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := debug
-.PHONY: debug release test deprecations clean
+.PHONY: debug release test deprecations analyze clean
 .NOTPARALLEL:
 
 XCODEBUILD ?= /usr/bin/xcodebuild
@@ -22,6 +22,9 @@ test:
 
 deprecations:
 	./script/check_deprecations.sh
+
+analyze:
+	./script/check_analyzer.sh
 
 clean:
 	rm -rf -- build
