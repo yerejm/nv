@@ -121,18 +121,10 @@
 
 //figure out which notes to display given some selected labels
 - (NSSet*)notesAtFilteredIndexes:(NSIndexSet*)anIndexSet {
-    NSUInteger i, numLabels = [anIndexSet count];
-    NSUInteger *labelsBuffer = malloc(numLabels * sizeof(NSUInteger));
-    
-    NSRange range = NSMakeRange([anIndexSet firstIndex], ([anIndexSet lastIndex]-[anIndexSet firstIndex]) + 1);
-    [anIndexSet getIndexes:labelsBuffer maxCount:numLabels inIndexRange:&range];
-    
     NSMutableSet *notesOfLabels = [[NSMutableSet alloc] init];
-
-    for (i=0; i<numLabels; i++) {
-	NSInteger labelIndex = labelsBuffer[i];
-	[notesOfLabels unionSet:[objects[labelIndex] noteSet]];
-    }
+    [anIndexSet enumerateIndexesUsingBlock:^(NSUInteger labelIndex, BOOL *stop) {
+        [notesOfLabels unionSet:[self->objects[labelIndex] noteSet]];
+    }];
     
     return notesOfLabels;
 }

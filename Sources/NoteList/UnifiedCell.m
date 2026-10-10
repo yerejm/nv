@@ -92,7 +92,7 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 - (NSString *)dateString {
     GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
     unsigned int columns = [prefs tableColumnsBitmap];
-    if (!noteObject || (!ColumnIsSet(NoteDateCreatedColumn, columns) && !ColumnIsSet(NoteDateModifiedColumn, columns))) return @"";
+    if (!noteObject || (!ColumnIsSet(NoteDateCreatedColumn, columns) && !ColumnIsSet(NoteDateModifiedColumn, columns))) return nil;
     BOOL created = ColumnIsSet(NoteDateCreatedColumn, columns) &&
         (!ColumnIsSet(NoteDateModifiedColumn, columns) || [[prefs sortedTableColumnKey] isEqualToString:NoteDateCreatedColumnString]);
     return (created ? dateCreatedStringOfNote : dateModifiedStringOfNote)((id)self.controlView, noteObject, NSNotFound);

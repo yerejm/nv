@@ -343,7 +343,7 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 			return NSLocalizedString(@"Type any text to search; press Return to create a note", @"tooltip string for search/title field");
 		}
 	}
-	return nil;
+	return @"";
 }
 
 - (void)mouseEntered:(NSEvent *)theEvent {

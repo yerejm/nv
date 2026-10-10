@@ -33,7 +33,7 @@ OSStatus NVPathMakeReference(const UInt8 *path, NVFileReference *ref, Boolean *i
     struct statfs volume;
     char resolved[PATH_MAX];
     if (!realpath((const char *)path, resolved) || stat(resolved, &info) || statfs(resolved, &volume))
-        return NVStatusFromErrno(errno);
+        return errno ? NVStatusFromErrno(errno) : ioErr;
     memset(ref, 0, sizeof(*ref));
     ref->volume = volume.f_fsid;
     ref->inode = info.st_ino;

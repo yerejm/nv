@@ -48,7 +48,6 @@ int IsZeros(const void *s1, size_t n);
 int ContainsUInteger(const NSUInteger *uintArray, size_t count, NSUInteger auint);
 void modp_tolower_copy(char* dest, const char* str, size_t len);
 int ContainsHighAscii(const void *s1, size_t n);
-CFStringRef CFStringFromBase10Integer(int quantity);
 unsigned DumbWordCount(const void *s1, size_t len);
 NSInteger genericSortContextFirst(int (*context) (void*, void*), void* one, void* two);
 NSInteger genericSortContextLast(void* one, void* two, int (*context) (void*, void*));

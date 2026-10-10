@@ -646,7 +646,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 }
 
 - (NSMenu *)defaultNoteCommandsMenuWithTarget:(id)target {
-	NSMenu *theMenu = [[NSMenu alloc] initWithTitle:@"Contextual Note Commands Menu"];
+	NSMenu *theMenu = [[NSMenu alloc] init];
 	NSMenu *notesMenu = [[[NSApp mainMenu] itemWithTag:NOTES_MENU_ID] submenu];
 	
 	_CopyItemWithSelectorFromMenu(theMenu, notesMenu, @selector(renameNote:), target, -1);

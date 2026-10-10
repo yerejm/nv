@@ -521,9 +521,11 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 
 	//sometimes floating point numbers really don't like to be compared to each other
 
+	NSColor *p = [c1 colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]], *g = [c2 colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
+	if (!p || !g) return [c1 isEqual:c2];
 	CGFloat pRed, pGreen, pBlue, gRed, gGreen, gBlue, pAlpha, gAlpha;
-	[[c1 colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]] getRed:&pRed green:&pGreen blue:&pBlue alpha:&pAlpha];
-	[[c2 colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]] getRed:&gRed green:&gGreen blue:&gBlue alpha:&gAlpha];
+	[p getRed:&pRed green:&pGreen blue:&pBlue alpha:&pAlpha];
+	[g getRed:&gRed green:&gGreen blue:&gBlue alpha:&gAlpha];
 	
 #define SCR(__ch) ((int)roundf(((__ch) * 255.0)))
 	

@@ -34,6 +34,7 @@
 #include "NVMD5.h"
 
 NSString *NotesDatabaseFileName = @"Notes & Settings";
+NSString *const NotesDirectoryName = @"Notational Data";
 NSString *UnverifiedJournalFileName = @"Interim Note-Changes (unverified)";
 NSString *PreUpgradeDatabaseFileName = @"Notes & Settings (before security upgrade)";
 
@@ -184,12 +185,12 @@ CFUUIDRef CopySyntheticUUIDForVolumeCreationDate(NVFileReference *ref) {
 		//if this is not Leopard or the FSEvents UUID is null, 
 		//then take MD5 sum of creation date + some other info?
 
-		if (!strcmp(sfsb->f_fstypename, "hfs")) {
+		if (sfsb && !strcmp(sfsb->f_fstypename, "hfs")) {
 			//if this is an HFS volume, then use getattrlist to get finderinfo from the volume
 			diskUUID = CopyHFSVolumeUUIDForMount(sfsb->f_mntonname);
 		}
 
-		if (!diskUUID) {
+		if (!diskUUID && sfsb) {
 			//this is not an hfs disk
 			diskUUID = FSEventsCopyUUIDForDevice(sfsb->f_fsid.val[0]);
 		}
@@ -372,7 +373,7 @@ terminate:
     NSURL *support = [[NSFileManager defaultManager] URLForDirectory:NSApplicationSupportDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:YES error:&error];
     NVFileReference parent;
     if (!NVURLGetFileReference((__bridge CFURLRef)support, &parent)) return error ? NVStatusFromErrno((int)[error code]) : fnfErr;
-    return CreateDirectoryIfNotPresent(&parent, CFSTR("Notational Data"), ref);
+    return CreateDirectoryIfNotPresent(&parent, (__bridge CFStringRef)NotesDirectoryName, ref);
 }
 
 - (NSString*)uniqueFilenameForTitle:(NSString*)title fromNote:(NoteObject*)note {

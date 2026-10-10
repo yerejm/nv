@@ -164,16 +164,6 @@ int ContainsHighAscii(const void *s1, size_t n) {
 	return 0;
 }
 
-CFStringRef CFStringFromBase10Integer(int quantity) {
-	char *buffer = NULL;
-	if (asprintf(&buffer, "%d", quantity) < 0 || !buffer)
-		return nil;
-	
-	//try to get on the fast path of __CFStringCreateImmutableFunnel3; most overhead will be in cfruntime allocation, anyway, though, so whatever.
-	CFStringEncoding encoding = CFStringGetSystemEncoding() == kCFStringEncodingMacRoman ? kCFStringEncodingMacRoman : kCFStringEncodingASCII;
-	return CFStringCreateWithCStringNoCopy(kCFAllocatorDefault, buffer, encoding, kCFAllocatorDefault);	
-}
-
 unsigned DumbWordCount(const void *s1, size_t len) {
 
 	unsigned count = len > 0;

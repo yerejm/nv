@@ -1406,7 +1406,7 @@ cancelCompetion:
 }
 
 - (void)setupFontMenu {
-	NSMenu *theMenu = [[NSMenu alloc] initWithTitle:@"NVFontMenu"];
+	NSMenu *theMenu = [[NSMenu alloc] init];
 	
 	NSMenuItem *theMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Cut",@"cut menu item title") action:@selector(cut:) keyEquivalent:@""];
 	[theMenuItem setTarget:self];

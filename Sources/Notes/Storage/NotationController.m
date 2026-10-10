@@ -455,14 +455,13 @@ bail:
 			}
 		}
 		
+    } else {
+	NSLog(@"_makeChangesInDictionary: Could not get values or keys!");
+    }
 	if (keys != keysBuffer)
 	    free(keys);
 	if (values != valuesBuffer)
 	    free(values);
-	
-    } else {
-	NSLog(@"_makeChangesInDictionary: Could not get values or keys!");
-    }
 }
 
 - (void)closeJournal {

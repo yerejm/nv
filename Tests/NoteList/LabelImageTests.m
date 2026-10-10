@@ -1,5 +1,8 @@
 #import <XCTest/XCTest.h>
 #import "LabelsListController.h"
+#import "LabelObject.h"
+#import "NoteObject.h"
+#import "NotationPrefs.h"
 
 @interface LabelImageTests : XCTestCase
 @end
@@ -38,5 +41,24 @@
     }
     XCTAssertGreaterThan(filled, 0U);
     XCTAssertGreaterThan(knockedOut, 0U);
+}
+- (void)testSelectedLabelsCollectTheirNotes {
+    NoteObject *first = [[NoteObject alloc] initWithNoteBody:[[NSAttributedString alloc] initWithString:@"one"] title:@"one" delegate:nil format:SingleDatabaseFormat labels:nil];
+    NoteObject *second = [[NoteObject alloc] initWithNoteBody:[[NSAttributedString alloc] initWithString:@"two"] title:@"two" delegate:nil format:SingleDatabaseFormat labels:nil];
+    NoteObject *third = [[NoteObject alloc] initWithNoteBody:[[NSAttributedString alloc] initWithString:@"three"] title:@"three" delegate:nil format:SingleDatabaseFormat labels:nil];
+    LabelObject *alpha = [[LabelObject alloc] initWithTitle:@"alpha"], *beta = [[LabelObject alloc] initWithTitle:@"beta"], *gamma = [[LabelObject alloc] initWithTitle:@"gamma"];
+    [alpha addNote:first];
+    [beta addNote:second];
+    [gamma addNote:second];
+    [gamma addNote:third];
+    //the list keeps unretained pointers into this array
+    NSArray *shown NS_VALID_UNTIL_END_OF_SCOPE = @[alpha, beta, gamma];
+    LabelsListController *labels = [[LabelsListController alloc] init];
+    [labels fillArrayFromArray:shown];
+    NSMutableIndexSet *selection = [NSMutableIndexSet indexSetWithIndex:0];
+    [selection addIndex:2];
+    XCTAssertEqualObjects([labels notesAtFilteredIndexes:selection], ([NSSet setWithObjects:first, second, third, nil]));
+    XCTAssertEqualObjects([labels notesAtFilteredIndexes:[NSIndexSet indexSetWithIndex:1]], [NSSet setWithObject:second]);
+    XCTAssertEqualObjects([labels notesAtFilteredIndexes:[NSIndexSet indexSet]], [NSSet set]);
 }
 @end

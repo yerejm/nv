@@ -295,7 +295,7 @@ errorReturn:
 
 - (NSMenu*)addEditorPrefsMenu {
 	if (!editorPrefsMenus) editorPrefsMenus = [NSMutableSet new];
-	NSMenu *aMenu = [[NSMenu alloc] initWithTitle:@"External Editors Menu"];
+	NSMenu *aMenu = [[NSMenu alloc] init];
 	[aMenu setAutoenablesItems:NO];
 	[aMenu setDelegate:self];
 	[editorPrefsMenus addObject:aMenu];
@@ -305,7 +305,7 @@ errorReturn:
 
 - (NSMenu*)addEditNotesMenu {
 	if (!editNotesMenus) editNotesMenus = [NSMutableSet new];
-	NSMenu *aMenu = [[NSMenu alloc] initWithTitle:@"Edit Note Menu"];
+	NSMenu *aMenu = [[NSMenu alloc] init];
 	[aMenu setAutoenablesItems:YES];
 	[aMenu setDelegate:self];
 	[editNotesMenus addObject:aMenu];

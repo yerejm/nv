@@ -579,3 +579,9 @@
 "Encrypted notes are edited from a protected space in memory, which holds notes of up to %d MB." = "As notas encriptadas são editadas a partir de um espaço protegido na memória, que aceita notas até %d MB.";
 "The protected editing space could not be created." = "Não foi possível criar o espaço de edição protegido.";
 "Encrypted notes are only edited externally from memory, so this note was not opened." = "As notas encriptadas só são editadas externamente a partir da memória, por isso esta nota não foi aberta.";
+
+/* window title when no note is selected */
+"Notation" = "Notation";
+
+/* font preview when no note font is set */
+"Unknown" = "Desconhecida";

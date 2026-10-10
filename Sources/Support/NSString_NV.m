@@ -85,7 +85,7 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
     static NSString *days[3] = { NULL };
     
     if (!timeOnlyFormatter) {
-		timeOnlyFormatter = CFDateFormatterCreate(kCFAllocatorDefault, CFLocaleCopyCurrent(), kCFDateFormatterNoStyle, kCFDateFormatterShortStyle);
+		timeOnlyFormatter = CFDateFormatterCreate(kCFAllocatorDefault, (__bridge CFLocaleRef)[NSLocale currentLocale], kCFDateFormatterNoStyle, kCFDateFormatterShortStyle);
     }
     
     if (!days[ThisDay]) {
@@ -123,7 +123,7 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 		
 		if (!dateAndTimeFormatter) {
 			BOOL horiz = [[GlobalPrefs defaultPrefs] horizontalLayout];
-			dateAndTimeFormatter = CFDateFormatterCreate(kCFAllocatorDefault, CFLocaleCopyCurrent(), 
+			dateAndTimeFormatter = CFDateFormatterCreate(kCFAllocatorDefault, (__bridge CFLocaleRef)[NSLocale currentLocale], 
 														 horiz ? kCFDateFormatterShortStyle : kCFDateFormatterMediumStyle, 
 														 horiz ? kCFDateFormatterNoStyle : kCFDateFormatterShortStyle);
 		}
@@ -535,14 +535,15 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 	AddIfUnique(systemEncoding);
 	AddIfUnique(NSMacOSRomanStringEncoding);
 	
-	encodingIndex = 0;
-	do {
+	NSUInteger encodingCount = encodingIndex;
+	for (encodingIndex = 0; encodingIndex < encodingCount; encodingIndex++) {
 		stringFromData = [[NSMutableString alloc] initWithBytesNoCopy:[data mutableBytes] length:[data length] 
 															 encoding:encodingsToTry[encodingIndex] freeWhenDone:NO];
-	} while (!stringFromData && ++encodingIndex < 5);
+		if (stringFromData) break;
+	}
 		
 	if (stringFromData) {
-		NSAssert(encodingIndex < 5, @"got valid string from data, but encodingIndex is too high!");
+		NSAssert(encodingIndex < encodingCount, @"got valid string from data, but encodingIndex is too high!");
 		//report ASCII files as UTF-8 data in case this encoding will be used for future writes of a note
 		*encoding = hasHighASCII ? encodingsToTry[encodingIndex] : NSUTF8StringEncoding;
 		return stringFromData;

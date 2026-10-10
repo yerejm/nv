@@ -27,6 +27,8 @@
 #import "BufferUtils.h"
 
 extern NSString *NotesDatabaseFileName;
+//the folder name must match the folder on disk, so it is not translated
+extern NSString *const NotesDirectoryName;
 extern NSString *UnverifiedJournalFileName;
 extern NSString *PreUpgradeDatabaseFileName;
 

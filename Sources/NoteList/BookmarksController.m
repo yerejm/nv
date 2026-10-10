@@ -40,6 +40,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 			self = [self initWithNoteUUIDBytes:[uuidString uuidBytes] searchString:[aDict objectForKey:BMSearchStringKey]];
 		} else {
 			NSLog(@"NoteBookmark init: supplied nil uuidString");
+			return nil;
 		}
 	} else {
 		NSLog(@"NoteBookmark init: supplied nil dictionary; couldn't init");

@@ -25,6 +25,7 @@
 #import "NSFileManager_NV.h"
 #import "NSBezierPath_NV.h"
 #import "NotationPrefs.h"
+#import "NotationFileManager.h"
 #import "GlobalPrefs.h"
 
 #define SYSTEM_LIST_FONT_SIZE 12.0f
@@ -131,7 +132,7 @@
 	NSDictionary *attributes = [NSDictionary dictionaryWithObjectsAndKeys:font ? font : [NSFont systemFontOfSize:12.0],
 		NSFontAttributeName, [NSColor textColor], NSForegroundColorAttributeName, centerStyle, NSParagraphStyleAttributeName, nil];
 
-	NSString *fontNameAndSize = font ? [NSString stringWithFormat:@"%@ %g", [font displayName], [font pointSize]] : @"Unknown";
+	NSString *fontNameAndSize = font ? [NSString stringWithFormat:@"%@ %g", [font displayName], [font pointSize]] : NSLocalizedString(@"Unknown", @"font preview when no note font is set");
 	NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:fontNameAndSize attributes:attributes];
 	
 	[[bodyTextFontField cell] setAttributedStringValue:attributedString];
@@ -300,7 +301,7 @@
 }
 
 - (NSMenu*)directorySelectionMenu {
-    NSMenu *theMenu = [[NSMenu alloc] initWithTitle:@"Note Directory Menu"];
+    NSMenu *theMenu = [[NSMenu alloc] init];
     
     NVFileReference targetRef = {{0}};
     NSString *name = [prefsController displayNameForDefaultDirectoryWithFSRef:&targetRef];
@@ -383,7 +384,7 @@
     [openPanel setPrompt:NSLocalizedString(@"Select", @"title of open panel button to select a folder")];
     [openPanel setMessage:NSLocalizedString(@"Select the folder that Notational Velocity should use for reading and storing notes.",nil)];
     
-    if (NVRunOpenPanel(openPanel, startingDirectory, @"Notational Data", nil) == NSModalResponseOK) {
+    if (NVRunOpenPanel(openPanel, startingDirectory, NotesDirectoryName, nil) == NSModalResponseOK) {
 		NSString *filename = [[openPanel URL] path];
 		if (!filename)
 			return NO;

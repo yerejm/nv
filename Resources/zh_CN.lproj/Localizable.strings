@@ -579,3 +579,9 @@
 "Encrypted notes are edited from a protected space in memory, which holds notes of up to %d MB." = "加密笔记在内存中的受保护空间里编辑，该空间最多可容纳 %d MB 的笔记。";
 "The protected editing space could not be created." = "无法创建受保护的编辑空间。";
 "Encrypted notes are only edited externally from memory, so this note was not opened." = "加密笔记只能从内存中进行外部编辑，因此未打开此笔记。";
+
+/* window title when no note is selected */
+"Notation" = "Notation";
+
+/* font preview when no note font is set */
+"Unknown" = "未知";

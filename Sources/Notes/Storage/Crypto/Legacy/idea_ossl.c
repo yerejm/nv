@@ -3,6 +3,8 @@
  *
  */
 
+#define __STDC_WANT_LIB_EXT1__ 1
+#include <string.h>
 #include "idea_ossl.h"
 
 #define IDEA_BLOCK	8
@@ -284,7 +286,7 @@ void idea_cfb64_encrypt(const unsigned char *in, unsigned char *out,
 			n=(n+1)&0x07;
 		}
 	}
-	v0=v1=ti[0]=ti[1]=t=c=cc=0;
+	memset_s(ti, sizeof(ti), 0, sizeof(ti));
 	*num=n;
 }
 

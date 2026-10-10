@@ -651,9 +651,12 @@ const char WALAuthenticatedJournalMagic[8] = {'N', 'V', 'W', 'A', 'L', 0, 0, 5};
     return object;
 }
 
-static CFStringRef SynchronizedNoteKeyDescription(const void *value) {
-
-	return value ? (CFStringRef)CFBridgingRetain([NSString uuidStringWithBytes:*(CFUUIDBytes*)value]) : NULL;
+static CFStringRef SynchronizedNoteKeyCopyDescription(const void *value) {
+	if (!value) return NULL;
+	CFUUIDRef uuid = CFUUIDCreateFromUUIDBytes(NULL, *(CFUUIDBytes*)value);
+	CFStringRef description = CFUUIDCreateString(NULL, uuid);
+	CFRelease(uuid);
+	return description;
 }
 static CFHashCode SynchronizedNoteHash(const void * o) {
 	
@@ -675,7 +678,7 @@ static Boolean SynchronizedNoteIsEqual(const void *o, const void *p) {
     CFDictionaryKeyCallBacks keyCallbacks = kCFTypeDictionaryKeyCallBacks;
     keyCallbacks.equal = SynchronizedNoteIsEqual;
     keyCallbacks.hash = SynchronizedNoteHash;
-	keyCallbacks.copyDescription = SynchronizedNoteKeyDescription;
+	keyCallbacks.copyDescription = SynchronizedNoteKeyCopyDescription;
 	keyCallbacks.retain = NULL;
 	keyCallbacks.release = NULL;
     

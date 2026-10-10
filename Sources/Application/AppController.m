@@ -1066,7 +1066,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 - (NSMenu *)applicationDockMenu:(NSApplication *)sender {
 	static NSMenu *dockMenu = nil;
 	if (!dockMenu) {
-		dockMenu = [[NSMenu alloc] initWithTitle:@"NV Dock Menu"];
+		dockMenu = [[NSMenu alloc] init];
 		[[dockMenu addItemWithTitle:NSLocalizedString(@"Add New Note from Clipboard", @"menu item title in dock menu")
 							 action:@selector(paste:) keyEquivalent:@""] setTarget:notesTableView];
 	}
@@ -1818,7 +1818,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 - (void)_expandToolbar {
     [splitView setLeadingPaneCollapsed:NO];
     if (![toolbar isVisible]) {
-        [self _setWindowTitle:@"Notation"];
+        [self _setWindowTitle:NSLocalizedString(@"Notation", @"window title when no note is selected")];
         [window toggleToolbarShown:nil];
         [[NSUserDefaults standardUserDefaults] setBool:NO forKey:@"ToolbarHidden"];
     }

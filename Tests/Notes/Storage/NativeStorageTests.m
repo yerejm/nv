@@ -845,4 +845,11 @@ static BOOL NVUnexpectedObjectWasDecoded = NO;
     XCTAssertEqualObjects(note->titleString, @"Legacy imported note");
     XCTAssertEqualObjects(note->contentString.string, @"Preserved legacy IDEA content: café 日本語\n[[Project Alpha]]");
 }
+- (void)testShortLivedStringFallsBackToAnEncodingThatDecodes {
+    NSMutableData *data = [NSMutableData dataWithBytes:"caf\x8E" length:4];
+    NSStringEncoding encoding = NSUTF8StringEncoding;
+    NSMutableString *string = [NSMutableString newShortLivedStringFromData:data ofGuessedEncoding:&encoding withPath:NULL orWithFSRef:NULL];
+    XCTAssertEqualObjects(string, @"café");
+    XCTAssertEqual(encoding, NSMacOSRomanStringEncoding);
+}
 @end
