@@ -41,6 +41,8 @@
 	
 	BOOL mouseInside;
 	BOOL updatingTextWidth;
+	NSUInteger liveResizeTopCharacter;
+	CGFloat liveResizeTopOffset;
 	
 };
 

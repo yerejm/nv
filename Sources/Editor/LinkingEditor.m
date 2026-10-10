@@ -191,6 +191,26 @@
     [self updateTextWidth];
 }
 
+- (void)viewWillStartLiveResize {
+    [super viewWillStartLiveResize];
+    NSLayoutManager *layoutManager = [self layoutManager];
+    NSRect visibleRect = [self visibleRect];
+    NSPoint origin = [self textContainerOrigin];
+    NSUInteger glyphIndex = [layoutManager glyphIndexForPoint:NSMakePoint(NSMinX(visibleRect) - origin.x, NSMinY(visibleRect) - origin.y) inTextContainer:[self textContainer]];
+    liveResizeTopCharacter = [layoutManager characterIndexForGlyphAtIndex:glyphIndex];
+    liveResizeTopOffset = NSMinY(visibleRect) - origin.y - NSMinY([layoutManager lineFragmentRectForGlyphAtIndex:glyphIndex effectiveRange:NULL]);
+}
+
+//NSTextView recenters on the insertion point when a live resize such as a divider drag ends, so the line that was at the top is put back there
+- (void)viewDidEndLiveResize {
+    [super viewDidEndLiveResize];
+    if (liveResizeTopCharacter >= [[self textStorage] length]) return;
+    NSLayoutManager *layoutManager = [self layoutManager];
+    NSUInteger glyphIndex = [layoutManager glyphIndexForCharacterAtIndex:liveResizeTopCharacter];
+    NSRect lineRect = [layoutManager lineFragmentRectForGlyphAtIndex:glyphIndex effectiveRange:NULL];
+    [self scrollPoint:NSMakePoint(NSMinX([self visibleRect]), NSMinY(lineRect) + [self textContainerOrigin].y + liveResizeTopOffset)];
+}
+
 - (void)indicateRange:(NSValue*)rangeValue {
 	[self showFindIndicatorForRange:[rangeValue rangeValue]];
 }
