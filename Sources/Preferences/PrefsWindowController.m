@@ -137,8 +137,6 @@
 	[[bodyTextFontField cell] setAttributedStringValue:attributedString];
     [bodyTextFontField updateCell:[bodyTextFontField cell]];
 	
-	[attributedString autorelease];
-	
 }
 
 //changing the scheme re-sends both colors to every observer, so a dragged color well should only do it once
@@ -302,7 +300,7 @@
 }
 
 - (NSMenu*)directorySelectionMenu {
-    NSMenu *theMenu = [[[NSMenu alloc] initWithTitle:@"Note Directory Menu"] autorelease];
+    NSMenu *theMenu = [[NSMenu alloc] initWithTitle:@"Note Directory Menu"];
     
     NVFileReference targetRef = {{0}};
     NSString *name = [prefsController displayNameForDefaultDirectoryWithFSRef:&targetRef];
@@ -313,7 +311,7 @@
 	if (!IsZeros(&targetRef, sizeof(NVFileReference)) || [[prefsController aliasDataForDefaultDirectory] fsRefAsAlias:&targetRef])
 		iconImage = [NSImage smallIconForFSRef:&targetRef];
 	
-    NSMenuItem *theMenuItem = [[[NSMenuItem alloc] initWithTitle:name action:nil keyEquivalent:@""] autorelease];
+    NSMenuItem *theMenuItem = [[NSMenuItem alloc] initWithTitle:name action:nil keyEquivalent:@""];
     
     if (iconImage)
 		[theMenuItem setImage:iconImage];
@@ -322,8 +320,8 @@
     
     [theMenu addItem:[NSMenuItem separatorItem]];
     
-    theMenuItem = [[[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Other...", @"title of menu item for selecting a different notes folder")
-											  action:@selector(changeDefaultDirectory) keyEquivalent:@""] autorelease];
+    theMenuItem = [[NSMenuItem alloc] initWithTitle:NSLocalizedString(@"Other...", @"title of menu item for selecting a different notes folder")
+											  action:@selector(changeDefaultDirectory) keyEquivalent:@""];
     [theMenuItem setTarget:self];
     [theMenu addItem:theMenuItem];
     
@@ -386,17 +384,16 @@
     [openPanel setMessage:NSLocalizedString(@"Select the folder that Notational Velocity should use for reading and storing notes.",nil)];
     
     if (NVRunOpenPanel(openPanel, startingDirectory, @"Notational Data", nil) == NSModalResponseOK) {
-		CFStringRef filename = (CFStringRef)[[openPanel URL] path];
+		NSString *filename = [[openPanel URL] path];
 		if (!filename)
 			return NO;
 		
 		if (path)
-			*path = [[[[openPanel URL] path] copy] autorelease];
+			*path = [[[openPanel URL] path] copy];
 		
 		//yes, I know that navigation services uses uses FSRefs, but NSSavePanel saves us much more work
-		CFURLRef url = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, filename, kCFURLPOSIXPathStyle, true);
-		[(id)url autorelease];
-		if (!url || !NVURLGetFileReference(url, notesDirectoryRef))
+		NSURL *url = CFBridgingRelease(CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (__bridge CFStringRef)filename, kCFURLPOSIXPathStyle, true));
+		if (!url || !NVURLGetFileReference((__bridge CFURLRef)url, notesDirectoryRef))
 			return NO;
 		
 		return YES;
@@ -431,7 +428,6 @@
     [item setTarget:self];
     [item setAction:@selector(switchViews:)];
     [items setObject:item forKey:name];
-    [item release];
 }
 
 - (void)awakeFromNib {
@@ -506,7 +502,6 @@
     [toolbar setDisplayMode:NSToolbarDisplayModeIconAndLabel];
     [window setToolbarStyle:NSWindowToolbarStylePreference];
     [window setToolbar:toolbar];
-    [toolbar release];  //setToolbar retains the toolbar we pass, so release the one we used.
 
 
     CGFloat toolbarWidth = 40;
@@ -521,7 +516,6 @@
     }
     paneContainer = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, contentSize.width, contentSize.height)];
     [window setContentView:paneContainer];
-    [paneContainer release];
     [window setContentMinSize:contentSize];
     [window setContentSize:contentSize];
 
@@ -588,7 +582,7 @@
 	[[NSFontPanel sharedFontPanel] close];
 
     [window makeFirstResponder:nil];
-    for (NSView *pane in [[paneContainer.subviews copy] autorelease])
+    for (NSView *pane in [paneContainer.subviews copy])
         [pane removeFromSuperview];
     [prefsView setFrameOrigin:NSMakePoint(floor((NSWidth(paneContainer.bounds) - NSWidth(prefsView.frame)) / 2),
                                         NSHeight(paneContainer.bounds) - NSHeight(prefsView.frame))];

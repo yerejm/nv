@@ -69,7 +69,7 @@
 - (id)initWithCoder:(NSCoder *)decoder {
 	if ((self = [super initWithCoder:decoder])) {
 		[KeyDerivationDelaySlider setCellClass:[KeyDerivationDelaySliderCell class]];
-		NSCell *myCell = [[[KeyDerivationDelaySliderCell alloc] init] autorelease];
+		NSCell *myCell = [[KeyDerivationDelaySliderCell alloc] init];
 		[myCell setAction:[[self cell] action]];
 		[myCell setTarget:[[self cell] target]];
 		[self setCell:myCell];

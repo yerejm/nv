@@ -59,7 +59,7 @@
 
 - (id)initWithNotationPrefs:(NotationPrefs*)prefs {
 	if ((self = [super init])) {
-		notationPrefs = [prefs retain];
+		notationPrefs = prefs;
 		
 	}
 	return self;
@@ -67,10 +67,6 @@
 - (void)dealloc {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
-	[notationPrefs release];
-	[keyDerivation release];
-	
-	[super dealloc];
 }
 
 - (void)awakeFromNib {

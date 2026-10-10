@@ -126,12 +126,8 @@ NSString *NVShortcutDescription(NSInteger keyCode, NSUInteger carbonModifiers, T
 
 - (void)dealloc {
 	if (clickMonitor) [NSEvent removeMonitor:clickMonitor];
-	[clickMonitor release];
 	[[NSDistributedNotificationCenter defaultCenter] removeObserver:self];
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
-	[bezelCell release];
-	[clearButton release];
-	[super dealloc];
 }
 
 - (void)setKeyCode:(NSInteger)aKeyCode carbonModifiers:(NSUInteger)carbonModifiers {
@@ -223,12 +219,12 @@ NSString *NVShortcutDescription(NSInteger keyCode, NSUInteger carbonModifiers, T
 	if (![super becomeFirstResponder]) return NO;
 	recording = YES;
 	heldModifiers = 0;
-	__block NVShortcutRecorder *recorder = self;
-	clickMonitor = [[NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskLeftMouseDown | NSEventMaskRightMouseDown handler:^NSEvent *(NSEvent *event) {
+	__weak NVShortcutRecorder *recorder = self;
+	clickMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskLeftMouseDown | NSEventMaskRightMouseDown handler:^NSEvent *(NSEvent *event) {
 		if ([event window] != [recorder window] || ![recorder mouse:[recorder convertPoint:[event locationInWindow] fromView:nil] inRect:[recorder bounds]])
 			[recorder _endRecording];
 		return event;
-	}] retain];
+	}];
 	if ([delegate respondsToSelector:@selector(shortcutRecorderDidBeginRecording:)])
 		[delegate shortcutRecorderDidBeginRecording:self];
 	[self _update];
@@ -239,7 +235,6 @@ NSString *NVShortcutDescription(NSInteger keyCode, NSUInteger carbonModifiers, T
 	if (![super resignFirstResponder]) return NO;
 	recording = NO;
 	[NSEvent removeMonitor:clickMonitor];
-	[clickMonitor release];
 	clickMonitor = nil;
 	if ([delegate respondsToSelector:@selector(shortcutRecorderDidEndRecording:)])
 		[delegate shortcutRecorderDidEndRecording:self];

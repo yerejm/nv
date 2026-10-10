@@ -58,7 +58,7 @@
 - (id)init {
     if ((self = [super init])) {
 		didAwakeFromNib = NO;
-		notationPrefs = [[[GlobalPrefs defaultPrefs] notationPrefs] retain];
+		notationPrefs = [[GlobalPrefs defaultPrefs] notationPrefs];
 		
 		disableEncryptionString = NSLocalizedString(@"Turn Off Note Encryption...",nil);
 		enableEncryptionString = NSLocalizedString(@"Turn On Note Encryption...",nil);
@@ -68,14 +68,8 @@
     return self;
 }
 - (void)dealloc {
-	[passphrasePicker release];
-	[changer release];
-	[notationPrefs release];
-	[postStorageFormatInvocation release];
-	
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
-	[super dealloc];
 }
 
 - (void)awakeFromNib {
@@ -128,11 +122,10 @@
 	if ([selectorString isEqualToString:SEL_STR(setNotationPrefs:sender:)]) {
 		
 		//force these objects to re-init with the new notationprefs
-		[changer release]; changer = nil;
-		[passphrasePicker release]; passphrasePicker = nil;
+		changer = nil;
+		passphrasePicker = nil;
 		
-		[notationPrefs release];
-		notationPrefs = [[[GlobalPrefs defaultPrefs] notationPrefs] retain];
+		notationPrefs = [[GlobalPrefs defaultPrefs] notationPrefs];
 		
 		if (didAwakeFromNib)
 			[self initializeControls];
@@ -183,7 +176,7 @@
 }
 
 - (IBAction)upgradeDatabaseSecurity:(id)sender {
-	NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+	NSAlert *alert = [[NSAlert alloc] init];
 	[alert setMessageText:NSLocalizedString(@"Upgrade the security of this database?", nil)];
 	[alert setInformativeText:[NSString stringWithFormat:NSLocalizedString(@"Notes will be protected against tampering. Older versions of Notational Velocity won’t be able to open this database afterwards. A copy of the database as it is now will be kept in your notes folder as “%@”.", nil), PreUpgradeDatabaseFileName]];
 	//older versions lose access to the upgraded database, so Return must not confirm it:
@@ -192,13 +185,13 @@
 	[alert addButtonWithTitle:NSLocalizedString(@"Upgrade", nil)];
 	[alert beginSheetModalForWindow:[view window] completionHandler:^(NSModalResponse response) {
 		if (response != NSAlertSecondButtonReturn) return;
-		id controller = [notationPrefs delegate];
+		id controller = [self->notationPrefs delegate];
 		if (![controller respondsToSelector:@selector(upgradeToAuthenticatedFormat)] || ![controller upgradeToAuthenticatedFormat]) {
-			NSAlert *failure = [[[NSAlert alloc] init] autorelease];
+			NSAlert *failure = [[NSAlert alloc] init];
 			[failure setMessageText:NSLocalizedString(@"The database could not be upgraded.", nil)];
 			[failure setInformativeText:NSLocalizedString(@"Open Console in /Applications/Utilities/ for more information.", nil)];
 			[failure addButtonWithTitle:NSLocalizedString(@"OK", nil)];
-			[failure beginSheetModalForWindow:[view window] completionHandler:nil];
+			[failure beginSheetModalForWindow:[self->view window] completionHandler:nil];
 		}
 		[self updateDatabaseSecurityControls];
 	}];
@@ -252,9 +245,9 @@
 		NSString *extension = [notationPrefs pathExtensionAtIndex:rowIndex];
 		
 		if ([notationPrefs indexOfChosenPathExtension] == (unsigned int)rowIndex) {
-			return [[[NSAttributedString alloc] initWithString:extension attributes:
+			return [[NSAttributedString alloc] initWithString:extension attributes:
 					[NSDictionary dictionaryWithObjectsAndKeys:
-					 [NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]], NSFontAttributeName, nil]] autorelease];
+					 [NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]], NSFontAttributeName, nil]];
 		}
 		return extension;
 			
@@ -318,7 +311,6 @@
 
 - (void)runQueuedStorageFormatChangeInvocation {
 	[postStorageFormatInvocation performSelector:@selector(invoke) withObject:nil afterDelay:0.0];
-	[postStorageFormatInvocation release];
 	postStorageFormatInvocation = nil;
 }
 
@@ -352,7 +344,7 @@
 		
 		NSAlert *alert = NVMakeAlert(NSLocalizedString(@"Individual files remain in the notes directory. Leave them alone or move them to the Trash?",nil), NSLocalizedString(@"When notes are stored in a single database individual files become redundant.",nil), NSLocalizedString(@"Keep Files", @"button title for not discarding note files"), NSLocalizedString(@"Cancel",nil), NSLocalizedString(@"Move to Trash", @"button title for trashing notes"));
 		
-		NVBeginAlertSheet(alert, [view window], notationPrefs, @selector(noteFilesCleanupSheetDidEnd:returnCode:contextInfo:), self);
+		NVBeginAlertSheet(alert, [view window], notationPrefs, @selector(noteFilesCleanupSheetDidEnd:returnCode:contextInfo:), (__bridge void *)self);
 		//will ultimately call -notesStorageFormatDidChange
 	} else {
 		//just call setNotesStorageFormat straight-out
@@ -423,12 +415,10 @@
 		//need to show PW picker dialog after this ->
 		
 		
-		[postStorageFormatInvocation release];
-		
 		//so queue it up:
 		InvocationRecorder *invRecorder = [InvocationRecorder invocationRecorder];
 		[[invRecorder prepareWithInvocationTarget:passphrasePicker] showAroundWindow:[view window] resultDelegate:self];
-		postStorageFormatInvocation = [[invRecorder invocation] retain];
+		postStorageFormatInvocation = [invRecorder invocation];
 	}
 }
 
@@ -459,7 +449,7 @@
 	[notationPrefs setDoesEncryption:NO];
 	[self updateRemoveKeychainItemStatus];
 	
-	[passphrasePicker release]; passphrasePicker = nil;
+	passphrasePicker = nil;
 }
 
 - (void)disableEncryptionWithWarning:(BOOL)warning {

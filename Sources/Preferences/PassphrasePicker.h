@@ -35,7 +35,7 @@
 	
 	KeyDerivationManager *keyDerivation;
 	NotationPrefs *notationPrefs;
-	id resultDelegate;
+	__weak id resultDelegate;
 }
 
 - (IBAction)discloseAdvancedSettings:(id)sender;

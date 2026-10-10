@@ -27,12 +27,12 @@
 
 + (PassphraseRetriever *)retrieverWithNotationPrefs:(NotationPrefs*)prefs {
 	PassphraseRetriever *retriever = [[PassphraseRetriever alloc] initWithNotationPrefs:prefs];
-	return [retriever autorelease];
+	return retriever;
 }
 
 - (id)initWithNotationPrefs:(NotationPrefs*)prefs {
 	if ((self = [super init])) {
-		notationPrefs = [prefs retain];
+		notationPrefs = prefs;
 		
 	}
 	return self;
@@ -41,9 +41,6 @@
 - (void)dealloc {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
 	
-	[notationPrefs release];
-	
-	[super dealloc];
 }
 
 //1 for OK, 0 for cancelled, some other number for something else

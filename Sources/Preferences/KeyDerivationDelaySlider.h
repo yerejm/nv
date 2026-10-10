@@ -31,7 +31,7 @@
 @end
 
 @interface KeyDerivationDelaySlider : NSSlider {
-	id delegate;
+	__weak id delegate;
 }
 
 - (void)mouseUp;

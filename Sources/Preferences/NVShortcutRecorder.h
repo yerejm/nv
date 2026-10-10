@@ -16,7 +16,7 @@ NSString *NVShortcutDescription(NSInteger keyCode, NSUInteger carbonModifiers, T
 
 //records a shortcut while focused: Escape or a click elsewhere cancels, Delete removes the shortcut
 @interface NVShortcutRecorder : NSView {
-	id<NVShortcutRecorderDelegate> delegate;
+	__weak id<NVShortcutRecorderDelegate> delegate;
 	NSInteger keyCode;
 	NSUInteger modifiers, heldModifiers;
 	BOOL recording;
@@ -25,7 +25,7 @@ NSString *NVShortcutDescription(NSInteger keyCode, NSUInteger carbonModifiers, T
 	id clickMonitor;
 }
 
-@property (nonatomic, assign) IBOutlet id<NVShortcutRecorderDelegate> delegate;
+@property (nonatomic, weak) IBOutlet id<NVShortcutRecorderDelegate> delegate;
 @property (nonatomic, readonly) NSInteger keyCode;
 @property (nonatomic, readonly) NSUInteger modifiers;
 @property (nonatomic, readonly, getter=isRecording) BOOL recording;

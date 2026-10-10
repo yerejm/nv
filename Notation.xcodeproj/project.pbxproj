@@ -54,16 +54,16 @@
 		214495030ADC7C8D00E2A2B6 /* SecurityInterface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 214494F80ADC7C8D00E2A2B6 /* SecurityInterface.framework */; };
 		2144950F0ADC883100E2A2B6 /* PasswordAssistantButton.tif in Resources */ = {isa = PBXBuildFile; fileRef = 2144950D0ADC883000E2A2B6 /* PasswordAssistantButton.tif */; };
 		214495100ADC883100E2A2B6 /* PasswordAssistantButtonPressed.tif in Resources */ = {isa = PBXBuildFile; fileRef = 2144950E0ADC883000E2A2B6 /* PasswordAssistantButtonPressed.tif */; };
-		214495130ADC8A6600E2A2B6 /* PassphrasePicker.m in Sources */ = {isa = PBXBuildFile; fileRef = 214495120ADC8A6600E2A2B6 /* PassphrasePicker.m */; };
+		214495130ADC8A6600E2A2B6 /* PassphrasePicker.m in Sources */ = {isa = PBXBuildFile; fileRef = 214495120ADC8A6600E2A2B6 /* PassphrasePicker.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		2144957A0ADCC06300E2A2B6 /* PassphrasePicker.xib in Resources */ = {isa = PBXBuildFile; fileRef = 214495740ADCC06300E2A2B6 /* PassphrasePicker.xib */; };
 		214495870ADCC07E00E2A2B6 /* PassphraseChanger.xib in Resources */ = {isa = PBXBuildFile; fileRef = 214495810ADCC07E00E2A2B6 /* PassphraseChanger.xib */; };
 		21469C8C0BEBA6A10094835F /* TemporaryFileCachePreparer.m in Sources */ = {isa = PBXBuildFile; fileRef = 21469C8A0BEBA6A10094835F /* TemporaryFileCachePreparer.m */; };
 		2147D82C131EC86100C65006 /* COPYING.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2147D82B131EC86100C65006 /* COPYING.txt */; };
 		215309F412E4E92300AF2739 /* DiskUUIDEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 215309F312E4E92300AF2739 /* DiskUUIDEntry.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21544FBE0B06331800C0D1D5 /* KeyDerivationManager.xib in Resources */ = {isa = PBXBuildFile; fileRef = 21544FB80B06331800C0D1D5 /* KeyDerivationManager.xib */; };
-		21544FC10B06332600C0D1D5 /* KeyDerivationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 21544FC00B06332600C0D1D5 /* KeyDerivationManager.m */; };
-		215452080B06541800C0D1D5 /* PassphraseChanger.m in Sources */ = {isa = PBXBuildFile; fileRef = 215450F80B06509600C0D1D5 /* PassphraseChanger.m */; };
-		215453F00B067A5100C0D1D5 /* KeyDerivationDelaySlider.m in Sources */ = {isa = PBXBuildFile; fileRef = 215453EF0B067A5100C0D1D5 /* KeyDerivationDelaySlider.m */; };
+		21544FC10B06332600C0D1D5 /* KeyDerivationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 21544FC00B06332600C0D1D5 /* KeyDerivationManager.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
+		215452080B06541800C0D1D5 /* PassphraseChanger.m in Sources */ = {isa = PBXBuildFile; fileRef = 215450F80B06509600C0D1D5 /* PassphraseChanger.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
+		215453F00B067A5100C0D1D5 /* KeyDerivationDelaySlider.m in Sources */ = {isa = PBXBuildFile; fileRef = 215453EF0B067A5100C0D1D5 /* KeyDerivationDelaySlider.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		2155DEA6097B5F0300163A10 /* BufferUtils.c in Sources */ = {isa = PBXBuildFile; fileRef = 2155DEA5097B5F0300163A10 /* BufferUtils.c */; };
 		2155DF44097C992800163A10 /* AttributedPlainText.m in Sources */ = {isa = PBXBuildFile; fileRef = 2155DF43097C992800163A10 /* AttributedPlainText.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21582DC50B73F59B00711663 /* BookmarksController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21582DC40B73F59A00711663 /* BookmarksController.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
@@ -89,9 +89,9 @@
 		219196C009D4F20100586B15 /* Add.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 219196BC09D4F20000586B15 /* Add.tiff */; };
 		219196C109D4F20100586B15 /* Remove_Pressed.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 219196BD09D4F20000586B15 /* Remove_Pressed.tiff */; };
 		219196C209D4F20100586B15 /* Remove.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 219196BE09D4F20000586B15 /* Remove.tiff */; };
-		2191982209D607C600586B15 /* PrefsWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2191982109D607C600586B15 /* PrefsWindowController.m */; };
+		2191982209D607C600586B15 /* PrefsWindowController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2191982109D607C600586B15 /* PrefsWindowController.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		219588D20961D7F200972B8C /* LinkingEditor.m in Sources */ = {isa = PBXBuildFile; fileRef = 219588D10961D7F200972B8C /* LinkingEditor.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
-		219739FB0AFE42A10046683E /* PassphraseRetriever.m in Sources */ = {isa = PBXBuildFile; fileRef = 219739FA0AFE42A10046683E /* PassphraseRetriever.m */; };
+		219739FB0AFE42A10046683E /* PassphraseRetriever.m in Sources */ = {isa = PBXBuildFile; fileRef = 219739FA0AFE42A10046683E /* PassphraseRetriever.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21973A290AFE447A0046683E /* PassphraseRetriever.xib in Resources */ = {isa = PBXBuildFile; fileRef = 21973A230AFE447A0046683E /* PassphraseRetriever.xib */; };
 		21973FF10B0060C80046683E /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21973FBC0B0060C80046683E /* Security.framework */; };
 		219D222F1111564F005E7DF5 /* Contact Information.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 219D22281111564F005E7DF5 /* Contact Information.nvhelp */; };
@@ -101,7 +101,7 @@
 		219FD3160B2CC655004E132B /* LinkingEditor_Indentation.m in Sources */ = {isa = PBXBuildFile; fileRef = 219FD3150B2CC655004E132B /* LinkingEditor_Indentation.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		219FD63E0B309B69004E132B /* BlorPasswordRetriever.m in Sources */ = {isa = PBXBuildFile; fileRef = 219FD63D0B309B69004E132B /* BlorPasswordRetriever.m */; };
 		21A2F95E09DF3FDC001AF0B5 /* NotationPrefs.m in Sources */ = {isa = PBXBuildFile; fileRef = 21A2F95D09DF3FDC001AF0B5 /* NotationPrefs.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
-		21A2FA1709DF6174001AF0B5 /* NotationPrefsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21A2FA1609DF6174001AF0B5 /* NotationPrefsViewController.m */; };
+		21A2FA1709DF6174001AF0B5 /* NotationPrefsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21A2FA1609DF6174001AF0B5 /* NotationPrefsViewController.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21A2FA7C09DF64E9001AF0B5 /* NotationPrefsView.xib in Resources */ = {isa = PBXBuildFile; fileRef = 21A2FA7A09DF64E9001AF0B5 /* NotationPrefsView.xib */; };
 		21A30EA70971D11D0071E9AF /* FastListDataSource.m in Sources */ = {isa = PBXBuildFile; fileRef = 21A30EA60971D11D0071E9AF /* FastListDataSource.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21A38EE412EA864400CEB5F0 /* MakeDefault_Pressed.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 21A38EE212EA864400CEB5F0 /* MakeDefault_Pressed.tiff */; };
@@ -111,7 +111,7 @@
 		21B1BC361104D20E0004A7D0 /* InvocationRecorder.m in Sources */ = {isa = PBXBuildFile; fileRef = 21B1BC351104D20E0004A7D0 /* InvocationRecorder.m */; };
 		4E5F6A7B8C9D0E1F2A3B4C01 /* NVSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E5F6A7B8C9D0E1F2A3B4C03 /* NVSplitView.m */; };
 		4E5F6A7B8C9D0E1F2A3B4C04 /* NVHotKey.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E5F6A7B8C9D0E1F2A3B4C06 /* NVHotKey.m */; };
-		4E5F6A7B8C9D0E1F2A3B4C07 /* NVShortcutRecorder.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E5F6A7B8C9D0E1F2A3B4C09 /* NVShortcutRecorder.m */; };
+		4E5F6A7B8C9D0E1F2A3B4C07 /* NVShortcutRecorder.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E5F6A7B8C9D0E1F2A3B4C09 /* NVShortcutRecorder.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21B548FA112F307E00E163A1 /* NotationDirectoryManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 21B548F8112F307E00E163A1 /* NotationDirectoryManager.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21B54C021134F2E800E163A1 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21B54C011134F2E800E163A1 /* IOKit.framework */; };
 		21B64A2612E61FA700D87EFC /* LabelColumnCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 21B64A2512E61FA700D87EFC /* LabelColumnCell.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
@@ -127,7 +127,7 @@
 		21D60128098FDB46007440DF /* GlobalPrefs.m in Sources */ = {isa = PBXBuildFile; fileRef = 21D60127098FDB46007440DF /* GlobalPrefs.m */; };
 		21D6F7EF12E0C751005C2DA5 /* AppController_Importing.m in Sources */ = {isa = PBXBuildFile; fileRef = 21D6F7EE12E0C751005C2DA5 /* AppController_Importing.m */; };
 		21D6FB4912E104D6005C2DA5 /* NSBezierPath_NV.m in Sources */ = {isa = PBXBuildFile; fileRef = 21D6FB4812E104D6005C2DA5 /* NSBezierPath_NV.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
-		21DB3D0F12D4FBDD0057F52B /* SecureTextEntryManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 21DB3D0E12D4FBDD0057F52B /* SecureTextEntryManager.m */; };
+		21DB3D0F12D4FBDD0057F52B /* SecureTextEntryManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 21DB3D0E12D4FBDD0057F52B /* SecureTextEntryManager.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21DB4BE612DE4E3D0057F52B /* NSString_CustomTruncation.m in Sources */ = {isa = PBXBuildFile; fileRef = 21DB4BE512DE4E3D0057F52B /* NSString_CustomTruncation.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21DC788F097894B600E59B09 /* NSCollection_utils.m in Sources */ = {isa = PBXBuildFile; fileRef = 21DC788E097894B600E59B09 /* NSCollection_utils.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21DF19B210D172F600543C35 /* DFCapRightInactive.png in Resources */ = {isa = PBXBuildFile; fileRef = 21DF19AE10D172F600543C35 /* DFCapRightInactive.png */; };
@@ -149,7 +149,7 @@
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
 		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
-		D3EECA00106F66C70023D7F8 /* NVPasswordGenerator.m in Sources */ = {isa = PBXBuildFile; fileRef = D3EEC9FE106F66C70023D7F8 /* NVPasswordGenerator.m */; };
+		D3EECA00106F66C70023D7F8 /* NVPasswordGenerator.m in Sources */ = {isa = PBXBuildFile; fileRef = D3EEC9FE106F66C70023D7F8 /* NVPasswordGenerator.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXCopyFilesBuildPhase section */

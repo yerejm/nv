@@ -24,11 +24,11 @@
 @implementation KeyDerivationManager
 
 - (id)initWithNotationPrefs:(NotationPrefs*)prefs {
-	notationPrefs = [prefs retain];
+	notationPrefs = prefs;
 	
 	//compute initial test duration for the current iteration number
-	crapData = [[@"random crap" dataUsingEncoding:NSASCIIStringEncoding] retain];
-	crapSalt = [[NSData randomDataOfLength:256] retain];
+	crapData = [@"random crap" dataUsingEncoding:NSASCIIStringEncoding];
+	crapSalt = [NSData randomDataOfLength:256];
 	
 	lastHashIterationCount = [notationPrefs hashIterationCount];
 	lastHashDuration = [self delayForHashIterations:lastHashIterationCount];
@@ -69,10 +69,9 @@
 	NSView *advancedView = [view superview];
 	//a deactivated constraint is released by its view, and the nib outlet does not retain it
 	if (collapsed != collapsedLayout) {
-		[collapsedLayout release];
-		collapsedLayout = [collapsed retain];
+		collapsedLayout = collapsed;
 	}
-	if (!expandedLayout) expandedLayout = [[[buttons topAnchor] constraintEqualToAnchor:[advancedView bottomAnchor] constant:14] retain];
+	if (!expandedLayout) expandedLayout = [[buttons topAnchor] constraintEqualToAnchor:[advancedView bottomAnchor] constant:14];
 	if (!disclosed) [advancedView setHidden:YES];
 	[collapsedLayout setActive:!disclosed];
 	[expandedLayout setActive:disclosed];
@@ -84,16 +83,6 @@
 	frame.origin.y = NSMaxY([window frame]) - NSHeight(frame);
 	[window setFrame:frame display:YES animate:YES];
 	if (disclosed) [advancedView setHidden:NO];
-}
-
-- (void)dealloc {
-	[collapsedLayout release];
-	[expandedLayout release];
-	[notationPrefs release];
-	[crapData release];
-	[crapSalt release];
-	
-	[super dealloc];
 }
 
 - (NSView*)view {

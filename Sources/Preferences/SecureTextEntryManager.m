@@ -39,14 +39,6 @@ static SecureTextEntryManager *sharedInstance = nil;
     return sharedInstance;
 }
 
-+ (id)allocWithZone:(NSZone *)zone {
-	if (sharedInstance == nil) {
-		sharedInstance = [super allocWithZone:zone];
-		return sharedInstance;  // assignment and return on first allocation
-	}
-    return nil; // on subsequent allocation attempts return nil
-}
-
 - (id)init {
 	if ((self = [super init])) {
 		
@@ -129,7 +121,7 @@ static SecureTextEntryManager *sharedInstance = nil;
     NSSet *identifiers = [self _bundleIdentifiersOfIncompatibleApps];
     for (NSRunningApplication *application in [[NSWorkspace sharedWorkspace] runningApplications]) {
         if (![identifiers containsObject:[application bundleIdentifier]]) continue;
-        NSAlert *alert = [[[NSAlert alloc] init] autorelease];
+        NSAlert *alert = [[NSAlert alloc] init];
         [alert setMessageText:[NSString stringWithFormat:NSLocalizedString(@"Secure Text Entry will prevent %@, which is currently installed on this computer, from working in Notational Velocity.", @"for warning about incompatibility with TextExpander, Typinator, etc."), [application localizedName]]];
         [alert addButtonWithTitle:NSLocalizedString(@"OK", nil)];
         [alert setShowsSuppressionButton:YES];
@@ -138,26 +130,6 @@ static SecureTextEntryManager *sharedInstance = nil;
             [[NSUserDefaults standardUserDefaults] setBool:YES forKey:ShouldHideSecureTextEntryWarningKey];
         break;
     }
-}
-
-- (id)copyWithZone:(NSZone *)zone {
-    return self;
-}
-
-- (id)retain {
-    return self;
-}
-
-- (NSUInteger)retainCount {
-    return UINT_MAX;  // denotes an object that cannot be released
-}
-
-- (oneway void)release {
-    //do nothing
-}
-
-- (id)autorelease {
-    return self;
 }
 
 @end
