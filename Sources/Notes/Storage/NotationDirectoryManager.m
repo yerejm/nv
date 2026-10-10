@@ -130,7 +130,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 	
 	FSEventStreamContext context = { 0, (__bridge void *)self, CFRetain, CFRelease, CFCopyDescription };
 	
-	noteDirEventStreamRef = FSEventStreamCreate(NULL, &FSEventsCallback, &context, (__bridge CFArrayRef)[NSArray arrayWithObject:path], kFSEventStreamEventIdSinceNow, 
+	noteDirEventStreamRef = FSEventStreamCreate(NULL, &FSEventsCallback, &context, (__bridge CFArrayRef)@[path], kFSEventStreamEventIdSinceNow, 
 												1.0, kFSEventStreamCreateFlagWatchRoot | 0x00000008 /*kFSEventStreamCreateFlagIgnoreSelf*/);
 	
 	FSEventStreamSetDispatchQueue(noteDirEventStreamRef, dispatch_get_main_queue());
@@ -518,7 +518,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 	NSMutableDictionary *addedDict = [NSMutableDictionary dictionaryWithCapacity:[addedEntries count]];
 	
 	for (i=0; i<[addedEntries count]; i++) {
-		NSNumber *sizeKey = [NSNumber numberWithUnsignedInt:((NoteCatalogEntry*)[[addedEntries objectAtIndex:i] pointerValue])->logicalSize];
+		NSNumber *sizeKey = @(((NoteCatalogEntry*)[[addedEntries objectAtIndex:i] pointerValue])->logicalSize);
 		id sameSizeObj = [addedDict objectForKey:sizeKey];
 		
 		if ([sameSizeObj isKindOfClass:[NSArray class]]) {
@@ -527,7 +527,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 			[sameSizeObj addObject:[addedEntries objectAtIndex:i]];
 		} else if (sameSizeObj) {
 			//two objects need to be inserted into the new array
-			[addedDict setObject:[NSMutableArray arrayWithObjects:sameSizeObj, [addedEntries objectAtIndex:i], nil] forKey:sizeKey];
+			[addedDict setObject:[@[sameSizeObj, [addedEntries objectAtIndex:i]] mutableCopy] forKey:sizeKey];
 		} else {
 			//nothing with this key, just insert it directly
 			[addedDict setObject:[addedEntries objectAtIndex:i] forKey:sizeKey];
@@ -536,7 +536,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 	
 	for (i=0; i<[removedEntries count]; i++) {
 		NoteObject *removedObj = [removedEntries objectAtIndex:i];
-		NSNumber *sizeKey = [NSNumber numberWithUnsignedInt:fileSizeOfNote(removedObj)];
+		NSNumber *sizeKey = @(fileSizeOfNote(removedObj));
 		BOOL foundMatchingContent = NO;
 		
 		//does any added item have the same size as removedObj?

@@ -84,8 +84,7 @@
 + (NSDictionary*)standardDictionary {
 	static NSDictionary *standardDictionary = nil;
 	if (!standardDictionary)
-		standardDictionary = [NSDictionary dictionaryWithObjectsAndKeys:
-			[NSFont systemFontOfSize:[NSFont smallSystemFontSize]], NSFontAttributeName, nil];
+		standardDictionary = @{NSFontAttributeName: [NSFont systemFontOfSize:[NSFont smallSystemFontSize]]};
 
 	return standardDictionary;
 }

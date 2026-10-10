@@ -203,7 +203,7 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 - (void)copyItemToPasteboard:(id)sender {
 	
 	NSPasteboard *pasteboard = [NSPasteboard generalPasteboard];
-	[pasteboard declareTypes:[NSArray arrayWithObject:NSPasteboardTypeString] owner:nil];
+	[pasteboard declareTypes:@[NSPasteboardTypeString] owner:nil];
 	[pasteboard setString:[sender isKindOfClass:[NSMenuItem class]] ? [sender representedObject] : self
 				  forType:NSPasteboardTypeString];
 }
@@ -439,7 +439,7 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 		if (url) reasons = [NSDictionary dictionaryWithContentsOfURL:url error:NULL];
 	}
 	
-	NSString *reason = [reasons objectForKey:[[NSNumber numberWithInt:(int)err] stringValue]];
+	NSString *reason = [reasons objectForKey:[@((int)err) stringValue]];
 	if (!reason)
 		return [NSString stringWithFormat:NSLocalizedString(@"an error of type %d occurred", @"string of last resort for errors not found in CarbonErrorStrings"), (int)err];
 	return reason;

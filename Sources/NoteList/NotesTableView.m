@@ -50,12 +50,13 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	globalPrefs = [GlobalPrefs defaultPrefs];
 
 	userDefaults = [NSUserDefaults standardUserDefaults];
-	[userDefaults registerDefaults: [NSDictionary dictionaryWithObjectsAndKeys: [NSNumber numberWithBool: YES], @"UseCtrlForSwitchingNotes", nil]];
+	[userDefaults registerDefaults: @{@"UseCtrlForSwitchingNotes": @YES}];
 		
 	loadStatusString = NSLocalizedString(@"Loading Notes...",nil);
-	loadStatusAttributes = [NSDictionary dictionaryWithObjectsAndKeys:
-		[NSFont systemFontOfSize:STATUS_STRING_FONT_SIZE], NSFontAttributeName,
-		[[NSColor controlTextColor] colorWithAlphaComponent:0.5f], NSForegroundColorAttributeName, nil];
+	loadStatusAttributes = @{
+		NSFontAttributeName: [NSFont systemFontOfSize:STATUS_STRING_FONT_SIZE],
+		NSForegroundColorAttributeName: [[NSColor controlTextColor] colorWithAlphaComponent:0.5f]
+	};
 	loadStatusStringWidth = [loadStatusString sizeWithAttributes:loadStatusAttributes].width;
 	
 	affinity = 0;
@@ -134,7 +135,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 	}
 	
 	//horizontal view has only a single column; store column widths separately for it
-	NSArray *columnsToDisplay = [globalPrefs horizontalLayout] ? [NSArray arrayWithObject:NoteTitleColumnString] : [globalPrefs visibleTableColumns];
+	NSArray *columnsToDisplay = [globalPrefs horizontalLayout] ? @[NoteTitleColumnString] : [globalPrefs visibleTableColumns];
 	
 	for (i=0; i<[allColumns count]; i++) {
 		NoteAttributeColumn *column = [allColumns objectAtIndex:i];
@@ -160,7 +161,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
      @selector(setForegroundTextColor:sender:), @selector(setBackgroundTextColor:sender:),
      @selector(setAlternatingRows:sender:), @selector(setShowNoteListGrid:sender:), nil];
 	
-	[self registerForDraggedTypes:[NSArray arrayWithObjects:NSPasteboardTypeFileURL, NSPasteboardTypeRTF, NSPasteboardTypeRTFD, NSPasteboardTypeString, nil]];
+	[self registerForDraggedTypes:@[NSPasteboardTypeFileURL, NSPasteboardTypeRTF, NSPasteboardTypeRTFD, NSPasteboardTypeString]];
 	
 	NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
 	[center addObserver:self selector:@selector(_fieldEditorTextDidChange:) name:NSTextDidChangeNotification object:nil];
@@ -990,7 +991,7 @@ enum { kNext_Tag = 'j', kPrev_Tag = 'k' };
 											 indexOfSelectedItem:anIndex minusWordSet:existingWordSet];
 		}
 	}
-	return [NSArray array];
+	return @[];
 }
 
 

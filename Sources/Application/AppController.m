@@ -480,7 +480,7 @@ terminateApp:
 }
 
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar*)theToolbar {
-	return [NSArray arrayWithObject:@"DualField"];
+	return @[@"DualField"];
 }
 
 - (void)_setWindowTitle:(NSString *)title {

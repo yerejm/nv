@@ -174,12 +174,12 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 				NSFontTraitMask newTraits = [fontMan traitsOfFont:newFont];
 				
 				if (!(newTraits & NSItalicFontMask) && (traits & NSItalicFontMask)) {
-					[newAttributes setObject:[NSNumber numberWithFloat:0.20] forKey:NSObliquenessAttributeName];
+					[newAttributes setObject:@0.20f forKey:NSObliquenessAttributeName];
 				} else if (newTraits & NSItalicFontMask) {
 					[newAttributes removeObjectForKey:NSObliquenessAttributeName];
 				}
 				if (!(newTraits & NSBoldFontMask) && (traits & NSBoldFontMask)) {
-					[newAttributes setObject:[NSNumber numberWithFloat:-3.50] forKey:NSStrokeWidthAttributeName];
+					[newAttributes setObject:@-3.50f forKey:NSStrokeWidthAttributeName];
 				} else if (newTraits & NSBoldFontMask) {
 					[newAttributes removeObjectForKey:NSStrokeWidthAttributeName];
 				}
@@ -364,7 +364,7 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 			NSRange thisLineRange = NSMakeRange(scanRange.location, lineEndRange.location - scanRange.location);
 			NSString *thisLine = [[self string] substringWithRange:thisLineRange];
 			if([thisLine hasPrefix:@"#"]) {
-				[self addAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInt:NSUnderlineStyleSingle],  NSUnderlineStyleAttributeName, [NSNull null], NVHiddenHeadingTagAttributeName, nil] range:NSMakeRange(thisLineRange.location, thisLineRange.length)];
+				[self addAttributes:@{NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle), NVHiddenHeadingTagAttributeName: [NSNull null]} range:NSMakeRange(thisLineRange.location, thisLineRange.length)];
 			} else if([self attribute:NVHiddenHeadingTagAttributeName existsInRange:thisLineRange]) {
 				[self removeAttribute:NVHiddenHeadingTagAttributeName range:thisLineRange];
 				[self removeAttribute:NSUnderlineStyleAttributeName range:thisLineRange];
@@ -409,8 +409,7 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 			if (done) {
 				
 				//add strikethrough and NVHiddenDoneTagAttributeName attributes, because this line ends in @done
-				[self addAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[NSNumber numberWithInt:NSUnderlineStyleSingle], 
-									 NSStrikethroughStyleAttributeName, [NSNull null], NVHiddenDoneTagAttributeName, nil] 
+				[self addAttributes:@{NSStrikethroughStyleAttributeName: @(NSUnderlineStyleSingle), NVHiddenDoneTagAttributeName: [NSNull null]}
 							  range:NSMakeRange(thisLineRange.location, done.range.location - thisLineRange.location)];
 				//and the done tag itself should never be struck-through; remove that just in case typing attributes had carried over from elsewhere
 				[self removeAttribute:NSStrikethroughStyleAttributeName range:done.range];
@@ -522,14 +521,15 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 		[centerStyle setAlignment:NSTextAlignmentCenter];
 
 		approxCharStr = [[NSAttributedString alloc] initWithString:[NSString stringWithCharacters:&ch length:1] attributes:
-						 [NSDictionary dictionaryWithObjectsAndKeys:[NSFont fontWithName:@"Symbol" size:16.0f], NSFontAttributeName, centerStyle, NSParagraphStyleAttributeName, nil]];
+						 @{NSFontAttributeName: [NSFont fontWithName:@"Symbol" size:16.0f] ?: [NSFont systemFontOfSize:16.0f],
+						   NSParagraphStyleAttributeName: centerStyle}];
 	}
 	NSMutableAttributedString *mutableStr = [approxCharStr mutableCopy];
 	
 	NSString *timeStr = seconds < 1.0 ? [NSString stringWithFormat:@" %0.0f ms", seconds*1000] : [NSString stringWithFormat:@" %0.2f secs", seconds];
 	
 	[mutableStr appendAttributedString:[[NSAttributedString alloc] initWithString:timeStr attributes:
-										 [NSDictionary dictionaryWithObject:[NSFont systemFontOfSize:13.0f] forKey:NSFontAttributeName]]];
+										 @{NSFontAttributeName: [NSFont systemFontOfSize:13.0f]}]];
 	return mutableStr;
 }
 

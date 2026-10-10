@@ -57,7 +57,7 @@
 	if (linkStyle)
 		[self setObject:linkStyle forKey:NSLinkAttributeName];
 	if (strikethroughStyle)
-		[self setObject:[NSNumber numberWithInt:NSUnderlineStyleSingle] forKey:NSStrikethroughStyleAttributeName];
+		[self setObject:@(NSUnderlineStyleSingle) forKey:NSStrikethroughStyleAttributeName];
 	if (strokeWidthStyle)
 		[self setObject:strokeWidthStyle forKey:NSStrokeWidthAttributeName];
 	if (obliquenessStyle)
@@ -92,7 +92,7 @@
 @implementation NSDictionary (HTTP)
 
 + (NSDictionary*)optionsDictionaryWithTimeout:(float)timeout {
-	return [NSDictionary dictionaryWithObject:[NSNumber numberWithFloat:timeout] forKey:NSTimeoutDocumentOption];
+	return @{NSTimeoutDocumentOption: @(timeout)};
 }
 
 - (NSString*)URLEncodedString {
@@ -146,9 +146,11 @@
 	unsigned int i;
 	
 	
-	NSDictionary *blackAttrs = [NSDictionary dictionaryWithObjectsAndKeys:[NSFont menuFontOfSize:13.0f], NSFontAttributeName, nil];
-	NSDictionary *grayAttrs = [NSDictionary dictionaryWithObjectsAndKeys:[NSColor grayColor], NSForegroundColorAttributeName, 
-		[NSFont menuFontOfSize:13.0f], NSFontAttributeName, nil];
+	NSDictionary *blackAttrs = @{NSFontAttributeName: [NSFont menuFontOfSize:13.0f]};
+	NSDictionary *grayAttrs = @{
+		NSForegroundColorAttributeName: [NSColor grayColor],
+		NSFontAttributeName: [NSFont menuFontOfSize:13.0f]
+	};
 
 	BOOL didAddInitialSeparator = NO;
 	

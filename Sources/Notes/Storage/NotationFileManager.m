@@ -397,7 +397,7 @@ terminate:
 				isUnique = NO;
 				
 				uniqueFilename = [uniqueFilename stringByDeletingPathExtension];
-				NSString *numberPath = [[NSNumber numberWithInt:++iteration] stringValue];
+				NSString *numberPath = [@(++iteration) stringValue];
 				uniqueFilename = [uniqueFilename stringByAppendingPathExtension:numberPath];
 				break;
 			}

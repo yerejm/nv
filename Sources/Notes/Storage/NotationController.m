@@ -201,7 +201,7 @@
 	char *notesData = NULL;
 	OSStatus err = noErr, result = noErr;
 	if ((err = NVReadFile(notesFileRef, BlockSizeForNotation(self), &fileSize, (void**)&notesData, false)) != noErr)
-		return [NSNumber numberWithInt:err];
+		return @(err);
 	
 	FrozenNotation *frozenNotation = nil;
 	NSData *archivedNotation = nil;
@@ -242,7 +242,7 @@
 	NSLog(@"verified %lu notes in %g s", (unsigned long)[notesToVerify count], (float)[[NSDate date] timeIntervalSinceDate:date]);
 returnResult:
 	if (notesData) free(notesData);
-	return [NSNumber numberWithInt:result];
+	return @(result);
 }
 
 

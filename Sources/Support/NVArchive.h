@@ -39,8 +39,8 @@ static inline id NVUnarchiveLegacyStickies(NSData *data) {
 
 static inline NSSet *NVPropertyListClasses(void) {
     static NSSet *classes = nil;
-    if (!classes) classes = [[NSSet alloc] initWithObjects:[NSDictionary class], [NSArray class], [NSString class],
-                             [NSNumber class], [NSDate class], [NSData class], nil];
+    if (!classes) classes = [[NSSet alloc] initWithArray:@[[NSDictionary class], [NSArray class], [NSString class],
+                             [NSNumber class], [NSDate class], [NSData class]]];
     return classes;
 }
 
@@ -58,7 +58,7 @@ static inline id NVDecodeObjectOfClasses(NSCoder *decoder, NSSet *classes, Class
 
 //unlike -decodeArrayOfObjectsOfClass:forKey:, this permits elements that themselves hold nested collections
 static inline NSArray *NVDecodeArrayOfObjectsOfClass(NSCoder *decoder, Class elementClass, NSString *key) {
-    NSArray *array = NVDecodeObjectOfClasses(decoder, [NSSet setWithObjects:[NSArray class], elementClass, nil], [NSArray class], key);
+    NSArray *array = NVDecodeObjectOfClasses(decoder, [NSSet setWithArray:@[[NSArray class], elementClass]], [NSArray class], key);
     for (id element in array) {
         if (![element isKindOfClass:elementClass]) {
             NSString *reason = [NSString stringWithFormat:@"array for key '%@' holds a %@ instead of a %@", key, [element class], elementClass];

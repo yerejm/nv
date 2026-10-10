@@ -84,7 +84,7 @@
 	if (!img) {
 		//generate the image and add it to labelImages under imgKey
 		float tableFontSize = [[GlobalPrefs defaultPrefs] tableFontSize] - 1.0;
-		NSDictionary *attrs = [NSDictionary dictionaryWithObject:[NSFont systemFontOfSize:tableFontSize] forKey:NSFontAttributeName];
+		NSDictionary *attrs = @{NSFontAttributeName: [NSFont systemFontOfSize:tableFontSize]};
 		NSSize wordSize = [aWord sizeWithAttributes:attrs];
 		NSRect wordRect = NSMakeRect(0, 0, roundf(wordSize.width + 4.0), roundf(tableFontSize * 1.3));
 		

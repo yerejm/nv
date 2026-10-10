@@ -642,7 +642,7 @@ const char WALAuthenticatedJournalMagic[8] = {'N', 'V', 'W', 'A', 'L', 0, 0, 5};
     id <SynchronizedNote> object = nil;
 	@try {
 		NSKeyedUnarchiver *unarchiver = NVUnarchiverForData(presumablySerializedData);
-		object = [unarchiver decodeObjectOfClasses:[NSSet setWithObjects:[NoteObject class], [DeletedNoteObject class], nil] forKey:@"aNote"];
+		object = [unarchiver decodeObjectOfClasses:[NSSet setWithArray:@[[NoteObject class], [DeletedNoteObject class]]] forKey:@"aNote"];
     } @catch (NSException *e) {
 		NSLog(@"recoverNextObject got an exception while unarchiving object: %@; returning NSNull to skip", [e reason]);
 		object = (id<SynchronizedNote>)[NSNull null];

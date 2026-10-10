@@ -113,7 +113,7 @@
 		return NO;
 	}
 	NSString *textEncStr = [(__bridge NSString *)CFStringConvertEncodingToIANACharSetName(cfStringEncoding) stringByAppendingFormat:@";%@", 
-							[[NSNumber numberWithInt:cfStringEncoding] stringValue]];
+							[@(cfStringEncoding) stringValue]];
 	const char *textEncUTF8Str = [textEncStr UTF8String];
 	
 	if (setxattr(path, "com.apple.TextEncoding", textEncUTF8Str, strlen(textEncUTF8Str), 0, 0) < 0) {

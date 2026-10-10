@@ -218,14 +218,14 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	case SingleDatabaseFormat:
 	    return [NSMutableArray arrayWithCapacity:0];
 	case PlainTextFormat: 
-	    return [NSMutableArray arrayWithObjects:CFBridgingRelease(NVStringFromOSType(TEXT_TYPE_ID)),
-			CFBridgingRelease(NVStringFromOSType(UTXT_TYPE_ID)), nil];
+	    return [@[CFBridgingRelease(NVStringFromOSType(TEXT_TYPE_ID)),
+			CFBridgingRelease(NVStringFromOSType(UTXT_TYPE_ID))] mutableCopy];
 	case RTFTextFormat: 
-	    return [NSMutableArray arrayWithObjects:CFBridgingRelease(NVStringFromOSType(RTF_TYPE_ID)), nil];
+	    return [@[CFBridgingRelease(NVStringFromOSType(RTF_TYPE_ID))] mutableCopy];
 	case HTMLFormat:
-	    return [NSMutableArray arrayWithObjects:CFBridgingRelease(NVStringFromOSType(HTML_TYPE_ID)), nil];
+	    return [@[CFBridgingRelease(NVStringFromOSType(HTML_TYPE_ID))] mutableCopy];
 	case WordDocFormat:
-		return [NSMutableArray arrayWithObjects:CFBridgingRelease(NVStringFromOSType(WORD_DOC_TYPE_ID)), nil];
+		return [@[CFBridgingRelease(NVStringFromOSType(WORD_DOC_TYPE_ID))] mutableCopy];
 	default:
 	    NSLog(@"Unknown format ID: %d", formatID);
     }
@@ -238,15 +238,15 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	case SingleDatabaseFormat:
 	    return [NSMutableArray arrayWithCapacity:0];
 	case PlainTextFormat: 
-	    return [NSMutableArray arrayWithObjects:@"txt", @"text", @"utf8", @"taskpaper", nil];
+	    return [@[@"txt", @"text", @"utf8", @"taskpaper"] mutableCopy];
 	case RTFTextFormat: 
-	    return [NSMutableArray arrayWithObjects:@"rtf", nil];
+	    return [@[@"rtf"] mutableCopy];
 	case HTMLFormat:
-	    return [NSMutableArray arrayWithObjects:@"html", @"htm", nil];
+	    return [@[@"html", @"htm"] mutableCopy];
 	case WordDocFormat:
-		return [NSMutableArray arrayWithObjects:@"doc", nil];
+		return [@[@"doc"] mutableCopy];
 	case WordXMLFormat:
-		return [NSMutableArray arrayWithObjects:@"docx", nil];
+		return [@[@"docx"] mutableCopy];
 	default:
 	    NSLog(@"Unknown format ID: %d", formatID);
     }

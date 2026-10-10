@@ -120,7 +120,7 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 		[alignStyle setAlignment:NSTextAlignmentRight];
         [alignStyle setLineBreakMode:NSLineBreakByTruncatingTail];
 	}
-	return [NSMutableDictionary dictionaryWithObjectsAndKeys:alignStyle, NSParagraphStyleAttributeName, [self font], NSFontAttributeName, nil];
+	return [@{NSParagraphStyleAttributeName: alignStyle, NSFontAttributeName: [self font]} mutableCopy];
 }
 
 - (void)drawWithFrame:(NSRect)cellFrame inView:(NSView *)controlView {	
@@ -170,8 +170,10 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 	if ([tv currentEditor] && [self isHighlighted]) {
 		//needed because the body text is normally not drawn while editing
 		NSMutableAttributedString *cloneStr = [[self attributedStringValue] mutableCopy];
-		[cloneStr addAttributes:[NSDictionary dictionaryWithObjectsAndKeys:[self font], NSFontAttributeName, textColor, 
-								 NSForegroundColorAttributeName, nil] range:NSMakeRange(0, [cloneStr length])];
+		[cloneStr addAttributes:@{
+			NSFontAttributeName: [self font],
+			NSForegroundColorAttributeName: textColor
+		} range:NSMakeRange(0, [cloneStr length])];
 		[cloneStr addAttributes:LineTruncAttributesForTitle() range:NSMakeRange(0, [titleOfNote(noteObject) length])];
 		
 		[cloneStr drawWithRect:NSInsetRect([self titleRectForBounds:cellFrame], 2., 0.) options: NSStringDrawingTruncatesLastVisibleLine | NSStringDrawingUsesLineFragmentOrigin];

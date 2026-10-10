@@ -118,50 +118,48 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 		
 		tableColumns = nil;
 		
-		[defaults registerDefaults:[NSDictionary dictionaryWithObjectsAndKeys:
-			[NSNumber numberWithBool:YES], AutoSuggestLinksKey,
-			[NSNumber numberWithBool:YES], AutoFormatsDoneTagKey,
-			[NSNumber numberWithBool:YES], AutoFormatsMarkdownHeadingsKey,
-			[NSNumber numberWithBool:YES], AutoIndentsNewLinesKey, 
-			[NSNumber numberWithBool:YES], AutoFormatsListBulletsKey,
-			[NSNumber numberWithBool:NO], UseSoftTabsKey,
-			[NSNumber numberWithInt:4], NumberOfSpacesInTabKey,
-			[NSNumber numberWithBool:YES], PastePreservesStyleKey,
-			[NSNumber numberWithBool:YES], TabKeyIndentsKey,
-			[NSNumber numberWithBool:YES], ConfirmNoteDeletionKey,
-			[NSNumber numberWithBool:YES], CheckSpellingInNoteBodyKey, 
-			[NSNumber numberWithBool:NO], TextReplacementInNoteBodyKey, 
-			[NSNumber numberWithBool:YES], AutoCompleteSearchesKey, 
-			[NSNumber numberWithBool:YES], QuitWhenClosingMainWindowKey, 
-			[NSNumber numberWithBool:NO], TriedToImportBlorKey,
-			[NSNumber numberWithBool:NO], HorizontalLayoutKey,
-			@NO, KeepsMaxTextWidthKey,
-			@660, NoteBodyMaxWidthKey,
-            @3, ColorSchemeKey,
-            @NO, AlternatingRowsKey,
-            @YES, ShowNoteListGridKey,
-            @NO, UseThemedScrollbarsKey,
-            @NO, UseAutoPairingKey,
-            @NO, RightToLeftEditingKey,
-            @NO, ShowWordCountKey,
-            @YES, ShowDockIconKey,
-            @NO, ShowMenuBarIconKey,
-            @NO, SmartInsertDeleteKey,
-			[NSNumber numberWithBool:YES], MakeURLsClickableKey,
-			[NSNumber numberWithBool:YES], HighlightSearchTermsKey, 
-			[NSNumber numberWithBool:YES], TableColumnsHaveBodyPreviewKey, 
-			[NSNumber numberWithDouble:0.0], LastScrollOffsetKey,
-			@"General", LastSelectedPreferencesPaneKey, 
-			
-			NVArchiveObject([NSFont systemFontOfSize:[NSFont systemFontSize]]), NoteBodyFontKey,
-			
-			NVArchiveObject([NSColor textColor]), ForegroundTextColorKey,
-			NVArchiveObject([NSColor textBackgroundColor]), BackgroundTextColorKey,
-			
-			[NSNumber numberWithFloat:[NSFont smallSystemFontSize]], TableFontSizeKey, 
-			[NSArray arrayWithObjects:NoteTitleColumnString, NoteDateModifiedColumnString, nil], NoteAttributesVisibleKey,
-			NoteDateModifiedColumnString, TableSortColumnKey,
-			[NSNumber numberWithBool:YES], TableIsReverseSortedKey, nil]];
+		[defaults registerDefaults:@{
+			AutoSuggestLinksKey: @YES,
+			AutoFormatsDoneTagKey: @YES,
+			AutoFormatsMarkdownHeadingsKey: @YES,
+			AutoIndentsNewLinesKey: @YES,
+			AutoFormatsListBulletsKey: @YES,
+			UseSoftTabsKey: @NO,
+			NumberOfSpacesInTabKey: @4,
+			PastePreservesStyleKey: @YES,
+			TabKeyIndentsKey: @YES,
+			ConfirmNoteDeletionKey: @YES,
+			CheckSpellingInNoteBodyKey: @YES,
+			TextReplacementInNoteBodyKey: @NO,
+			AutoCompleteSearchesKey: @YES,
+			QuitWhenClosingMainWindowKey: @YES,
+			TriedToImportBlorKey: @NO,
+			HorizontalLayoutKey: @NO,
+			KeepsMaxTextWidthKey: @NO,
+			NoteBodyMaxWidthKey: @660,
+			ColorSchemeKey: @3,
+			AlternatingRowsKey: @NO,
+			ShowNoteListGridKey: @YES,
+			UseThemedScrollbarsKey: @NO,
+			UseAutoPairingKey: @NO,
+			RightToLeftEditingKey: @NO,
+			ShowWordCountKey: @NO,
+			ShowDockIconKey: @YES,
+			ShowMenuBarIconKey: @NO,
+			SmartInsertDeleteKey: @NO,
+			MakeURLsClickableKey: @YES,
+			HighlightSearchTermsKey: @YES,
+			TableColumnsHaveBodyPreviewKey: @YES,
+			LastScrollOffsetKey: @0.0,
+			LastSelectedPreferencesPaneKey: @"General",
+			NoteBodyFontKey: NVArchiveObject([NSFont systemFontOfSize:[NSFont systemFontSize]]),
+			ForegroundTextColorKey: NVArchiveObject([NSColor textColor]),
+			BackgroundTextColorKey: NVArchiveObject([NSColor textBackgroundColor]),
+			TableFontSizeKey: @((float)[NSFont smallSystemFontSize]),
+			NoteAttributesVisibleKey: @[NoteTitleColumnString, NoteDateModifiedColumnString],
+			TableSortColumnKey: NoteDateModifiedColumnString,
+			TableIsReverseSortedKey: @YES
+		}];
 		
 		NVMigrateLegacyArchivedPreferences(defaults);
 		
@@ -597,7 +595,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 	
 	if (!noteBodyAttributes && bodyFont) {
 		
-		NSMutableDictionary *attrs = [NSMutableDictionary dictionaryWithObjectsAndKeys:bodyFont, NSFontAttributeName, nil];
+		NSMutableDictionary *attrs = [@{NSFontAttributeName: bodyFont} mutableCopy];
 		
 		//not storing the foreground color in each note will make the database smaller, and black is assumed when drawing text
 		NSColor *fgColor = [self foregroundTextColor];
@@ -631,7 +629,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 		while (numberOfSpaces--) {
 			[sizeString appendString:@" "];
 		}
-		NSDictionary *sizeAttribute = [[NSDictionary alloc] initWithObjectsAndKeys:bodyFont, NSFontAttributeName, nil];
+		NSDictionary *sizeAttribute = @{NSFontAttributeName: bodyFont};
 		float sizeOfTab = [sizeString sizeWithAttributes:sizeAttribute].width;
 		
 		noteBodyParagraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];

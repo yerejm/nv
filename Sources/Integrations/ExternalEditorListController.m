@@ -88,7 +88,7 @@ NSString *ExternalEditorsChangedNotification = @"ExternalEditorsChanged";
 		if (noErr != err) {
 			NSLog(@"LSCanURLAcceptURL '%@' err: %d", path, err);
 		}
-		[knownPathExtensions setObject:[NSNumber numberWithBool:(BOOL)canAccept] forKey:extension];
+		[knownPathExtensions setObject:@((BOOL)canAccept) forKey:extension];
 		
 		return (BOOL)canAccept;
 	}
@@ -171,7 +171,7 @@ static ExternalEditorListController* sharedInstance = nil;
 	if ((self = [self init])) {
 		//TextEdit is not an ODB editor, but can be used to open files directly
 		[[NSUserDefaults standardUserDefaults] registerDefaults:
-		 [NSDictionary dictionaryWithObject:[NSArray arrayWithObject:@"com.apple.TextEdit"] forKey:UserEEIdentifiersKey]];
+		 @{UserEEIdentifiersKey: @[@"com.apple.TextEdit"]}];
 	
 		[self _initDefaults];
 	}
@@ -223,12 +223,33 @@ static ExternalEditorListController* sharedInstance = nil;
 + (NSSet*)ODBAppIdentifiers {
 	static NSSet *_ODBAppIdentifiers = nil;
 	if (!_ODBAppIdentifiers)
-		_ODBAppIdentifiers = [[NSSet alloc] initWithObjects:
-							  @"de.codingmonkeys.SubEthaEdit", @"com.barebones.bbedit", @"com.barebones.textwrangler",
-							  @"com.macromates.textmate", @"com.transtex.texeditplus", @"jp.co.artman21.JeditX", @"org.gnu.Aquamacs",
-							  @"org.smultron.Smultron", @"com.peterborgapps.Smultron", @"org.fraise.Fraise", @"com.aynimac.CotEditor", @"com.macrabbit.cssedit",
-							  @"com.talacia.Tag", @"org.skti.skEdit", @"com.cgerdes.ji", @"com.optima.PageSpinner", @"com.hogbaysoftware.WriteRoom",
-							  @"com.hogbaysoftware.WriteRoom.mac", @"org.vim.MacVim", @"com.forgedit.ForgEdit", @"com.tacosw.TacoHTMLEdit", @"com.macrabbit.espresso", @"com.sublimetext.2", @"com.metaclassy.byword", @"jp.informationarchitects.WriterForMacOSX", nil];
+		_ODBAppIdentifiers = [[NSSet alloc] initWithArray:@[
+							  @"de.codingmonkeys.SubEthaEdit",
+							  @"com.barebones.bbedit",
+							  @"com.barebones.textwrangler",
+							  @"com.macromates.textmate",
+							  @"com.transtex.texeditplus",
+							  @"jp.co.artman21.JeditX",
+							  @"org.gnu.Aquamacs",
+							  @"org.smultron.Smultron",
+							  @"com.peterborgapps.Smultron",
+							  @"org.fraise.Fraise",
+							  @"com.aynimac.CotEditor",
+							  @"com.macrabbit.cssedit",
+							  @"com.talacia.Tag",
+							  @"org.skti.skEdit",
+							  @"com.cgerdes.ji",
+							  @"com.optima.PageSpinner",
+							  @"com.hogbaysoftware.WriteRoom",
+							  @"com.hogbaysoftware.WriteRoom.mac",
+							  @"org.vim.MacVim",
+							  @"com.forgedit.ForgEdit",
+							  @"com.tacosw.TacoHTMLEdit",
+							  @"com.macrabbit.espresso",
+							  @"com.sublimetext.2",
+							  @"com.metaclassy.byword",
+							  @"jp.informationarchitects.WriterForMacOSX"
+		]];
 	return _ODBAppIdentifiers;
 }
 

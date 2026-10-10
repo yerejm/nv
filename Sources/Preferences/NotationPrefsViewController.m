@@ -246,8 +246,7 @@
 		
 		if ([notationPrefs indexOfChosenPathExtension] == (unsigned int)rowIndex) {
 			return [[NSAttributedString alloc] initWithString:extension attributes:
-					[NSDictionary dictionaryWithObjectsAndKeys:
-					 [NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]], NSFontAttributeName, nil]];
+					@{NSFontAttributeName: [NSFont boldSystemFontOfSize:[NSFont smallSystemFontSize]]}];
 		}
 		return extension;
 			

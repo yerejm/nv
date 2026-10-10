@@ -30,7 +30,7 @@ sources.extend(ROOT / 'Tests' / filename for filename in [
     'Application/NativeActivationTests.m', 'Application/PasteboardImportTests.m',
     'Integrations/AcceptanceEditorTests.m', 'Integrations/EditingSpaceTests.m',
     'Preferences/ShortcutRecorderTests.m', 'Notes/Model/PreviewTruncationTests.m',
-    'Resources/LocalizedLayoutTests.m', 'NoteList/LabelImageTests.m', 'NoteList/DualFieldTrackingTests.m',
+    'Resources/LocalizedLayoutTests.m', 'NoteList/LabelImageTests.m', 'NoteList/DualFieldTrackingTests.m', 'NoteList/BookmarkTests.m',
     'Support/CompiledNib.m', 'Support/AcceptanceEditorSession.m'])
 objects = {}
 

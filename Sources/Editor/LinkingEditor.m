@@ -161,7 +161,7 @@
 
 	[self setTypingAttributes:[prefsController noteBodyAttributes]];
 
-	[self performSelector:@selector(_fixCursorForBackgroundUpdatingMouseInside:) withObject:[NSNumber numberWithBool:YES] afterDelay:0.0];
+	[self performSelector:@selector(_fixCursorForBackgroundUpdatingMouseInside:) withObject:@YES afterDelay:0.0];
 
 	return [super becomeFirstResponder];
 }
@@ -196,7 +196,7 @@
 }
 
 - (BOOL)resignFirstResponder {
-	[self performSelector:@selector(_fixCursorForBackgroundUpdatingMouseInside:) withObject:[NSNumber numberWithBool:YES] afterDelay:0.0];
+	[self performSelector:@selector(_fixCursorForBackgroundUpdatingMouseInside:) withObject:@YES afterDelay:0.0];
 
 	return [super resignFirstResponder];
 }
@@ -216,7 +216,7 @@
 		//system text colors get the dynamic selection color so it follows the appearance and accent color
 		NSColor *selectionColor = [prefsController colorScheme] == 0 ? [NSColor selectedTextBackgroundColor] :
 			[self _selectionColorForForegroundColor:fgColor backgroundColor:bgColor];
-		[self setSelectedTextAttributes:[NSDictionary dictionaryWithObject:selectionColor forKey:NSBackgroundColorAttributeName]];
+		[self setSelectedTextAttributes:@{NSBackgroundColorAttributeName: selectionColor}];
 	}];
 }
 
@@ -319,7 +319,7 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 
 - (NSDictionary*)preferredLinkAttributes {
 	if (![prefsController URLsAreClickable])
-		return [NSDictionary dictionary];
+		return @{};
 	
 	NSColor *fgColor = [prefsController foregroundTextColor];
 	NSColor *bgColor = [prefsController backgroundTextColor];
@@ -327,10 +327,11 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 	NSColor *linkColor = [fgColor type] == NSColorTypeCatalog && [bgColor type] == NSColorTypeCatalog ? [NSColor linkColor] :
 		[self _linkColorForForegroundColor:fgColor backgroundColor:bgColor];
 	
-	return [NSDictionary dictionaryWithObjectsAndKeys:
-			[NSCursor pointingHandCursor], NSCursorAttributeName,
-			[NSNumber numberWithInt:NSUnderlineStyleSingle], NSUnderlineStyleAttributeName,
-			linkColor, NSForegroundColorAttributeName, nil];
+	return @{
+		NSCursorAttributeName: [NSCursor pointingHandCursor],
+		NSUnderlineStyleAttributeName: @(NSUnderlineStyleSingle),
+		NSForegroundColorAttributeName: linkColor
+	};
 }
 
 
@@ -434,7 +435,7 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 }
 
 - (NSArray *)readablePasteboardTypes {
-	NSMutableArray *types = [NSMutableArray arrayWithObjects:NSPasteboardTypeFileURL, NVPTFPboardType, NSPasteboardTypeString, nil];
+	NSMutableArray *types = [@[NSPasteboardTypeFileURL, NVPTFPboardType, NSPasteboardTypeString] mutableCopy];
 	
 	if ([prefsController pastePreservesStyle]) {
 		[types insertObject:NSPasteboardTypeRTF atIndex:2];
@@ -463,7 +464,7 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 }
 
 - (NSArray *)writablePasteboardTypes {
-	NSMutableArray *types = [NSMutableArray arrayWithObjects:NVPTFPboardType, NSPasteboardTypeString, nil];
+	NSMutableArray *types = [@[NVPTFPboardType, NSPasteboardTypeString] mutableCopy];
 	
 	NSRange selectedRange = [self selectedRange];
 	if (selectedRange.length) {
@@ -508,7 +509,7 @@ copyRTFType:
 - (void)strikethroughNV:(id)sender {
 
 	[self applyStyleOfTrait:0 alternateAttributeName:NSStrikethroughStyleAttributeName 
-	alternateAttributeValue:[NSNumber numberWithInt:NSUnderlineStyleSingle]];
+	alternateAttributeValue:@(NSUnderlineStyleSingle)];
 	
 	[[self undoManager] setActionName:NSLocalizedString(@"Strikethrough",nil)];
 }
@@ -517,13 +518,13 @@ copyRTFType:
 #define OBLIQUENESS_FOR_ITALIC (0.20)
 - (void)bold:(id)sender {	
 	[self applyStyleOfTrait:NSBoldFontMask alternateAttributeName:NSStrokeWidthAttributeName 
-	alternateAttributeValue:[NSNumber numberWithFloat:STROKE_WIDTH_FOR_BOLD]];	
+	alternateAttributeValue:@((float)STROKE_WIDTH_FOR_BOLD)];	
 	
 	[[self undoManager] setActionName:NSLocalizedString(@"Bold",nil)];
 }
 - (void)italic:(id)sender {
 	[self applyStyleOfTrait:NSItalicFontMask alternateAttributeName:NSObliquenessAttributeName 
-	alternateAttributeValue:[NSNumber numberWithFloat:OBLIQUENESS_FOR_ITALIC]];	
+	alternateAttributeValue:@((float)OBLIQUENESS_FOR_ITALIC)];	
 	
 	[[self undoManager] setActionName:NSLocalizedString(@"Italic",nil)];
 }
@@ -1038,7 +1039,7 @@ static BOOL NVFindActionSelectsNote(NSInteger action) {
 
 //hiding or showing the view does not always produce mouseEntered/Exited events
 - (void)viewDidUnhide {
-	[self performSelector:@selector(_fixCursorForBackgroundUpdatingMouseInside:) withObject:[NSNumber numberWithBool:YES] afterDelay:0.0];
+	[self performSelector:@selector(_fixCursorForBackgroundUpdatingMouseInside:) withObject:@YES afterDelay:0.0];
 
 	[super viewDidUnhide];
 }
@@ -1311,7 +1312,7 @@ cancelCompetion:
 			if ([[self typingAttributes] attributesHaveFontTrait:NSBoldFontMask orAttribute:NSStrokeWidthAttributeName]) {
 				[newTypingAttributes applyStyleInverted:NO trait:NSBoldFontMask forFont:currentFont 
 								 alternateAttributeName:NSStrokeWidthAttributeName 
-								alternateAttributeValue:[NSNumber numberWithFloat:STROKE_WIDTH_FOR_BOLD]];
+								alternateAttributeValue:@((float)STROKE_WIDTH_FOR_BOLD)];
 				
 				currentFont = [newTypingAttributes objectForKey:NSFontAttributeName];
 			}
@@ -1319,7 +1320,7 @@ cancelCompetion:
 			if ([[self typingAttributes] attributesHaveFontTrait:NSItalicFontMask orAttribute:NSObliquenessAttributeName]) {
 				[newTypingAttributes applyStyleInverted:NO trait:NSItalicFontMask forFont:currentFont 
 								 alternateAttributeName:NSObliquenessAttributeName 
-								alternateAttributeValue:[NSNumber numberWithFloat:OBLIQUENESS_FOR_ITALIC]];	
+								alternateAttributeValue:@((float)OBLIQUENESS_FOR_ITALIC)];	
 			}
 			[self setTypingAttributes:newTypingAttributes];
 		}
@@ -1397,7 +1398,7 @@ cancelCompetion:
 			} else {
 				[self insertText:previousLineWhitespaceString replacementRange:[self selectedRange]];
 				if (carriedBulletRange.length) {
-					[[self layoutManager] addTemporaryAttributes:[NSDictionary dictionaryWithObject:[NSNull null] forKey:NVHiddenBulletIndentAttributeName] 
+					[[self layoutManager] addTemporaryAttributes:@{NVHiddenBulletIndentAttributeName: [NSNull null]} 
 											   forCharacterRange:carriedBulletRange];
 				}
 			}
@@ -1506,7 +1507,7 @@ cancelCompetion:
     NSPasteboard *pb = [NSPasteboard generalPasteboard];
     NSPasteboardItem *pbitem = [[NSPasteboardItem alloc] init];
     [pbitem setData:[password dataUsingEncoding:NSUTF8StringEncoding] forType:@"public.plain-text"];
-    [pb writeObjects:[NSArray arrayWithObject:pbitem]];
+    [pb writeObjects:@[pbitem]];
     } @catch (NSException *e) {}
 }
 

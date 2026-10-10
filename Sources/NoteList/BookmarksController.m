@@ -96,8 +96,10 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 	return noteObject;
 }
 - (NSDictionary*)dictionaryRep {
-	return [NSDictionary dictionaryWithObjectsAndKeys:searchString, BMSearchStringKey, 
-		[NSString uuidStringWithBytes:uuidBytes], BMNoteUUIDStringKey, nil];
+	return @{
+		BMSearchStringKey: searchString ?: @"",
+		BMNoteUUIDStringKey: [NSString uuidStringWithBytes:uuidBytes]
+	};
 }
 
 - (NSString *)description {
@@ -150,7 +152,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 	[bookmarksTableView setTarget:self];
 	[bookmarksTableView setDoubleAction:@selector(doubleClicked:)];
 	
-	[bookmarksTableView registerForDraggedTypes:[NSArray arrayWithObjects:MovedBookmarksType, nil]];
+	[bookmarksTableView registerForDraggedTypes:@[MovedBookmarksType]];
 	[bookmarksTableView setBackgroundColor:[NSColor controlBackgroundColor]];
 	NVUseSymbolForListButton(addBookmarkButton, @"plus");
 	NVUseSymbolForListButton(removeBookmarkButton, @"minus");

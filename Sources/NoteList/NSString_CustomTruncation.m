@@ -65,13 +65,13 @@ static NSMutableParagraphStyle *LineBreakingStyle(void) {
 
 static NSDictionary *GrayTextAttributes(void) {
 	static NSDictionary *grayTextAttributes = nil;
-	if (!grayTextAttributes) grayTextAttributes = [NSDictionary dictionaryWithObjectsAndKeys:[NSColor secondaryLabelColor], NSForegroundColorAttributeName, nil];
+	if (!grayTextAttributes) grayTextAttributes = @{NSForegroundColorAttributeName: [NSColor secondaryLabelColor]};
 	return grayTextAttributes;
 }
 
 static NSDictionary *LineTruncAttributes(void) {
 	static NSDictionary *lineTruncAttributes = nil;
-	if (!lineTruncAttributes) lineTruncAttributes = [NSDictionary dictionaryWithObjectsAndKeys:LineBreakingStyle(), NSParagraphStyleAttributeName, nil];
+	if (!lineTruncAttributes) lineTruncAttributes = @{NSParagraphStyleAttributeName: LineBreakingStyle()};
 	return lineTruncAttributes;
 }
 
@@ -83,8 +83,10 @@ NSDictionary *LineTruncAttributesForTitle(void) {
 		BOOL usesBold = ColumnIsSet(NoteLabelsColumn, bitmap) || ColumnIsSet(NoteDateCreatedColumn, bitmap) ||
 		ColumnIsSet(NoteDateModifiedColumn, bitmap) || [prefs tableColumnsShowPreview];
 		
-		titleTruncAttrs = [NSMutableDictionary dictionaryWithObjectsAndKeys:[LineBreakingStyle() mutableCopy], NSParagraphStyleAttributeName,
-							(usesBold ? [NSFont boldSystemFontOfSize:fontSize] : [NSFont systemFontOfSize:fontSize]), NSFontAttributeName, nil];
+		titleTruncAttrs = [@{
+			NSParagraphStyleAttributeName: [LineBreakingStyle() mutableCopy],
+			NSFontAttributeName: (usesBold ? [NSFont boldSystemFontOfSize:fontSize] : [NSFont systemFontOfSize:fontSize])
+		} mutableCopy];
 		
 		if (ColumnIsSet(NoteDateCreatedColumn, bitmap) || ColumnIsSet(NoteDateModifiedColumn, bitmap)) {
 			//account for right-"aligned" date string, which will be relatively constant, so this can be cached
@@ -120,8 +122,10 @@ static NSUInteger PreviewCharacterLimitForWidth(CGFloat width) {
 	//title is black (no added colors) and truncated with LineTruncAttributesForTitle()
 	//body is gray and truncated with a variable tail indent, depending on intruding tags
 	
-	NSDictionary *bodyTruncDict = [NSDictionary dictionaryWithObjectsAndKeys:[LineBreakingStyle() mutableCopy], 
-								   NSParagraphStyleAttributeName, [[GlobalPrefs defaultPrefs] interfaceSecondaryColor], NSForegroundColorAttributeName, nil];
+	NSDictionary *bodyTruncDict = @{
+		NSParagraphStyleAttributeName: [LineBreakingStyle() mutableCopy],
+		NSForegroundColorAttributeName: [[GlobalPrefs defaultPrefs] interfaceSecondaryColor]
+	};
 	//set word-wrapping to let -[NSCell setTruncatesLastVisibleLine:] work
 	[[bodyTruncDict objectForKey:NSParagraphStyleAttributeName] setLineBreakMode:NSLineBreakByWordWrapping];
 	

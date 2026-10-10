@@ -577,7 +577,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 - (NSAttributedString*)printableStringRelativeToBodyFont:(NSFont*)bodyFont {
 	NSFont *titleFont = [[NSFontManager sharedFontManager] convertFont:bodyFont toSize:[bodyFont pointSize] + 6.0f];
 	
-	NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:titleFont, NSFontAttributeName, nil];
+	NSDictionary *dict = titleFont ? @{NSFontAttributeName: titleFont} : nil;
 	
 	NSMutableAttributedString *largeAttributedTitleString = [[NSMutableAttributedString alloc] initWithString:titleString attributes:dict];
 	
@@ -1037,8 +1037,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 		case HTMLFormat:
 			//export to HTML document here using NSHTMLTextDocumentType;
 			formattedData = [contentString dataFromRange:NSMakeRange(0, [contentString length]) 
-									  documentAttributes:[NSDictionary dictionaryWithObject:NSHTMLTextDocumentType 
-																					 forKey:NSDocumentTypeDocumentAttribute] error:&error];
+									  documentAttributes:@{NSDocumentTypeDocumentAttribute: NSHTMLTextDocumentType} error:&error];
 			//our links will always be to filenames, so hopefully we shouldn't have to change anything
 			break;
 		default:
@@ -1423,16 +1422,14 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 			break;
 		case HTMLFormat:
 			formattedData = [contentMinusColor dataFromRange:NSMakeRange(0, [contentMinusColor length]) 
-									  documentAttributes:[NSDictionary dictionaryWithObject:NSHTMLTextDocumentType 
-																					 forKey:NSDocumentTypeDocumentAttribute] error:&error];
+									  documentAttributes:@{NSDocumentTypeDocumentAttribute: NSHTMLTextDocumentType} error:&error];
 			break;
 		case WordDocFormat:
 			formattedData = [contentMinusColor docFormatFromRange:NSMakeRange(0, [contentMinusColor length]) documentAttributes:@{}];
 			break;
 		case WordXMLFormat:
 			formattedData = [contentMinusColor dataFromRange:NSMakeRange(0, [contentMinusColor length]) 
-									  documentAttributes:[NSDictionary dictionaryWithObject:NSWordMLTextDocumentType 
-																					 forKey:NSDocumentTypeDocumentAttribute] error:&error];
+									  documentAttributes:@{NSDocumentTypeDocumentAttribute: NSWordMLTextDocumentType} error:&error];
 			break;
 		default:
 			NSLog(@"Attempted to export using unknown format ID: %d", storageFormat);

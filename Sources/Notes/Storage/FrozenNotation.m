@@ -38,7 +38,7 @@
 	if ([decoder containsValueForKey:VAR_STR(prefs)]) {
 		prefs = [decoder decodeObjectOfClass:[NotationPrefs class] forKey:VAR_STR(prefs)];
 		notesData = [decoder decodeObjectOfClass:[NSMutableData class] forKey:VAR_STR(notesData)];
-		deletedNoteSet = [NVDecodeObjectOfClasses(decoder, [NSSet setWithObjects:[NSSet class], [DeletedNoteObject class], nil],
+		deletedNoteSet = [NVDecodeObjectOfClasses(decoder, [NSSet setWithArray:@[[NSSet class], [DeletedNoteObject class]]],
 												  [NSSet class], VAR_STR(deletedNoteSet)) mutableCopy];
 	} else {
 		NSLog(@"FrozenNotation: decoding legacy %@", decoder);

@@ -129,8 +129,11 @@
 	}
 
 	NSFont *font = [prefsController noteBodyFont];
-	NSDictionary *attributes = [NSDictionary dictionaryWithObjectsAndKeys:font ? font : [NSFont systemFontOfSize:12.0],
-		NSFontAttributeName, [NSColor textColor], NSForegroundColorAttributeName, centerStyle, NSParagraphStyleAttributeName, nil];
+	NSDictionary *attributes = @{
+		NSFontAttributeName: font ? font : [NSFont systemFontOfSize:12.0],
+		NSForegroundColorAttributeName: [NSColor textColor],
+		NSParagraphStyleAttributeName: centerStyle
+	};
 
 	NSString *fontNameAndSize = font ? [NSString stringWithFormat:@"%@ %g", [font displayName], [font pointSize]] : NSLocalizedString(@"Unknown", @"font preview when no note font is set");
 	NSAttributedString *attributedString = [[NSAttributedString alloc] initWithString:fontNameAndSize attributes:attributes];
@@ -534,7 +537,7 @@
 }
 
 - (NSArray *)toolbarDefaultItemIdentifiers:(NSToolbar*)theToolbar {
-    return [NSArray arrayWithObjects:@"General", @"Notes", @"Editing", @"Fonts & Colors", @"Display", @"Writing", @"Desktop", nil];
+    return @[@"General", @"Notes", @"Editing", @"Fonts & Colors", @"Display", @"Writing", @"Desktop"];
 }
 
 - (NSArray *)toolbarSelectableItemIdentifiers: (NSToolbar *)toolbar {

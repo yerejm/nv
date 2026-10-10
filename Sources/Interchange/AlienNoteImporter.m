@@ -253,7 +253,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 				NoteObject *noteObject = [[NoteObject alloc] initWithNoteBody:newString title:[getter userData] ? [getter userData] : urlString
 																	 delegate:nil format:SingleDatabaseFormat labels:nil];
 
-				[receptionDelegate noteImporter:self importedNotes:[NSArray arrayWithObject:noteObject]];
+				[receptionDelegate noteImporter:self importedNotes:@[noteObject]];
 			}
 		}
 
@@ -463,7 +463,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 	} else {
 		NoteObject *note = [self noteWithFile:filename];
 		if (note)
-			return [NSArray arrayWithObject:note];
+			return @[note];
 	}
 	return nil;
 }
@@ -526,7 +526,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 		return nil;
 	}
 	
-	[documentSettings setObject:[NSNumber numberWithBool:[retriever canRetrieveFromKeychain]]
+	[documentSettings setObject:@([retriever canRetrieveFromKeychain])
 						 forKey:PasswordWasRetrievedFromKeychainKey];
 	[documentSettings setObject:[retriever originalPasswordString] forKey:RetrievedPasswordKey];
 	
