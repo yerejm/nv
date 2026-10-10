@@ -136,7 +136,6 @@
 	if ([updatedSelectionsArray count] > 0) {
 		[textView setSelectedRanges:updatedSelectionsArray];
 	}
-	[updatedSelectionsArray release];
 }
 
 - (IBAction)shiftRightAction:(id)sender {
@@ -219,8 +218,6 @@
 	if ([updatedSelectionsArray count] > 0) {
 		[textView setSelectedRanges:updatedSelectionsArray];
 	}
-	[replacementString release];
-	[updatedSelectionsArray release];
 }
 
 
