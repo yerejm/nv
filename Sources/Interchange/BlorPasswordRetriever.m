@@ -33,13 +33,13 @@
 
 - (id)initWithBlor:(NSString*)blorPath {
 	if ((self = [super init])) {
-		path = [blorPath retain];
+		path = blorPath;
 		
 		couldRetrieveFromKeychain = NO;
 		
 		//read hash (first 20 bytes) of file
 		NSFileHandle *handle = [NSFileHandle fileHandleForReadingAtPath:path];
-		hashData = [[handle readDataUpToLength:20 error:NULL] retain];
+		hashData = [handle readDataUpToLength:20 error:NULL];
 		
 		[handle closeAndReturnError:NULL];
 		
@@ -77,18 +77,17 @@
 - (NSData *)keychainPasswordData {
     NSString *account = [[path stringByAbbreviatingWithTildeInPath] lowercaseString];
     if ([account length] > 255) account = [account substringToIndex:255];
-    NSDictionary *query = @{(id)kSecClass: (id)kSecClassGenericPassword,
-                            (id)kSecAttrService: @"NV",
-                            (id)kSecAttrAccount: account,
-                            (id)kSecReturnData: @YES};
+    NSDictionary *query = @{(__bridge id)kSecClass: (__bridge id)kSecClassGenericPassword,
+                            (__bridge id)kSecAttrService: @"NV",
+                            (__bridge id)kSecAttrAccount: account,
+                            (__bridge id)kSecReturnData: @YES};
     CFTypeRef data = NULL;
-    if (SecItemCopyMatching((CFDictionaryRef)query, &data) != errSecSuccess) return nil;
-    return [(NSData *)data autorelease];
+    if (SecItemCopyMatching((__bridge CFDictionaryRef)query, &data) != errSecSuccess) return nil;
+    return CFBridgingRelease(data);
 }
 
 - (NSData*)validPasswordHashData {
 	
-	[originalPasswordString release];
 	originalPasswordString = nil;
 	
 	//try to get PW from keychain. if that fails, request from user
@@ -151,11 +150,7 @@
 
 - (void)dealloc {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
-	[hashData release];
-	[path release];
-	[originalPasswordString release];
 	
-	[super dealloc];
 }
 
 @end
@@ -165,12 +160,12 @@
 
 - (id)initWithBlor:(NSString*)blorPath passwordHashData:(NSData*)passwordHashData {
 	if ((self = [super init])) {
-		path = [blorPath retain];
+		path = blorPath;
 		
-		if (!(keyData = [passwordHashData retain]))
+		if (!(keyData = passwordHashData))
 			return nil;
 		
-		if (!(blorData = [[NSMutableData dataWithContentsOfFile:path] retain]))
+		if (!(blorData = [NSMutableData dataWithContentsOfFile:path]))
 			return nil;
 			
 		if ([blorData length] < 28) {
@@ -186,13 +181,6 @@
 	}
 	
 	return self;
-}
-
-- (void)dealloc {
-	[blorData release];
-	[keyData release];
-	
-	[super dealloc];
 }
 
 - (void)decryptNextBytesOfLength:(long)length {
@@ -268,11 +256,7 @@
 	[attributedBody addAttributesForMarkdownHeadingLinesInRange:NSMakeRange(0, [attributedBody length])];
 	NoteObject *note = [[NoteObject alloc] initWithNoteBody:attributedBody title:titleString delegate:nil format:SingleDatabaseFormat labels:nil];
 
-	[bodyString release];
-	[attributedBody release];
-	[titleString release];
-	
-	return [note autorelease];
+	return note;
 }
 
 @end

@@ -1683,6 +1683,11 @@
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000029</string>
+			<key>settings</key>
+			<dict>
+				<key>COMPILER_FLAGS</key>
+				<string>-fobjc-arc</string>
+			</dict>
 		</dict>
 		<key>00000000000000000000008D</key>
 		<dict>
@@ -1774,6 +1779,11 @@
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000031</string>
+			<key>settings</key>
+			<dict>
+				<key>COMPILER_FLAGS</key>
+				<string>-fobjc-arc</string>
+			</dict>
 		</dict>
 		<key>000000000000000000000095</key>
 		<dict>
@@ -1781,6 +1791,11 @@
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000032</string>
+			<key>settings</key>
+			<dict>
+				<key>COMPILER_FLAGS</key>
+				<string>-fobjc-arc</string>
+			</dict>
 		</dict>
 		<key>000000000000000000000096</key>
 		<dict>
@@ -1800,6 +1815,11 @@
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000034</string>
+			<key>settings</key>
+			<dict>
+				<key>COMPILER_FLAGS</key>
+				<string>-fobjc-arc</string>
+			</dict>
 		</dict>
 		<key>000000000000000000000098</key>
 		<dict>
@@ -1840,6 +1860,11 @@
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>000000000000000000000039</string>
+			<key>settings</key>
+			<dict>
+				<key>COMPILER_FLAGS</key>
+				<string>-fobjc-arc</string>
+			</dict>
 		</dict>
 		<key>00000000000000000000009D</key>
 		<dict>
@@ -1859,6 +1884,11 @@
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>00000000000000000000003B</string>
+			<key>settings</key>
+			<dict>
+				<key>COMPILER_FLAGS</key>
+				<string>-fobjc-arc</string>
+			</dict>
 		</dict>
 		<key>00000000000000000000009F</key>
 		<dict>

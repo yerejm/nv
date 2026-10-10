@@ -51,7 +51,7 @@
 }
 
 - (void)exportPanelDidEnd:(NSSavePanel *)sheet returnCode:(NSModalResponse)returnCode contextInfo:(void  *)contextInfo {
-	NSArray *notes = (NSArray *)contextInfo;
+	NSArray *notes = (__bridge_transfer NSArray *)contextInfo;
 	if (returnCode == NSModalResponseOK && notes) {
 		//write notes in chosen format
 		unsigned int i;
@@ -78,9 +78,8 @@
 		}
 		
 		NVFileReference directoryRef;
-		CFURLRef url = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (CFStringRef)directory, kCFURLPOSIXPathStyle, true);
-		[(id)url autorelease];
-		if (!url || !NVURLGetFileReference(url, &directoryRef)) {
+		NSURL *url = CFBridgingRelease(CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (__bridge CFStringRef)directory, kCFURLPOSIXPathStyle, true));
+		if (!url || !NVURLGetFileReference((__bridge CFURLRef)url, &directoryRef)) {
 			NVRunAlert(NSAlertStyleWarning, [NSString stringWithFormat:NSLocalizedString(@"The notes couldn't be exported because the directory quotemark%@quotemark couldn't be accessed.",nil),
 				[directory stringByAbbreviatingWithTildeInPath]], @"", NSLocalizedString(@"OK",nil), nil, nil);
 			return;
@@ -120,8 +119,6 @@
 
 		
 	}
-    [notes release];
-    [exportPanel release];
     exportPanel = nil;
 }
 
@@ -138,7 +135,7 @@
 	
 	if ([notes count] == 1) {
 		NSSavePanel *savePanel = [NSSavePanel savePanel];
-        exportPanel = [savePanel retain];
+        exportPanel = savePanel;
 		[savePanel setAccessoryView:accessoryView];
 		[savePanel setCanCreateDirectories:YES];
 		[savePanel setCanSelectHiddenExtension:YES];
@@ -150,7 +147,7 @@
 		filename = [filename stringByAppendingPathExtension:[NotationPrefs pathExtensionForFormat:(int)[[formatSelectorPopup selectedItem] tag]]];
 			
 		[savePanel setNameFieldStringValue:filename];
-        NVBeginPanel(savePanel, window, self, @selector(exportPanelDidEnd:returnCode:contextInfo:), (void *)[notes retain]);
+        NVBeginPanel(savePanel, window, self, @selector(exportPanelDidEnd:returnCode:contextInfo:), (__bridge_retained void *)notes);
 		
 	} else if ([notes count] > 1) {
 		NSOpenPanel *openPanel = [NSOpenPanel openPanel];
@@ -162,7 +159,7 @@
 		[openPanel setTitle:NSLocalizedString(@"Export Notes", @"title of export notes dialog")];
 		[openPanel setMessage:NVFormatCount(NSLocalizedString(@"Choose a folder into which %d notes will be exported",nil), [notes count])];
 
-		NVBeginPanel(openPanel, window, self, @selector(exportPanelDidEnd:returnCode:contextInfo:), (void *)[notes retain]);
+		NVBeginPanel(openPanel, window, self, @selector(exportPanelDidEnd:returnCode:contextInfo:), (__bridge_retained void *)notes);
 	} else {
 		NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"No notes were selected for exporting.",nil), NSLocalizedString(@"You must select at least one note to export.",nil), NSLocalizedString(@"OK",nil), NULL, NULL);
 	}

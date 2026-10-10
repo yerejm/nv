@@ -37,7 +37,7 @@
 	
 	id userData;
 	
-	id delegate;
+	id delegate; //retained until the download ends, so the delegate needs no other owner
 	
 	BOOL isIndicating, isImporting;
 	

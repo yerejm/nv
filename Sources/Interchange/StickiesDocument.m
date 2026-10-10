@@ -25,15 +25,6 @@
 
 @implementation StickiesDocument
 
-- (void)dealloc {
-	
-	[mRTFDData release];
-	[mCreationDate release];
-	[mModificationDate release];
-	
-	[super dealloc];
-}
-
 - (id)initWithCoder:(id)decoder {
 	if (!(self = [super init]))
 		return nil;
@@ -41,12 +32,12 @@
 	//the window fields are only read past to reach the dates
 	int windowFlags, windowColor;
 	NSRect32 windowFrame;
-	mRTFDData = [[decoder decodeObject] retain];
+	mRTFDData = [decoder decodeObject];
 	[decoder decodeValueOfObjCType:@encode(int) at:&windowFlags size:sizeof(windowFlags)];
 	[decoder decodeValueOfObjCType:"{_NSRect={_NSPoint=ff}{_NSSize=ff}}" at:&windowFrame size:sizeof(windowFrame)];
 	[decoder decodeValueOfObjCType:@encode(int) at:&windowColor size:sizeof(windowColor)];
-	mCreationDate = [[decoder decodeObject] retain];
-	mModificationDate = [[decoder decodeObject] retain];
+	mCreationDate = [decoder decodeObject];
+	mModificationDate = [decoder decodeObject];
 	
 	return self;
 }

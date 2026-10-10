@@ -27,28 +27,17 @@
 		maxExpectedByteCount = 0;
 		isImporting = isIndicating = NO;
 		delegate = aDelegate;
-		url = [aUrl retain];
-		userData = [someObj retain];
+		url = aUrl;
+		userData = someObj;
 		
-		session = [[NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration ephemeralSessionConfiguration] delegate:self delegateQueue:[NSOperationQueue mainQueue]] retain];
-        downloader = [[session downloadTaskWithURL:url] retain];
+		session = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration ephemeralSessionConfiguration] delegate:self delegateQueue:[NSOperationQueue mainQueue]];
+        downloader = [session downloadTaskWithURL:url];
         [downloader resume];
 		
 		[self startProgressIndication:self];
 	}
 	
 	return self;
-}
-
-- (void)dealloc {
-	[downloader release];
-    [session release];
-    [downloadError release];
-	[downloadPath release];
-	[url release];
-	[userData release];
-	
-	[super dealloc];
 }
 
 - (NSURL*)url {
@@ -120,15 +109,15 @@
 
 - (void)URLSession:(NSURLSession *)aSession downloadTask:(NSURLSessionDownloadTask *)task didFinishDownloadingToURL:(NSURL *)location {
     if (finished) return;
-    tempDirectory = [[NSTemporaryDirectory() stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]] retain];
+    tempDirectory = [NSTemporaryDirectory() stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]];
     NSError *error = nil;
     NSFileManager *manager = [NSFileManager defaultManager];
     NSString *name = [[[task response] suggestedFilename] lastPathComponent];
     if (![name length] || [name isEqualToString:@"."] || [name isEqualToString:@".."]) name = @"download";
-    downloadPath = [[tempDirectory stringByAppendingPathComponent:name] retain];
+    downloadPath = [tempDirectory stringByAppendingPathComponent:name];
     if (![manager createDirectoryAtPath:tempDirectory withIntermediateDirectories:NO attributes:nil error:&error] ||
         ![manager moveItemAtURL:location toURL:[NSURL fileURLWithPath:downloadPath] error:&error]) {
-        downloadError = [error retain];
+        downloadError = error;
     }
 }
 
@@ -151,14 +140,13 @@
 	isImporting = YES;
 	[self updateProgress];
 	
-	[self retain];
 	[delegate URLGetter:self returnedDownloadedFile:path];
+	delegate = nil;
 	
 	//clean up after ourselves
 	NSFileManager *fileMan = [NSFileManager defaultManager];
 	if (downloadPath) {
 		[fileMan removeItemAtPath:downloadPath error:NULL];
-		[downloadPath release];
 		downloadPath = nil;
 	}
 	
@@ -168,13 +156,10 @@
 			[fileMan removeItemAtPath:tempDirectory error:NULL];
 		else
 			NSLog(@"note removing %@ because it still contains files!", tempDirectory);
-		[tempDirectory release];
 		tempDirectory = nil;
 	}
 	
 	[self stopProgressIndication];
-	
-	[self release];
 }
 
 - (NSString*)downloadPath {
