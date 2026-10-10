@@ -47,7 +47,7 @@ NSString *ExternalEditorsChangedNotification = @"ExternalEditorsChanged";
 		NSAssert(resolvedURL || bundleIdentifier, @"the bundle identifier and URL cannot both be nil");
 		if (!bundleIdentifier) {
 			if (!(bundleIdentifier = [[[NSBundle bundleWithPath:[aURL path]] bundleIdentifier] copy])) {
-				NSLog(@"initWithBundleID:resolvedURL: URL does not seem to point to a valid bundle");
+				os_log_error(NVLogExternalEditing(), "initWithBundleID:resolvedURL: URL does not seem to point to a valid bundle");
 				return nil;
 			}
 		}
@@ -86,7 +86,7 @@ NSString *ExternalEditorsChangedNotification = @"ExternalEditorsChanged";
 		Boolean canAccept = false;
 		OSStatus err = LSCanURLAcceptURL((__bridge CFURLRef)[NSURL fileURLWithPath:path], (__bridge CFURLRef)[self resolvedURL], kLSRolesEditor, kLSAcceptAllowLoginUI, &canAccept);
 		if (noErr != err) {
-			NSLog(@"LSCanURLAcceptURL '%@' err: %d", path, err);
+			os_log_error(NVLogExternalEditing(), "LSCanURLAcceptURL '%@' err: %d", path, err);
 		}
 		[knownPathExtensions setObject:@((BOOL)canAccept) forKey:extension];
 		
@@ -282,7 +282,7 @@ static ExternalEditorListController* sharedInstance = nil;
 	return;
 errorReturn:
 	NSBeep();
-	NSLog(@"Unable to add external editor");
+	os_log_error(NVLogExternalEditing(), "Unable to add external editor");
 }
 
 - (void)resetUserEditors:(id)sender {

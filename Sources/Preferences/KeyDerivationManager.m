@@ -55,7 +55,7 @@
 	if ((self = [super init])) {
 		if (!view) {
 			if (!NVLoadNib(@"KeyDerivationManager", self))  {
-				NSLog(@"Failed to load KeyDerivationManager.nib");
+				os_log_error(NVLogPreferences(), "Failed to load KeyDerivationManager.nib");
 				NSBeep();
 				return nil;
 			}

@@ -71,11 +71,11 @@ BOOL NVTimingSafeEqualData(NSData *a, NSData *b) {
             NSSwapHostIntToBig((unsigned int)[self length]);
 			[newData setLength:bufferLength + sizeof(unsigned)];
 		} else {
-			NSLog(@"error compressing: %s", zError(zlibError));
+			os_log_error(NVLogStorage(), "error compressing: %{public}s", zError(zlibError));
 			newData = nil;
 		}
 	} else
-		NSLog(@"error compressing: couldn't allocate memory");
+		os_log_error(NVLogStorage(), "error compressing: couldn't allocate memory");
 	
 	return newData;
 }
@@ -100,7 +100,7 @@ BOOL NVTimingSafeEqualData(NSData *a, NSData *b) {
 			newData = [ NSMutableData dataWithLength:originalSize ];
 		NS_HANDLER
 			if ([[localException name] isEqualToString:NSInvalidArgumentException] ) {
-				NSLog(@"error decompressing--bad size: %@", [localException reason]);
+				os_log_error(NVLogStorage(), "error decompressing--bad size: %@", [localException reason]);
 				NS_VALUERETURN( nil, NSMutableData * );
 			} else
 				[localException raise];   // This should NEVER happen...
@@ -110,14 +110,14 @@ BOOL NVTimingSafeEqualData(NSData *a, NSData *b) {
 			outSize = originalSize;
 			zlibError = uncompress([newData mutableBytes], &outSize, [self bytes], [self length] - sizeof(unsigned));
 			if( zlibError != Z_OK ) {
-				NSLog(@"decompression failed: %s", zError(zlibError));
+				os_log_error(NVLogStorage(), "decompression failed: %{public}s", zError(zlibError));
 				newData = nil;
 			} else if (originalSize != outSize)
-				NSLog(@"error decompressing: extracted size %lu does not match original of %u", outSize, originalSize);
+				os_log_error(NVLogStorage(), "error decompressing: extracted size %lu does not match original of %u", outSize, originalSize);
 		} else
-			NSLog(@"error allocating memory while decompressing");
+			os_log_error(NVLogStorage(), "error allocating memory while decompressing");
 	} else
-		NSLog(@"error decompressing: data does not seem to be compressed with zlib");
+		os_log_error(NVLogStorage(), "error decompressing: data does not seem to be compressed with zlib");
 	
 	return newData;
 }
@@ -148,7 +148,7 @@ BOOL NVTimingSafeEqualData(NSData *a, NSData *b) {
 + (NSMutableData *)randomDataOfLength:(int)len {
 	NSMutableData *randomData = [NSMutableData dataWithLength:len];
 	if (CCRandomGenerateBytes([randomData mutableBytes], len) != kCCSuccess) {
-		NSLog(@"error generating random data");
+		os_log_error(NVLogStorage(), "error generating random data");
 		return nil;
 	}
 	return randomData;

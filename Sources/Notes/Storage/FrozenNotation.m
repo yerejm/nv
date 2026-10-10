@@ -41,7 +41,7 @@
 		deletedNoteSet = [NVDecodeObjectOfClasses(decoder, [NSSet setWithArray:@[[NSSet class], [DeletedNoteObject class]]],
 												  [NSSet class], VAR_STR(deletedNoteSet)) mutableCopy];
 	} else {
-		NSLog(@"FrozenNotation: decoding legacy %@", decoder);
+		os_log_info(NVLogStorage(), "FrozenNotation: decoding legacy %@", decoder);
 		prefs = [decoder decodeObject];
 		notesData = [decoder decodeObject];
 		(void)[decoder decodeObject];
@@ -82,13 +82,13 @@
 			//we also want to have the salt reset here, but that requires knowing the original password
 			
 			if (![prefs encryptDataInNewSession:notesData]) {
-				NSLog(@"Couldn't encrypt data!");
+				os_log_error(NVLogStorage(), "Couldn't encrypt data!");
 				return nil;
 			}
 		}
 		
 		if (![notesData length]) {
-			NSLog(@"%s: empty notesData; returning nil", sel_getName(_cmd));
+			os_log_error(NVLogStorage(), "%{public}s: empty notesData; returning nil", sel_getName(_cmd));
 			return nil;
 		}
 	}
@@ -117,7 +117,7 @@
 	
 	@try {
 		if ([somePrefs doesEncryption] && (*err = [somePrefs decryptAndVerifyData:notesData]) != noErr) {
-			NSLog(@"Error decrypting data: %d", (int)*err);
+			os_log_error(NVLogStorage(), "Error decrypting data: %d", (int)*err);
 			return nil;
 		}
 		
@@ -125,7 +125,7 @@
 		
 		if (!notesData) {
 			*err = kCompressionErr;
-			NSLog(@"Error decompressing data");
+			os_log_error(NVLogStorage(), "Error decompressing data");
 			return nil;
 		}
 		NSKeyedUnarchiver *unarchiver = NVUnarchiverForData(notesData);
@@ -133,7 +133,7 @@
 		
 	} @catch (NSException *e) {
 		*err = kCoderErr;
-		NSLog(@"(VERIFY) Error unarchiving notes from data (%@, %@)", [e name], [e reason]);
+		os_log_error(NVLogStorage(), "(VERIFY) Error unarchiving notes from data (%{public}@, %@)", [e name], [e reason]);
 		return nil;
 	}
 	
@@ -168,7 +168,7 @@
 					//if result is 1, passphrase should already be loaded
 				}
 				if ((*err = [prefs decryptAndVerifyData:notesData]) != noErr) {
-					NSLog(@"Error decrypting data: %d", (int)*err);
+					os_log_error(NVLogStorage(), "Error decrypting data: %d", (int)*err);
 					return(nil);
 				}
 			}
@@ -178,7 +178,7 @@
 			
 			if (!notesData) {
 				*err = kCompressionErr;
-				NSLog(@"Error decompressing data");
+				os_log_error(NVLogStorage(), "Error decompressing data");
 				return(nil);
 			}
             @try {
@@ -191,7 +191,7 @@
             }
 		} @catch (NSException *e) {
 			*err = kCoderErr;
-			NSLog(@"Error unarchiving notes from data (%@, %@)", [e name], [e reason]);
+			os_log_error(NVLogStorage(), "Error unarchiving notes from data (%{public}@, %@)", [e name], [e reason]);
 			return(nil);
 		}
 	}

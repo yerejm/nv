@@ -126,7 +126,7 @@
 	
 	if (!accessoryView) {
 		if (!NVLoadNib(@"ExporterManager", self)) {
-			NSLog(@"Failed to load ExporterManager.nib");
+			os_log_error(NVLogImportExport(), "Failed to load ExporterManager.nib");
 			NSBeep();
 			return;
 		}

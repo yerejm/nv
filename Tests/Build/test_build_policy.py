@@ -18,7 +18,7 @@ class BuildPolicyTests(unittest.TestCase):
         literals, localized = set(), set()
         for path in (ROOT / 'Sources').rglob('*.[mhc]'):
             text = path.read_text(errors='replace')
-            literals.update(re.findall(r'@"((?:[^"\\]|\\.)*)"', text))
+            literals.update(value for prefix, value in re.findall(r'(@?)"((?:[^"\\]|\\.)*)"', text) if prefix)
             localized.update(re.findall(r'NSLocalizedString\(\s*@"((?:[^"\\]|\\.)*)"', text))
         for language in ('en', 'de', 'fr', 'it', 'pt', 'zh_CN'):
             data = (ROOT / 'Resources' / f'{language}.lproj' / 'Localizable.strings').read_bytes()
@@ -115,6 +115,15 @@ class BuildPolicyTests(unittest.TestCase):
         for path in sources:
             with self.subTest(path=str(path.relative_to(ROOT))):
                 self.assertEqual(carbon.findall(comments.sub('', path.read_text(errors='replace'))), [])
+
+    def test_sources_log_to_application_categories(self):
+        categories = set(re.findall(r'NV_LOG_CATEGORY\((\w+),', (ROOT / 'Sources/Support/NVLog.h').read_text()))
+        for directory in ['Sources', 'Vendor']:
+            for path in (ROOT / directory).rglob('*.[mhc]'):
+                text = path.read_text(errors='replace')
+                with self.subTest(path=str(path.relative_to(ROOT))):
+                    self.assertNotIn('NSLog(', text)
+                    self.assertEqual(set(re.findall(r'\bos_log(?:_[a-z]+)?\((\w+)\(\)', text)) - categories, set())
 
     def test_application_uses_hardened_runtime_with_apple_events_only(self):
         project = json.loads(subprocess.check_output([

@@ -39,11 +39,11 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 		if (uuidString) {
 			self = [self initWithNoteUUIDBytes:[uuidString uuidBytes] searchString:[aDict objectForKey:BMSearchStringKey]];
 		} else {
-			NSLog(@"NoteBookmark init: supplied nil uuidString");
+			os_log_error(NVLogNoteList(), "NoteBookmark init: supplied nil uuidString");
 			return nil;
 		}
 	} else {
-		NSLog(@"NoteBookmark init: supplied nil dictionary; couldn't init");
+		os_log_error(NVLogNoteList(), "NoteBookmark init: supplied nil dictionary; couldn't init");
 		return nil;
 	}
 	return self;
@@ -66,12 +66,12 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 		
 		CFUUIDBytes *bytes = [aNote uniqueNoteIDBytes];
 		if (!bytes) {
-			NSLog(@"NoteBookmark init: no cfuuidbytes pointer from note %@", titleOfNote(aNote));
+			os_log_error(NVLogNoteList(), "NoteBookmark init: no cfuuidbytes pointer from note %@", titleOfNote(aNote));
 			return nil;
 		}
 		uuidBytes = *bytes;
 	} else {
-		NSLog(@"NoteBookmark init: supplied nil note");
+		os_log_error(NVLogNoteList(), "NoteBookmark init: supplied nil note");
 		return nil;
 	}
 	return self;
@@ -457,7 +457,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 - (void)loadWindowIfNecessary {
 	if (!window) {
 		if (!NVLoadNib(@"SavedSearches", self))  {
-			NSLog(@"Failed to load SavedSearches.nib");
+			os_log_error(NVLogNoteList(), "Failed to load SavedSearches.nib");
 			NSBeep();
 			return;
 		}

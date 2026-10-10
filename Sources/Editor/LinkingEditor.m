@@ -592,7 +592,7 @@ copyRTFType:
 		if (range && range->length > 0 && range->location + range->length <= bodyLength) {
 			[[self layoutManager] addTemporaryAttributes:highlightDict forCharacterRange:*(NSRange*)range];
 		} else {
-			NSLog(@"highlightRangesTemporarily: Invalid range (%@)", range ? NSStringFromRange(*(NSRange*)range) : @"null");
+			os_log_error(NVLogEditor(), "highlightRangesTemporarily: Invalid range (%{public}@)", range ? NSStringFromRange(*(NSRange*)range) : @"null");
 		}
 	}
 }
@@ -632,7 +632,7 @@ copyRTFType:
 						}
 						[[self layoutManager] addTemporaryAttributes:highlightDict forCharacterRange:*(NSRange*)range];
 					} else {
-						NSLog(@"highlightTermsTemporarily: Invalid range (%@)", range ? NSStringFromRange(*(NSRange*)range) : @"?");
+						os_log_error(NVLogEditor(), "highlightTermsTemporarily: Invalid range (%{public}@)", range ? NSStringFromRange(*(NSRange*)range) : @"?");
 					}
 				}
 				CFRelease(ranges);

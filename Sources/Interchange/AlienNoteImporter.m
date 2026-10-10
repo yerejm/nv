@@ -65,7 +65,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 		AlienNoteImporter *importer = [AlienNoteImporter importerWithPath:[AlienNoteImporter blorPath]];
 		NSArray *noteArray = [importer importedNotes];
 		if ([noteArray count] > 0) {
-			NSLog(@"importing BLOR");
+			os_log_info(NVLogImportExport(), "importing BLOR");
 			NSData *passData = [[[importer documentSettings] objectForKey:RetrievedPasswordKey] dataUsingEncoding:NSUTF8StringEncoding];
 			BOOL shouldStoreInKeychain = [[[importer documentSettings] objectForKey:PasswordWasRetrievedFromKeychainKey] boolValue];
 			[prefs setPassphraseData:passData inKeychain:shouldStoreInKeychain];
@@ -94,7 +94,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 	NSDictionary *oldDict = [[NSUserDefaults standardUserDefaults] persistentDomainForName:@"com.scrod.notationalvelocity"];
 	NSString *blorPath = [oldDict objectForKey:@"DatabaseLocation"];
 	if (!blorPath) {
-		NSLog(@"Couldn't read old defaults--reverting to default location in prefs directory");
+		os_log_error(NVLogImportExport(), "Couldn't read old defaults--reverting to default location in prefs directory");
 		blorPath = [NSString stringWithFormat:@"%@/Library/Preferences/%@", NSHomeDirectory(), @"NotationalDatabase.blor"];
 	}
 	return blorPath;
@@ -140,12 +140,12 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 	if (PDFKitBundle == nil) {
 		NSString *PDFKitPath = @"/System/Library/Frameworks/Quartz.framework/Frameworks/PDFKit.framework";
 		if (![[NSFileManager defaultManager] fileExistsAtPath:PDFKitPath]) {
-			NSLog(@"Couldn't find PDFKit.framework");
+			os_log_error(NVLogImportExport(), "Couldn't find PDFKit.framework");
 			return nil;
 		}
 		PDFKitBundle = [NSBundle bundleWithPath:PDFKitPath];
 		if (![PDFKitBundle load]) {
-			NSLog(@"Couldn't load PDFKit.framework");
+			os_log_error(NVLogImportExport(), "Couldn't load PDFKit.framework");
 		}
 	}
 	return PDFKitBundle;
@@ -156,7 +156,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 	if (PDFDocClass == nil) {
 		PDFDocClass = [[self PDFKitBundle] classNamed:@"PDFDocument"];
 		if (PDFDocClass == nil) {
-			NSLog(@"Couldn't find PDFDocument class in PDFKit.framework");
+			os_log_error(NVLogImportExport(), "Couldn't find PDFDocument class in PDFKit.framework");
 		}
 	}
 	return PDFDocClass;
@@ -169,7 +169,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 - (NSView*)accessoryView {
 	if (!importAccessoryView) {
 		if (!NVLoadNib(@"ImporterAccessory", self))  {
-			NSLog(@"Failed to load ImporterAccessory.nib");
+			os_log_error(NVLogImportExport(), "Failed to load ImporterAccessory.nib");
 			NSBeep();
 			return nil;
 		}
@@ -194,7 +194,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 				NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"None of the selected files could be imported.",nil), NSLocalizedString(@"Please choose other files.",nil), NSLocalizedString(@"OK",nil), nil, nil);
 		}
 	} else {
-		NSLog(@"Where's my note importing delegate?");
+		os_log_fault(NVLogImportExport(), "Where's my note importing delegate?");
 		NSBeep();
 	}
 	
@@ -258,7 +258,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 		}
 
 	} else {
-		NSLog(@"Where's my note importing delegate?");
+		os_log_fault(NVLogImportExport(), "Where's my note importing delegate?");
 		NSBeep();
 	}
 
@@ -302,7 +302,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 		
 		return array;
 	} else {
-		NSLog(@"notesWithPaths: has the wrong kind of object!");
+		os_log_fault(NVLogImportExport(), "notesWithPaths: has the wrong kind of object!");
 	}
 	
 	return nil;
@@ -358,16 +358,16 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 						attributedStringFromData = [[NSMutableAttributedString alloc] initWithAttributedString:[sel attributedString]];
 						//maybe we could check pages and boundsForPage: to try to determine where a line was soft-wrapped in the document?
 					} else {
-						NSLog(@"Couldn't get entire doc selection for PDF");
+						os_log_error(NVLogImportExport(), "Couldn't get entire doc selection for PDF");
 					}
 				} else {
-					NSLog(@"Couldn't parse data into PDF");
+					os_log_error(NVLogImportExport(), "Couldn't parse data into PDF");
 				}
 			} else {
-				NSLog(@"No PDFDocument!");
+				os_log_error(NVLogImportExport(), "No PDFDocument!");
 			}
 		} @catch (NSException *e) {
-			NSLog(@"Error importing PDF %@ (%@, %@)", filename, [e name], [e reason]);
+			os_log_error(NVLogImportExport(), "Error importing PDF %@ (%{public}@, %@)", filename, [e name], [e reason]);
 		}
 	} else if (fileType == TEXT_TYPE_ID || [extension isEqualToString:@"txt"] || [extension isEqualToString:@"text"] ||
 			   [filename UTIOfFileConformsToType:@"public.plain-text"]) {
@@ -417,7 +417,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 			
 			return noteObject;
 		} else {
-			NSLog(@"couldn't generate note object from imported attributed string??");
+			os_log_error(NVLogImportExport(), "couldn't generate note object from imported attributed string??");
 		}
 		
 	}
@@ -479,7 +479,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 		stickyNotes = NVUnarchiveLegacyStickies(stickyData);
 	NS_HANDLER
 		stickyNotes = nil;
-		NSLog(@"Error parsing stickies database: %@", [localException reason]);
+		os_log_error(NVLogImportExport(), "Error parsing stickies database: %@", [localException reason]);
 	NS_ENDHANDLER
 	
 	if (stickyNotes && [stickyNotes isKindOfClass:[NSMutableArray class]]) {
@@ -502,16 +502,16 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 
 					[notes addObject:noteObject];
 				} else {
-					NSLog(@"couldn't generate note object from sticky note??");
+					os_log_error(NVLogImportExport(), "couldn't generate note object from sticky note??");
 				}
 			} else {
-				NSLog(@"Sticky document is wrong: %@", [doc description]);
+				os_log_error(NVLogImportExport(), "Sticky document is wrong: %@", [doc description]);
 			}
 		}
 		
 		return notes;
 	} else {
-		NSLog(@"Sticky notes array is wrong: %@", [stickyNotes description]);
+		os_log_error(NVLogImportExport(), "Sticky notes array is wrong: %@", [stickyNotes description]);
 	}
 	
 	return nil;
@@ -522,7 +522,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 	BlorPasswordRetriever *retriever = [[BlorPasswordRetriever alloc] initWithBlor:filename];
 	NSData *keyData = [retriever validPasswordHashData];
 	if (!keyData) {
-		NSLog(@"Couldn't get a valid pass-key to decrypt the blor!");
+		os_log_error(NVLogImportExport(), "Couldn't get a valid pass-key to decrypt the blor!");
 		return nil;
 	}
 	
@@ -542,7 +542,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 	//iterate over notes with blorenumerator and return array
 	BlorNoteEnumerator *enumerator = [[BlorNoteEnumerator alloc] initWithBlor:filename passwordHashData:keyData];
 	if (!enumerator) {
-		NSLog(@"couldn't initialize blor note enumerator!");
+		os_log_error(NVLogImportExport(), "couldn't initialize blor note enumerator!");
 		return nil;
 	}
 	NSMutableArray *array = [NSMutableArray array];
@@ -558,7 +558,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 	}
 	
 	if (count != [enumerator suspectedNoteCount]) {
-		NSLog(@"read notes (%d) != stated note count (%d)!", count, [enumerator suspectedNoteCount]);
+		os_log_error(NVLogImportExport(), "read notes (%d) != stated note count (%d)!", count, [enumerator suspectedNoteCount]);
 	}
 	
 	return array;

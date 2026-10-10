@@ -50,7 +50,7 @@
 - (void)showWindow:(id)sender {
 	if (!window) {
 		if (!NVLoadNib(@"Preferences", self))  {
-			NSLog(@"Failed to load Preferences.nib");
+			os_log_error(NVLogPreferences(), "Failed to load Preferences.nib");
 			return;
 		}
 	}
@@ -78,7 +78,7 @@
 }
 
 - (void)menuNeedsUpdate:(NSMenu *)menu {
-	NSLog(@"I need an update: %@", [menu description]);
+	os_log_debug(NVLogPreferences(), "I need an update: %@", [menu description]);
 }
 
 - (BOOL)shortcutRecorder:(NVShortcutRecorder *)recorder shouldChangeToKeyCode:(NSInteger)keyCode carbonModifiers:(NSUInteger)modifiers {
@@ -226,7 +226,7 @@
 }
 
 - (IBAction)changedNotesFolderLocation:(id)sender {
-    NSLog(@"Changed notes folder menu");
+    os_log_debug(NVLogPreferences(), "Changed notes folder menu");
 }
 
 - (IBAction)changedQuitBehavior:(id)sender {
@@ -350,7 +350,7 @@
 				
 			}
 		} else {
-			NSLog(@"This folder is already chosen!");
+			os_log_debug(NVLogPreferences(), "This folder is already chosen!");
 		}
 		
 	}
@@ -365,7 +365,7 @@
     NSString *startingDirectory = nil;
 	
     if (!notesDirectoryRef) {
-		NSLog(@"notesDirectoryRef is NULL!");
+		os_log_fault(NVLogPreferences(), "notesDirectoryRef is NULL!");
 		return NO;
     }
     
@@ -575,7 +575,7 @@
     } else if ([sender isEqualToString:@"Desktop"]) {
         prefsView = desktopView;
 	} else {
-		NSLog(@"unknown sender: %@", sender);
+		os_log_fault(NVLogPreferences(), "unknown sender: %@", sender);
 	}
     
     if (prefsView == databaseView)

@@ -113,11 +113,11 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 		@try {
 			baseBodyFont = [decoder decodeObjectOfClass:[NSFont class] forKey:VAR_STR(baseBodyFont)];
 		} @catch (NSException *e) {
-			NSLog(@"Error trying to unarchive default base body font (%@, %@)", [e name], [e reason]);
+			os_log_error(NVLogStorage(), "Error trying to unarchive default base body font (%{public}@, %@)", [e name], [e reason]);
 		}
 		if (!baseBodyFont || ![baseBodyFont isKindOfClass:[NSFont class]]) {
 			baseBodyFont = [[GlobalPrefs defaultPrefs] noteBodyFont];
-			NSLog(@"setting base body to current default: %@", baseBodyFont);
+			os_log_info(NVLogStorage(), "setting base body to current default: %@", baseBodyFont);
 			preferencesChanged = YES;
 		}
 		//foregroundColor does not receive the same treatment as basebodyfont; in the event of a discrepancy between global and per-db settings,
@@ -125,7 +125,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 		@try {
 			foregroundColor = [decoder decodeObjectOfClass:[NSColor class] forKey:VAR_STR(foregroundColor)];
 		} @catch (NSException *e) {
-			NSLog(@"Error trying to unarchive foreground text color (%@, %@)", [e name], [e reason]);
+			os_log_error(NVLogStorage(), "Error trying to unarchive foreground text color (%{public}@, %@)", [e name], [e reason]);
 		}
 		if (!foregroundColor || ![foregroundColor isKindOfClass:[NSColor class]]) {
 			foregroundColor = [[GlobalPrefs defaultPrefs] foregroundTextColor];
@@ -227,7 +227,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	case WordDocFormat:
 		return [@[CFBridgingRelease(NVStringFromOSType(WORD_DOC_TYPE_ID))] mutableCopy];
 	default:
-	    NSLog(@"Unknown format ID: %d", formatID);
+	    os_log_error(NVLogStorage(), "Unknown format ID: %d", formatID);
     }
     
     return [NSMutableArray arrayWithCapacity:0];
@@ -248,7 +248,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	case WordXMLFormat:
 		return [@[@"docx"] mutableCopy];
 	default:
-	    NSLog(@"Unknown format ID: %d", formatID);
+	    os_log_error(NVLogStorage(), "Unknown format ID: %d", formatID);
     }
     
     return [NSMutableArray arrayWithCapacity:0];
@@ -386,7 +386,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 
 - (void)removeKeychainData {
     OSStatus status = SecItemDelete((__bridge CFDictionaryRef)[self keychainQuery]);
-    if (status != errSecSuccess && status != errSecItemNotFound) NSLog(@"Error deleting keychain item: %d", (int)status);
+    if (status != errSecSuccess && status != errSecItemNotFound) os_log_error(NVLogStorage(), "Error deleting keychain item: %d", (int)status);
 }
 
 - (NSData *)passwordDataFromKeychain {
@@ -407,7 +407,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
         [item addEntriesFromDictionary:attributes];
         status = SecItemAdd((__bridge CFDictionaryRef)item, NULL);
     }
-    if (status != errSecSuccess) NSLog(@"Error storing passphrase in keychain: %d", (int)status);
+    if (status != errSecSuccess) os_log_error(NVLogStorage(), "Error storing passphrase in keychain: %d", (int)status);
 }
 
 - (void)setStoresPasswordInKeychain:(BOOL)value {
@@ -643,7 +643,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 		return idx;
 	}
 	
-	NSLog(@"saw new disk UUID: %@ (other disks are: %@)", diskEntry, seenDiskUUIDEntries);
+	os_log_info(NVLogStorage(), "saw new disk UUID: %@ (other disks are: %@)", diskEntry, seenDiskUUIDEntries);
 	[seenDiskUUIDEntries addObject:diskEntry];
 	
 	preferencesChanged = YES;
@@ -674,7 +674,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 		
 		return @"docx";
 	default:
-	    NSLog(@"storage format ID is unknown: %d", format);
+	    os_log_error(NVLogStorage(), "storage format ID is unknown: %d", format);
     }
     
     return @"";

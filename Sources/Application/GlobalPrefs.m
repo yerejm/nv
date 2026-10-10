@@ -183,7 +183,7 @@ void NVMigrateLegacyArchivedPreferences(NSUserDefaults *defaults) {
 		@try {
 			value = NVUnarchiveLegacyObject(data);
 		} @catch (NSException *e) {
-			NSLog(@"Unable to read legacy preference %@ (%@, %@)", key, [e name], [e reason]);
+			os_log_error(NVLogApplication(), "Unable to read legacy preference %{public}@ (%{public}@, %@)", key, [e name], [e reason]);
 		}
 		if ([value isKindOfClass:expectedClass]) [defaults setObject:NVArchiveObject(value) forKey:key];
 		else [defaults removeObjectForKey:key];
@@ -219,7 +219,7 @@ void NVMigrateLegacyArchivedPreferences(NSUserDefaults *defaults) {
 		va_end(argList);
 		
 	} else {
-		NSLog(@"%s: target %@ does not respond to callback selector!", sel_getName(_cmd), [sender description]);
+		os_log_fault(NVLogApplication(), "%{public}s: target %@ does not respond to callback selector!", sel_getName(_cmd), [sender description]);
 	}
 }
 
@@ -237,7 +237,7 @@ void NVMigrateLegacyArchivedPreferences(NSUserDefaults *defaults) {
 		if (![senders count])
 			[selectorObservers removeObjectForKey:selectorKey];
 	} else {
-		NSLog(@"Selector %@ has no observers?", NSStringFromSelector(selector));
+		os_log_fault(NVLogApplication(), "Selector %{public}@ has no observers?", NSStringFromSelector(selector));
 	}
 }
 
@@ -539,7 +539,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 		if (![[prefsFont fontName] isEqualToString:[noteFont fontName]] || 
 			[prefsFont pointSize] != [noteFont pointSize]) {
 			
-			NSLog(@"archived notationPrefs base font does not match current global default font!");
+			os_log_error(NVLogApplication(), "archived notationPrefs base font does not match current global default font!");
 			[self _setNoteBodyFont:prefsFont];
 			
 			SEND_CALLBACKS();
@@ -581,7 +581,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 	if (!noteBodyFont) {
 		noteBodyFont = NVUnarchivePreference([defaults dataForKey:NoteBodyFontKey], [NSFont class]);
 		if (!noteBodyFont) {
-			NSLog(@"Unable to unarchive the note body font; using the default");
+			os_log_error(NVLogApplication(), "Unable to unarchive the note body font; using the default");
 			[defaults removeObjectForKey:NoteBodyFontKey];
 			noteBodyFont = NVUnarchivePreference([defaults dataForKey:NoteBodyFontKey], [NSFont class]);
 		}

@@ -445,7 +445,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		contentString = [[NSMutableAttributedString alloc] initWithAttributedString:bodyText];
 		[self initContentCacheCString];
 		if (!cContents) {
-			NSLog(@"couldn't get UTF8 string from contents?!?");
+			os_log_error(NVLogNotes(), "couldn't get UTF8 string from contents?!?");
 			return nil;
 		}
 
@@ -674,7 +674,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		
 		if (!externalTrigger) {
 			if ([delegate noteFileRenamed:noteFileRefInit(self) fromName:oldName toName:filename] != noErr) {
-				NSLog(@"Couldn't rename note %@", titleString);
+				os_log_error(NVLogNotes(), "Couldn't rename note %@", titleString);
 				
 				//revert name
 				filename = oldName;
@@ -812,7 +812,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		[delegate note:self didRemoveLabelSet:labelSet];
 		labelSet = nil;
 	} else {
-		NSLog(@"not disconnecting labels because no delegate exists");
+		os_log_debug(NVLogNotes(), "not disconnecting labels because no delegate exists");
 	}
 }
 
@@ -974,7 +974,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 		return NO;
     
     if (fileWasCreated) {
-		NSLog(@"writing note %@, because it didn't exist", titleString);
+		os_log_debug(NVLogNotes(), "writing note %@, because it didn't exist", titleString);
 		return [self writeUsingCurrentFileFormat];
     }
     
@@ -984,7 +984,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 		return NO;
     
     if (NVCompareFileDates(fileModifiedDate, info.contentModificationDate) > 0) {
-		NSLog(@"writing note %@, because it was modified", titleString);
+		os_log_debug(NVLogNotes(), "writing note %@, because it was modified", titleString);
 		return [self writeUsingCurrentFileFormat];
     }
     
@@ -1024,7 +1024,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 				//but we can auto-detect UTF-8, so what the heck
 				[self _setFileEncoding:NSUTF8StringEncoding];
 				//maybe we could rename the file file.utf8.txt here
-				NSLog(@"promoting to unicode (UTF-8)");
+				os_log_info(NVLogNotes(), "promoting to unicode (UTF-8)");
 				formattedData = [[contentString string] dataUsingEncoding:fileEncoding allowLossyConversion:YES];
 			}
 			break;
@@ -1041,7 +1041,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 			//our links will always be to filenames, so hopefully we shouldn't have to change anything
 			break;
 		default:
-			NSLog(@"Attempted to write using unknown format ID: %d", formatID);
+			os_log_error(NVLogNotes(), "Attempted to write using unknown format ID: %d", formatID);
     }
     
     if (formattedData) {
@@ -1060,7 +1060,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 		
 		OSStatus err = noErr;
 		if ((err = [delegate storeDataAtomicallyInNotesDirectory:formattedData withName:filename destinationRef:noteFileRefInit(self)]) != noErr) {
-			NSLog(@"Unable to save note file %@", filename);
+			os_log_error(NVLogNotes(), "Unable to save note file %@", filename);
 			
 			[delegate noteDidNotWrite:self errorCode:err];
 			return NO;
@@ -1090,7 +1090,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 		
     } else {
 		[delegate noteDidNotWrite:self errorCode:kDataFormattingErr];
-		NSLog(@"Unable to convert note contents into format %d", formatID);
+		os_log_error(NVLogNotes(), "Unable to convert note contents into format %d", formatID);
 		return NO;
     }
     
@@ -1114,7 +1114,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 	} while (NVFileNotFoundErr == err);
 
 	if (noErr != err) {
-		NSLog(@"could not set file dates: %d", err);
+		os_log_error(NVLogNotes(), "could not set file dates: %d", err);
 		return err;
 	}
 	
@@ -1122,7 +1122,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 	
 	NVFileInfo info = {0};
 	if ((err = [delegate fileInNotesDirectory:noteFileRefInit(self) isOwnedByUs:NULL hasFileInfo:&info]) != noErr) {
-		NSLog(@"Unable to get new modification date of file %@: %d", filename, err);
+		os_log_error(NVLogNotes(), "Unable to get new modification date of file %@: %d", filename, err);
 		return err;
 	}
 	fileModifiedDate = info.contentModificationDate;
@@ -1142,7 +1142,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 	if ((err = NVReferenceMakePath(fsRef, [pathData mutableBytes], [pathData length])) == noErr) {
 		[[NSFileManager defaultManager] setTextEncodingAttribute:fileEncoding atFSPath:[pathData bytes]];
 	} else {
-		NSLog(@"%s: error getting path from NVFileReference: %d (IsZeros: %d)", sel_getName(_cmd), err, IsZeros(fsRef, sizeof(fsRef)));
+		os_log_error(NVLogNotes(), "%{public}s: error getting path from NVFileReference: %d (IsZeros: %d)", sel_getName(_cmd), err, IsZeros(fsRef, sizeof(fsRef)));
 	}
 	return err;
 }
@@ -1166,7 +1166,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 			if ([delegate currentNoteStorageFormat] == PlainTextFormat) {
 				//actual conversion is expected because notes are presently being maintained as plain text files
 				
-				NSLog(@"rewriting %@ as utf8 data", titleString);
+				os_log_info(NVLogNotes(), "rewriting %@ as utf8 data", titleString);
 				didUpgrade = [self writeUsingCurrentFileFormat];
 			} else if ([delegate currentNoteStorageFormat] == SingleDatabaseFormat) {
 				//update last-written-filemod time to guarantee proper encoding at next DB storage format switch, 
@@ -1214,7 +1214,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 - (BOOL)updateFromFile {
     NSMutableData *data = [delegate dataFromFileInNotesDirectory:noteFileRefInit(self) forFilename:filename];
     if (!data) {
-		NSLog(@"Couldn't update note from file on disk");
+		os_log_error(NVLogNotes(), "Couldn't update note from file on disk");
 		return NO;
     }
 	
@@ -1237,7 +1237,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 	
     NSMutableData *data = [delegate dataFromFileInNotesDirectory:noteFileRefInit(self) forCatalogEntry:catEntry];
     if (!data) {
-		NSLog(@"Couldn't update note from file on disk given catalog entry");
+		os_log_error(NVLogNotes(), "Couldn't update note from file on disk given catalog entry");
 		return NO;
     }
 	    
@@ -1263,7 +1263,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 			//this file has either never had tags or has had them cleared by accident (e.g., non-user intervention)
 			//so if this note still has tags, then restore them now.
 			
-			NSLog(@"restoring lost tags for %@", titleString);
+			os_log_info(NVLogNotes(), "restoring lost tags for %@", titleString);
 			[[NSFileManager defaultManager] setOpenMetaTags:[self orderedLabelTitles] atFSPath:[pathData bytes]];
 			didRestoreLabels = YES;
 		}
@@ -1293,7 +1293,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 - (BOOL)updateFromData:(NSMutableData*)data inFormat:(int)fmt {
     
     if (!data) {
-		NSLog(@"%@: Data is nil!", NSStringFromSelector(_cmd));
+		os_log_error(NVLogNotes(), "%{public}@: Data is nil!", NSStringFromSelector(_cmd));
 		return NO;
     }
     
@@ -1312,7 +1312,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 			attributedStringFromData = [[NSMutableAttributedString alloc] initWithString:stringFromData 
 																			  attributes:[[GlobalPrefs defaultPrefs] noteBodyAttributes]];
 	    } else {
-			NSLog(@"String could not be initialized from data");
+			os_log_error(NVLogNotes(), "String could not be initialized from data");
 	    }
 	    
 	    break;
@@ -1327,11 +1327,11 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 		
 	    break;
 	default:
-	    NSLog(@"%@: Unknown format: %d", NSStringFromSelector(_cmd), fmt);
+	    os_log_error(NVLogNotes(), "%{public}@: Unknown format: %d", NSStringFromSelector(_cmd), fmt);
     }
     
     if (!attributedStringFromData) {
-		NSLog(@"Couldn't make string out of data for note %@ with format %d", titleString, fmt);
+		os_log_error(NVLogNotes(), "Couldn't make string out of data for note %@ with format %d", titleString, fmt);
 		return NO;
     }
     
@@ -1353,7 +1353,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 - (void)moveFileToTrash {
 	OSStatus err = noErr;
 	if ((err = [delegate moveFileToTrash:noteFileRefInit(self) forFilename:filename]) != noErr) {
-		NSLog(@"Couldn't move file to trash: %d", err);
+		os_log_error(NVLogNotes(), "Couldn't move file to trash: %d", err);
 	} else {
 		//file's gone! don't assume it's not coming back. if the storage format was not single-db, this note better be removed
 	}
@@ -1367,7 +1367,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 		if (err != NVFileNotFoundErr) {
 			//what happens if we wanted to undo the deletion? moveFileToTrash will now tell the note that it shouldn't look for the file
 			//so it would not be rewritten on re-creation?
-			NSLog(@"Unable to delete file %@ (%d); moving to trash instead", filename, err);
+			os_log_error(NVLogNotes(), "Unable to delete file %@ (%d); moving to trash instead", filename, err);
 			[self moveFileToTrash];
 		}
 	}
@@ -1413,7 +1413,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 		case PlainTextFormat:
 			if (!(formattedData = [[contentMinusColor string] dataUsingEncoding:fileEncoding allowLossyConversion:NO])) {
 				[self _setFileEncoding:NSUTF8StringEncoding];
-				NSLog(@"promoting to unicode (UTF-8) on export--probably because internal format is singledb");
+				os_log_info(NVLogNotes(), "promoting to unicode (UTF-8) on export--probably because internal format is singledb");
 				formattedData = [[contentMinusColor string] dataUsingEncoding:fileEncoding allowLossyConversion:YES];
 			}
 			break;
@@ -1432,7 +1432,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 									  documentAttributes:@{NSDocumentTypeDocumentAttribute: NSWordMLTextDocumentType} error:&error];
 			break;
 		default:
-			NSLog(@"Attempted to export using unknown format ID: %d", storageFormat);
+			os_log_error(NVLogNotes(), "Attempted to export using unknown format ID: %d", storageFormat);
     }
 	if (!formattedData)
 		return kDataFormattingErr;
@@ -1450,16 +1450,16 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 	NVFileReference fileRef;
 	OSStatus err = NVCreateFileIfNotPresent(directoryRef, (__bridge CFStringRef)newfilename, &fileRef, (Boolean*)&fileWasCreated);
 	if (err != noErr) {
-		NSLog(@"NVCreateFileIfNotPresent: %d", err);
+		os_log_error(NVLogNotes(), "NVCreateFileIfNotPresent: %d", err);
 		return err;
 	}
 	if (!fileWasCreated && !overwrite) {
-		NSLog(@"File already existed!");
+		os_log_error(NVLogNotes(), "File already existed!");
 		return NVDuplicateFilenameErr;
 	}
 	//yes, the file is probably not on the same volume as our notes directory
 	if ((err = NVWriteFile(&fileRef, BlockSizeForNotation(delegate), [formattedData length], [formattedData bytes], false, true)) != noErr) {
-		NSLog(@"error writing to temporary file: %d", err);
+		os_log_error(NVLogNotes(), "error writing to temporary file: %d", err);
 		return err;
     }
 	if (PlainTextFormat == storageFormat) {
@@ -1496,7 +1496,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 		[[delegate delegate] contentsUpdatedForNote:self];
 	} else {
 		NSBeep();
-		NSLog(@"odbEditor:didModifyFile: unable to get data from %@", path);
+		os_log_error(NVLogNotes(), "odbEditor:didModifyFile: unable to get data from %@", path);
 	}	
 }
 -(void)odbEditor:(ODBEditor *)editor didClosefile:(NSString *)path context:(NSDictionary *)context {

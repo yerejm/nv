@@ -79,7 +79,7 @@ fi
 /usr/bin/open -n "${RUN_ENV[@]}" "$RUN_APP"
 case "$RUN_MODE" in
     --logs|--telemetry)
-        /usr/bin/log stream --info --style compact --predicate 'process == "NVDevelopment"'
+        /usr/bin/log stream --info --debug --style compact --predicate 'process == "NVDevelopment"'
         ;;
     --verify)
         RUN_FAILED=0

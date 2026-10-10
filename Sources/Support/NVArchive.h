@@ -2,11 +2,12 @@
 #define NV_ARCHIVE_H
 
 #import <Foundation/Foundation.h>
+#import "NVLog.h"
 
 static inline NSData *NVArchiveObject(id object) {
     NSError *error = nil;
     NSData *data = [NSKeyedArchiver archivedDataWithRootObject:object requiringSecureCoding:YES error:&error];
-    if (!data) NSLog(@"Unable to archive %@: %@", [object class], error);
+    if (!data) os_log_error(NVLogStorage(), "Unable to archive %{public}@: %@", [object class], error);
     return data;
 }
 

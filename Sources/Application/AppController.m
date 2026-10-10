@@ -348,7 +348,7 @@ static void *NVEffectiveAppearanceContext = &NVEffectiveAppearanceContext;
 	
 	[self setNotationController:newNotation];
 	
-	NSLog(@"load time: %g, ",[[NSDate date] timeIntervalSinceDate:before]);
+	os_log_debug(NVLogApplication(), "load time: %g, ",[[NSDate date] timeIntervalSinceDate:before]);
 	
 	//import old database(s) here if necessary
 	[AlienNoteImporter importBlorOrHelpFilesIfNecessaryIntoNotation:newNotation];
@@ -1192,7 +1192,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 			return YES;
 		}
 	} else
-		NSLog(@"%@/%@ got %@", [control description], [aTextView description], NSStringFromSelector(command));
+		os_log_debug(NVLogApplication(), "%@/%@ got %{public}@", [control description], [aTextView description], NSStringFromSelector(command));
 	
 	return NO;
 }
@@ -1598,7 +1598,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 	
 	if ([sender firstResponder] == textView) {
 		if (currentNote) {
-			NSLog(@"windowWillReturnUndoManager should not be called when textView is first responder");
+			os_log_fault(NVLogApplication(), "windowWillReturnUndoManager should not be called when textView is first responder");
 		}
 		
 		NSUndoManager *undoMan = [self undoManagerForTextView:textView];
@@ -1659,7 +1659,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 		NSUInteger selectedNoteIndex = [notationController indexInFilteredListForNoteIdenticalTo:note];
 		
 		if (selectedNoteIndex == NSNotFound) {
-			NSLog(@"Note was not visible--showing all notes and trying again");
+			os_log_debug(NVLogApplication(), "Note was not visible--showing all notes and trying again");
 			[self cancelOperation:nil];
 			
 			selectedNoteIndex = [notationController indexInFilteredListForNoteIdenticalTo:note];
@@ -1726,7 +1726,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 			[fieldEditor replaceCharactersInRange:fullRange withString:string];
 			[fieldEditor didChangeText];
 		} else {
-			NSLog(@"I shouldn't change text?");
+			os_log_debug(NVLogApplication(), "I shouldn't change text?");
 		}
 	}
 }
@@ -1976,7 +1976,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
     if ([notationController flushAllNoteChanges])
 		[notationController closeJournal];
 	else
-		NSLog(@"Could not flush database, so not removing journal");
+		os_log_error(NVLogApplication(), "Could not flush database, so not removing journal");
 	
     [self _saveNotesListLayout];
     [prefsController synchronize];

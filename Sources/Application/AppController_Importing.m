@@ -236,7 +236,7 @@
 			} else if (txtBody) {
 				[pboard setString:txtBody forType:NSPasteboardTypeString];
 			} else {
-				NSLog(@"no txt or html to add to pboard");
+				os_log_debug(NVLogApplication(), "no txt or html to add to pboard");
 				return NO;
 			}
 			return [self addNotesFromPasteboard:pboard];

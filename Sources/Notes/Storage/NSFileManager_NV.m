@@ -53,7 +53,7 @@
 	NSError* errorString = nil;
 	id outObject = [NSPropertyListSerialization propertyListWithData:nsData options:NSPropertyListImmutable format:&formatFound error:&errorString];
 	if (errorString) {
-		NSLog(@"%s: error deserializing labels: %@", sel_getName(_cmd), errorString);
+		os_log_error(NVLogStorage(), "%{public}s: error deserializing labels: %@", sel_getName(_cmd), errorString);
 
 		return nil;
 	}
@@ -78,7 +78,7 @@
 		NSError *errorString = nil;
 		dataToSendNS = [NSPropertyListSerialization dataWithPropertyList:plistObject format:NSPropertyListBinaryFormat_v1_0 options:0 error:&errorString];
 		if (errorString) {
-			NSLog(@"%s: error serializing labels: %@", sel_getName(_cmd), errorString);
+			os_log_error(NVLogStorage(), "%{public}s: error serializing labels: %@", sel_getName(_cmd), errorString);
 
 			return NO;
 		}
@@ -94,7 +94,7 @@
 	}
 	
 	if (returnVal < 0) {
-		if (errno != ENOATTR) NSLog(@"%s: couldn't set/remove attribute: %d (value '%@')", sel_getName(_cmd), errno, dataToSendNS);
+		if (errno != ENOATTR) os_log_error(NVLogStorage(), "%{public}s: couldn't set/remove attribute: %d (value '%@')", sel_getName(_cmd), errno, dataToSendNS);
 		return NO;
 	}
 
@@ -109,7 +109,7 @@
 	
 	CFStringEncoding cfStringEncoding = CFStringConvertNSStringEncodingToEncoding(encoding);
 	if (cfStringEncoding == kCFStringEncodingInvalidId) {
-		NSLog(@"%s: encoding %lu is invalid!", sel_getName(_cmd), encoding);
+		os_log_error(NVLogStorage(), "%{public}s: encoding %lu is invalid!", sel_getName(_cmd), encoding);
 		return NO;
 	}
 	NSString *textEncStr = [(__bridge NSString *)CFStringConvertEncodingToIANACharSetName(cfStringEncoding) stringByAppendingFormat:@";%@", 
@@ -117,7 +117,7 @@
 	const char *textEncUTF8Str = [textEncStr UTF8String];
 	
 	if (setxattr(path, "com.apple.TextEncoding", textEncUTF8Str, strlen(textEncUTF8Str), 0, 0) < 0) {
-		NSLog(@"couldn't set text encoding attribute of %s to '%s': %d", path, textEncUTF8Str, errno);
+		os_log_error(NVLogStorage(), "couldn't set text encoding attribute of %s to '%{public}s': %d", path, textEncUTF8Str, errno);
 		return NO;
 	}
 	return YES;
@@ -131,12 +131,12 @@
 	//It could be, but it probably won't. If it is, then we won't get the encoding. Too bad.
 	char xattrValueBytes[128] = { 0 };
 	if (getxattr(path, "com.apple.TextEncoding", xattrValueBytes, sizeof(xattrValueBytes), 0, 0) < 0) {
-		if (ENOATTR != errno) NSLog(@"couldn't get text encoding attribute of %s: %d", path, errno);
+		if (ENOATTR != errno) os_log_error(NVLogStorage(), "couldn't get text encoding attribute of %s: %d", path, errno);
 		return 0;
 	}
 	NSString *encodingStr = [NSString stringWithUTF8String:xattrValueBytes];
 	if (!encodingStr) {
-		NSLog(@"couldn't make attribute data from %s into a string", path);
+		os_log_error(NVLogStorage(), "couldn't make attribute data from %s into a string", path);
 		return 0;
 	}
 	NSArray *segs = [encodingStr componentsSeparatedByString:@";"];
@@ -146,7 +146,7 @@
 	} else if ([(NSString*)[segs objectAtIndex:0] length] > 1) {
 		CFStringEncoding theCFEncoding = CFStringConvertIANACharSetNameToEncoding((__bridge CFStringRef)[segs objectAtIndex:0]);
 		if (theCFEncoding == kCFStringEncodingInvalidId) {
-			NSLog(@"couldn't convert IANA charset");
+			os_log_error(NVLogStorage(), "couldn't convert IANA charset");
 			return 0;
 		}
 		return CFStringConvertEncodingToNSStringEncoding(theCFEncoding);

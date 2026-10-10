@@ -48,7 +48,7 @@
 - (NSView*)view {
     if (!view) {
 		if (!NVLoadNib(@"NotationPrefsView", self))  {
-			NSLog(@"Failed to load NotationPrefsView.nib");
+			os_log_error(NVLogPreferences(), "Failed to load NotationPrefsView.nib");
 			return nil;
 		}
     }
@@ -463,7 +463,7 @@
 		}
 		
 	} else {
-		NSLog(@"Not disabling encryption because it is already off.");
+		os_log_debug(NVLogPreferences(), "Not disabling encryption because it is already off.");
 	}
 }
 

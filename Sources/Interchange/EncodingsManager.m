@@ -132,7 +132,7 @@ static const NSStringEncoding AllowedEncodings[] = {
 		
 		if (!window) {
 			if (!NVLoadNib(@"EncodingsManager", self))  {
-				NSLog(@"Failed to load EncodingsManager.nib");
+				os_log_error(NVLogImportExport(), "Failed to load EncodingsManager.nib");
 				NSBeep();
 				return;
 			}
@@ -203,7 +203,7 @@ static const NSStringEncoding AllowedEncodings[] = {
 			[encodingsPopUpButton selectItemWithTag:(int)currentEncoding];
 		}		
 	} else {  
-		NSLog(@"Unknown class sent msg to change encoding: %@", [sender description]);
+		os_log_fault(NVLogImportExport(), "Unknown class sent msg to change encoding: %@", [sender description]);
 	}
 }
 
@@ -251,10 +251,10 @@ static const NSStringEncoding AllowedEncodings[] = {
 	if (NVCompareFileDates(fileModifiedDateOfNote(note), info.contentModificationDate) > 0) {
 		NSModalResponse result = NVRunAlert(NSAlertStyleCritical, [NSString stringWithFormat:NSLocalizedString(@"The note quotemark%@quotemark is newer than its file on disk.",nil), titleOfNote(note)], NSLocalizedString(@"If you update this note with re-interpreted data from the file, you may overwrite your changes.",nil), NSLocalizedString(@"Don't Update", @"don't update the note from its file on disk"), NSLocalizedString(@"Overwrite Note", @"...from file on disk"), NULL);
 		if (result == NSAlertFirstButtonReturn) {
-			NSLog(@"not updating");
+			os_log_debug(NVLogImportExport(), "not updating");
 			return NO;
 		} else {
-			NSLog(@"user wants to update");
+			os_log_debug(NVLogImportExport(), "user wants to update");
 		}
 	}
 	

@@ -46,6 +46,8 @@ make clean
 
 `./script/build_and_run.sh` builds and opens the development app with isolated preferences and notes. Its `--verify` option runs the full GUI acceptance suite, including TextEdit, full-screen transitions and quit/reopen checks, and requires an unlocked desktop. Use the build and test commands above for routine source and folder changes.
 
+The app logs to the unified system log under the subsystem `net.notational.velocity`, with one category per area (`storage`, `notes`, `editor`, `import-export` and so on). `./script/build_and_run.sh --logs` opens the development app and streams its messages, including debug messages; otherwise use `log stream --info --debug --predicate 'subsystem == "net.notational.velocity"'`. Note text, titles, file names and paths are logged as private values and appear as `<private>`. Processes started directly from a shell, such as the unit-test host, have been observed to record them in full.
+
 `./script/test_external_editor.sh` checks only the external-editor lifecycle. It opens a generated document in a separate background TextEdit instance with document restoration disabled, closes that instance, and removes its temporary document. Existing TextEdit instances are preserved. The full acceptance suite uses the same ownership checks, closes the editor in `finally`, and retains an exit-trap cleanup fallback for errors, timeouts and interrupts. Runner cleanup cancels future launches and makes pending launches close their returned instance. Only the PID, launch date and bundle identity recorded for the test instance permit termination.
 
 To regenerate the test projects after changing source membership or paths:

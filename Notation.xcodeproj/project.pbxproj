@@ -166,6 +166,7 @@
 /* Begin PBXFileReference section */
         A7BAEE1B0000000000000009 /* NVAppKit.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NVAppKit.h; sourceTree = "<group>"; };
         A7BAEE1B000000000000000A /* NVArchive.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NVArchive.h; sourceTree = "<group>"; };
+        A7BAEE1B000000000000000B /* NVLog.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NVLog.h; sourceTree = "<group>"; };
 		A7BAEE1B0000000000000008 /* UniformTypeIdentifiers.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = System/Library/Frameworks/UniformTypeIdentifiers.framework; sourceTree = SDKROOT; };
 		A7BAEE1B0000000000000005 /* NVMD5.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = NVMD5.c; sourceTree = "<group>"; };
 		A7BAEE1B0000000000000006 /* NVMD5.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = NVMD5.h; sourceTree = "<group>"; };
@@ -722,6 +723,7 @@
 			children = (
                 A7BAEE1B0000000000000009 /* NVAppKit.h */,
                 A7BAEE1B000000000000000A /* NVArchive.h */,
+                A7BAEE1B000000000000000B /* NVLog.h */,
 				21D6FB4712E104D6005C2DA5 /* NSBezierPath_NV.h */,
 				21D6FB4812E104D6005C2DA5 /* NSBezierPath_NV.m */,
 				21DC788D097894B600E59B09 /* NSCollection_utils.h */,

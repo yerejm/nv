@@ -49,7 +49,7 @@ static NSString *RunTool(NSString *path, NSArray *arguments, int *status) {
 	[task setStandardError:[NSFileHandle fileHandleWithNullDevice]];
 	NSError *error = nil;
 	if (![task launchAndReturnError:&error]) {
-		NSLog(@"couldn't launch %@: %@", path, [error localizedDescription]);
+		os_log_error(NVLogExternalEditing(), "couldn't launch %@: %@", path, [error localizedDescription]);
 		*status = -1;
 		return nil;
 	}
@@ -79,7 +79,7 @@ static BOOL DetachDevice(NSString *device, NSString *mountPath) {
 	}
 	RunTool(@"/usr/bin/hdiutil", @[@"detach", device], &status);
 	if (status) RunTool(@"/usr/bin/hdiutil", @[@"detach", @"-force", device], &status);
-	if (status) NSLog(@"couldn't detach the editing RAM disk %@", device);
+	if (status) os_log_error(NVLogExternalEditing(), "couldn't detach the editing RAM disk %{public}@", device);
 	return status == 0;
 }
 
@@ -91,7 +91,7 @@ static BOOL CreatePrivateDirectory(NSString *path) {
 	BOOL ready = [fileManager fileExistsAtPath:path isDirectory:&isDirectory] && isDirectory ?
 		[fileManager setAttributes:privateAccess ofItemAtPath:path error:&error] :
 		[fileManager createDirectoryAtPath:path withIntermediateDirectories:NO attributes:privateAccess error:&error];
-	if (!ready) NSLog(@"couldn't create directory '%@': %@", path, [error localizedDescription]);
+	if (!ready) os_log_error(NVLogExternalEditing(), "couldn't create directory '%@': %@", path, [error localizedDescription]);
 	return ready;
 }
 
@@ -102,7 +102,7 @@ static NSString *MountRAMDisk(NSString *mountPath) {
 		[NSString stringWithFormat:@"ram://%lu", (unsigned long)(RAMDiskBytes / 512)]], &status);
 	NSString *device = [[output componentsSeparatedByCharactersInSet:[NSCharacterSet whitespaceAndNewlineCharacterSet]] firstObject];
 	if (status || ![device hasPrefix:@"/dev/"]) {
-		NSLog(@"couldn't attach a RAM disk for editing");
+		os_log_error(NVLogExternalEditing(), "couldn't attach a RAM disk for editing");
 		return nil;
 	}
 	RunTool(@"/sbin/newfs_hfs", @[@"-v", ProtectedSpaceName, device], &status);
@@ -111,7 +111,7 @@ static NSString *MountRAMDisk(NSString *mountPath) {
 		//the new volume's root replaces the mount point's permissions
 		if (!status && [DeviceMountedAt(mountPath) isEqualToString:device] && CreatePrivateDirectory(mountPath)) return device;
 	}
-	NSLog(@"couldn't prepare the editing RAM disk %@", device);
+	os_log_error(NVLogExternalEditing(), "couldn't prepare the editing RAM disk %{public}@", device);
 	DetachDevice(device, mountPath);
 	return nil;
 }

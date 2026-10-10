@@ -106,7 +106,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 	//the directory was moved; re-initialize the event stream for the new path
 	//but do so after this callback ends to avoid confusing FSEvents
 	if (rootChanged) {
-		NSLog(@"FSEventsCallback detected directory dislocation; reconfiguring stream");
+		os_log_info(NVLogStorage(), "FSEventsCallback detected directory dislocation; reconfiguring stream");
 		[self performSelector:@selector(_configureDirEventStream) withObject:nil afterDelay:0];
 	}
 	
@@ -135,7 +135,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 	
 	FSEventStreamSetDispatchQueue(noteDirEventStreamRef, dispatch_get_main_queue());
 	if (!FSEventStreamStart(noteDirEventStreamRef)) {
-		NSLog(@"could not start the FSEvents stream!");
+		os_log_error(NVLogStorage(), "could not start the FSEvents stream!");
 	}
 	
 }
@@ -276,7 +276,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 		return YES;
     }
     
-    NSLog(@"Error opening NVDirectoryIterator: %d", status);
+    os_log_error(NVLogStorage(), "Error opening NVDirectoryIterator: %d", status);
     
     return NO;
 }
@@ -299,7 +299,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 		if (![unwrittenNotes containsObject:aNoteObject]) {
 			
 			if (![aNoteObject updateFromCatalogEntry:catEntry]) {
-				NSLog(@"file %@ was modified but could not be updated", catEntry->filename);
+				os_log_error(NVLogStorage(), "file %@ was modified but could not be updated", catEntry->filename);
 			}
 			//do not call makeNoteDirty because use of the WAL in this instance would cause redundant disk activity
 			//in the event of a crash this change could still be recovered; 
@@ -312,12 +312,12 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 			[self performSelector:@selector(scheduleUpdateListForAttribute:) withObject:NoteDateModifiedColumnString afterDelay:0.0];
 			
 			notesChanged = YES;
-			NSLog(@"FILE WAS MODIFIED: %@", catEntry->filename);
+			os_log_debug(NVLogStorage(), "FILE WAS MODIFIED: %@", catEntry->filename);
 			
 			return YES;
 		} else {
 			//it's a conflict! we win.
-			NSLog(@"%@ was modified with unsaved changes in NV! Deciding the conflict in favor of NV.", catEntry->filename); 
+			os_log_info(NVLogStorage(), "%@ was modified with unsaved changes in NV! Deciding the conflict in favor of NV.", catEntry->filename); 
 		}
 		
 	}
@@ -442,7 +442,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 				lastInserted = j;
 				exitedEarly = YES;
 				
-				NSLog(@"File deleted as per CNID: %@", filenameOfNote(currentNote));
+				os_log_debug(NVLogStorage(), "File deleted as per CNID: %@", filenameOfNote(currentNote));
 				[hfsRemovedEntries addObject:currentNote];
 				
 				break;
@@ -452,7 +452,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 				
 				
 				//note was renamed!
-				NSLog(@"File %@ renamed as per CNID to %@", filenameOfNote(currentNote), catEntry->filename);
+				os_log_debug(NVLogStorage(), "File %@ renamed as per CNID to %@", filenameOfNote(currentNote), catEntry->filename);
 				if (![self modifyNoteIfNecessary:currentNote usingCatalogEntry:catEntry]) {
 					//at least update the file name, because we _know_ that changed
 					
@@ -468,7 +468,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 			
 			//a new file was found on the disk! read it into memory!
 			
-			NSLog(@"File added as per CNID: %@", catEntry->filename);
+			os_log_debug(NVLogStorage(), "File added as per CNID: %@", catEntry->filename);
 			[hfsAddedEntries addObject:[NSValue valueWithPointer:catEntry]];
 		}
 		
@@ -479,7 +479,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 				lastInserted = bSize;
 				
 				//file deleted from disk; 
-				NSLog(@"File deleted as per CNID: %@", filenameOfNote(currentNote));
+				os_log_debug(NVLogStorage(), "File deleted as per CNID: %@", filenameOfNote(currentNote));
 				[hfsRemovedEntries addObject:currentNote];
 			}
 		}
@@ -487,7 +487,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
     
     for (j=lastInserted; j<bSize; j++) {
 		NoteCatalogEntry *appendedCatEntry = (NoteCatalogEntry *)[[addedEntries objectAtIndex:j] pointerValue];
-		NSLog(@"File added as per CNID: %@", appendedCatEntry->filename);
+		os_log_debug(NVLogStorage(), "File added as per CNID: %@", appendedCatEntry->filename);
 		[hfsAddedEntries addObject:[NSValue valueWithPointer:appendedCatEntry]];
     }
 	
@@ -496,7 +496,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 	} else {
 		if (![hfsRemovedEntries count]) {
 			for (i=0; i<[hfsAddedEntries count]; i++) {
-				NSLog(@"File _actually_ added: %@ (%s)", ((NoteCatalogEntry*)[[hfsAddedEntries objectAtIndex:i] pointerValue])->filename, sel_getName(_cmd));
+				os_log_debug(NVLogStorage(), "File _actually_ added: %@ (%{public}s)", ((NoteCatalogEntry*)[[hfsAddedEntries objectAtIndex:i] pointerValue])->filename, sel_getName(_cmd));
 				[self addNoteFromCatalogEntry:(NoteCatalogEntry*)[[hfsAddedEntries objectAtIndex:i] pointerValue]];
 			}
 		}
@@ -555,7 +555,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 			if ([[[addedObjToCompare contentString] string] isEqualToString:[[removedObj contentString] string]]) {
 				//process this pair as a modification
 				
-				NSLog(@"File %@ renamed as per content to %@", filenameOfNote(removedObj), filenameOfNote(addedObjToCompare));
+				os_log_debug(NVLogStorage(), "File %@ renamed as per content to %@", filenameOfNote(removedObj), filenameOfNote(addedObjToCompare));
 				if (![self modifyNoteIfNecessary:removedObj usingCatalogEntry:[val pointerValue]]) {
 					//at least update the file name, because we _know_ that changed
 					directoryChangesFound = YES;
@@ -575,14 +575,14 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 		}
 		
 		if (!foundMatchingContent) {
-			NSLog(@"File %@ _actually_ removed (size: %u)", filenameOfNote(removedObj), fileSizeOfNote(removedObj));
+			os_log_debug(NVLogStorage(), "File %@ _actually_ removed (size: %u)", filenameOfNote(removedObj), fileSizeOfNote(removedObj));
 			[deletionManager addDeletedNote:removedObj];
 		}
 	}
 	
 	for (i=0; i<[addedEntries count]; i++) {
 		NoteCatalogEntry *appendedCatEntry = (NoteCatalogEntry *)[[addedEntries objectAtIndex:i] pointerValue];
-		NSLog(@"File _actually_ added: %@ (%s)", appendedCatEntry->filename, sel_getName(_cmd));
+		os_log_debug(NVLogStorage(), "File _actually_ added: %@ (%{public}s)", appendedCatEntry->filename, sel_getName(_cmd));
 		[self addNoteFromCatalogEntry:appendedCatEntry];
     }	
 }

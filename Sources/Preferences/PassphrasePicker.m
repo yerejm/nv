@@ -53,7 +53,7 @@
 - (void)showAroundWindow:(NSWindow*)mainWindow resultDelegate:(id)aDelegate {
 	if (!newPassphraseWindow) {
 		if (!NVLoadNib(@"PassphrasePicker", self))  {
-			NSLog(@"Failed to load PassphrasePicker.nib");
+			os_log_error(NVLogPreferences(), "Failed to load PassphrasePicker.nib");
 			NSBeep();
 			return;
 		}

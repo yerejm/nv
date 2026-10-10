@@ -86,7 +86,7 @@
 - (void)showAroundWindow:(NSWindow*)window {
 	if (!changePassphraseWindow) {
 		if (!NVLoadNib(@"PassphraseChanger", self))  {
-			NSLog(@"Failed to load PassphraseChanger.nib");
+			os_log_error(NVLogPreferences(), "Failed to load PassphraseChanger.nib");
 			NSBeep();
 			return;
 		}

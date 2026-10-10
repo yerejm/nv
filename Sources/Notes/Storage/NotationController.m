@@ -154,7 +154,7 @@
 		//upgrade note-text-encodings here if there might exist notes with the wrong encoding (check NotationPrefs values)
 		if (epochIteration < 2) {
 			//this would have to be a database from epoch 1, where the default file-encoding was system-default
-			NSLog(@"trying to upgrade note encodings");
+			os_log_info(NVLogStorage(), "trying to upgrade note encodings");
 			[allNotes makeObjectsPerformSelector:@selector(upgradeToUTF8IfUsingSystemEncoding)];
 			//move aside the old database as the new format breaks compatibility
 			(void)[self renameAndForgetNoteDatabaseFile:@"Notes & Settings (old version from 2.0b)"];
@@ -164,7 +164,7 @@
 		}
 		if (epochIteration < 4) {
 			if ([self removeSpuriousDatabaseFileNotes]) {
-				NSLog(@"found and removed spurious DB notes");
+				os_log_info(NVLogStorage(), "found and removed spurious DB notes");
 				[self refilterNotes];
 			}
 			
@@ -178,7 +178,7 @@
 		}
 		
 		if (epochIteration < [notationPrefs formatEpoch]) {
-			NSLog(@"epochIteration was upgraded from %u to %u", epochIteration, [notationPrefs formatEpoch]);
+			os_log_info(NVLogStorage(), "epochIteration was upgraded from %u to %u", epochIteration, [notationPrefs formatEpoch]);
 			notesChanged = YES;
 			[self flushEverything];
 		} else if ([notationPrefs epochIteration] > EPOC_ITERATION) {
@@ -214,7 +214,7 @@
 	@try {
 		frozenNotation = NVUnarchiveObject(archivedNotation, [FrozenNotation class]);
 	} @catch (NSException *e) {
-		NSLog(@"(VERIFY) Error unarchiving notes and preferences from data (%@, %@)", [e name], [e reason]);
+		os_log_error(NVLogStorage(), "(VERIFY) Error unarchiving notes and preferences from data (%{public}@, %@)", [e name], [e reason]);
 		result = kCoderErr;
 		goto returnResult;
 	}
@@ -239,7 +239,7 @@
 		}
 	}
 	
-	NSLog(@"verified %lu notes in %g s", (unsigned long)[notesToVerify count], (float)[[NSDate date] timeIntervalSinceDate:date]);
+	os_log_info(NVLogStorage(), "verified %lu notes in %g s", (unsigned long)[notesToVerify count], (float)[[NSDate date] timeIntervalSinceDate:date]);
 returnResult:
 	if (notesData) free(notesData);
 	return @(result);
@@ -264,7 +264,7 @@ returnResult:
 		@try {
 			frozenNotation = NVUnarchiveObject(archivedNotation, [FrozenNotation class]);
 		} @catch (NSException *e) {
-			NSLog(@"Error unarchiving notes and preferences from data (%@, %@)", [e name], [e reason]);
+			os_log_error(NVLogStorage(), "Error unarchiving notes and preferences from data (%{public}@, %@)", [e name], [e reason]);
 			
 			if (notesData)
 				free(notesData);
@@ -333,7 +333,7 @@ returnResult:
 						//we shouldn't continue because the journal is still the sole record of the unsaved notes, so we can't delete it
 						//BUT: what if the database can't be verified? We should be able to continue, and just keep adding to the WAL
 						//in this case the WAL should be destroyed, re-initialized, and the recovered (and de-duped) notes added back
-						NSLog(@"Unable to flush recovered notes back to database");
+						os_log_error(NVLogStorage(), "Unable to flush recovered notes back to database");
 						databaseCouldNotBeFlushed = YES;
 					}
 				}
@@ -345,20 +345,20 @@ returnResult:
 				if ([walReader rejectedUnverifiedRecords]) {
 					//the notes recovered before the first unverified record are kept; the rest stays on disk for inspection
 					if (![walReader retireLogFileWithName:UnverifiedJournalFileName]) {
-						NSLog(@"Unable to move aside the unverified write-ahead-log file");
+						os_log_error(NVLogStorage(), "Unable to move aside the unverified write-ahead-log file");
 						goto bail;
 					}
 					[self performSelector:@selector(reportUnverifiedJournal) withObject:nil afterDelay:0.0];
 				} else if (![walReader destroyLogFile]) {
 					//couldn't delete the log file, so we can't create a new one
-					NSLog(@"Unable to delete the old write-ahead-log file");
+					os_log_error(NVLogStorage(), "Unable to delete the old write-ahead-log file");
 					goto bail;
 				}
 				
 				if (!(walWriter = [[WALStorageController alloc] initWithParentFSRep:(char*)convertedPath encryptionKey:walSessionKey authenticated:[notationPrefs usesAuthenticatedFormat]])) {
 					//couldn't create a journal after recovering the old one
 					//if databaseCouldNotBeFlushed is true here, then we've potentially lost notes; perhaps exchangeobjects would be better here?
-					NSLog(@"Unable to create a new write-ahead-log after deleting the old one");
+					os_log_error(NVLogStorage(), "Unable to create a new write-ahead-log after deleting the old one");
 					goto bail;
 				}
 				
@@ -373,7 +373,7 @@ returnResult:
 					[self refilterNotes];
 				}
 			} else {
-				NSLog(@"Unable to recover unsaved notes from write-ahead-log");
+				os_log_error(NVLogStorage(), "Unable to recover unsaved notes from write-ahead-log");
 				//1) should we let the user attempt to remove it without recovery?
 				goto bail;
 			}
@@ -382,7 +382,7 @@ returnResult:
 		
 		return YES;
     } else {
-		NSLog(@"NVReferenceMakePath error: %d", err);
+		os_log_error(NVLogStorage(), "NVReferenceMakePath error: %d", err);
 		goto bail;
     }
     
@@ -392,7 +392,7 @@ bail:
 }
 
 - (void)reportUnverifiedJournal {
-	NSLog(@"Unsaved changes in the write-ahead-log failed verification; the log was kept as \"%@\"", UnverifiedJournalFileName);
+	os_log_error(NVLogStorage(), "Unsaved changes in the write-ahead-log failed verification; the log was kept as \"%{public}@\"", UnverifiedJournalFileName);
 	if (delegate)
 		NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"Some unsaved note changes could not be verified and were not restored.", nil),
 				   [NSString stringWithFormat:NSLocalizedString(@"The Interim Note-Changes file may have been damaged or altered. It was kept in your notes folder as “%@”.", nil), UnverifiedJournalFileName],
@@ -424,7 +424,7 @@ bail:
 					
 					NoteObject *existingNote = [allNotes objectAtIndex:existingNoteIndex];
 					if ([existingNote youngerThanLogObject:obj]) {
-						NSLog(@"got a newer deleted note %@", obj);
+						os_log_debug(NVLogStorage(), "got a newer deleted note %@", obj);
 						//except that normally the undomanager doesn't exist by this point			
 						[self _registerDeletionUndoForNote:existingNote];
 						[allNotes removeObjectAtIndex:existingNoteIndex];
@@ -432,10 +432,10 @@ bail:
 						[self _addDeletedNote:obj];
 						notesChanged = YES;
 					} else {
-						NSLog(@"got an older deleted note %@", obj);
+						os_log_debug(NVLogStorage(), "got an older deleted note %@", obj);
 					}
 				} else {
-					NSLog(@"got a deleted note with a UUID that doesn't match anything in allNotes, adding to deletedNotes only");
+					os_log_debug(NVLogStorage(), "got a deleted note with a UUID that doesn't match anything in allNotes, adding to deletedNotes only");
 					[self _addDeletedNote:obj];
 				}
 			} else if (existingNoteIndex != NSNotFound) {
@@ -456,7 +456,7 @@ bail:
 		}
 		
     } else {
-	NSLog(@"_makeChangesInDictionary: Could not get values or keys!");
+	os_log_fault(NVLogStorage(), "_makeChangesInDictionary: Could not get values or keys!");
     }
 	if (keys != keysBuffer)
 	    free(keys);
@@ -468,7 +468,7 @@ bail:
     //remove journal file if we have one
     if (walWriter) {
 		if (![walWriter destroyLogFile])
-			NSLog(@"couldn't remove wal file--is this an error for note flushing?");
+			os_log_error(NVLogStorage(), "couldn't remove wal file--is this an error for note flushing?");
 		
 		walWriter = nil;	
     }
@@ -508,7 +508,7 @@ bail:
 	NSError *error = nil;
 	[[NSFileManager defaultManager] removeItemAtPath:backup error:NULL];
 	if (![[NSFileManager defaultManager] copyItemAtPath:[directory stringByAppendingPathComponent:NotesDatabaseFileName] toPath:backup error:&error]) {
-		NSLog(@"Unable to keep a copy of the database before upgrading it: %@", error);
+		os_log_error(NVLogStorage(), "Unable to keep a copy of the database before upgrading it: %@", error);
 		return NO;
 	}
 	
@@ -530,7 +530,7 @@ bail:
 		
 		if (walWriter) {
 			if (![walWriter synchronize])
-				NSLog(@"Couldn't sync wal file--is this an error for note flushing?");
+				os_log_error(NVLogStorage(), "Couldn't sync wal file--is this an error for note flushing?");
 			[NSObject cancelPreviousPerformRequestsWithTarget:walWriter selector:@selector(synchronize) object:nil];
 		}
 		
@@ -541,7 +541,7 @@ bail:
 		NSData *serializedData = [FrozenNotation frozenDataWithExistingNotes:allNotes deletedNotes:deletedNotes prefs:notationPrefs];
 		if (!serializedData) {
 			
-			NSLog(@"serialized data is nil!");
+			os_log_error(NVLogStorage(), "serialized data is nil!");
 			return NO;
 		}
 		
@@ -937,7 +937,7 @@ bail:
 			[self performSelector:@selector(synchronizeNoteChanges:) withObject:nil afterDelay:2.7];
 		}
 	} else {
-		NSLog(@"not writing note %@ because it is not controlled by NoteController", note);
+		os_log_error(NVLogStorage(), "not writing note %@ because it is not controlled by NoteController", note);
 	}
 }
 
@@ -989,7 +989,7 @@ bail:
     }
 	//add journal removal event
 	if (walWriter && ![walWriter writeRemovalForNote:aNoteObject]) {
-		NSLog(@"Couldn't log note removal");
+		os_log_error(NVLogStorage(), "Couldn't log note removal");
 	}
 	
     

@@ -48,7 +48,7 @@
 	
 	if (!window) {
 		if (!NVLoadNib(@"PassphraseRetriever", self))  {
-			NSLog(@"Failed to load PassphraseRetriever.nib");
+			os_log_error(NVLogPreferences(), "Failed to load PassphraseRetriever.nib");
 			NSBeep();
 			return 0;
 		}

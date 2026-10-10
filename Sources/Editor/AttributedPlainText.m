@@ -72,7 +72,7 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 			}
 		}
 	} @catch (NSException *e) {
-		NSLog(@"indentTextLists: %@", e);
+		os_log_error(NVLogEditor(), "indentTextLists: %@", e);
 	}
 }
 
@@ -196,7 +196,7 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 		}
 	}	
 	@catch (NSException *e) {
-		NSLog(@"Error trying to re-style text (%@, %@)", [e name], [e reason]);
+		os_log_error(NVLogEditor(), "Error trying to re-style text (%{public}@, %@)", [e name], [e reason]);
 	}
 		
 	return rangesChanged > 0;
@@ -377,7 +377,7 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 			}
 		} while(NSMaxRange(scanRange) <= NSMaxRange(changedRange));
 	} @catch (NSException *e) {
-		NSLog(@"_%s(%@): %@", sel_getName(_cmd), NSStringFromRange(changedRange), e);
+		os_log_error(NVLogEditor(), "_%{public}s(%{public}@): %@", sel_getName(_cmd), NSStringFromRange(changedRange), e);
 	}
 }
 
@@ -429,7 +429,7 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 		} while (NSMaxRange(scanRange) <= NSMaxRange(changedRange));
 	}
 	@catch (NSException *e) {
-		NSLog(@"_%s(%@): %@", sel_getName(_cmd), NSStringFromRange(changedRange), e);
+		os_log_error(NVLogEditor(), "_%{public}s(%{public}@): %@", sel_getName(_cmd), NSStringFromRange(changedRange), e);
 	}
 }
 
@@ -506,7 +506,7 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 			[allAttributes setObject:attributes forKey:[NSValue valueWithRange:effectiveRange]];
 		}
 		NS_HANDLER
-			NSLog(@"Error getting attributes: %@", [localException reason]);
+			os_log_error(NVLogEditor(), "Error getting attributes: %@", [localException reason]);
 		NS_ENDHANDLER
 		
 		return allAttributes;

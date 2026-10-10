@@ -64,7 +64,7 @@
 - (void)startProgressIndication:(id)sender {
 	if (!window) {
 		if (!NVLoadNib(@"URLGetter", self))  {
-			NSLog(@"Failed to load URLGetter.nib");
+			os_log_error(NVLogImportExport(), "Failed to load URLGetter.nib");
 			NSBeep();
 			return;
 		}
@@ -155,7 +155,7 @@
 		if (![[fileMan contentsOfDirectoryAtPath:tempDirectory error:NULL] count])
 			[fileMan removeItemAtPath:tempDirectory error:NULL];
 		else
-			NSLog(@"note removing %@ because it still contains files!", tempDirectory);
+			os_log_error(NVLogImportExport(), "note removing %@ because it still contains files!", tempDirectory);
 		tempDirectory = nil;
 	}
 	

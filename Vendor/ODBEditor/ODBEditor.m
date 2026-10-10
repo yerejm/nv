@@ -137,7 +137,7 @@ static ODBEditor	*_sharedODBEditor;
 		NSString *path = [aNote noteFilePath];
 		
 		[[NSWorkspace sharedWorkspace] openURLs:@[[NSURL fileURLWithPath:path]] withApplicationAtURL:[ed resolvedURL] configuration:[NSWorkspaceOpenConfiguration configuration] completionHandler:^(NSRunningApplication *application, NSError *error) {
-            if (error) dispatch_async(dispatch_get_main_queue(), ^{ NSLog(@"Could not open note in external editor: %@", error); NSBeep(); });
+            if (error) dispatch_async(dispatch_get_main_queue(), ^{ os_log_error(NVLogExternalEditing(), "Could not open note in external editor: %@", error); NSBeep(); });
         }];
 		return YES;
 	}
@@ -146,12 +146,12 @@ static ODBEditor	*_sharedODBEditor;
 	//what if this editor is not an ODB editor? what if the path doesn't exist?
 	
 	if (!editingSpacePreparer) {
-		NSLog(@"not editing '%@' because no database has initialized an editing space", aNote);
+		os_log_error(NVLogExternalEditing(), "not editing '%@' because no database has initialized an editing space", aNote);
 		NSBeep();
 		return NO;
 	}
 	if (![ed isODBEditor]) {
-		NSLog(@"not editing '%@' with '%@' because it is not an ODB editor and the note-file cannot be saved directly", aNote, ed);
+		os_log_error(NVLogExternalEditing(), "not editing '%@' with '%@' because it is not an ODB editor and the note-file cannot be saved directly", aNote, ed);
 		NSBeep();
 		return NO;
 	}
@@ -171,7 +171,7 @@ static ODBEditor	*_sharedODBEditor;
 		NSString *path = [self _nonexistingTemporaryPathForFilename:filenameOfNote(aNote) inDirectory:cachePath];
 		NSError *error = nil;
 		if (![[[aNote contentString] string] writeToFile:path atomically:NO encoding:NSUTF8StringEncoding error:&error]) {
-			NSLog(@"not editing '%@' because it could not be written to '%@': %@", aNote, path, error);
+			os_log_error(NVLogExternalEditing(), "not editing '%@' because it could not be written to '%@': %@", aNote, path, error);
 			NSBeep();
 			[self _releaseEditingSpaceIfUnused];
 			return;
@@ -228,7 +228,7 @@ static ODBEditor	*_sharedODBEditor;
                 [self->_filePathsBeingEdited removeObjectForKey:path];
                 [[NSFileManager defaultManager] removeItemAtPath:path error:NULL];
                 [self _releaseEditingSpaceIfUnused];
-                NSLog(@"Could not open external editing session: %@", error);
+                os_log_error(NVLogExternalEditing(), "Could not open external editing session: %@", error);
                 NSBeep();
             }
         });
@@ -262,7 +262,7 @@ static ODBEditor	*_sharedODBEditor;
 	}
 	else
 	{
-		NSLog(@"Got ODB editor event for unknown file '%@'", path);
+		os_log_error(NVLogExternalEditing(), "Got ODB editor event for unknown file '%@'", path);
 	}
 }
 
@@ -280,7 +280,7 @@ static ODBEditor	*_sharedODBEditor;
 	}
 	else
 	{
-		NSLog(@"Got ODB editor event for unknown file '%@'", fileName);
+		os_log_error(NVLogExternalEditing(), "Got ODB editor event for unknown file '%@'", fileName);
 	}
 	if (fileName)
 		[_filePathsBeingEdited removeObjectForKey: fileName];

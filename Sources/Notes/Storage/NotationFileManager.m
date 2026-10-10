@@ -93,7 +93,7 @@ static BOOL GetVolumeUUIDAttr(const char *path, VolumeUUID *volumeUUIDPtr) {
 	
 	/* Get the Finder Info */
 	if ((result = getattrlist(path, &alist, &volFinderInfo, sizeof(volFinderInfo), 0))) {
-		NSLog(@"GetVolumeUUIDAttr error: %d", result);
+		os_log_error(NVLogStorage(), "GetVolumeUUIDAttr error: %d", result);
 		return NO;
 	}
 	
@@ -206,9 +206,9 @@ static struct statfs *StatFSVolumeInfo(NotationController *controller) {
 			controller->statfsInfo = calloc(1, sizeof(struct statfs));
 			
 			if (statfs((char*)convertedPath, controller->statfsInfo))
-				NSLog(@"statfs: error %d\n", errno);
+				os_log_error(NVLogStorage(), "statfs: error %d", errno);
 		} else
-			NSLog(@"NVReferenceMakePath: error %d\n", err);
+			os_log_error(NVLogStorage(), "NVReferenceMakePath: error %d", err);
 		
 		free(convertedPath);
 	}
@@ -237,7 +237,7 @@ long BlockSizeForNotation(NotationController *controller) {
 	if (IsZeros(childRef, sizeof(NVFileReference)) || [self fileInNotesDirectory:childRef isOwnedByUs:&isOwned hasFileInfo:NULL] != noErr || !isOwned) {
 		OSStatus err = noErr;
 		if ((err = NVMakeReference(&noteDirectoryRef, (__bridge CFStringRef)filename, childRef)) != noErr) {
-			NSLog(@"Could not get an fsref for file with name %@: %d\n", filename, err);
+			os_log_error(NVLogStorage(), "Could not get an fsref for file with name %@: %d", filename, err);
 			return err;
 		}
     }
@@ -262,7 +262,7 @@ long BlockSizeForNotation(NotationController *controller) {
 	
     OSStatus err = noErr;	
     if ((err = NVRename(&noteDatabaseRef, (__bridge CFStringRef)newfilename, NULL)) != noErr) {
-		NSLog(@"Error renaming notes database file to %@: %d", newfilename, err);
+		os_log_error(NVLogStorage(), "Error renaming notes database file to %@: %d", newfilename, err);
 		return err;
     }
 	//reset the NVFileReference to ensure it doesn't point to the renamed file
@@ -415,7 +415,7 @@ terminate:
 	if (noErr != err) return err;
     
     if ((err = NVRename(childRef, (__bridge CFStringRef)newName, childRef)) != noErr) {
-		NSLog(@"Error renaming file %@ to %@: %d", oldName, newName, err);
+		os_log_error(NVLogStorage(), "Error renaming file %@ to %@: %d", oldName, newName, err);
 		return err;
     }
     
@@ -443,7 +443,7 @@ terminate:
     if (noErr != err) return err;
 
 	if ((err = NVDeleteObject(childRef)) != noErr) {
-		NSLog(@"Error deleting file: %d", err);
+		os_log_error(NVLogStorage(), "Error deleting file: %d", err);
 		return err;
 	}
     
@@ -467,7 +467,7 @@ terminate:
 	if (noErr != err) return nil;
 	
     if ((err = NVReadFile(childRef, BlockSizeForNotation(self), &fileSize, (void**)&notesDataPtr, true)) != noErr) {
-		NSLog(@"%s: error %d", sel_getName(_cmd), err);
+		os_log_error(NVLogStorage(), "%{public}s: error %d", sel_getName(_cmd), err);
 		return nil;
 	}    
     if (!notesDataPtr)
@@ -493,13 +493,13 @@ terminate:
     	
 	NVFileReference tempFileRef;
     if ((err = CreateTemporaryFile(&noteDirectoryRef, &tempFileRef)) != noErr) {
-		NSLog(@"error creating temporary file: %d", err);
+		os_log_error(NVLogStorage(), "error creating temporary file: %d", err);
 		return err;
     }
     
     //now write to temporary file and swap
     if ((err = NVWriteFile(&tempFileRef, BlockSizeForNotation(self), [data length], [data bytes], false, false)) != noErr) {
-		NSLog(@"error writing to temporary file: %d", err);
+		os_log_error(NVLogStorage(), "error writing to temporary file: %d", err);
 		
 		return err;
     }
@@ -509,7 +509,7 @@ terminate:
 	if (verifyDelegate && verificationSel) {
 		NSNumber *(*verify)(id, SEL, NSValue *, NSString *) = (void *)[verifyDelegate methodForSelector:verificationSel];
 		if (noErr != (err = [verify(verifyDelegate, verificationSel, [NSValue valueWithPointer:&tempFileRef], filename) intValue])) {
-			NSLog(@"couldn't verify written notes, so not continuing to save");
+			os_log_error(NVLogStorage(), "couldn't verify written notes, so not continuing to save");
 			(void)NVDeleteObject(&tempFileRef);
 			return err;
 		}
@@ -520,7 +520,7 @@ terminate:
 	if (IsZeros(destRef,sizeof(NVFileReference)) || [self fileInNotesDirectory:destRef isOwnedByUs:&isOwned hasFileInfo:NULL] != noErr || !isOwned) {
 		
 		if ((err = [self createFileIfNotPresentInNotesDirectory:destRef forFilename:filename fileWasCreated:nil]) != noErr) {
-			NSLog(@"error creating or getting fsref for file %@: %d", filename, err);
+			os_log_error(NVLogStorage(), "error creating or getting fsref for file %@: %d", filename, err);
 			return err;
 		}
     }
@@ -534,14 +534,14 @@ terminate:
     }
 
     if (err != noErr) {
-		NSLog(@"error exchanging contents of temporary file with destination file %@: %d",filename, err);
+		os_log_error(NVLogStorage(), "error exchanging contents of temporary file with destination file %@: %d",filename, err);
 		return err;
     }
     
     if ((err = NVDeleteObject(&tempFileRef)) != noErr) {
-		NSLog(@"Error deleting temporary file: %d; moving to trash", err);
+		os_log_error(NVLogStorage(), "Error deleting temporary file: %d; moving to trash", err);
 		if ((err = [self moveFileToTrash:&tempFileRef forFilename:nil]) != noErr)
-			NSLog(@"Error moving file to trash: %d\n", err);
+			os_log_error(NVLogStorage(), "Error moving file to trash: %d", err);
     }
     
     return noErr;
