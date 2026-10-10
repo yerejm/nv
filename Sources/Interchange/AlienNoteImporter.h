@@ -39,12 +39,12 @@ extern NSString *RetrievedPasswordKey;
 	__weak id receptionDelegate;
 	
 	id source;
-	NSMutableDictionary *documentSettings;
+	NSMutableDictionary<NSString *, id> *documentSettings;
 	BOOL shouldGrabCreationDates;
 }
 
 //a directory containing notes, a custom bundle, or custom file format in which more than one note could be expected
-- (instancetype)initWithStoragePaths:(NSArray*)filenames;
+- (instancetype)initWithStoragePaths:(NSArray<NSString *> *)filenames;
 - (instancetype)initWithStoragePath:(NSString*)filename;
 + (void)importBlorOrHelpFilesIfNecessaryIntoNotation:(NotationController*)notation;
 + (AlienNoteImporter *)importerWithPath:(NSString*)path;
@@ -56,18 +56,18 @@ extern NSString *RetrievedPasswordKey;
 + (Class)PDFDocClass;
 
 - (NSView*)accessoryView;
-- (NSDictionary*)documentSettings;
-- (NSArray*)importedNotes;
+- (NSDictionary<NSString *, id> *)documentSettings;
+- (NSArray<NoteObject *> *)importedNotes;
 
-- (NSArray*)notesWithPaths:(NSArray*)paths;
+- (NSArray<NoteObject *> *)notesWithPaths:(NSArray<NSString *> *)paths;
 //where filename is a file expected to contain a single note (e.g., text, RTF, word)
 - (NoteObject*)noteWithFile:(NSString*)filename;
 
-- (NSArray*)notesInDirectory:(NSString*)filename;
-- (NSArray*)notesInFile:(NSString*)filename;
+- (NSArray<NoteObject *> *)notesInDirectory:(NSString*)filename;
+- (NSArray<NoteObject *> *)notesInFile:(NSString*)filename;
 
 @end
 
 @interface AlienNoteImporter (DialogDelegate)
-- (void)noteImporter:(AlienNoteImporter*)importer importedNotes:(NSArray*)notes;
+- (void)noteImporter:(AlienNoteImporter*)importer importedNotes:(NSArray<NoteObject *> *)notes;
 @end

@@ -81,7 +81,7 @@
 	return self;
 }
 
-+ (NSDictionary*)standardDictionary {
++ (NSDictionary<NSAttributedStringKey, id> *)standardDictionary {
 	static NSDictionary *standardDictionary = nil;
 	if (!standardDictionary)
 		standardDictionary = @{NSFontAttributeName: [NSFont systemFontOfSize:[NSFont smallSystemFontSize]]};

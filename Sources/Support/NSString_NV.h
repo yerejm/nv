@@ -51,7 +51,7 @@ void resetCurrentDayTime(void);
 - (BOOL)superficiallyResemblesAnHTTPURL;
 + (NSString*)reasonStringFromCarbonFSError:(OSStatus)err;
 
-- (NSArray*)labelCompatibleWords;
+- (NSArray<NSString *> *)labelCompatibleWords;
 
 - (BOOL)UTIOfFileConformsToType:(NSString*)type;
 

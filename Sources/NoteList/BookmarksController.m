@@ -33,7 +33,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 
 @implementation NoteBookmark
 
-- (instancetype)initWithDictionary:(NSDictionary*)aDict {
+- (instancetype)initWithDictionary:(NSDictionary<NSString *, NSString *> *)aDict {
 	if (aDict) {
 		NSString *uuidString = [aDict objectForKey:BMNoteUUIDStringKey];
 		if (uuidString) {
@@ -95,7 +95,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 	if (!noteObject) noteObject = [delegate noteWithUUIDBytes:uuidBytes];
 	return noteObject;
 }
-- (NSDictionary*)dictionaryRep {
+- (NSDictionary<NSString *, NSString *> *)dictionaryRep {
 	return @{
 		BMSearchStringKey: searchString ?: @"",
 		BMNoteUUIDStringKey: [NSString uuidStringWithBytes:uuidBytes]
@@ -164,7 +164,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 	[bookmarks makeObjectsPerformSelector:@selector(setDelegate:) withObject:nil];
 }
 
-- (instancetype)initWithBookmarks:(NSArray*)array {
+- (instancetype)initWithBookmarks:(NSArray<NSDictionary<NSString *, NSString *> *> *)array {
 	if ((self = [self init])) {
 		unsigned int i;
 		for (i=0; i<[array count]; i++) {
@@ -178,7 +178,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 	return self;
 }
 
-- (NSArray*)dictionaryReps {
+- (NSArray<NSDictionary<NSString *, NSString *> *> *)dictionaryReps {
 	
 	NSMutableArray *array = [NSMutableArray arrayWithCapacity:[bookmarks count]];
 	unsigned int i;

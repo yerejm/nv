@@ -85,7 +85,7 @@ extern const char WALAuthenticatedJournalMagic[8];
 - (BOOL)writeEstablishedNote:(id<SynchronizedNote>)aNoteObject;
 - (BOOL)writeRemovalForNote:(id<SynchronizedNote>)aNoteObject;
 - (BOOL)writeNoteObject:(id<SynchronizedNote>)aNoteObject;
-- (void)writeNoteObjects:(NSArray*)notes;
+- (void)writeNoteObjects:(NSArray<id <SynchronizedNote>> *)notes;
 - (BOOL)_attemptToWriteUnwrittenData;
 - (BOOL)_encryptAndWriteData:(NSMutableData*)data;
 - (BOOL)synchronize;

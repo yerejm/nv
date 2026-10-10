@@ -29,24 +29,24 @@
 
 @interface LabelsListController : FastListDataSource {
 	NSCountedSet *allLabels;
-	NSMutableDictionary *labelImages;
+	NSMutableDictionary<NSString *, NSImage *> *labelImages;
 }
 
 
-- (NSArray*)labelTitlesPrefixedByString:(NSString*)prefixString indexOfSelectedItem:(NSInteger *)anIndex minusWordSet:(NSSet*)antiSet;
+- (NSArray<NSString *> *)labelTitlesPrefixedByString:(NSString*)prefixString indexOfSelectedItem:(NSInteger *)anIndex minusWordSet:(NSSet<NSString *> *)antiSet;
 
 - (void)invalidateCachedLabelImages;
 - (NSImage*)cachedLabelImageForWord:(NSString*)aWord highlighted:(BOOL)isHighlighted;
 
-- (NSSet*)notesAtFilteredIndex:(int)labelIndex;
-- (NSSet*)notesAtFilteredIndexes:(NSIndexSet*)anIndexSet;
+- (NSSet<NoteObject *> *)notesAtFilteredIndex:(int)labelIndex;
+- (NSSet<NoteObject *> *)notesAtFilteredIndexes:(NSIndexSet*)anIndexSet;
 
 //mostly useful for updating labels of notes individually
-- (void)addLabelSet:(NSSet*)labelSet toNote:(NoteObject*)note;
-- (void)removeLabelSet:(NSSet*)labelSet fromNote:(NoteObject*)note;
+- (void)addLabelSet:(NSSet<LabelObject *> *)labelSet toNote:(NoteObject*)note;
+- (void)removeLabelSet:(NSSet<LabelObject *> *)labelSet fromNote:(NoteObject*)note;
 
 //for changing note labels en masse
-- (void)addLabelSet:(NSSet*)labelSet toNoteSet:(NSSet*)notes;
-- (void)removeLabelSet:(NSSet*)labelSet fromNoteSet:(NSSet*)notes;
+- (void)addLabelSet:(NSSet<LabelObject *> *)labelSet toNoteSet:(NSSet<NoteObject *> *)notes;
+- (void)removeLabelSet:(NSSet<LabelObject *> *)labelSet fromNoteSet:(NSSet<NoteObject *> *)notes;
 
 @end

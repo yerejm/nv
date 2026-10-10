@@ -32,7 +32,7 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
 - (float)tableFontFrameHeight;
 
 - (void)setPreviewIsHidden:(BOOL)value;
-- (NSMutableDictionary*)baseTextAttributes;
+- (NSMutableDictionary<NSAttributedStringKey, id> *)baseTextAttributes;
 - (NoteObject*)noteObject;
 - (void)setNoteObject:(NoteObject*)obj;
 

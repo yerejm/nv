@@ -53,11 +53,11 @@ extern NSString *NVHiddenBulletIndentAttributeName;
 
 - (BOOL)attribute:(NSString*)anAttribute existsInRange:(NSRange)aRange;
 
-- (NSArray*)allLinks;
+- (NSArray<NSURL *> *)allLinks;
 - (id)findNextLinkAtIndex:(NSUInteger)startIndex effectiveRange:(NSRange *)range;
 #if SEPARATE_ATTRS
 //extract the attributes using their ranges as keys
-- (NSDictionary*)attributesByRange;
+- (NSDictionary<NSValue *, NSDictionary<NSAttributedStringKey, id> *> *)attributesByRange;
 #endif
 
 + (NSAttributedString*)timeDelayStringWithNumberOfSeconds:(double)seconds;

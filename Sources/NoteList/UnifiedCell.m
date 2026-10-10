@@ -113,7 +113,7 @@ NSAttributedString *AttributedStringForSelection(NSAttributedString *str, BOOL w
     return date.length ? MIN(ceil([date sizeWithAttributes:[self baseTextAttributes]].width) + 4, frame.size.width * 0.6) : 0;
 }
 
-- (NSMutableDictionary*)baseTextAttributes {
+- (NSMutableDictionary<NSAttributedStringKey, id> *)baseTextAttributes {
 	static NSMutableParagraphStyle *alignStyle = nil;
 	if (!alignStyle) {
 		alignStyle = [[NSMutableParagraphStyle alloc] init];

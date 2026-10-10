@@ -61,7 +61,7 @@
 	}
 }
 
-- (instancetype)initWithNotes:(NSMutableArray*)notes deletedNotes:(NSMutableSet*)antiNotes prefs:(NotationPrefs*)somePrefs {
+- (instancetype)initWithNotes:(NSMutableArray<NoteObject *> *)notes deletedNotes:(NSMutableSet<DeletedNoteObject *> *)antiNotes prefs:(NotationPrefs*)somePrefs {
 	
 	if ((self = [super init])) {
 
@@ -96,8 +96,8 @@
 	return self;
 }
 
-+ (NSData*)frozenDataWithExistingNotes:(NSMutableArray*)notes 
-						  deletedNotes:(NSMutableSet*)antiNotes 
++ (NSData*)frozenDataWithExistingNotes:(NSMutableArray<NoteObject *> *)notes 
+						  deletedNotes:(NSMutableSet<DeletedNoteObject *> *)antiNotes 
 								 prefs:(NotationPrefs*)prefs {
 	FrozenNotation *frozenNotation = [[FrozenNotation alloc] initWithNotes:notes deletedNotes:antiNotes prefs:prefs];
 
@@ -109,7 +109,7 @@
 	return encodedNotationData;
 }
 
-- (NSMutableArray*)unpackedNotesWithPrefs:(NotationPrefs*)somePrefs returningError:(OSStatus*)err {
+- (NSMutableArray<NoteObject *> *)unpackedNotesWithPrefs:(NotationPrefs*)somePrefs returningError:(OSStatus*)err {
 	
 	//decrypt notesData if necessary, then unarchive
 	
@@ -141,7 +141,7 @@
 }
 
 
-- (NSMutableArray*)unpackedNotesReturningError:(OSStatus*)err {
+- (NSMutableArray<NoteObject *> *)unpackedNotesReturningError:(OSStatus*)err {
 	
 	//decrypt notesData, grabbing password from from keychain or user as necessary, then unarchive
 	
@@ -199,7 +199,7 @@
 	return allNotes;
 }
 
-- (NSMutableSet*)deletedNotes {
+- (NSMutableSet<DeletedNoteObject *> *)deletedNotes {
 	return deletedNoteSet;
 }
 

@@ -780,7 +780,7 @@ bail:
 	return newNote;
 }
 
-- (void)addNotes:(NSArray*)noteArray {
+- (void)addNotes:(NSArray<NoteObject *> *)noteArray {
 	
 	if (![noteArray count]) return; 
 	
@@ -840,7 +840,7 @@ bail:
 	}
 }
 
-- (BOOL)openFiles:(NSArray*)filenames {
+- (BOOL)openFiles:(NSArray<NSString *> *)filenames {
 	//reveal notes that already exist with any of these filenames
 	//for paths left over that weren't in the notes-folder/database, import those files as new notes
 	
@@ -946,13 +946,14 @@ bail:
     [aNoteObject setDelegate:self];	
 	
     [allNotes addObject:aNoteObject];
-	[deletedNotes removeObject:aNoteObject];
+	//a note and its deleted record compare equal by UUID
+	[deletedNotes removeObject:(id)aNoteObject];
     
     notesChanged = YES;
 }
 
 //the gateway methods must always show warnings, or else flash overlay window if show-warnings-pref is off
-- (void)removeNotes:(NSArray*)noteArray {
+- (void)removeNotes:(NSArray<NoteObject *> *)noteArray {
 	NSEnumerator *enumerator = [noteArray objectEnumerator];
 	NoteObject* note;
 	
@@ -1089,14 +1090,14 @@ bail:
 }
 
 //re-searching for all notes each time a label is added or removed is unnecessary, I think
-- (void)note:(NoteObject*)note didAddLabelSet:(NSSet*)labelSet {
+- (void)note:(NoteObject*)note didAddLabelSet:(NSSet<LabelObject *> *)labelSet {
 	[labelsListController addLabelSet:labelSet toNote:note];
         
     //this can only happen while the note is visible
 	
 }
 
-- (void)note:(NoteObject*)note didRemoveLabelSet:(NSSet*)labelSet {
+- (void)note:(NoteObject*)note didRemoveLabelSet:(NSSet<LabelObject *> *)labelSet {
 	[labelsListController removeLabelSet:labelSet fromNote:note];
         
 }
@@ -1257,7 +1258,7 @@ bail:
     return selectedNoteIndex;
 }
 
-- (NSArray*)noteTitlesPrefixedByString:(NSString*)prefixString indexOfSelectedItem:(NSInteger *)anIndex {
+- (NSArray<NSString *> *)noteTitlesPrefixedByString:(NSString*)prefixString indexOfSelectedItem:(NSInteger *)anIndex {
 	NSMutableArray *objs = [NSMutableArray arrayWithCapacity:[allNotes count]];
 	const char *searchString = [prefixString lowercaseUTF8String];
 	NSUInteger i, titleLen = 0, strLen = strlen(searchString), j = 0, shortestTitleLen = UINT_MAX;
@@ -1285,13 +1286,13 @@ bail:
 	return nil;
 }
 
-- (NSArray*)notesAtIndexes:(NSIndexSet*)indexSet {
+- (NSArray<NoteObject *> *)notesAtIndexes:(NSIndexSet*)indexSet {
 	return [notesListDataSource objectsAtFilteredIndexes:indexSet];
 }
 
 //O(n^2) at best, but at least we're dealing with C arrays
 
-- (NSIndexSet*)indexesOfNotes:(NSArray*)noteArray {
+- (NSIndexSet*)indexesOfNotes:(NSArray<NoteObject *> *)noteArray {
 	NSMutableIndexSet *noteIndexes = [[NSMutableIndexSet alloc] init];
 	
 	NSUInteger i, noteCount = [noteArray count];

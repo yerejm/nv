@@ -457,7 +457,7 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 	return NO;
 }
 
-- (NSArray*)allLinks {
+- (NSArray<NSURL *> *)allLinks {
 	NSRange range;
 	NSUInteger startIndex = 0;
 	NSMutableArray *array = [NSMutableArray arrayWithCapacity:1];
@@ -492,7 +492,7 @@ static BOOL _StringWithRangeIsProbablyObjC(NSString *string, NSRange blockRange)
 
 #if SEPARATE_ATTRS
 //extract the attributes using their ranges as keys
-- (NSDictionary*)attributesByRange {
+- (NSDictionary<NSValue *, NSDictionary<NSAttributedStringKey, id> *> *)attributesByRange {
     NSMutableDictionary *allAttributes = [NSMutableDictionary dictionaryWithCapacity:1];
 	NSDictionary *attributes;
     NSRange effectiveRange = NSMakeRange(0,0);

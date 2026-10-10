@@ -69,7 +69,7 @@
 	return NO;
 }
 
-- (void)addDeletedNotes:(NSArray*)array {
+- (void)addDeletedNotes:(NSArray<NoteObject *> *)array {
 	if ([array count] > 0) {
 		if (![deletedNotes count]) {
 			//canceling the delayed selector would not be necessary if updateForVerifiedExistingNote 

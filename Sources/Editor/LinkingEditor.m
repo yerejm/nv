@@ -317,7 +317,7 @@ CGFloat _perceptualColorDifference(NSColor*a, NSColor*b) {
 	return _perceptualColorDifference(brighter, bgColor) > _perceptualColorDifference(darker, bgColor) ? brighter : darker;
 }
 
-- (NSDictionary*)preferredLinkAttributes {
+- (NSDictionary<NSAttributedStringKey, id> *)preferredLinkAttributes {
 	if (![prefsController URLsAreClickable])
 		return @{};
 	

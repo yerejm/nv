@@ -122,7 +122,7 @@
     exportPanel = nil;
 }
 
-- (void)exportNotes:(NSArray*)notes forWindow:(NSWindow*)window {
+- (void)exportNotes:(NSArray<NoteObject *> *)notes forWindow:(NSWindow*)window {
 	
 	if (!accessoryView) {
 		if (!NVLoadNib(@"ExporterManager", self)) {

@@ -23,19 +23,20 @@
 #import <Cocoa/Cocoa.h>
 
 @class NotationPrefs;
+@class NoteObject, DeletedNoteObject;
 
 @interface FrozenNotation : NSObject <NSSecureCoding> {
-	NSMutableArray *allNotes;
-	NSMutableSet *deletedNoteSet;
+	NSMutableArray<NoteObject *> *allNotes;
+	NSMutableSet<DeletedNoteObject *> *deletedNoteSet;
 	NSMutableData *notesData;
 	NotationPrefs *prefs;
 }
-- (instancetype)initWithNotes:(NSMutableArray*)notes deletedNotes:(NSMutableSet*)antiNotes prefs:(NotationPrefs*)prefs;
+- (instancetype)initWithNotes:(NSMutableArray<NoteObject *> *)notes deletedNotes:(NSMutableSet<DeletedNoteObject *> *)antiNotes prefs:(NotationPrefs*)prefs;
 
-+ (NSData*)frozenDataWithExistingNotes:(NSMutableArray*)notes deletedNotes:(NSMutableSet*)antiNotes prefs:(NotationPrefs*)prefs;
-- (NSMutableArray*)unpackedNotesWithPrefs:(NotationPrefs*)somePrefs returningError:(OSStatus*)err;
-- (NSMutableArray*)unpackedNotesReturningError:(OSStatus*)err;
-- (NSMutableSet*)deletedNotes; //these won't need to be encrypted
++ (NSData*)frozenDataWithExistingNotes:(NSMutableArray<NoteObject *> *)notes deletedNotes:(NSMutableSet<DeletedNoteObject *> *)antiNotes prefs:(NotationPrefs*)prefs;
+- (NSMutableArray<NoteObject *> *)unpackedNotesWithPrefs:(NotationPrefs*)somePrefs returningError:(OSStatus*)err;
+- (NSMutableArray<NoteObject *> *)unpackedNotesReturningError:(OSStatus*)err;
+- (NSMutableSet<DeletedNoteObject *> *)deletedNotes; //these won't need to be encrypted
 - (NotationPrefs*)notationPrefs;
 
 @end

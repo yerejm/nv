@@ -112,7 +112,7 @@ static SecureTextEntryManager *sharedInstance = nil;
 	}
 }
 
-- (NSSet*)_bundleIdentifiersOfIncompatibleApps {
+- (NSSet<NSString *> *)_bundleIdentifiersOfIncompatibleApps {
 	return [NSSet setWithArray:@[@"com.smileonmymac.textexpander", @"com.macility.typinator2", @"com.typeit4me.TypeIt4MeMenu", @"uk.co.activata.Autopilot2", @"au.com.tech.AutoTyper"]];
 }
 

@@ -30,7 +30,7 @@
 	NSString *directory;
 	BOOL protectsContents, preparing, releaseRequested;
 	NSString *deviceName, *preparedCachePath;
-	NSMutableArray *pendingCompletions;
+	NSMutableArray<void (^)(void)> *pendingCompletions;
 }
 
 + (NSUInteger)largestProtectedNoteLength;

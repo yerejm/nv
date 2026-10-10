@@ -44,10 +44,10 @@ typedef struct _NoteFilterContext {
 	    
 	//caching/searching purposes only -- created at runtime
 	char *cTitle, *cContents, *cLabels, *cTitleFoundPtr, *cContentsFoundPtr, *cLabelsFoundPtr;
-	NSMutableSet *labelSet;
+	NSMutableSet<LabelObject *> *labelSet;
 	BOOL contentsWere7Bit, contentCacheNeedsUpdate;
 	//if this note's title is "Chicken Shack menu listing", its prefix parent might have the title "Chicken Shack"
-	NSMutableArray *prefixParentNotes;
+	NSMutableArray<NoteObject *> *prefixParentNotes;
 	
 	NSString *dateModifiedString, *dateCreatedString;
 	
@@ -122,7 +122,7 @@ NSInteger compareFileSize(id *a, id *b);
 	NSString* titleOfNote(NoteObject *note);
 	NSString* labelsOfNote(NoteObject *note);
 
-	NSMutableArray* prefixParentsOfNote(NoteObject *note);
+	NSMutableArray<NoteObject *> *prefixParentsOfNote(NoteObject *note);
 
 #define DefColAttrAccessor(__FName, __IVar) force_inline id __FName(NotesTableView *tv, NoteObject *note, NSInteger row) { return note->__IVar; }
 #define DefModelAttrAccessor(__FName, __IVar) force_inline typeof (((NoteObject *)0)->__IVar) __FName(NoteObject *note) { return note->__IVar; }
@@ -149,15 +149,15 @@ NSInteger compareFileSize(id *a, id *b);
 			  delegate:(id)aDelegate format:(int)formatID labels:(NSString*)aLabelString;
 - (instancetype)initWithCatalogEntry:(NoteCatalogEntry*)entry delegate:(id)aDelegate;
 
-- (NSSet*)labelSet;
-- (void)replaceMatchingLabelSet:(NSSet*)aLabelSet;
+- (NSSet<LabelObject *> *)labelSet;
+- (void)replaceMatchingLabelSet:(NSSet<LabelObject *> *)aLabelSet;
 - (void)updateLabelConnectionsAfterDecoding;
 - (void)updateLabelConnections;
 - (void)disconnectLabels;
 - (BOOL)_setLabelString:(NSString*)newLabelString;
 - (void)setLabelString:(NSString*)newLabels;
-- (NSMutableSet*)labelSetFromCurrentString;
-- (NSArray*)orderedLabelTitles;
+- (NSMutableSet<LabelObject *> *)labelSetFromCurrentString;
+- (NSArray<NSString *> *)orderedLabelTitles;
 - (NSSize)sizeOfLabelBlocks;
 - (void)_drawLabelBlocksInRect:(NSRect)aRect rightAlign:(BOOL)onRight highlighted:(BOOL)isHighlighted getSizeOnly:(NSSize*)reqSize;
 - (void)drawLabelBlocksInRect:(NSRect)aRect rightAlign:(BOOL)onRight highlighted:(BOOL)isHighlighted;
@@ -222,8 +222,8 @@ NSInteger compareFileSize(id *a, id *b);
 @end
 
 @interface NSObject (NoteObjectDelegate)
-- (void)note:(NoteObject*)note didAddLabelSet:(NSSet*)labelSet;
-- (void)note:(NoteObject*)note didRemoveLabelSet:(NSSet*)labelSet;
+- (void)note:(NoteObject*)note didAddLabelSet:(NSSet<LabelObject *> *)labelSet;
+- (void)note:(NoteObject*)note didRemoveLabelSet:(NSSet<LabelObject *> *)labelSet;
 - (void)note:(NoteObject*)note attributeChanged:(NSString*)attribute;
 @end
 

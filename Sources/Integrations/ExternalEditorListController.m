@@ -96,7 +96,7 @@ NSString *ExternalEditorsChangedNotification = @"ExternalEditorsChanged";
 	return [canHandleNumber boolValue];
 }
 
-- (BOOL)canEditAllNotes:(NSArray*)notes {
+- (BOOL)canEditAllNotes:(NSArray<NoteObject *> *)notes {
 	NSUInteger i = 0;
 	for (i=0; i<[notes count]; i++) {
 		if (![self isODBEditor] && ![self canEditNoteDirectly:[notes objectAtIndex:i]])
@@ -203,7 +203,7 @@ static ExternalEditorListController* sharedInstance = nil;
 	}
 }
 
-- (NSArray*)_installedODBEditors {
+- (NSArray<ExternalEditor *> *)_installedODBEditors {
 	if (!_installedODBEditors) {
 		_installedODBEditors = [[NSMutableArray alloc] initWithCapacity:5];
 		
@@ -220,7 +220,7 @@ static ExternalEditorListController* sharedInstance = nil;
 	return _installedODBEditors;
 }
 
-+ (NSSet*)ODBAppIdentifiers {
++ (NSSet<NSString *> *)ODBAppIdentifiers {
 	static NSSet *_ODBAppIdentifiers = nil;
 	if (!_ODBAppIdentifiers)
 		_ODBAppIdentifiers = [[NSSet alloc] initWithArray:@[
@@ -295,7 +295,7 @@ errorReturn:
 	[self menusChanged];
 }
 
-- (NSArray*)userEditorIdentifiers {
+- (NSArray<NSString *> *)userEditorIdentifiers {
 	//for storing in nsuserdefaults
 	//extract bundle identifiers
 	

@@ -47,7 +47,7 @@
     IBOutlet NotationPrefsViewController *notationPrefsViewController;
 	
 	NSMutableParagraphStyle *centerStyle;
-	NSMutableDictionary *items;
+	NSMutableDictionary<NSString *, NSToolbarItem *> *items;
 	NSToolbar *toolbar;
 	BOOL fontPanelWasOpen;
 	

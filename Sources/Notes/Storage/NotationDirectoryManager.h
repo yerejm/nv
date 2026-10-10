@@ -24,6 +24,7 @@
 #import <Cocoa/Cocoa.h>
 
 #import "NotationController.h"
+@class NoteObject;
 
 @interface NotationController (NotationDirectoryManager)
 
@@ -31,13 +32,13 @@ NSInteger compareCatalogEntryName(const void *one, const void *two);
 NSInteger compareCatalogValueNodeID(id *a, id *b);
 NSInteger compareCatalogValueFileSize(id *a, id *b);
 
-- (NSSet*)notesWithFilenames:(NSArray*)filenames unknownFiles:(NSArray**)unknownFiles;
+- (NSSet<NoteObject *> *)notesWithFilenames:(NSArray<NSString *> *)filenames unknownFiles:(NSArray<NSString *> **)unknownFiles;
 
 - (BOOL)_readFilesInDirectory;
 - (BOOL)modifyNoteIfNecessary:(NoteObject*)aNoteObject usingCatalogEntry:(NoteCatalogEntry*)catEntry;
 - (void)makeNotesMatchCatalogEntries:(NoteCatalogEntry**)catEntriesPtrs ofSize:(size_t)catCount;
-- (void)processNotesAddedByCNID:(NSMutableArray*)addedEntries removed:(NSMutableArray*)removedEntries;
-- (void)processNotesAddedByContent:(NSMutableArray*)addedEntries removed:(NSMutableArray*)removedEntries;
+- (void)processNotesAddedByCNID:(NSMutableArray<NSValue *> *)addedEntries removed:(NSMutableArray<NoteObject *> *)removedEntries;
+- (void)processNotesAddedByContent:(NSMutableArray<NSValue *> *)addedEntries removed:(NSMutableArray<NoteObject *> *)removedEntries;
 - (BOOL)synchronizeNotesFromDirectory;
 - (void)_destroyDirEventStream;
 - (void)_configureDirEventStream;

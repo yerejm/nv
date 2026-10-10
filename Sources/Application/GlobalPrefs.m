@@ -486,7 +486,7 @@ void NVMigrateLegacyArchivedPreferences(NSUserDefaults *defaults) {
 	return [fauxAlphaSTHC blendedColorWithFraction:(1.0 - [color alphaComponent]) ofColor:[self backgroundTextColor]];
 }
 
-- (NSDictionary*)searchTermHighlightAttributes {
+- (NSDictionary<NSAttributedStringKey, id> *)searchTermHighlightAttributes {
 	if (!searchTermHighlightAttributes) {
 		NSColor *highlightColor = [self searchTermHighlightColorRaw:NO];
 		//the note's own text color can be unreadable on the highlight, e.g. light text on the yellow system color
@@ -590,7 +590,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
     return noteBodyFont;
 }
 
-- (NSDictionary*)noteBodyAttributes {
+- (NSDictionary<NSAttributedStringKey, id> *)noteBodyAttributes {
 	NSFont *bodyFont = [self noteBodyFont];
 	
 	if (!noteBodyAttributes && bodyFont) {
@@ -729,7 +729,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 	}
 }
 
-- (NSArray*)visibleTableColumns {
+- (NSArray<NSString *> *)visibleTableColumns {
 	if (!tableColumns) {
 		tableColumns = [NSMutableArray arrayWithArray:[defaults arrayForKey:NoteAttributesVisibleKey]];
 		tableColsBitmap = 0U;

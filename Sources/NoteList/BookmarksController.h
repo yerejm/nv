@@ -34,14 +34,14 @@
 	__weak id delegate;
 }
 
-- (instancetype)initWithDictionary:(NSDictionary*)aDict;
+- (instancetype)initWithDictionary:(NSDictionary<NSString *, NSString *> *)aDict;
 - (instancetype)initWithNoteObject:(NoteObject*)aNote searchString:(NSString*)aString;
 - (instancetype)initWithNoteUUIDBytes:(CFUUIDBytes)bytes searchString:(NSString*)aString;
 
 - (NSString*)searchString;
 - (NoteObject*)noteObject;
 - (void)validateNoteObject;
-- (NSDictionary*)dictionaryRep;
+- (NSDictionary<NSString *, NSString *> *)dictionaryRep;
 - (void)setDelegate:(id)aDelegate;
 - (id)delegate;
 
@@ -71,7 +71,7 @@
 <NSMenuItemValidation, NSWindowDelegate, NSTableViewDelegate, NSTableViewDataSource>
 {
 	//model
-	NSMutableArray *bookmarks;
+	NSMutableArray<NoteBookmark *> *bookmarks;
 		
 	//for NoteObject <-> UUID lookups
 	__weak id dataSource;
@@ -92,8 +92,8 @@
 	NoteBookmark *currentBookmark;
 }
 
-- (instancetype)initWithBookmarks:(NSArray*)array;
-- (NSArray*)dictionaryReps;
+- (instancetype)initWithBookmarks:(NSArray<NSDictionary<NSString *, NSString *> *> *)array;
+- (NSArray<NSDictionary<NSString *, NSString *> *> *)dictionaryReps;
 
 - (id)dataSource;
 - (void)setDataSource:(id)aDataSource;

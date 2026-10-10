@@ -59,7 +59,7 @@
 - (NSUInteger)numberOfPages;
 
 - (NSInteger)printedPageCountForAttributedString:(NSAttributedString*)string;
-+ (NSView *)printableViewWithNotes:(NSArray*)notes;
-+ (void)printNotes:(NSArray*)notes forWindow:(NSWindow*)window;
++ (NSView *)printableViewWithNotes:(NSArray<NoteObject *> *)notes;
++ (void)printNotes:(NSArray<NoteObject *> *)notes forWindow:(NSWindow*)window;
 
 @end

@@ -213,7 +213,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	free(allowedTypes);
 }
 
-+ (NSMutableArray*)defaultTypeStringsForFormat:(int)formatID {
++ (NSMutableArray<NSString *> *)defaultTypeStringsForFormat:(int)formatID {
     switch (formatID) {
 	case SingleDatabaseFormat:
 	    return [NSMutableArray arrayWithCapacity:0];
@@ -233,7 +233,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
     return [NSMutableArray arrayWithCapacity:0];
 }
 
-+ (NSMutableArray*)defaultPathExtensionsForFormat:(int)formatID {
++ (NSMutableArray<NSString *> *)defaultPathExtensionsForFormat:(int)formatID {
     switch (formatID) {
 	case SingleDatabaseFormat:
 	    return [NSMutableArray arrayWithCapacity:0];

@@ -100,7 +100,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 	return blorPath;
 }
 
-- (instancetype)initWithStoragePaths:(NSArray*)filenames {
+- (instancetype)initWithStoragePaths:(NSArray<NSString *> *)filenames {
 	if ((self = [self init])) {
 		if ((source = filenames)) {
 		
@@ -162,7 +162,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 	return PDFDocClass;
 }
 
-- (NSDictionary*)documentSettings {
+- (NSDictionary<NSString *, id> *)documentSettings {
 	return documentSettings;
 }
 
@@ -272,13 +272,13 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 	(void)[[URLGetter alloc] initWithURL:aURL delegate:self userData:linkTitle];
 }
 
-- (NSArray*)importedNotes {
+- (NSArray<NoteObject *> *)importedNotes {
 	if (!importerSelector) return nil;
 	NSArray *(*import)(id, SEL, id) = (void *)[self methodForSelector:importerSelector];
 	return import(self, importerSelector, source);
 }
 
-- (NSArray*)notesWithPaths:(NSArray*)paths {
+- (NSArray<NoteObject *> *)notesWithPaths:(NSArray<NSString *> *)paths {
 	if ([paths isKindOfClass:[NSArray class]]) {
 		
 		NSMutableArray *array = [NSMutableArray array];
@@ -424,7 +424,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 	return nil;
 }
 
-- (NSArray*)notesInDirectory:(NSString*)filename {
+- (NSArray<NoteObject *> *)notesInDirectory:(NSString*)filename {
 	
 	//recurse through all subdirectories calling notesInFile where appropriate and collecting arrays into one
 	NSArray *filenames = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:filename error:NULL];
@@ -449,7 +449,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 	return array;
 }
 
-- (NSArray*)notesInFile:(NSString*)filename {
+- (NSArray<NoteObject *> *)notesInFile:(NSString*)filename {
 	NSString *extension = [[filename pathExtension] lowercaseString];
 	
 	if ([extension isEqualToString:@"blor"]) {

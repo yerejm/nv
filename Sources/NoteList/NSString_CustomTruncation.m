@@ -47,7 +47,7 @@ static NSUInteger PreviewCharacterLimitForWidth(CGFloat width);
 	return preview;
 }
 
-static NSMutableDictionary *titleTruncAttrs = nil;
+static NSMutableDictionary<NSAttributedStringKey, id> *titleTruncAttrs = nil;
 
 void ResetFontRelatedTableAttributes(void) {
 	titleTruncAttrs = nil;
@@ -75,7 +75,7 @@ static NSDictionary *LineTruncAttributes(void) {
 	return lineTruncAttributes;
 }
 
-NSDictionary *LineTruncAttributesForTitle(void) {
+NSDictionary<NSAttributedStringKey, id> *LineTruncAttributesForTitle(void) {
 	if (!titleTruncAttrs) {
 		GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
 		unsigned int bitmap = [prefs tableColumnsBitmap];

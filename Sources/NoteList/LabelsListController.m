@@ -40,7 +40,7 @@
 	return self;
 }
 
-- (NSArray*)labelTitlesPrefixedByString:(NSString*)prefixString indexOfSelectedItem:(NSInteger *)anIndex minusWordSet:(NSSet*)antiSet {
+- (NSArray<NSString *> *)labelTitlesPrefixedByString:(NSString*)prefixString indexOfSelectedItem:(NSInteger *)anIndex minusWordSet:(NSSet<NSString *> *)antiSet {
 	
 	NSMutableArray *objs = [[allLabels allObjects] mutableCopy];
 	NSMutableArray *titles = [NSMutableArray arrayWithCapacity:[allLabels count]];
@@ -115,12 +115,12 @@
 
 
 //NotationController will probably want to filter these further if there is already a search in progress
-- (NSSet*)notesAtFilteredIndex:(int)labelIndex {
+- (NSSet<NoteObject *> *)notesAtFilteredIndex:(int)labelIndex {
     return [objects[labelIndex] noteSet];
 }
 
 //figure out which notes to display given some selected labels
-- (NSSet*)notesAtFilteredIndexes:(NSIndexSet*)anIndexSet {
+- (NSSet<NoteObject *> *)notesAtFilteredIndexes:(NSIndexSet*)anIndexSet {
     NSMutableSet *notesOfLabels = [[NSMutableSet alloc] init];
     [anIndexSet enumerateIndexesUsingBlock:^(NSUInteger labelIndex, BOOL *stop) {
         [notesOfLabels unionSet:[self->objects[labelIndex] noteSet]];
@@ -134,7 +134,7 @@
    it's up to the sender to ensure that any given note is not added or removed from a label unnecessarily */
 
 //called when deleting labels in a note
-- (void)removeLabelSet:(NSSet*)labelSet fromNote:(NoteObject*)note {
+- (void)removeLabelSet:(NSSet<LabelObject *> *)labelSet fromNote:(NoteObject*)note {
     
     //labelSet in this case is probably not the prototype labelSet, so all that may be necessary is to call removeNote: on it
     //HOWEVER, don't know this for sure, assuming this API is to remain non-permeable
@@ -150,7 +150,7 @@
 }
 
 //called for labels added to a note
-- (void)addLabelSet:(NSSet*)labelSet toNote:(NoteObject*)note {
+- (void)addLabelSet:(NSSet<LabelObject *> *)labelSet toNote:(NoteObject*)note {
     
     [allLabels unionSet:labelSet];
     
@@ -161,7 +161,7 @@
 
 
 //useful for moving groups of notes from one label to another
-- (void)removeLabelSet:(NSSet*)labelSet fromNoteSet:(NSSet*)notes {    
+- (void)removeLabelSet:(NSSet<LabelObject *> *)labelSet fromNoteSet:(NSSet<NoteObject *> *)notes {    
     [allLabels minusSet:labelSet];
 	
 	//could use this as an opportunity to remove counterparts in labelImages
@@ -170,7 +170,7 @@
     [existingLabels makeObjectsPerformSelector:@selector(removeNoteSet:) withObject:notes];
 }
 
-- (void)addLabelSet:(NSSet*)labelSet toNoteSet:(NSSet*)notes {
+- (void)addLabelSet:(NSSet<LabelObject *> *)labelSet toNoteSet:(NSSet<NoteObject *> *)notes {
     [allLabels unionSet:labelSet];
     
     NSMutableSet *existingLabels = [allLabels setIntersectedWithSet:labelSet];

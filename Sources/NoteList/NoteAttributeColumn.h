@@ -36,7 +36,7 @@
 	float absoluteMinimumWidth;
 }
 
-+ (NSDictionary*)standardDictionary;
++ (NSDictionary<NSAttributedStringKey, id> *)standardDictionary;
 SEL columnAttributeMutator(NoteAttributeColumn *col);
 - (void)setMutatingSelector:(SEL)selector;
 id columnAttributeForObject(NotesTableView *tv, NoteAttributeColumn *col, id object, NSInteger row);

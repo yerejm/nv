@@ -40,7 +40,7 @@ extern NSString *ShouldHideSecureTextEntryWarningKey;
 - (void)_enableSecureEventInput;
 - (void)_disableSecureEventInput;
 
-- (NSSet*)_bundleIdentifiersOfIncompatibleApps;
+- (NSSet<NSString *> *)_bundleIdentifiersOfIncompatibleApps;
 - (void)checkForIncompatibleApps;
 
 @end

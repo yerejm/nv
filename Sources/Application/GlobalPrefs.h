@@ -51,18 +51,18 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 	NSUserDefaults *defaults;
 	
 	void (*runCallbacksIMP)(GlobalPrefs*, SEL, SEL, id);
-	NSMutableDictionary *selectorObservers;
+	NSMutableDictionary<NSString *, NSMutableArray *> *selectorObservers;
 	
 	NVHotKey *appActivationHotKey;
 	
 	BookmarksController *bookmarksController;
 	NotationPrefs *notationPrefs;
-	NSDictionary *noteBodyAttributes, *searchTermHighlightAttributes;
+	NSDictionary<NSAttributedStringKey, id> *noteBodyAttributes, *searchTermHighlightAttributes;
 	NSMutableParagraphStyle *noteBodyParagraphStyle;
 	NSFont *noteBodyFont;
 	BOOL autoCompleteSearches;
 	
-	NSMutableArray *tableColumns;
+	NSMutableArray<NSString *> *tableColumns;
 	unsigned int tableColsBitmap;
 }
 
@@ -78,7 +78,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 
 - (void)removeTableColumn:(NSString*)columnKey sender:(id)sender;
 - (void)addTableColumn:(NSString*)columnKey sender:(id)sender;
-- (NSArray*)visibleTableColumns;
+- (NSArray<NSString *> *)visibleTableColumns;
 - (unsigned int)tableColumnsBitmap;
 
 - (void)setSortedTableColumnKey:(NSString*)sortedKey reversed:(BOOL)reversed sender:(id)sender;
@@ -92,7 +92,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 - (void)setNoteBodyFont:(NSFont*)aFont sender:(id)sender;
 - (void)_setNoteBodyFont:(NSFont*)aFont;
 - (NSFont*)noteBodyFont;
-- (NSDictionary*)noteBodyAttributes;
+- (NSDictionary<NSAttributedStringKey, id> *)noteBodyAttributes;
 - (NSParagraphStyle*)noteBodyParagraphStyle;
 - (BOOL)_bodyFontIsMonospace;
 
@@ -150,7 +150,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2);
 - (void)setSearchTermHighlightColor:(NSColor*)color sender:(id)sender;
 - (void)useSystemSearchTermHighlightColorFromSender:(id)sender;
 - (BOOL)searchTermHighlightColorIsCustom;
-- (NSDictionary*)searchTermHighlightAttributes;
+- (NSDictionary<NSAttributedStringKey, id> *)searchTermHighlightAttributes;
 - (NSColor*)searchTermHighlightColorRaw:(BOOL)isRaw;
 
 - (void)setSoftTabs:(BOOL)value sender:(id)sender;

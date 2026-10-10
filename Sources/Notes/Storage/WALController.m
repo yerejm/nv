@@ -264,7 +264,7 @@ const char WALAuthenticatedJournalMagic[8] = {'N', 'V', 'W', 'A', 'L', 0, 0, 5};
 	return [self writeNoteObject:removedNote];	
 }
 
-- (void)writeNoteObjects:(NSArray*)notes {
+- (void)writeNoteObjects:(NSArray<id <SynchronizedNote>> *)notes {
 	//assume that the LSNs have been incremented already if they needed to be
 	NSUInteger i;
     for (i=0; i<[notes count]; i++) {

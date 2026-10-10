@@ -36,12 +36,12 @@ extern NSString *ExternalEditorsChangedNotification;
 	NSString *bundleIdentifier;
 	NSURL *resolvedURL;
 	NSString *displayName;
-	NSMutableDictionary *knownPathExtensions;
+	NSMutableDictionary<NSString *, NSNumber *> *knownPathExtensions;
 }
 
 - (instancetype)initWithBundleID:(NSString*)aBundleIdentifier resolvedURL:(NSURL*)aURL;
 - (BOOL)canEditNoteDirectly:(NoteObject*)aNote;
-- (BOOL)canEditAllNotes:(NSArray*)notes;
+- (BOOL)canEditAllNotes:(NSArray<NoteObject *> *)notes;
 - (NSImage*)iconImage;
 - (NSURL*)resolvedURL;
 - (NSString*)displayName;
@@ -53,22 +53,22 @@ extern NSString *ExternalEditorsChangedNotification;
 
 @interface ExternalEditorListController : NSObject <NSMenuDelegate> {
 
-	NSMutableArray *userEditorList;
+	NSMutableArray<ExternalEditor *> *userEditorList;
 	ExternalEditor *defaultEditor;
 	
-	NSMutableSet *editNotesMenus, *editorPrefsMenus;
+	NSMutableSet<NSMenu *> *editNotesMenus, *editorPrefsMenus;
 	
-	NSMutableArray *_installedODBEditors;
+	NSMutableArray<ExternalEditor *> *_installedODBEditors;
 }
 - (instancetype)initWithUserDefaults;
 + (ExternalEditorListController*)sharedInstance;
 - (void)addUserEditorFromDialog:(id)sender;
 - (void)resetUserEditors:(id)sender;
 - (void)_initDefaults;
-- (NSArray*)_installedODBEditors;
+- (NSArray<ExternalEditor *> *)_installedODBEditors;
 - (BOOL)editorIsMember:(ExternalEditor*)anEditor;
-+ (NSSet*)ODBAppIdentifiers;
-- (NSArray*)userEditorIdentifiers;
++ (NSSet<NSString *> *)ODBAppIdentifiers;
+- (NSArray<NSString *> *)userEditorIdentifiers;
 - (NSMenu*)addEditorPrefsMenu;
 - (NSMenu*)addEditNotesMenu;
 - (void)menusChanged;

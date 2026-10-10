@@ -145,7 +145,7 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
     return dateString;
 }
 
-- (NSArray*)labelCompatibleWords {
+- (NSArray<NSString *> *)labelCompatibleWords {
 	NSArray *array = [self componentsSeparatedByCharactersInSet:[NSCharacterSet labelSeparatorCharacterSet]];
 	NSMutableArray *titles = [NSMutableArray arrayWithCapacity:[array count]];
 	

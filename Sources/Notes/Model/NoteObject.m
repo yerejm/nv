@@ -766,7 +766,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 
 //these two methods let us get the actual label objects in use by other notes
 //they assume that the label string already contains the title of the label object(s); that there is only replacement and not addition
-- (void)replaceMatchingLabelSet:(NSSet*)aLabelSet {
+- (void)replaceMatchingLabelSet:(NSSet<LabelObject *> *)aLabelSet {
     [labelSet minusSet:aLabelSet];
     [labelSet unionSet:aLabelSet];
 }
@@ -843,7 +843,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	}
 }
 
-- (NSMutableSet*)labelSetFromCurrentString {
+- (NSMutableSet<LabelObject *> *)labelSetFromCurrentString {
 	
 	NSArray *words = [self orderedLabelTitles];
 	NSMutableSet *newLabelSet = [NSMutableSet setWithCapacity:[words count]];
@@ -864,7 +864,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 }
 
 
-- (NSArray*)orderedLabelTitles {
+- (NSArray<NSString *> *)orderedLabelTitles {
 	return [labelString labelCompatibleWords];
 }
 
@@ -1551,7 +1551,7 @@ BOOL noteTitleIsAPrefixOfOtherNoteTitle(NoteObject *longerNote, NoteObject *shor
 	[prefixParentNotes removeAllObjects];
 }
 
-- (NSSet*)labelSet {
+- (NSSet<LabelObject *> *)labelSet {
     return labelSet;
 }
 

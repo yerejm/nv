@@ -26,7 +26,7 @@
 @interface NSString (CustomTruncation)
 
 void ResetFontRelatedTableAttributes(void);
-NSDictionary *LineTruncAttributesForTitle(void);
+NSDictionary<NSAttributedStringKey, id> *LineTruncAttributesForTitle(void);
 
 - (NSString*)truncatedPreviewStringOfLength:(NSUInteger)bodyCharCount;
 - (NSAttributedString*)attributedSingleLinePreviewFromBodyText:(NSAttributedString*)bodyText upToWidth:(float)width;

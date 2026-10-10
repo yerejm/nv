@@ -31,8 +31,8 @@ typedef struct _ViewLocationContext {
 
 @interface NotesTableView : NSTableView <NSDraggingSource> {
 	IBOutlet NSTextField *controlField;
-	NSMutableArray *allColumns;
-	NSMutableDictionary *allColsDict;
+	NSMutableArray<NoteAttributeColumn *> *allColumns;
+	NSMutableDictionary<NSString *, NoteAttributeColumn *> *allColsDict;
 	
 	NSInteger firstRowIndexBeforeSplitResize;
 	
@@ -47,7 +47,7 @@ typedef struct _ViewLocationContext {
 	NSView *cornerView;
 	NSTextFieldCell *cachedCell;
 	
-	NSDictionary *loadStatusAttributes;
+	NSDictionary<NSAttributedStringKey, id> *loadStatusAttributes;
 	float loadStatusStringWidth;
 	NSString *loadStatusString;
 	

@@ -27,7 +27,7 @@
     IBOutlet NSTableView *tableView;
     IBOutlet NSPanel *window;
 	IBOutlet NSButton *confirmDeletionButton;
-	NSMutableArray *deletedNotes;
+	NSMutableArray<NoteObject *> *deletedNotes;
 	NotationController* notationController;
 	BOOL hasDeletedNotes;
 }
@@ -36,7 +36,7 @@
 - (NotationController*)notationController;
 - (IBAction)changeConfirmDeletion:(id)sender;
 - (BOOL)noteFileIsAlreadyDeleted:(NoteObject*)aNote;
-- (void)addDeletedNotes:(NSArray*)array;
+- (void)addDeletedNotes:(NSArray<NoteObject *> *)array;
 - (void)addDeletedNote:(NoteObject*)aNote;
 - (NSRect)windowSizeForNotesFromSender:(id)sender;
 void updateForVerifiedDeletedNote(DeletionManager *self, NoteObject *missingNote);

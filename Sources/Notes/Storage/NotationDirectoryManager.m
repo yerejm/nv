@@ -57,7 +57,7 @@ NSInteger compareCatalogValueFileSize(id *a, id *b) {
 //used to find notes corresponding to a group of existing files in the notes dir, with the understanding 
 //that the files' contents are up-to-date and the filename property of the note objs is also up-to-date
 //e.g. caller should know that if notes are stored as a single DB, then the file could still be out-of-date
-- (NSSet*)notesWithFilenames:(NSArray*)filenames unknownFiles:(NSArray**)unknownFiles {
+- (NSSet<NoteObject *> *)notesWithFilenames:(NSArray<NSString *> *)filenames unknownFiles:(NSArray<NSString *> **)unknownFiles {
 	//intersects a list of filenames with the current set of available notes
 	
 	NSUInteger i = 0;
@@ -414,7 +414,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 }
 
 //find renamed notes through unique file IDs
-- (void)processNotesAddedByCNID:(NSMutableArray*)addedEntries removed:(NSMutableArray*)removedEntries {
+- (void)processNotesAddedByCNID:(NSMutableArray<NSValue *> *)addedEntries removed:(NSMutableArray<NoteObject *> *)removedEntries {
 	NSUInteger aSize = [removedEntries count], bSize = [addedEntries count];
     
     //sort on nodeID here
@@ -509,7 +509,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 }
 
 //reconcile the "actually" added/deleted files into renames for files with identical content, looking at logical size first
-- (void)processNotesAddedByContent:(NSMutableArray*)addedEntries removed:(NSMutableArray*)removedEntries {
+- (void)processNotesAddedByContent:(NSMutableArray<NSValue *> *)addedEntries removed:(NSMutableArray<NoteObject *> *)removedEntries {
 	//more than 1 entry in the same list could have the same file size, so sort-algo assumptions above don't apply here
 	//instead of sorting, build a dict keyed by file size, with duplicate sizes (on the same side) chained into arrays
 	//make temporary notes out of the new NoteCatalogEntries to allow their contents to be compared directly where sizes match

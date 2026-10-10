@@ -829,7 +829,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
     return [[notationController labelsListDataSource] labelTitlesPrefixedByString:substring indexOfSelectedItem:selectedIndex minusWordSet:[NSSet setWithArray:[tokenField objectValue] ?: @[]]];
 }
 
-- (void)applySharedTags:(NSArray *)tags toNotes:(NSArray *)notes originalSharedTags:(NSArray *)sharedTags {
+- (void)applySharedTags:(NSArray<NSString *> *)tags toNotes:(NSArray<NoteObject *> *)notes originalSharedTags:(NSArray<NSString *> *)sharedTags {
     NSSet *oldShared = [NSSet setWithArray:[sharedTags valueForKey:@"lowercaseString"]];
     for (NoteObject *note in notes) {
         NSMutableArray *result = [NSMutableArray array];
@@ -843,7 +843,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
     }
 }
 
-- (void)noteImporter:(AlienNoteImporter*)importer importedNotes:(NSArray*)notes {
+- (void)noteImporter:(AlienNoteImporter*)importer importedNotes:(NSArray<NoteObject *> *)notes {
 	
 	[notationController addNotes:notes];
 }
@@ -1697,7 +1697,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 	[self revealNote:note options:opts];
 }
 
-- (void)notation:(NotationController*)notation revealNotes:(NSArray*)notes {
+- (void)notation:(NotationController*)notation revealNotes:(NSArray<NoteObject *> *)notes {
 	
 	NSIndexSet *indexes = [notation indexesOfNotes:notes];
 	if ([notes count] != [indexes count]) {

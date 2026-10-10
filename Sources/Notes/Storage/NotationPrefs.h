@@ -23,6 +23,7 @@
 
 #import <Cocoa/Cocoa.h>
 #import "NotationController.h"
+@class DiskUUIDEntry;
 #include <CommonCrypto/CommonKeyDerivation.h>
 
 /* this class is responsible for managing all preferences specific to a notational database,
@@ -54,12 +55,12 @@ extern NSString *NotationPrefsDidChangeNotification;
 	BOOL confirmFileDeletion;
 	
 	unsigned int chosenExtIndices[4];
-    NSMutableArray *typeStrings[4], *pathExtensions[4];
+    NSMutableArray<NSString *> *typeStrings[4], *pathExtensions[4];
     OSType *allowedTypes;
 	
 	NSData *masterSalt, *dataSessionSalt, *verifierKey;
 	
-	NSMutableArray *seenDiskUUIDEntries;
+	NSMutableArray<DiskUUIDEntry *> *seenDiskUUIDEntries;
 	
 	UInt32 epochIteration, formatEpoch;
 	BOOL firstTimeUsed;
@@ -75,8 +76,8 @@ extern NSString *NotationPrefsDidChangeNotification;
 
 NSMutableDictionary *ServiceAccountDictInit(NotationPrefs *prefs, NSString* serviceName);
 
-+ (NSMutableArray*)defaultTypeStringsForFormat:(int)formatID;
-+ (NSMutableArray*)defaultPathExtensionsForFormat:(int)formatID;
++ (NSMutableArray<NSString *> *)defaultTypeStringsForFormat:(int)formatID;
++ (NSMutableArray<NSString *> *)defaultPathExtensionsForFormat:(int)formatID;
 - (BOOL)preferencesChanged;
 - (void)setForegroundTextColor:(NSColor*)aColor;
 - (NSColor*)foregroundColor;

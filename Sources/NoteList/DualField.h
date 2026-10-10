@@ -53,7 +53,7 @@ enum { BUTTON_HIDDEN, BUTTON_NORMAL, BUTTON_PRESSED };
 	BOOL showsDocumentIcon;
 	
 	//cleared when doing a new manual search
-	NSMutableArray *followedLinks;
+	NSMutableArray<NoteBookmark *> *followedLinks;
 	
 	NSCursor *IBeamCursor;
 }

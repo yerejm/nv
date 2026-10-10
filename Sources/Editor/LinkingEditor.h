@@ -47,7 +47,7 @@
 - (NSColor*)_insertionPointColorForForegroundColor:(NSColor*)fgColor backgroundColor:(NSColor*)bgColor;
 - (NSColor*)_linkColorForForegroundColor:(NSColor*)fgColor backgroundColor:(NSColor*)bgColor;
 - (NSColor*)_selectionColorForForegroundColor:(NSColor*)fgColor backgroundColor:(NSColor*)bgColor;
-- (NSDictionary*)preferredLinkAttributes;
+- (NSDictionary<NSAttributedStringKey, id> *)preferredLinkAttributes;
 - (void)updateTextColors;
 - (void)updateTextWidth;
 - (void)updateWritingDirection;

@@ -37,15 +37,15 @@ static inline id NVUnarchiveLegacyStickies(NSData *data) {
 }
 #pragma clang diagnostic pop
 
-static inline NSSet *NVPropertyListClasses(void) {
-    static NSSet *classes = nil;
+static inline NSSet<Class> *NVPropertyListClasses(void) {
+    static NSSet<Class> *classes = nil;
     if (!classes) classes = [[NSSet alloc] initWithArray:@[[NSDictionary class], [NSArray class], [NSString class],
                              [NSNumber class], [NSDate class], [NSData class]]];
     return classes;
 }
 
 //nested values may be any of the allowed classes, but the value itself must be a rootClass
-static inline id NVDecodeObjectOfClasses(NSCoder *decoder, NSSet *classes, Class rootClass, NSString *key) {
+static inline id NVDecodeObjectOfClasses(NSCoder *decoder, NSSet<Class> *classes, Class rootClass, NSString *key) {
     id object = [decoder decodeObjectOfClasses:classes forKey:key];
     if (object && ![object isKindOfClass:rootClass]) {
         NSString *reason = [NSString stringWithFormat:@"value for key '%@' is not a %@", key, rootClass];

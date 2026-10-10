@@ -18,6 +18,7 @@
 
 
 #import <Cocoa/Cocoa.h>
+@class NoteObject;
 
 @interface ExporterManager : NSObject {
 	IBOutlet NSView *accessoryView;
@@ -28,6 +29,6 @@
 
 + (ExporterManager *)sharedManager;
 - (IBAction)formatSelectorChanged:(id)sender;
-- (void)exportNotes:(NSArray*)notes forWindow:(NSWindow*)window;
+- (void)exportNotes:(NSArray<NoteObject *> *)notes forWindow:(NSWindow*)window;
 
 @end

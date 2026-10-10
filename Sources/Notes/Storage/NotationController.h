@@ -45,9 +45,10 @@ typedef struct _NoteCatalogEntry {
 @class NoteBookmark;
 @class DeletionManager;
 @class GlobalPrefs;
+@class LabelObject;
 
 @interface NotationController : NSObject {
-    NSMutableArray *allNotes;
+    NSMutableArray<NoteObject *> *allNotes;
     FastListDataSource *notesListDataSource;
     LabelsListController *labelsListController;
 	GlobalPrefs *prefsController;
@@ -68,7 +69,7 @@ typedef struct _NoteCatalogEntry {
     
     NotationPrefs *notationPrefs;
 	
-	NSMutableSet *deletedNotes;
+	NSMutableSet<DeletedNoteObject *> *deletedNotes;
     
     NVFileInfo *fileInfoArray;
     CFStringRef *filenameArray;
@@ -91,7 +92,7 @@ typedef struct _NoteCatalogEntry {
     OSStatus lastWriteError;
     
     WALStorageController *walWriter;
-    NSMutableSet *unwrittenNotes;
+    NSMutableSet<NoteObject *> *unwrittenNotes;
 	BOOL notesChanged;
 	NSTimer *changeWritingTimer;
 	NSUndoManager *undoManager;
@@ -139,19 +140,19 @@ typedef struct _NoteCatalogEntry {
 - (void)checkIfNotationIsTrashed;
 - (void)updateLinksToNote:(NoteObject*)aNoteObject fromOldName:(NSString*)oldname;
 - (void)updateTitlePrefixConnections;
-- (void)addNotes:(NSArray*)noteArray;
+- (void)addNotes:(NSArray<NoteObject *> *)noteArray;
 - (void)addNewNote:(NoteObject*)aNoteObject;
 - (void)_addNote:(NoteObject*)aNoteObject;
 - (void)removeNote:(NoteObject*)aNoteObject;
-- (void)removeNotes:(NSArray*)noteArray;
+- (void)removeNotes:(NSArray<NoteObject *> *)noteArray;
 - (DeletedNoteObject*)_addDeletedNote:(id<SynchronizedNote>)aNote;
 - (void)_registerDeletionUndoForNote:(NoteObject*)aNote;
 - (NoteObject*)addNoteFromCatalogEntry:(NoteCatalogEntry*)catEntry;
 
-- (BOOL)openFiles:(NSArray*)filenames;
+- (BOOL)openFiles:(NSArray<NSString *> *)filenames;
 
-- (void)note:(NoteObject*)note didAddLabelSet:(NSSet*)labelSet;
-- (void)note:(NoteObject*)note didRemoveLabelSet:(NSSet*)labelSet;
+- (void)note:(NoteObject*)note didAddLabelSet:(NSSet<LabelObject *> *)labelSet;
+- (void)note:(NoteObject*)note didRemoveLabelSet:(NSSet<LabelObject *> *)labelSet;
 
 - (void)filterNotesFromLabelAtIndex:(int)labelIndex;
 - (void)filterNotesFromLabelIndexSet:(NSIndexSet*)indexSet;
@@ -161,11 +162,11 @@ typedef struct _NoteCatalogEntry {
 - (BOOL)filterNotesFromString:(NSString*)string;
 - (BOOL)filterNotesFromUTF8String:(const char*)searchString forceUncached:(BOOL)forceUncached;
 - (NSUInteger)preferredSelectedNoteIndex;
-- (NSArray*)noteTitlesPrefixedByString:(NSString*)prefixString indexOfSelectedItem:(NSInteger *)anIndex;
+- (NSArray<NSString *> *)noteTitlesPrefixedByString:(NSString*)prefixString indexOfSelectedItem:(NSInteger *)anIndex;
 - (NoteObject*)noteForUUIDBytes:(CFUUIDBytes*)bytes;
 - (NoteObject*)noteObjectAtFilteredIndex:(NSInteger)noteIndex;
-- (NSArray*)notesAtIndexes:(NSIndexSet*)indexSet;
-- (NSIndexSet*)indexesOfNotes:(NSArray*)noteSet;
+- (NSArray<NoteObject *> *)notesAtIndexes:(NSIndexSet*)indexSet;
+- (NSIndexSet*)indexesOfNotes:(NSArray<NoteObject *> *)noteSet;
 - (NSUInteger)indexInFilteredListForNoteIdenticalTo:(NoteObject*)note;
 - (NSUInteger)totalNoteCount;
 
@@ -197,7 +198,7 @@ enum { NVDefaultReveal = 0, NVDoNotChangeScrollPosition = 1, NVOrderFrontWindow 
 - (void)notationListMightChange:(NotationController*)someNotation;
 - (void)notationListDidChange:(NotationController*)someNotation;
 - (void)notation:(NotationController*)notation revealNote:(NoteObject*)note options:(NSUInteger)opts;
-- (void)notation:(NotationController*)notation revealNotes:(NSArray*)notes;
+- (void)notation:(NotationController*)notation revealNotes:(NSArray<NoteObject *> *)notes;
 
 - (void)contentsUpdatedForNote:(NoteObject*)aNoteObject;
 - (void)titleUpdatedForNote:(NoteObject*)aNoteObject;

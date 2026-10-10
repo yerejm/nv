@@ -28,7 +28,7 @@
 
 @interface LabelObject : NSObject {
     NSString *labelName, *lowercaseName;
-    NSMutableSet *notes;
+    NSMutableSet<NoteObject *> *notes;
     
     NSUInteger lowercaseHash;
 }
@@ -41,10 +41,10 @@ int compareLabel(const void *one, const void *two);
 - (NSString*)associativeIdentifier;
 - (void)setTitle:(NSString*)title;
 - (void)addNote:(NoteObject*)note;
-- (void)addNoteSet:(NSSet*)noteSet;
+- (void)addNoteSet:(NSSet<NoteObject *> *)noteSet;
 - (void)removeNote:(NoteObject*)note;
-- (void)removeNoteSet:(NSSet*)noteSet;
-- (NSSet*)noteSet;
+- (void)removeNoteSet:(NSSet<NoteObject *> *)noteSet;
+- (NSSet<NoteObject *> *)noteSet;
 
 - (BOOL)isEqual:(id)anObject;
 - (NSUInteger)hash;

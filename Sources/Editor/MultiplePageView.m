@@ -187,7 +187,7 @@ static float defaultTextPadding(void) {
 	return (NSInteger)ceil(containerHeight/pageHeight);
 }
 
-+ (NSView *)printableViewWithNotes:(NSArray*)notes {
++ (NSView *)printableViewWithNotes:(NSArray<NoteObject *> *)notes {
 	
 	/// Code for splitting it into pages, mostly taken from TextEdit.  Since each "page" (except the last) has an NSFormFeedCharacter appended to it in the preview field,
 	/// we make as many text containers as we have pages, and the typesetter will then force a page break at each form feed.  It's not clear from the docs that this won't
@@ -256,7 +256,7 @@ static float defaultTextPadding(void) {
 }
 
 
-+ (void)printNotes:(NSArray*)notes forWindow:(NSWindow*)window {
++ (void)printNotes:(NSArray<NoteObject *> *)notes forWindow:(NSWindow*)window {
 	
 	NSPrintOperation *printOperation = [NSPrintOperation printOperationWithView:[MultiplePageView printableViewWithNotes:notes]];
     [printOperation runOperationModalForWindow:window delegate:nil didRunSelector:NULL contextInfo:NULL];

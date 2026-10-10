@@ -74,15 +74,15 @@ int compareLabel(const void *one, const void *two) {
     [notes removeObject:note];
 }
 
-- (void)addNoteSet:(NSSet*)noteSet {
+- (void)addNoteSet:(NSSet<NoteObject *> *)noteSet {
 	[notes unionSet:noteSet];
 }
 
-- (void)removeNoteSet:(NSSet*)noteSet {
+- (void)removeNoteSet:(NSSet<NoteObject *> *)noteSet {
 	[notes minusSet:noteSet];
 }
 
-- (NSSet*)noteSet {
+- (NSSet<NoteObject *> *)noteSet {
     return notes;
 }
 

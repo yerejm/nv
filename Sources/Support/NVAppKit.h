@@ -67,7 +67,7 @@ static inline void NVBeginPanel(NSSavePanel *panel, NSWindow *parent, id delegat
     }];
 }
 
-static inline void NVSetPanelTypes(NSSavePanel *panel, NSArray *extensions) {
+static inline void NVSetPanelTypes(NSSavePanel *panel, NSArray<NSString *> *extensions) {
     NSMutableArray *types = [NSMutableArray array];
     for (NSString *extension in extensions) {
         UTType *type = [UTType typeWithFilenameExtension:extension];
@@ -76,14 +76,14 @@ static inline void NVSetPanelTypes(NSSavePanel *panel, NSArray *extensions) {
     [panel setAllowedContentTypes:types];
 }
 
-static inline NSModalResponse NVRunOpenPanel(NSOpenPanel *panel, NSString *directory, NSString *name, NSArray *extensions) {
+static inline NSModalResponse NVRunOpenPanel(NSOpenPanel *panel, NSString *directory, NSString *name, NSArray<NSString *> *extensions) {
     if (directory) [panel setDirectoryURL:[NSURL fileURLWithPath:directory]];
     if (name) [panel setNameFieldStringValue:name];
     NVSetPanelTypes(panel, extensions);
     return [panel runModal];
 }
 
-static inline NSArray *NVFilePathsOnPasteboard(NSPasteboard *pasteboard) {
+static inline NSArray<NSString *> *NVFilePathsOnPasteboard(NSPasteboard *pasteboard) {
     NSArray *urls = [pasteboard readObjectsForClasses:@[[NSURL class]] options:@{NSPasteboardURLReadingFileURLsOnlyKey: @YES}];
     return [urls valueForKey:@"path"];
 }

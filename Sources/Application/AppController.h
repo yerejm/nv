@@ -29,6 +29,7 @@
 @class GlobalPrefs;
 @class PrefsWindowController;
 @class DualField;
+@class NoteObject;
 
 @interface AppController : NSObject
 <NSMenuItemValidation, NSApplicationDelegate, NSToolbarDelegate, NSTableViewDelegate, NSWindowDelegate, NSTextFieldDelegate, NSTextViewDelegate, NSTokenFieldDelegate, NVSplitViewDelegate>
@@ -45,7 +46,7 @@
     NSTextField *windowTitleLabel;
 	
 	NSURL *URLToInterpretOnLaunch;
-	NSMutableArray *pathsToOpenOnLaunch;
+	NSMutableArray<NSString *> *pathsToOpenOnLaunch;
 	
     NSUndoManager *windowUndoManager;
     PrefsWindowController *prefsWindowController;
@@ -69,7 +70,7 @@
 	NSString *typedString;
 	
 	NoteObject *currentNote;
-	NSArray *savedSelectedNotes;
+	NSArray<NoteObject *> *savedSelectedNotes;
 }
 
 void outletObjectAwoke(id sender);
@@ -89,7 +90,7 @@ void outletObjectAwoke(id sender);
 - (IBAction)editNoteExternally:(id)sender;
 - (IBAction)printNote:(id)sender;
 - (IBAction)tagNote:(id)sender;
-- (void)applySharedTags:(NSArray *)tags toNotes:(NSArray *)notes originalSharedTags:(NSArray *)sharedTags;
+- (void)applySharedTags:(NSArray<NSString *> *)tags toNotes:(NSArray<NoteObject *> *)notes originalSharedTags:(NSArray<NSString *> *)sharedTags;
 - (void)flagsChanged:(NSEvent *)event;
 - (void)updateWordCount;
 - (IBAction)toggleWordCount:(id)sender;
