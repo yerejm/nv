@@ -245,7 +245,7 @@ long BlockSizeForNotation(NotationController *controller) {
 	BOOL isOwned = NO;
 	if (IsZeros(childRef, sizeof(NVFileReference)) || [self fileInNotesDirectory:childRef isOwnedByUs:&isOwned hasCatalogInfo:NULL] != noErr || !isOwned) {
 		OSStatus err = noErr;
-		if ((err = FSRefMakeInDirectoryWithString(&noteDirectoryRef, childRef, (CFStringRef)filename, charsBuffer)) != noErr) {
+		if ((err = FSRefMakeInDirectoryWithString(&noteDirectoryRef, childRef, (__bridge CFStringRef)filename, charsBuffer)) != noErr) {
 			NSLog(@"Could not get an fsref for file with name %@: %d\n", filename, err);
 			return err;
 		}
@@ -264,7 +264,7 @@ long BlockSizeForNotation(NotationController *controller) {
 	UniChar chars[256];
 	if (!filename) return NO;
 	
-	return FSRefMakeInDirectoryWithString(&noteDirectoryRef, childRef, (CFStringRef)filename, chars) == noErr;
+	return FSRefMakeInDirectoryWithString(&noteDirectoryRef, childRef, (__bridge CFStringRef)filename, chars) == noErr;
 }
 
 - (OSStatus)renameAndForgetNoteDatabaseFile:(NSString*)newfilename {
@@ -296,9 +296,9 @@ long BlockSizeForNotation(NotationController *controller) {
 		NoteObject *obj = [allNotes objectAtIndex:i];
 		
 		if (!dbNote && [filenameOfNote(obj) isEqualToString:NotesDatabaseFileName])
-			dbNote = [[obj retain] autorelease];
+			dbNote = obj;
 		if (!walNote && [filenameOfNote(obj) isEqualToString:@"Interim Note-Changes"])
-			walNote = [[obj retain] autorelease];
+			walNote = obj;
 	}
 	if (dbNote) {
 		[allNotes removeObjectIdenticalTo:dbNote];
@@ -326,13 +326,12 @@ long BlockSizeForNotation(NotationController *controller) {
 		[openPanel setMessage:NSLocalizedString(@"Select a new location for your Notational Velocity notes.",nil)];
 		
 		if ([openPanel runModal] == NSModalResponseOK) {
-			CFStringRef filename = (CFStringRef)[[openPanel URL] path];
+			NSString *filename = [[openPanel URL] path];
 			if (filename) {
 				
 				NVFileReference newParentRef;
-				CFURLRef url = CFURLCreateWithFileSystemPath(kCFAllocatorDefault, filename, kCFURLPOSIXPathStyle, true);
-				[(id)url autorelease];
-				if (!url || !NVURLGetFileReference(url, &newParentRef)) {
+				NSURL *url = CFBridgingRelease(CFURLCreateWithFileSystemPath(kCFAllocatorDefault, (__bridge CFStringRef)filename, kCFURLPOSIXPathStyle, true));
+				if (!url || !NVURLGetFileReference((__bridge CFURLRef)url, &newParentRef)) {
 					NVRunAlert(NSAlertStyleWarning, NSLocalizedString(@"The chosen folder could not be used.", nil), NSLocalizedString(@"Your notes were not moved.",nil), NSLocalizedString(@"OK",nil), NULL, NULL);
 					continue;
 				}
@@ -372,7 +371,7 @@ terminate:
     NSError *error = nil;
     NSURL *support = [[NSFileManager defaultManager] URLForDirectory:NSApplicationSupportDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:YES error:&error];
     NVFileReference parent;
-    if (!NVURLGetFileReference((CFURLRef)support, &parent)) return error ? NVStatusFromErrno((int)[error code]) : fnfErr;
+    if (!NVURLGetFileReference((__bridge CFURLRef)support, &parent)) return error ? NVStatusFromErrno((int)[error code]) : fnfErr;
     return CreateDirectoryIfNotPresent(&parent, CFSTR("Notational Data"), ref);
 }
 
@@ -382,9 +381,9 @@ terminate:
     NSString *uniqueFilename = title;
 	
 	//remove illegal characters
-	NSMutableString *sanitizedName = [[[uniqueFilename stringByReplacingOccurrencesOfString:@":" withString:@"-"] mutableCopy] autorelease];
+	NSMutableString *sanitizedName = [[uniqueFilename stringByReplacingOccurrencesOfString:@":" withString:@"-"] mutableCopy];
 	if ([sanitizedName characterAtIndex:0] == (unichar)'.')	[sanitizedName replaceCharactersInRange:NSMakeRange(0, 1) withString:@"_"];
-	uniqueFilename = [[sanitizedName copy] autorelease];
+	uniqueFilename = [sanitizedName copy];
 	
 	//use the note's current format if the current default format is for a database; get the "ideal" extension for that format
 	int noteFormat = [notationPrefs notesStorageFormat] || !note ? [notationPrefs notesStorageFormat] : storageFormatOfNote(note);
@@ -481,7 +480,7 @@ terminate:
 }
 
 - (NSMutableData*)dataFromFileInNotesDirectory:(NVFileReference*)childRef forCatalogEntry:(NoteCatalogEntry*)catEntry {
-    return [self dataFromFileInNotesDirectory:childRef forFilename:(NSString*)catEntry->filename fileSize:catEntry->logicalSize];
+    return [self dataFromFileInNotesDirectory:childRef forFilename:(__bridge NSString*)catEntry->filename fileSize:catEntry->logicalSize];
 }
 
 - (NSMutableData*)dataFromFileInNotesDirectory:(NVFileReference*)childRef forFilename:(NSString*)filename fileSize:(UInt64)givenFileSize {
@@ -500,12 +499,12 @@ terminate:
     if (!notesDataPtr)
 		return nil;
     
-    return [[[NSMutableData alloc] initWithBytesNoCopy:notesDataPtr length:fileSize freeWhenDone:YES] autorelease];
+    return [[NSMutableData alloc] initWithBytesNoCopy:notesDataPtr length:fileSize freeWhenDone:YES];
 }
 
 - (OSStatus)createFileIfNotPresentInNotesDirectory:(NVFileReference*)childRef forFilename:(NSString*)filename fileWasCreated:(BOOL*)created {
 	
-	return FSCreateFileIfNotPresentInDirectory(&noteDirectoryRef, childRef, (CFStringRef)filename, (Boolean*)created);
+	return FSCreateFileIfNotPresentInDirectory(&noteDirectoryRef, childRef, (__bridge CFStringRef)filename, (Boolean*)created);
 }
 
 - (OSStatus)storeDataAtomicallyInNotesDirectory:(NSData*)data withName:(NSString*)filename destinationRef:(NVFileReference*)destRef {
@@ -534,7 +533,8 @@ terminate:
 	//before we try to swap the data contents of this temp file with the (possibly even soon-to-be-created) Notes & Settings file,
 	//try to read it back and see if it can be decrypted and decoded:
 	if (verifyDelegate && verificationSel) {
-		if (noErr != (err = [[verifyDelegate performSelector:verificationSel withObject:[NSValue valueWithPointer:&tempFileRef] withObject:filename] intValue])) {
+		NSNumber *(*verify)(id, SEL, NSValue *, NSString *) = (void *)[verifyDelegate methodForSelector:verificationSel];
+		if (noErr != (err = [verify(verifyDelegate, verificationSel, [NSValue valueWithPointer:&tempFileRef], filename) intValue])) {
 			NSLog(@"couldn't verify written notes, so not continuing to save");
 			(void)NVDeleteObject(&tempFileRef);
 			return err;

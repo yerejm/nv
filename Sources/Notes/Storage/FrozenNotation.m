@@ -36,14 +36,14 @@
 
 - (id)initWithCoder:(NSCoder*)decoder {
 	if ([decoder containsValueForKey:VAR_STR(prefs)]) {
-		prefs = [[decoder decodeObjectOfClass:[NotationPrefs class] forKey:VAR_STR(prefs)] retain];
-		notesData = [[decoder decodeObjectOfClass:[NSMutableData class] forKey:VAR_STR(notesData)] retain];
+		prefs = [decoder decodeObjectOfClass:[NotationPrefs class] forKey:VAR_STR(prefs)];
+		notesData = [decoder decodeObjectOfClass:[NSMutableData class] forKey:VAR_STR(notesData)];
 		deletedNoteSet = [NVDecodeObjectOfClasses(decoder, [NSSet setWithObjects:[NSSet class], [DeletedNoteObject class], nil],
 												  [NSSet class], VAR_STR(deletedNoteSet)) mutableCopy];
 	} else {
 		NSLog(@"FrozenNotation: decoding legacy %@", decoder);
-		prefs = [[decoder decodeObject] retain];
-		notesData = [[decoder decodeObject] retain];
+		prefs = [decoder decodeObject];
+		notesData = [decoder decodeObject];
 		(void)[decoder decodeObject];
 	}	
 	return self;
@@ -70,14 +70,11 @@
 		[archiver encodeObject:notes forKey:@"notes"];
         [archiver finishEncoding];
         [notesData setData:[archiver encodedData]];
-		[archiver release];
 		
-		prefs = [somePrefs retain];
-		deletedNoteSet = [antiNotes retain];		
+		prefs = somePrefs;
+		deletedNoteSet = antiNotes;		
 		
-		NSMutableData *oldNotesData = notesData;
-		notesData = [[notesData compressedData] retain];
-		[oldNotesData release];
+		notesData = [notesData compressedData];
 		
 		
 		if ([somePrefs doesEncryption]) {
@@ -99,15 +96,6 @@
 	return self;
 }
 
-- (void)dealloc {
-	[allNotes release];
-	[notesData release];
-	[prefs release];
-	[deletedNoteSet release];
-	
-	[super dealloc];
-}
-
 + (NSData*)frozenDataWithExistingNotes:(NSMutableArray*)notes 
 						  deletedNotes:(NSMutableSet*)antiNotes 
 								 prefs:(NotationPrefs*)prefs {
@@ -117,7 +105,6 @@
 		return nil;
 	
 	NSData *encodedNotationData = NVArchiveObject(frozenNotation);
-	[frozenNotation autorelease];
 	
 	return encodedNotationData;
 }
@@ -134,9 +121,7 @@
 			return nil;
 		}
 		
-		NSMutableData *oldNotesData = notesData;
-		notesData = [[notesData uncompressedData] retain];
-		[oldNotesData autorelease];
+		notesData = [notesData uncompressedData];
 		
 		if (!notesData) {
 			*err = kCompressionErr;
@@ -189,9 +174,7 @@
 			}
 			
 			
-			NSMutableData *oldNotesData = notesData;
-			notesData = [[notesData uncompressedData] retain];
-			[oldNotesData autorelease];
+			notesData = [notesData uncompressedData];
 			
 			if (!notesData) {
 				*err = kCompressionErr;
@@ -204,7 +187,7 @@
             } @catch (NSException *e) {
                 //only databases from before the first keyed format (epoch 2) can hold positional archives
                 if ([prefs epochIteration] >= 2) @throw;
-                allNotes = [NVUnarchiveLegacyObject(notesData) retain];
+                allNotes = NVUnarchiveLegacyObject(notesData);
             }
 		} @catch (NSException *e) {
 			*err = kCoderErr;

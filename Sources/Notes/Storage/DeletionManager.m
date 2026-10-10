@@ -36,7 +36,7 @@
 
 - (id)initWithNotationController:(NotationController*)aNotationController {
 	if ((self = [self init])) {
-		notationController = [aNotationController retain];
+		notationController = aNotationController;
 	}
 	return self;
 }
@@ -48,14 +48,6 @@
 	[window setFloatingPanel:YES];
 	[window setDelegate:self];
 	[tableView setBackgroundColor:[NSColor controlBackgroundColor]];
-}
-
-- (void)dealloc {
-
-	[notationController release];
-	notationController = nil;
-	[deletedNotes release];
-	[super dealloc];
 }
 
 - (NotationController*)notationController {
@@ -216,7 +208,7 @@ void updateForVerifiedExistingNote(DeletionManager *self, NoteObject *goodNote) 
 	//for purposes of generating useful undo messages
 	if ([deletedNotes count] > 1) {
 	
-		[notationController removeNotes:[[deletedNotes copy] autorelease]];
+		[notationController removeNotes:[deletedNotes copy]];
 		
 	} else if ([deletedNotes count] == 1) {
 		

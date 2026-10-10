@@ -64,7 +64,7 @@ extern NSString *NotationPrefsDidChangeNotification;
 	UInt32 epochIteration, formatEpoch;
 	BOOL firstTimeUsed;
 	BOOL preferencesChanged;
-	id delegate;
+	__weak id delegate;
 	
 	@private 
 	//masterKey is not to be stored anywhere

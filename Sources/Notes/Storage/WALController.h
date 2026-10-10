@@ -60,7 +60,7 @@ extern const char WALAuthenticatedJournalMagic[8];
 	int logFD;
 	char *journalFile;
 	NSData *logSessionKey, *recordEncryptionKey, *recordAuthenticationKey;
-	id delegate;
+	__weak id delegate;
 	
 	z_stream compressionStream;
 }

@@ -112,7 +112,7 @@
 		NSLog(@"%s: encoding %lu is invalid!", sel_getName(_cmd), encoding);
 		return NO;
 	}
-	NSString *textEncStr = [(NSString *)CFStringConvertEncodingToIANACharSetName(cfStringEncoding) stringByAppendingFormat:@";%@", 
+	NSString *textEncStr = [(__bridge NSString *)CFStringConvertEncodingToIANACharSetName(cfStringEncoding) stringByAppendingFormat:@";%@", 
 							[[NSNumber numberWithInt:cfStringEncoding] stringValue]];
 	const char *textEncUTF8Str = [textEncStr UTF8String];
 	
@@ -124,7 +124,7 @@
 }
 
 - (NSStringEncoding)textEncodingAttributeOfFSPath:(const char*)path {
-	if (!path) goto errorReturn;
+	if (!path) return 0;
 	
 	//We could query the size of the attribute, but that would require a second system call
 	//and the value for this key shouldn't need to be anywhere near this large, anyway.
@@ -132,27 +132,26 @@
 	char xattrValueBytes[128] = { 0 };
 	if (getxattr(path, "com.apple.TextEncoding", xattrValueBytes, sizeof(xattrValueBytes), 0, 0) < 0) {
 		if (ENOATTR != errno) NSLog(@"couldn't get text encoding attribute of %s: %d", path, errno);
-		goto errorReturn;
+		return 0;
 	}
 	NSString *encodingStr = [NSString stringWithUTF8String:xattrValueBytes];
 	if (!encodingStr) {
 		NSLog(@"couldn't make attribute data from %s into a string", path);
-		goto errorReturn;
+		return 0;
 	}
 	NSArray *segs = [encodingStr componentsSeparatedByString:@";"];
 	
 	if ([segs count] >= 2 && [(NSString*)[segs objectAtIndex:1] length] > 1) {
 		return CFStringConvertEncodingToNSStringEncoding([[segs objectAtIndex:1] intValue]);
 	} else if ([(NSString*)[segs objectAtIndex:0] length] > 1) {
-		CFStringEncoding theCFEncoding = CFStringConvertIANACharSetNameToEncoding((CFStringRef)[segs objectAtIndex:0]);
+		CFStringEncoding theCFEncoding = CFStringConvertIANACharSetNameToEncoding((__bridge CFStringRef)[segs objectAtIndex:0]);
 		if (theCFEncoding == kCFStringEncodingInvalidId) {
 			NSLog(@"couldn't convert IANA charset");
-			goto errorReturn;
+			return 0;
 		}
 		return CFStringConvertEncodingToNSStringEncoding(theCFEncoding);
 	}
 	
-errorReturn:
 	return 0;
 }
 
@@ -160,9 +159,9 @@ errorReturn:
     if (!data) return nil;
     NSDictionary *values = [NSURL resourceValuesForKeys:@[NSURLPathKey] fromBookmarkData:data];
     if (![values objectForKey:NSURLPathKey]) {
-        CFDataRef bookmark = NVBookmarkFromLegacyAlias((CFDataRef)data);
+        CFDataRef bookmark = NVBookmarkFromLegacyAlias((__bridge CFDataRef)data);
         if (bookmark) {
-            values = [NSURL resourceValuesForKeys:@[NSURLPathKey] fromBookmarkData:(NSData *)bookmark];
+            values = [NSURL resourceValuesForKeys:@[NSURLPathKey] fromBookmarkData:(__bridge NSData *)bookmark];
             CFRelease(bookmark);
         }
     }

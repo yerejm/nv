@@ -54,7 +54,7 @@ typedef struct _NoteCatalogEntry {
     LabelsListController *labelsListController;
 	GlobalPrefs *prefsController;
 	DeletionManager *deletionManager;
-	id delegate;
+	__weak id delegate;
 	
 	float titleColumnWidth;
 	NoteAttributeColumn* sortColumn;

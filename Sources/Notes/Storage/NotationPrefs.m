@@ -56,8 +56,8 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 		
 		unsigned int i;
 		for (i=0; i<4; i++) {
-			typeStrings[i] = [[NotationPrefs defaultTypeStringsForFormat:i] retain];
-			pathExtensions[i] = [[NotationPrefs defaultPathExtensionsForFormat:i] retain];
+			typeStrings[i] = [NotationPrefs defaultTypeStringsForFormat:i];
+			pathExtensions[i] = [NotationPrefs defaultPathExtensionsForFormat:i];
 			chosenExtIndices[i] = 0;
 		}
 		
@@ -71,8 +71,8 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 		keyDerivationPRF = kCCPRFHmacAlgSHA256;
 		formatEpoch = EPOC_ITERATION;
 		authenticatesData = YES;
-		baseBodyFont = [[[GlobalPrefs defaultPrefs] noteBodyFont] retain];
-		foregroundColor = [[[GlobalPrefs defaultPrefs] foregroundTextColor] retain];
+		baseBodyFont = [[GlobalPrefs defaultPrefs] noteBodyFont];
+		foregroundColor = [[GlobalPrefs defaultPrefs] foregroundTextColor];
 		epochIteration = 0;
 		
 		[self updateOSTypesArray];
@@ -112,24 +112,24 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 		formatEpoch = authenticatesData ? EPOC_ITERATION : LAST_COMPATIBLE_EPOCH;
 		
 		@try {
-			baseBodyFont = [[decoder decodeObjectOfClass:[NSFont class] forKey:VAR_STR(baseBodyFont)] retain];
+			baseBodyFont = [decoder decodeObjectOfClass:[NSFont class] forKey:VAR_STR(baseBodyFont)];
 		} @catch (NSException *e) {
 			NSLog(@"Error trying to unarchive default base body font (%@, %@)", [e name], [e reason]);
 		}
 		if (!baseBodyFont || ![baseBodyFont isKindOfClass:[NSFont class]]) {
-			baseBodyFont = [[[GlobalPrefs defaultPrefs] noteBodyFont] retain];
+			baseBodyFont = [[GlobalPrefs defaultPrefs] noteBodyFont];
 			NSLog(@"setting base body to current default: %@", baseBodyFont);
 			preferencesChanged = YES;
 		}
 		//foregroundColor does not receive the same treatment as basebodyfont; in the event of a discrepancy between global and per-db settings,
 		//the former is applied to the notes in the database, while the latter is restored from the database itself
 		@try {
-			foregroundColor = [[decoder decodeObjectOfClass:[NSColor class] forKey:VAR_STR(foregroundColor)] retain];
+			foregroundColor = [decoder decodeObjectOfClass:[NSColor class] forKey:VAR_STR(foregroundColor)];
 		} @catch (NSException *e) {
 			NSLog(@"Error trying to unarchive foreground text color (%@, %@)", [e name], [e reason]);
 		}
 		if (!foregroundColor || ![foregroundColor isKindOfClass:[NSColor class]]) {
-			foregroundColor = [[[GlobalPrefs defaultPrefs] foregroundTextColor] retain];
+			foregroundColor = [[GlobalPrefs defaultPrefs] foregroundTextColor];
 			preferencesChanged = YES;
 		}
 		
@@ -138,22 +138,22 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 		unsigned int i;
 		for (i=0; i<4; i++) {
 			if (!(typeStrings[i] = [[decoder decodeArrayOfObjectsOfClass:[NSString class] forKey:[VAR_STR(typeStrings) stringByAppendingFormat:@".%d",i]] mutableCopy]))
-				typeStrings[i] = [[NotationPrefs defaultTypeStringsForFormat:i] retain];
+				typeStrings[i] = [NotationPrefs defaultTypeStringsForFormat:i];
 			if (!(pathExtensions[i] = [[decoder decodeArrayOfObjectsOfClass:[NSString class] forKey:[VAR_STR(pathExtensions) stringByAppendingFormat:@".%d",i]] mutableCopy]))
-				pathExtensions[i] = [[NotationPrefs defaultPathExtensionsForFormat:i] retain];
+				pathExtensions[i] = [NotationPrefs defaultPathExtensionsForFormat:i];
 			chosenExtIndices[i] = [decoder decodeIntForKey:[VAR_STR(chosenExtIndices) stringByAppendingFormat:@".%d",i]];
 		}
 		
 		if (!(syncServiceAccounts = [NVDecodeObjectOfClasses(decoder, NVPropertyListClasses(), [NSDictionary class], VAR_STR(syncServiceAccounts)) mutableCopy]))
 			syncServiceAccounts = [[NSMutableDictionary alloc] init];
-		keychainDatabaseIdentifier = [[decoder decodeObjectOfClass:[NSString class] forKey:VAR_STR(keychainDatabaseIdentifier)] retain];
+		keychainDatabaseIdentifier = [decoder decodeObjectOfClass:[NSString class] forKey:VAR_STR(keychainDatabaseIdentifier)];
 		
 		if (!(seenDiskUUIDEntries = [[decoder decodeArrayOfObjectsOfClass:[DiskUUIDEntry class] forKey:VAR_STR(seenDiskUUIDEntries)] mutableCopy]))
 			seenDiskUUIDEntries = [[NSMutableArray alloc] init];
 		
-		masterSalt = [[decoder decodeObjectOfClass:[NSData class] forKey:VAR_STR(masterSalt)] retain];
-		dataSessionSalt = [[decoder decodeObjectOfClass:[NSData class] forKey:VAR_STR(dataSessionSalt)] retain];
-		verifierKey = [[decoder decodeObjectOfClass:[NSData class] forKey:VAR_STR(verifierKey)] retain];
+		masterSalt = [decoder decodeObjectOfClass:[NSData class] forKey:VAR_STR(masterSalt)];
+		dataSessionSalt = [decoder decodeObjectOfClass:[NSData class] forKey:VAR_STR(dataSessionSalt)];
+		verifierKey = [decoder decodeObjectOfClass:[NSData class] forKey:VAR_STR(verifierKey)];
 		
 		doesEncryption = doesEncryption && verifierKey && masterSalt;
 		
@@ -210,22 +210,8 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 
 
 - (void)dealloc {
-    
-    unsigned int i;
-    for (i=0; i<4; i++) {
-	[typeStrings[i] release];
-	[pathExtensions[i] release];
-    }
     if (allowedTypes)
 	free(allowedTypes);
-	
-	[syncServiceAccounts release];
-	[seenDiskUUIDEntries release];
-	[keychainDatabaseIdentifier release];
-	[baseBodyFont release];
-	[foregroundColor release];
-    
-    [super dealloc];
 }
 
 + (NSMutableArray*)defaultTypeStringsForFormat:(int)formatID {
@@ -233,14 +219,14 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	case SingleDatabaseFormat:
 	    return [NSMutableArray arrayWithCapacity:0];
 	case PlainTextFormat: 
-	    return [NSMutableArray arrayWithObjects:[(id)NVStringFromOSType(TEXT_TYPE_ID) autorelease],
-			[(id)NVStringFromOSType(UTXT_TYPE_ID) autorelease], nil];
+	    return [NSMutableArray arrayWithObjects:CFBridgingRelease(NVStringFromOSType(TEXT_TYPE_ID)),
+			CFBridgingRelease(NVStringFromOSType(UTXT_TYPE_ID)), nil];
 	case RTFTextFormat: 
-	    return [NSMutableArray arrayWithObjects:[(id)NVStringFromOSType(RTF_TYPE_ID) autorelease], nil];
+	    return [NSMutableArray arrayWithObjects:CFBridgingRelease(NVStringFromOSType(RTF_TYPE_ID)), nil];
 	case HTMLFormat:
-	    return [NSMutableArray arrayWithObjects:[(id)NVStringFromOSType(HTML_TYPE_ID) autorelease], nil];
+	    return [NSMutableArray arrayWithObjects:CFBridgingRelease(NVStringFromOSType(HTML_TYPE_ID)), nil];
 	case WordDocFormat:
-		return [NSMutableArray arrayWithObjects:[(id)NVStringFromOSType(WORD_DOC_TYPE_ID) autorelease], nil];
+		return [NSMutableArray arrayWithObjects:CFBridgingRelease(NVStringFromOSType(WORD_DOC_TYPE_ID)), nil];
 	default:
 	    NSLog(@"Unknown format ID: %d", formatID);
     }
@@ -297,7 +283,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 }
 
 - (NSDictionary*)syncServiceAccountsForArchiving {
-	NSMutableDictionary *tempDict = [[syncServiceAccounts mutableCopy] autorelease];
+	NSMutableDictionary *tempDict = [syncServiceAccounts mutableCopy];
 	
 	NSEnumerator *enumerator = [tempDict objectEnumerator];
 	NSMutableDictionary *account = nil;
@@ -347,8 +333,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 }
 
 - (void)setForegroundTextColor:(NSColor*)aColor {
-	[foregroundColor autorelease];
-	foregroundColor = [aColor retain];
+	foregroundColor = aColor;
 	
 	preferencesChanged = YES;
 }
@@ -358,8 +343,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 }
 
 - (void)setBaseBodyFont:(NSFont*)aFont {
-	[baseBodyFont autorelease];
-	baseBodyFont = [aFont retain];
+	baseBodyFont = aFont;
 		
 	preferencesChanged = YES;
 }
@@ -371,7 +355,6 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 
 - (void)forgetKeychainIdentifier {
 	
-	[keychainDatabaseIdentifier release];
 	keychainDatabaseIdentifier = nil;
 	
 	preferencesChanged = YES;
@@ -380,7 +363,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 - (const char *)setKeychainIdentifier {
 	if (!keychainDatabaseIdentifier) {
 		CFUUIDRef uuidRef = CFUUIDCreate(kCFAllocatorDefault);
-		keychainDatabaseIdentifier = (NSString*)CFUUIDCreateString(kCFAllocatorDefault, uuidRef);
+		keychainDatabaseIdentifier = CFBridgingRelease(CFUUIDCreateString(kCFAllocatorDefault, uuidRef));
 		CFRelease(uuidRef);
 
 		preferencesChanged = YES;
@@ -390,40 +373,40 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 }
 
 - (NSDictionary *)keychainQuery {
-    return @{(id)kSecClass: (id)kSecClassGenericPassword,
-             (id)kSecAttrService: @KEYCHAIN_SERVICENAME,
-             (id)kSecAttrAccount: [NSString stringWithUTF8String:[self setKeychainIdentifier]]};
+    return @{(__bridge id)kSecClass: (__bridge id)kSecClassGenericPassword,
+             (__bridge id)kSecAttrService: @KEYCHAIN_SERVICENAME,
+             (__bridge id)kSecAttrAccount: [NSString stringWithUTF8String:[self setKeychainIdentifier]]};
 }
 
 - (SecKeychainItemRef)currentKeychainItem {
-    NSMutableDictionary *query = [[[self keychainQuery] mutableCopy] autorelease];
-    [query setObject:@YES forKey:(id)kSecReturnRef];
+    NSMutableDictionary *query = [[self keychainQuery] mutableCopy];
+    [query setObject:@YES forKey:(__bridge id)kSecReturnRef];
     CFTypeRef item = NULL;
-    return SecItemCopyMatching((CFDictionaryRef)query, &item) == errSecSuccess ? (SecKeychainItemRef)item : NULL;
+    return SecItemCopyMatching((__bridge CFDictionaryRef)query, &item) == errSecSuccess ? (SecKeychainItemRef)item : NULL;
 }
 
 - (void)removeKeychainData {
-    OSStatus status = SecItemDelete((CFDictionaryRef)[self keychainQuery]);
+    OSStatus status = SecItemDelete((__bridge CFDictionaryRef)[self keychainQuery]);
     if (status != errSecSuccess && status != errSecItemNotFound) NSLog(@"Error deleting keychain item: %d", (int)status);
 }
 
 - (NSData *)passwordDataFromKeychain {
-    NSMutableDictionary *query = [[[self keychainQuery] mutableCopy] autorelease];
-    [query setObject:@YES forKey:(id)kSecReturnData];
+    NSMutableDictionary *query = [[self keychainQuery] mutableCopy];
+    [query setObject:@YES forKey:(__bridge id)kSecReturnData];
     CFTypeRef data = NULL;
-    OSStatus status = SecItemCopyMatching((CFDictionaryRef)query, &data);
+    OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, &data);
     if (status != errSecSuccess) return nil;
-    return [(NSData *)data autorelease];
+    return CFBridgingRelease(data);
 }
 
 - (void)setKeychainData:(NSData *)data {
     NSDictionary *query = [self keychainQuery];
-    NSDictionary *attributes = @{(id)kSecValueData: data};
-    OSStatus status = SecItemUpdate((CFDictionaryRef)query, (CFDictionaryRef)attributes);
+    NSDictionary *attributes = @{(__bridge id)kSecValueData: data};
+    OSStatus status = SecItemUpdate((__bridge CFDictionaryRef)query, (__bridge CFDictionaryRef)attributes);
     if (status == errSecItemNotFound) {
-        NSMutableDictionary *item = [[query mutableCopy] autorelease];
+        NSMutableDictionary *item = [query mutableCopy];
         [item addEntriesFromDictionary:attributes];
-        status = SecItemAdd((CFDictionaryRef)item, NULL);
+        status = SecItemAdd((__bridge CFDictionaryRef)item, NULL);
     }
     if (status != errSecSuccess) NSLog(@"Error storing passphrase in keychain: %d", (int)status);
 }
@@ -451,7 +434,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	if ([computedVerifyKey isEqualToData:verifierKey]) {
 		//if computedMasterKey is good, and we don't already have a master key, then this is it
 		if (!masterKey)
-			masterKey = [computedMasterKey retain];
+			masterKey = computedMasterKey;
 		
 		return YES;
 	}
@@ -469,8 +452,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	//and scale beyond with triplets, quintuplets, and septuplets--but key is not currently user-settable
 
 	//create new dataSessionSalt and key here
-	[dataSessionSalt release];
-	dataSessionSalt = [[NSData randomDataOfLength:256] retain];
+	dataSessionSalt = [NSData randomDataOfLength:256];
 	authenticatesData = [self usesAuthenticatedFormat];
 	
 	NSData *iv = [dataSessionSalt subdataWithRange:NSMakeRange(0, kCCBlockSizeAES128)];
@@ -521,17 +503,14 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	int keyLength = keyLengthInBits/8;
 	
 	//generate and set random salt
-	[masterSalt release];
-	masterSalt = [[NSData randomDataOfLength:256] retain];
+	masterSalt = [NSData randomDataOfLength:256];
 
 	//compute and set master key given salt and # of iterations
-	[masterKey release];
-	masterKey = [[passData derivedKeyOfLength:keyLength salt:masterSalt iterations:hashIterationCount PRF:keyDerivationPRF] retain];
+	masterKey = [passData derivedKeyOfLength:keyLength salt:masterSalt iterations:hashIterationCount PRF:keyDerivationPRF];
 	
 	//compute and set verify key from master key
-	[verifierKey release];
 	NSData *verifySalt = [NSData dataWithBytesNoCopy:VERIFY_SALT length:sizeof(VERIFY_SALT) freeWhenDone:NO];
-	verifierKey = [[masterKey derivedKeyOfLength:keyLength salt:verifySalt iterations:1 PRF:keyDerivationPRF] retain];
+	verifierKey = [masterKey derivedKeyOfLength:keyLength salt:verifySalt iterations:1 PRF:keyDerivationPRF];
 
 	//update keychain
 	[self setStoresPasswordInKeychain:inKeychain];
@@ -582,11 +561,12 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 
 - (void)noteFilesCleanupSheetDidEnd:(NSWindow *)sheet returnCode:(NSModalResponse)returnCode contextInfo:(void *)contextInfo {
 	
-	NSAssert(contextInfo, @"No contextInfo passed to noteFilesCleanupSheetDidEnd");
-	NSAssert([(id)contextInfo respondsToSelector:@selector(notesStorageFormatInProgress)],
+	NotationPrefsViewController *controller = (__bridge NotationPrefsViewController *)contextInfo;
+	NSAssert(controller, @"No contextInfo passed to noteFilesCleanupSheetDidEnd");
+	NSAssert([controller respondsToSelector:@selector(notesStorageFormatInProgress)],
 			 @"can't get notesStorageFormatInProgress method for changing");
 
-	int newNoteStorageFormat = [(NotationPrefsViewController*)contextInfo notesStorageFormatInProgress];
+	int newNoteStorageFormat = [controller notesStorageFormatInProgress];
 	
 	if (returnCode != NSAlertSecondButtonReturn)
 		//didn't cancel
@@ -598,15 +578,15 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	//but what if the files remain after switching to a single-db format--and then the user deletes a bunch of the files themselves?
 	//should we switch the currentFormatIDs of those notes to single-db? I guess.
 	
-	if ([(id)contextInfo respondsToSelector:@selector(notesStorageFormatDidChange)])
-		[(NotationPrefsViewController*)contextInfo notesStorageFormatDidChange];
+	if ([controller respondsToSelector:@selector(notesStorageFormatDidChange)])
+		[controller notesStorageFormatDidChange];
 	
 	if (returnCode != NSAlertSecondButtonReturn) {
 		//run queued method
-		NSAssert([(id)contextInfo respondsToSelector:@selector(runQueuedStorageFormatChangeInvocation)],
+		NSAssert([controller respondsToSelector:@selector(runQueuedStorageFormatChangeInvocation)],
 				 @"can't get runQueuedStorageFormatChangeInvocation method for changing");
 
-		[(NotationPrefsViewController*)contextInfo runQueuedStorageFormatChangeInvocation];
+		[controller runQueuedStorageFormatChangeInvocation];
 	}
 }
 
@@ -625,8 +605,8 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 		[self removeKeychainData];
 	
 		//clear out the verifier key and salt?
-		[verifierKey release]; verifierKey = nil;
-		[masterKey release]; masterKey = nil;
+		verifierKey = nil;
+		masterKey = nil;
 	}
 	
 	if (oldValue != value) {
@@ -656,7 +636,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 - (NSUInteger)tableIndexOfDiskUUID:(CFUUIDRef)UUIDRef {
 	//if this UUID doesn't yet exist, then add it and return the last index
 	
-	DiskUUIDEntry *diskEntry = [[[DiskUUIDEntry alloc] initWithUUIDRef:UUIDRef] autorelease];
+	DiskUUIDEntry *diskEntry = [[DiskUUIDEntry alloc] initWithUUIDRef:UUIDRef];
 	
 	NSUInteger idx = [seenDiskUUIDEntries indexOfObject: diskEntry];
 	if (NSNotFound != idx) {
@@ -740,7 +720,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
     allowedTypes = (OSType*)realloc(allowedTypes, newSize);
 	
     for (i=0; i<[typeStrings[notesStorageFormat] count]; i++)
-		allowedTypes[i] = NVOSTypeFromString((CFStringRef)[typeStrings[notesStorageFormat] objectAtIndex:i]);
+		allowedTypes[i] = NVOSTypeFromString((__bridge CFStringRef)[typeStrings[notesStorageFormat] objectAtIndex:i]);
 }
 
 - (void)addAllowedPathExtension:(NSString*)extension {
@@ -823,7 +803,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 				
 			return YES;
 		}
-		if (!NVOSTypeFromString((CFStringRef)[typeStrings[notesStorageFormat] objectAtIndex:oldIndex])) {
+		if (!NVOSTypeFromString((__bridge CFStringRef)[typeStrings[notesStorageFormat] objectAtIndex:oldIndex])) {
 			return NO;
 		}
     }
@@ -843,7 +823,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 }
 
 - (BOOL)catalogEntryAllowed:(NoteCatalogEntry*)catEntry {
-    NSString *filename = (NSString*)catEntry->filename;
+    NSString *filename = (__bridge NSString*)catEntry->filename;
 	
 	if (![filename length])
 		return NO;

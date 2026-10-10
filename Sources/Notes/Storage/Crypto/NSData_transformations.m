@@ -231,9 +231,9 @@ BOOL NVTimingSafeEqualData(NSData *a, NSData *b) {
 static NSURL *NVResolveBookmark(NSData *data, NSURLBookmarkResolutionOptions options) {
     NSURL *url = [NSURL URLByResolvingBookmarkData:data options:options relativeToURL:nil bookmarkDataIsStale:NULL error:NULL];
     if (!url) {
-        CFDataRef bookmark = NVBookmarkFromLegacyAlias((CFDataRef)data);
+        CFDataRef bookmark = NVBookmarkFromLegacyAlias((__bridge CFDataRef)data);
         if (bookmark) {
-            url = [NSURL URLByResolvingBookmarkData:(NSData *)bookmark options:options relativeToURL:nil bookmarkDataIsStale:NULL error:NULL];
+            url = [NSURL URLByResolvingBookmarkData:(__bridge NSData *)bookmark options:options relativeToURL:nil bookmarkDataIsStale:NULL error:NULL];
             CFRelease(bookmark);
         }
     }
@@ -241,11 +241,11 @@ static NSURL *NVResolveBookmark(NSData *data, NSURLBookmarkResolutionOptions opt
 }
 
 - (BOOL)fsRefAsAlias:(NVFileReference *)ref {
-    return NVURLGetFileReference((CFURLRef)NVResolveBookmark(self, NSURLBookmarkResolutionWithoutUI | NSURLBookmarkResolutionWithoutMounting), ref);
+    return NVURLGetFileReference((__bridge CFURLRef)NVResolveBookmark(self, NSURLBookmarkResolutionWithoutUI | NSURLBookmarkResolutionWithoutMounting), ref);
 }
 
 - (BOOL)fsRefAsAliasMountingVolume:(NVFileReference *)ref {
-    return NVURLGetFileReference((CFURLRef)NVResolveBookmark(self, 0), ref);
+    return NVURLGetFileReference((__bridge CFURLRef)NVResolveBookmark(self, 0), ref);
 }
 
 + (NSData*)uncachedDataFromFile:(NSString*)filename {
@@ -309,7 +309,7 @@ static NSURL *NVResolveBookmark(NSData *data, NSURLBookmarkResolutionOptions opt
 		}
 		
 		
-		string = (NSMutableString*)CFStringCreateMutableWithExternalCharactersNoCopy(NULL, (UniChar *)u, (CFIndex)len/2, (CFIndex)len/2, kCFAllocatorDefault);
+		string = CFBridgingRelease(CFStringCreateMutableWithExternalCharactersNoCopy(NULL, (UniChar *)u, (CFIndex)len/2, (CFIndex)len/2, kCFAllocatorDefault));
 		if (string)
 			*encoding = NSUnicodeStringEncoding;
 		return string;

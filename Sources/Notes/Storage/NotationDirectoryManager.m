@@ -90,7 +90,7 @@ NSInteger compareCatalogValueFileSize(id *a, id *b) {
 void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_events, void* event_paths, 
 					  const FSEventStreamEventFlags flags[],
                       const FSEventStreamEventId event_ids[]) {
-	NotationController* self = (NotationController*)info;
+	NotationController* self = (__bridge NotationController*)info;
 	
 	BOOL rootChanged = NO;
 	size_t i = 0;
@@ -128,9 +128,9 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 	
 	NSString *path = [[NSFileManager defaultManager] pathWithFSRef:&noteDirectoryRef];
 	
-	FSEventStreamContext context = { 0, self, CFRetain, CFRelease, CFCopyDescription };
+	FSEventStreamContext context = { 0, (__bridge void *)self, CFRetain, CFRelease, CFCopyDescription };
 	
-	noteDirEventStreamRef = FSEventStreamCreate(NULL, &FSEventsCallback, &context, (CFArrayRef)[NSArray arrayWithObject:path], kFSEventStreamEventIdSinceNow, 
+	noteDirEventStreamRef = FSEventStreamCreate(NULL, &FSEventsCallback, &context, (__bridge CFArrayRef)[NSArray arrayWithObject:path], kFSEventStreamEventIdSinceNow, 
 												1.0, kFSEventStreamCreateFlagWatchRoot | 0x00000008 /*kFSEventStreamCreateFlagIgnoreSelf*/);
 	
 	FSEventStreamSetDispatchQueue(noteDirEventStreamRef, dispatch_get_main_queue());
@@ -346,8 +346,8 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 	
 	NSAssert(allNotesBuffer != NULL, @"sorting buffer not initialized");
 	
-    NoteObject **currentNotes = allNotesBuffer;
-    [allNotes getObjects:(id*)currentNotes range:NSMakeRange(0, [allNotes count])];
+    NoteObject * __unsafe_unretained *currentNotes = allNotesBuffer;
+    [allNotes getObjects:currentNotes range:NSMakeRange(0, [allNotes count])];
 	
 	mergesort((void *)allNotesBuffer, (size_t)aSize, sizeof(id), (int (*)(const void *, const void *))compareFilename);
 	mergesort((void *)catEntriesPtrs, (size_t)bSize, sizeof(NoteCatalogEntry*), (int (*)(const void *, const void *))compareCatalogEntryName);
@@ -470,7 +470,7 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 					
 					directoryChangesFound = YES;
 					
-					[currentNote setFilename:(NSString*)catEntry->filename withExternalTrigger:YES];
+					[currentNote setFilename:(__bridge NSString*)catEntry->filename withExternalTrigger:YES];
 				}
 				
 				notesChanged = YES;
@@ -584,7 +584,6 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 				[addedEntries removeObjectIdenticalTo:val];
 				foundMatchingContent = YES;
 			}
-			[addedObjToCompare release];
 		}
 		
 		if (!foundMatchingContent) {

@@ -204,11 +204,13 @@
 		return [NSNumber numberWithInt:err];
 	
 	FrozenNotation *frozenNotation = nil;
+	NSData *archivedNotation = nil;
+	NSMutableArray *notesToVerify = nil;
 	if (!fileSize) {
 		result = eofErr;
 		goto returnResult;
 	}
-	NSData *archivedNotation = [[[NSData alloc] initWithBytesNoCopy:notesData length:fileSize freeWhenDone:NO] autorelease];
+	archivedNotation = [[NSData alloc] initWithBytesNoCopy:notesData length:fileSize freeWhenDone:NO];
 	@try {
 		frozenNotation = NVUnarchiveObject(archivedNotation, [FrozenNotation class]);
 	} @catch (NSException *e) {
@@ -217,7 +219,7 @@
 		goto returnResult;
 	}
 	//unpack notes using the current NotationPrefs instance (not the just-unarchived one), with which we presumably just used to encrypt it
-	NSMutableArray *notesToVerify = [[frozenNotation unpackedNotesWithPrefs:notationPrefs returningError:&err] retain];	
+	notesToVerify = [frozenNotation unpackedNotesWithPrefs:notationPrefs returningError:&err];
 	if (noErr != err) {
 		result = err;
 		goto returnResult;
@@ -271,13 +273,10 @@ returnResult:
 			return kCoderErr;
 		}
 	
-		[archivedNotation autorelease];
 	}
 	
 	
-	[notationPrefs release];
-	
-	if (!(notationPrefs = [[frozenNotation notationPrefs] retain]))
+	if (!(notationPrefs = [frozenNotation notationPrefs]))
 		notationPrefs = [[NotationPrefs alloc] init];
 	[notationPrefs setDelegate:self];
 
@@ -285,11 +284,8 @@ returnResult:
 	//which will be used to determine which attr-mod-time to use for each note after decoding
 	[self initializeDiskUUIDIfNecessary];
 	
-	[allNotes release];
-	
-	
 	//frozennotation will work out passwords, keychains, decryption, etc...
-	if (!(allNotes = [[frozenNotation unpackedNotesReturningError:&err] retain])) {
+	if (!(allNotes = [frozenNotation unpackedNotesReturningError:&err])) {
 		//notes could be nil because the user cancelled password authentication
 		//or because they were corrupted, or for some other reason
 		if (err != noErr)
@@ -300,8 +296,7 @@ returnResult:
 		[allNotes makeObjectsPerformSelector:@selector(setDelegate:) withObject:self];
 	}
 	
-	[deletedNotes release];
-	if (!(deletedNotes = [[frozenNotation deletedNotes] retain]))
+	if (!(deletedNotes = [frozenNotation deletedNotes]))
 	    deletedNotes = [[NSMutableSet alloc] init];
 			
 	[prefsController setNotationPrefs:notationPrefs sender:self];
@@ -325,8 +320,8 @@ returnResult:
 		//initialize the journal if necessary
 		if (!(walWriter = [[WALStorageController alloc] initWithParentFSRep:(char*)convertedPath encryptionKey:walSessionKey authenticated:[notationPrefs usesAuthenticatedFormat]])) {
 			//journal file probably already exists, so try to recover it
-			WALRecoveryController *walReader = [[[WALRecoveryController alloc] initWithParentFSRep:(char*)convertedPath encryptionKey:walSessionKey
-																		acceptingUnauthenticatedRecords:[notationPrefs acceptsUnauthenticatedJournal]] autorelease];
+			WALRecoveryController *walReader = [[WALRecoveryController alloc] initWithParentFSRep:(char*)convertedPath encryptionKey:walSessionKey
+																		acceptingUnauthenticatedRecords:[notationPrefs acceptsUnauthenticatedJournal]];
 			if (walReader) {
 				
 				BOOL databaseCouldNotBeFlushed = NO;
@@ -414,12 +409,12 @@ bail:
     void **values = (count <= vListBufCount) ? valuesBuffer : (void **)malloc(sizeof(void*) * count);
     
     if (keys && values && dict) {
-	CFDictionaryGetKeysAndValues((CFDictionaryRef)dict, (const void **)keys, (const void **)values);
+	CFDictionaryGetKeysAndValues((__bridge CFDictionaryRef)dict, (const void **)keys, (const void **)values);
 	
 		for (i=0; i<count; i++) {
 			
 			CFUUIDBytes *objUUIDBytes = (CFUUIDBytes *)keys[i];
-			id<SynchronizedNote> obj = (id)values[i];
+			id<SynchronizedNote> obj = (__bridge id)values[i];
 			
 			NSUInteger existingNoteIndex = [allNotes indexOfNoteWithUUIDBytes:objUUIDBytes];
 			
@@ -476,7 +471,6 @@ bail:
 		if (![walWriter destroyLogFile])
 			NSLog(@"couldn't remove wal file--is this an error for note flushing?");
 		
-		[walWriter release];
 		walWriter = nil;	
     }
 }
@@ -646,7 +640,7 @@ bail:
 		if ([notationPrefs notesStorageFormat] != SingleDatabaseFormat) {
 			//to avoid mutation enumeration if writing this file triggers a filename change which then triggers another makeNoteDirty which then triggers another scheduleWriteForNote:
 			//loose-coupling? what?
-			[[[unwrittenNotes copy] autorelease] makeObjectsPerformSelector:@selector(writeUsingCurrentFileFormatIfNecessary)];
+			[[unwrittenNotes copy] makeObjectsPerformSelector:@selector(writeUsingCurrentFileFormatIfNecessary)];
 			
 			//this always seems to call ourselves
 			[self performSelector:@selector(synchronizeNotesFromDirectory) withObject:nil afterDelay:0];
@@ -665,7 +659,6 @@ bail:
     
     if (changeWritingTimer) {
 		[changeWritingTimer invalidate];
-		[changeWritingTimer release];
 		changeWritingTimer = nil;
     }
 }
@@ -674,8 +667,7 @@ bail:
     if (aliasNeedsUpdating || !directoryBookmark) {
         NSData *data = [NSData aliasDataForFSRef:&noteDirectoryRef];
         if (!data) return nil;
-        [directoryBookmark release];
-        directoryBookmark = [data retain];
+        directoryBookmark = data;
         aliasNeedsUpdating = NO;
     }
     return directoryBookmark;
@@ -753,7 +745,6 @@ bail:
 		} while (isAPrefix && ++j<count);
 	}
 
-	[allNotesAlpha release];
 }
 
 - (void)addNewNote:(NoteObject*)note {
@@ -784,7 +775,6 @@ bail:
 - (NoteObject*)addNoteFromCatalogEntry:(NoteCatalogEntry*)catEntry {
 	NoteObject *newNote = [[NoteObject alloc] initWithCatalogEntry:catEntry delegate:self];
 	[self _addNote:newNote];
-	[newNote release];
 	
 	
 	directoryChangesFound = YES;
@@ -875,7 +865,7 @@ bail:
 			return YES;
 		}
 	}
-	NSArray *createdNotes = [[[[AlienNoteImporter alloc] initWithStoragePaths:unknownPaths] autorelease] importedNotes];
+	NSArray *createdNotes = [[[AlienNoteImporter alloc] initWithStoragePaths:unknownPaths] importedNotes];
 	if (!createdNotes) return NO;
 	
 	[self addNotes:createdNotes];
@@ -928,9 +918,9 @@ bail:
 		
 		//always synchronize absolutely no matter what 15 seconds after any change
 		if (!changeWritingTimer)
-			changeWritingTimer = [[NSTimer scheduledTimerWithTimeInterval:(immediately ? 0.0 : 15.0) target:self 
+			changeWritingTimer = [NSTimer scheduledTimerWithTimeInterval:(immediately ? 0.0 : 15.0) target:self 
 									 selector:@selector(synchronizeNoteChanges:)
-									 userInfo:nil repeats:NO] retain];
+									 userInfo:nil repeats:NO];
 		
 		//next user change always invalidates queued write from performSelector, but not queued write from timer
 		//this avoids excessive writing and any potential and unnecessary disk access while user types
@@ -981,8 +971,6 @@ bail:
 - (void)removeNote:(NoteObject*)aNoteObject {
     //reset linking labels and their notes
     
-	[aNoteObject retain];
-	
 	[aNoteObject disconnectLabels];
 	[aNoteObject abortEditingInExternalEditor];
 	
@@ -1014,8 +1002,6 @@ bail:
 	//rebuild the prefix tree, as this note may have been a prefix of another, or vise versa
 	[self updateTitlePrefixConnections];
     
-    [aNoteObject release];
-    
     [self refilterNotes];
 }
 
@@ -1039,8 +1025,7 @@ bail:
 
 
 - (void)setUndoManager:(NSUndoManager*)anUndoManager {
-    [undoManager autorelease];
-    undoManager = [anUndoManager retain];
+    undoManager = anUndoManager;
 }
 
 - (NSUndoManager*)undoManager {
@@ -1277,13 +1262,13 @@ bail:
 - (NSArray*)noteTitlesPrefixedByString:(NSString*)prefixString indexOfSelectedItem:(NSInteger *)anIndex {
 	NSMutableArray *objs = [NSMutableArray arrayWithCapacity:[allNotes count]];
 	const char *searchString = [prefixString lowercaseUTF8String];
-	NSUInteger i, titleLen, strLen = strlen(searchString), j = 0, shortestTitleLen = UINT_MAX;
+	NSUInteger i, titleLen = 0, strLen = strlen(searchString), j = 0, shortestTitleLen = UINT_MAX;
 
 	for (i=0; i<[allNotes count]; i++) {
 		NoteObject *thisNote = [allNotes objectAtIndex:i];
 		if (noteTitleHasPrefixOfUTF8String(thisNote, searchString, strLen)) {
 			[objs addObject:titleOfNote(thisNote)];
-			if (anIndex && (titleLen = CFStringGetLength((CFStringRef)titleOfNote(thisNote))) < shortestTitleLen) {
+			if (anIndex && (titleLen = CFStringGetLength((__bridge CFStringRef)titleOfNote(thisNote))) < shortestTitleLen) {
 				*anIndex = j;
 				shortestTitleLen = titleLen;
 			}
@@ -1313,7 +1298,7 @@ bail:
 	
 	NSUInteger i, noteCount = [noteArray count];
 	
-	id *notes = (id*)malloc(noteCount * sizeof(id));
+	__unsafe_unretained id *notes = (__unsafe_unretained id *)malloc(noteCount * sizeof(id));
 	[noteArray getObjects:notes range:NSMakeRange(0, [noteArray count])];
 	
 	for (i=0; i<noteCount; i++) {
@@ -1325,7 +1310,7 @@ bail:
 	
 	free(notes);
 	
-	return [noteIndexes autorelease];
+	return noteIndexes;
 }
 
 - (NSUInteger)indexInFilteredListForNoteIdenticalTo:(NoteObject*)note {
@@ -1342,8 +1327,7 @@ bail:
 
 - (void)setSortColumn:(NoteAttributeColumn*)col { 
 	
-    [sortColumn release];
-	sortColumn = [col retain];
+	sortColumn = col;
 	
 	[self sortAndRedisplayNotes];
 }
@@ -1408,8 +1392,8 @@ bail:
 		
 		//regenerate previews for visible rows immediately and post a delayed message to regenerate previews for all rows
 		if (rows.length > 0) {
-			CFArrayRef visibleNotes = CFArrayCreate(NULL, (const void **)([notesListDataSource immutableObjects] + rows.location), rows.length, NULL);
-			[(NSArray*)visibleNotes makeObjectsPerformSelector:@selector(updateTablePreviewString)];
+			CFArrayRef visibleNotes = CFArrayCreate(NULL, (const void **)(void *)([notesListDataSource immutableObjects] + rows.location), rows.length, NULL);
+			[(__bridge NSArray*)visibleNotes makeObjectsPerformSelector:@selector(updateTablePreviewString)];
 			CFRelease(visibleNotes);
 		}
 		
@@ -1435,7 +1419,6 @@ bail:
 }
 
 - (void)dealloc {
- 
 	[walWriter setDelegate:nil];
 	[notationPrefs setDelegate:nil];
 	[allNotes makeObjectsPerformSelector:@selector(setDelegate:) withObject:nil];
@@ -1450,18 +1433,6 @@ bail:
 		free(sortedCatalogEntries);
     if (allNotesBuffer)
 		free(allNotesBuffer);
-	
-    [directoryBookmark release];
-    [undoManager release];
-    [notesListDataSource release];
-    [labelsListController release];
-	[deletionManager release];
-    [allNotes release];
-	[deletedNotes release];
-	[notationPrefs release];
-	[unwrittenNotes release];
-    
-    [super dealloc];
 }
 
 @end
