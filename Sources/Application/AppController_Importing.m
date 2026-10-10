@@ -84,7 +84,7 @@
 					linkTitleType = [NSString customPasteboardTypeOfCode:0x75726C64];
 					linkTitle = [types containsObject:linkTitleType] ? [[pasteboard stringForType:linkTitleType] syntheticTitleAndTrimmedBody:NULL] : nil;
 				}
-				[[[[AlienNoteImporter alloc] init] autorelease] importURLInBackground:url linkTitle:linkTitle receptionDelegate:self];
+				[[[AlienNoteImporter alloc] init] importURLInBackground:url linkTitle:linkTitle receptionDelegate:self];
 				return YES;
 			}
 		}		
@@ -125,12 +125,11 @@
 		if (pboardString) newString = [[NSMutableAttributedString alloc] initWithString:pboardString];
 	}
 	
-	[newString autorelease];
 	if ([newString length] > 0) {
 		[newString removeAttachments];
 		
 		if (hasRTFData && ![prefsController pastePreservesStyle]) //fallback scenario
-			newString = [[[NSMutableAttributedString alloc] initWithString:[newString string]] autorelease];
+			newString = [[NSMutableAttributedString alloc] initWithString:[newString string]];
 		
 		NSUInteger bodyLoc = 0, prefixedSourceLength = 0;
 		NSString *noteTitle = [[newString string] syntheticTitleAndSeparatorWithContext:NULL bodyLoc:&bodyLoc maxTitleLen:36];
@@ -140,8 +139,8 @@
 		}
 		[newString santizeForeignStylesForImporting];
 		
-		NoteObject *note = [[[NoteObject alloc] initWithNoteBody:newString title:noteTitle delegate:notationController
-														  format:[notationController currentNoteStorageFormat] labels:nil] autorelease];
+		NoteObject *note = [[NoteObject alloc] initWithNoteBody:newString title:noteTitle delegate:notationController
+														  format:[notationController currentNoteStorageFormat] labels:nil];
 		if (bodyLoc > 0 && [newString length] >= bodyLoc + prefixedSourceLength) [note setSelectedRange:NSMakeRange(prefixedSourceLength, bodyLoc)];
 		[notationController addNewNote:note];
 		
@@ -165,7 +164,7 @@
 		
 		//add currentNote to the snapback button back-stack
 		if (currentNote) {
-			[field pushFollowedLink:[[[NoteBookmark alloc] initWithNoteObject:currentNote searchString:[self fieldSearchString]] autorelease]];
+			[field pushFollowedLink:[[NoteBookmark alloc] initWithNoteObject:currentNote searchString:[self fieldSearchString]]];
 		}
 		
 		NSString *terms = [aURL path];
@@ -224,8 +223,8 @@
 			[attributedContents removeAttachments];
 			[attributedContents santizeForeignStylesForImporting];
 			
-			NoteObject *note = [[[NoteObject alloc] initWithNoteBody:[attributedContents autorelease] title:title delegate:notationController
-															  format:[notationController currentNoteStorageFormat] labels:tags] autorelease];
+			NoteObject *note = [[NoteObject alloc] initWithNoteBody:attributedContents title:title delegate:notationController
+															  format:[notationController currentNoteStorageFormat] labels:tags];
 			[notationController addNewNote:note];
 			return YES;
 		} else if (txtBody || htmlBody) {
@@ -245,7 +244,7 @@
 	} else if ([[aURL host] length]) {
 		//assume find by default
 		if (currentNote) {
-			[field pushFollowedLink:[[[NoteBookmark alloc] initWithNoteObject:currentNote searchString:[self fieldSearchString]] autorelease]];
+			[field pushFollowedLink:[[NoteBookmark alloc] initWithNoteObject:currentNote searchString:[self fieldSearchString]]];
 		}
 		[self searchForString:[aURL host]];
 		return YES;

@@ -16,12 +16,12 @@ BOOL NVHotKeyIsFunctionKey(NSInteger keyCode) {
 @implementation NVHotKey
 
 static OSStatus NVHotKeyPressed(EventHandlerCallRef handler, EventRef event, void *context) {
-	NVHotKey *hotKey = (NVHotKey *)context;
+	NVHotKey *hotKey = (__bridge NVHotKey *)context;
 	EventHotKeyID hotKeyID;
 	if (GetEventParameter(event, kEventParamDirectObject, typeEventHotKeyID, NULL, sizeof(hotKeyID), NULL, &hotKeyID) != noErr ||
 		hotKeyID.signature != NVHotKeySignature || hotKeyID.id != hotKey->identifier)
 		return eventNotHandledErr;
-	[hotKey->target performSelector:hotKey->action withObject:hotKey];
+	((void (*)(id, SEL, id))objc_msgSend)(hotKey->target, hotKey->action, hotKey);
 	return noErr;
 }
 
@@ -32,7 +32,7 @@ static OSStatus NVHotKeyPressed(EventHandlerCallRef handler, EventRef event, voi
 		target = aTarget;
 		action = anAction;
 		EventTypeSpec pressed = { kEventClassKeyboard, kEventHotKeyPressed };
-		InstallEventHandler(GetEventDispatcherTarget(), NVHotKeyPressed, 1, &pressed, self, &handlerRef);
+		InstallEventHandler(GetEventDispatcherTarget(), NVHotKeyPressed, 1, &pressed, (__bridge void *)self, &handlerRef);
 	}
 	return self;
 }
@@ -40,7 +40,6 @@ static OSStatus NVHotKeyPressed(EventHandlerCallRef handler, EventRef event, voi
 - (void)dealloc {
 	[self unregister];
 	if (handlerRef) RemoveEventHandler(handlerRef);
-	[super dealloc];
 }
 
 - (BOOL)registerKeyCode:(NSInteger)keyCode carbonModifiers:(NSUInteger)modifiers {

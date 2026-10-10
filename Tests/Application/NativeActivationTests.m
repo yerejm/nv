@@ -30,7 +30,7 @@
 @end
 @implementation ActivationController
 - (id)initWithWindow:(ActivationWindow *)testWindow {
-    if ((self = [super init])) window = (id)testWindow;
+    if ((self = [super init])) window = (id)[testWindow retain];
     return self;
 }
 - (void)_expandToolbar {}

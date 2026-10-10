@@ -20,7 +20,7 @@
 @end
 @implementation PasteboardController
 - (id)initWithStorage:(PasteboardStorage *)storage {
-    if ((self = [super init])) notationController = (id)storage;
+    if ((self = [super init])) notationController = (id)[storage retain];
     return self;
 }
 @end

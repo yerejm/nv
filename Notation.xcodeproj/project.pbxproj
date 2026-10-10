@@ -20,7 +20,7 @@
 		211344450B354E000081B064 /* idea_ossl.c in Sources */ = {isa = PBXBuildFile; fileRef = 211344440B354E000081B064 /* idea_ossl.c */; };
 		211344C00B3551BD0081B064 /* BlorPasswordRetriever.xib in Resources */ = {isa = PBXBuildFile; fileRef = 211344BA0B3551BD0081B064 /* BlorPasswordRetriever.xib */; };
 		211345AB0B35D8540081B064 /* broken_md5.c in Sources */ = {isa = PBXBuildFile; fileRef = 211345A90B35D8540081B064 /* broken_md5.c */; };
-		2114C11609575BD400614E74 /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2114C11509575BD400614E74 /* AppController.m */; };
+		2114C11609575BD400614E74 /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2114C11509575BD400614E74 /* AppController.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		2114C13F0957732800614E74 /* NotationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2114C13E0957732800614E74 /* NotationController.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		2114C1460957733200614E74 /* NoteObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 2114C1450957733200614E74 /* NoteObject.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		2114C23E095883A600614E74 /* NSData_transformations.m in Sources */ = {isa = PBXBuildFile; fileRef = 2114C23C095883A600614E74 /* NSData_transformations.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
@@ -108,9 +108,9 @@
 		21A38EE512EA864400CEB5F0 /* MakeDefault.tiff in Resources */ = {isa = PBXBuildFile; fileRef = 21A38EE312EA864400CEB5F0 /* MakeDefault.tiff */; };
 		21A6E6FD0974204F008436A9 /* LabelsListController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21A6E6FC0974204F008436A9 /* LabelsListController.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21A73DC8099712A8009F8A6C /* WALController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21A73DC7099712A8009F8A6C /* WALController.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
-		21B1BC361104D20E0004A7D0 /* InvocationRecorder.m in Sources */ = {isa = PBXBuildFile; fileRef = 21B1BC351104D20E0004A7D0 /* InvocationRecorder.m */; };
-		4E5F6A7B8C9D0E1F2A3B4C01 /* NVSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E5F6A7B8C9D0E1F2A3B4C03 /* NVSplitView.m */; };
-		4E5F6A7B8C9D0E1F2A3B4C04 /* NVHotKey.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E5F6A7B8C9D0E1F2A3B4C06 /* NVHotKey.m */; };
+		21B1BC361104D20E0004A7D0 /* InvocationRecorder.m in Sources */ = {isa = PBXBuildFile; fileRef = 21B1BC351104D20E0004A7D0 /* InvocationRecorder.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
+		4E5F6A7B8C9D0E1F2A3B4C01 /* NVSplitView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E5F6A7B8C9D0E1F2A3B4C03 /* NVSplitView.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
+		4E5F6A7B8C9D0E1F2A3B4C04 /* NVHotKey.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E5F6A7B8C9D0E1F2A3B4C06 /* NVHotKey.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		4E5F6A7B8C9D0E1F2A3B4C07 /* NVShortcutRecorder.m in Sources */ = {isa = PBXBuildFile; fileRef = 4E5F6A7B8C9D0E1F2A3B4C09 /* NVShortcutRecorder.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21B548FA112F307E00E163A1 /* NotationDirectoryManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 21B548F8112F307E00E163A1 /* NotationDirectoryManager.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21B54C021134F2E800E163A1 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21B54C011134F2E800E163A1 /* IOKit.framework */; };
@@ -124,8 +124,8 @@
 		21CA2A931310E05300490979 /* Questo è il titolo di una nota.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 21CA2A8D1310E05300490979 /* Questo è il titolo di una nota.nvhelp */; };
 		21CA2A941310E05300490979 /* Scorciatoie terribilmente utili.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 21CA2A8F1310E05300490979 /* Scorciatoie terribilmente utili.nvhelp */; };
 		21D583620B78F0CC00245E29 /* ApplicationServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 21D5834D0B78F0CC00245E29 /* ApplicationServices.framework */; };
-		21D60128098FDB46007440DF /* GlobalPrefs.m in Sources */ = {isa = PBXBuildFile; fileRef = 21D60127098FDB46007440DF /* GlobalPrefs.m */; };
-		21D6F7EF12E0C751005C2DA5 /* AppController_Importing.m in Sources */ = {isa = PBXBuildFile; fileRef = 21D6F7EE12E0C751005C2DA5 /* AppController_Importing.m */; };
+		21D60128098FDB46007440DF /* GlobalPrefs.m in Sources */ = {isa = PBXBuildFile; fileRef = 21D60127098FDB46007440DF /* GlobalPrefs.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
+		21D6F7EF12E0C751005C2DA5 /* AppController_Importing.m in Sources */ = {isa = PBXBuildFile; fileRef = 21D6F7EE12E0C751005C2DA5 /* AppController_Importing.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21D6FB4912E104D6005C2DA5 /* NSBezierPath_NV.m in Sources */ = {isa = PBXBuildFile; fileRef = 21D6FB4812E104D6005C2DA5 /* NSBezierPath_NV.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21DB3D0F12D4FBDD0057F52B /* SecureTextEntryManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 21DB3D0E12D4FBDD0057F52B /* SecureTextEntryManager.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21DB4BE612DE4E3D0057F52B /* NSString_CustomTruncation.m in Sources */ = {isa = PBXBuildFile; fileRef = 21DB4BE512DE4E3D0057F52B /* NSString_CustomTruncation.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
@@ -147,7 +147,7 @@
 		6E12BAC124DAF0D300CBB989 /* Search@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 6E12BAC024DAF0D300CBB989 /* Search@2x.png */; };
 		6E12BACF24DAF4FB00CBB989 /* Pencil@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = 6E12BACE24DAF4FB00CBB989 /* Pencil@2x.png */; };
 		8D11072B0486CEB800E47090 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 089C165CFE840E0CC02AAC07 /* InfoPlist.strings */; };
-		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {ATTRIBUTES = (); }; };
+		8D11072D0486CEB800E47090 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		8D11072F0486CEB800E47090 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		D3EECA00106F66C70023D7F8 /* NVPasswordGenerator.m in Sources */ = {isa = PBXBuildFile; fileRef = D3EEC9FE106F66C70023D7F8 /* NVPasswordGenerator.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 /* End PBXBuildFile section */

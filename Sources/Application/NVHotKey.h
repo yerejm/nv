@@ -5,7 +5,7 @@ BOOL NVHotKeyIsFunctionKey(NSInteger keyCode);
 
 //a system-wide shortcut; Carbon hot keys are the only kind that need no Accessibility permission
 @interface NVHotKey : NSObject {
-	id target;
+	__weak id target;
 	SEL action;
 	UInt32 identifier;
 	EventHotKeyRef hotKeyRef;

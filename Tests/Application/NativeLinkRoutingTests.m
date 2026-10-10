@@ -25,7 +25,7 @@
 @end
 @implementation RoutingController
 - (id)initWithStorage:(RoutingStorage *)storage {
-    if ((self = [super init])) notationController = (id)storage;
+    if ((self = [super init])) notationController = (id)[storage retain];
     return self;
 }
 - (void)searchForString:(NSString *)search {}

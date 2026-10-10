@@ -56,7 +56,7 @@ static void NVUseMenuFontForStyledTitles(NSMenu *menu) {
     for (NSMenuItem *item in menu.itemArray) {
         if (item.submenu) NVUseMenuFontForStyledTitles(item.submenu);
         if (!item.attributedTitle.length) continue;
-        NSMutableAttributedString *title = [[item.attributedTitle mutableCopy] autorelease];
+        NSMutableAttributedString *title = [item.attributedTitle mutableCopy];
         [title removeAttribute:@"NSOriginalFont" range:NSMakeRange(0, title.length)];
         [item.attributedTitle enumerateAttribute:NSFontAttributeName inRange:NSMakeRange(0, title.length) options:0 usingBlock:^(NSFont *font, NSRange range, BOOL *stop) {
             NSFontTraitMask traits = font ? [fontManager traitsOfFont:font] & (NSBoldFontMask | NSItalicFontMask) : 0;
@@ -119,9 +119,9 @@ static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
     windowTitleLabel.font = [NSFont systemFontOfSize:13 weight:NSFontWeightSemibold];
     windowTitleLabel.alignment = NSTextAlignmentCenter;
     windowTitleLabel.lineBreakMode = NSLineBreakByTruncatingMiddle;
-    NSView *titleView = [[[NSView alloc] initWithFrame:NSMakeRect(0, 0, NSWidth(window.frame) - 84, 32)] autorelease];
+    NSView *titleView = [[NSView alloc] initWithFrame:NSMakeRect(0, 0, NSWidth(window.frame) - 84, 32)];
     [titleView addSubview:windowTitleLabel];
-    NSTitlebarAccessoryViewController *titleAccessory = [[[NSTitlebarAccessoryViewController alloc] init] autorelease];
+    NSTitlebarAccessoryViewController *titleAccessory = [[NSTitlebarAccessoryViewController alloc] init];
     titleAccessory.view = titleView;
     titleAccessory.layoutAttribute = NSLayoutAttributeRight;
     window.titleVisibility = NSWindowTitleHidden;
@@ -134,7 +134,7 @@ static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
 	[field setDelegate:self];
 	[textView setDelegate:self];
     modifierMonitor = [NSEvent addLocalMonitorForEventsMatchingMask:NSEventMaskFlagsChanged handler:^NSEvent *(NSEvent *event) {
-        if (event.window == window) [self flagsChanged:event];
+        if (event.window == self->window) [self flagsChanged:event];
         return event;
     }];
 	[splitView setDelegate:self];
@@ -163,7 +163,7 @@ static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
 		[splitSubview addSubview:editorStatusView positioned:NSWindowAbove relativeTo:splitSubview];
 		[editorStatusView setFrame:[[textView enclosingScrollView] frame]];
         NSScrollView *editorScroll = [textView enclosingScrollView];
-        wordCountLabel = [[NSTextField labelWithString:@""] retain];
+        wordCountLabel = [NSTextField labelWithString:@""];
         [wordCountLabel setFont:[NSFont systemFontOfSize:11]];
         [wordCountLabel setAlignment:NSTextAlignmentRight];
         [wordCountLabel setDrawsBackground:YES];
@@ -240,8 +240,8 @@ static void *NVEffectiveAppearanceContext = &NVEffectiveAppearanceContext;
 //a mount that finishes after cancelling or timing out is ignored
 - (void)_mountVolumeForAliasData:(NSData *)aliasData {
 	NSString *location = [[[NSFileManager defaultManager] pathCopiedFromAliasData:aliasData] stringByAbbreviatingWithTildeInPath];
-	NSPanel *panel = [[[NSPanel alloc] initWithContentRect:NSMakeRect(0, 0, 400, 96) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO] autorelease];
-	NSProgressIndicator *spinner = [[[NSProgressIndicator alloc] initWithFrame:NSMakeRect(20, 54, 16, 16)] autorelease];
+	NSPanel *panel = [[NSPanel alloc] initWithContentRect:NSMakeRect(0, 0, 400, 96) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
+	NSProgressIndicator *spinner = [[NSProgressIndicator alloc] initWithFrame:NSMakeRect(20, 54, 16, 16)];
 	[spinner setStyle:NSProgressIndicatorStyleSpinning];
 	[spinner setControlSize:NSControlSizeSmall];
 	[spinner startAnimation:nil];
@@ -262,7 +262,6 @@ static void *NVEffectiveAppearanceContext = &NVEffectiveAppearanceContext;
 	dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
 		NVFileReference ref;
 		[bookmark fsRefAsAliasMountingVolume:&ref];
-		[bookmark release];
 		dispatch_async(dispatch_get_main_queue(), ^{
 			if (waiting) [self _stopVolumeMountPanel];
 		});
@@ -296,6 +295,7 @@ static void *NVEffectiveAppearanceContext = &NVEffectiveAppearanceContext;
 	NSData *aliasData = [prefsController aliasDataForDefaultDirectory];
 	
 	NSString *subMessage = @"";
+	NSString *location = nil, *reason = nil;
 	
 	//if the option key is depressed, go straight to picking a new notes folder location
 	if (kCGEventFlagMaskAlternate == (CGEventSourceFlagsState(kCGEventSourceStateCombinedSessionState) & (CGEventFlags)NSEventModifierFlagDeviceIndependentFlagsMask)) {
@@ -315,7 +315,7 @@ static void *NVEffectiveAppearanceContext = &NVEffectiveAppearanceContext;
 	if (err == kPassCanceledErr)
 		goto showOpenPanel;
 	
-	NSString *location = (aliasData ? [[NSFileManager defaultManager] pathCopiedFromAliasData:aliasData] : NSLocalizedString(@"your Application Support directory",nil));
+	location = (aliasData ? [[NSFileManager defaultManager] pathCopiedFromAliasData:aliasData] : NSLocalizedString(@"your Application Support directory",nil));
 	if (!location) { //fscopyaliasinfo sucks
 		NVFileReference locationRef;
 		if ([aliasData fsRefAsAlias:&locationRef] && (location = [[NSFileManager defaultManager] displayNameAtPath:[[NSFileManager defaultManager] pathWithFSRef:&locationRef]]) != nil) {
@@ -327,7 +327,7 @@ static void *NVEffectiveAppearanceContext = &NVEffectiveAppearanceContext;
 	
 	while (!newNotation) {
 	    location = [location stringByAbbreviatingWithTildeInPath];
-	    NSString *reason = [NSString reasonStringFromCarbonFSError:err];
+	    reason = [NSString reasonStringFromCarbonFSError:err];
 		
 	    if (NVRunAlert(NSAlertStyleWarning, [NSString stringWithFormat:NSLocalizedString(@"Unable to initialize notes database in \n%@ because %@.",nil), location, reason], subMessage, NSLocalizedString(@"Choose another folder",nil), NSLocalizedString(@"Quit",nil), NULL) == NSAlertFirstButtonReturn) {
 			//show nsopenpanel, defaulting to current default notes dir
@@ -347,7 +347,6 @@ static void *NVEffectiveAppearanceContext = &NVEffectiveAppearanceContext;
 	}
 	
 	[self setNotationController:newNotation];
-	[newNotation release];
 	
 	NSLog(@"load time: %g, ",[[NSDate date] timeIntervalSinceDate:before]);
 	
@@ -355,12 +354,12 @@ static void *NVEffectiveAppearanceContext = &NVEffectiveAppearanceContext;
 	[AlienNoteImporter importBlorOrHelpFilesIfNecessaryIntoNotation:newNotation];
 	
 	if (pathsToOpenOnLaunch) {
-		[notationController openFiles:[pathsToOpenOnLaunch autorelease]];
+		[notationController openFiles:pathsToOpenOnLaunch];
 		pathsToOpenOnLaunch = nil;
 	}
 	
 	if (URLToInterpretOnLaunch) {
-		[self interpretNVURL:[URLToInterpretOnLaunch autorelease]];
+		[self interpretNVURL:URLToInterpretOnLaunch];
 		URLToInterpretOnLaunch = nil;
 	}
 	
@@ -397,8 +396,7 @@ terminateApp:
 				if (![self interpretNVURL:url])
 					NSBeep();
 			} else {
-				[URLToInterpretOnLaunch release];
-				URLToInterpretOnLaunch = [url retain];
+				URLToInterpretOnLaunch = url;
 			}
 		} else {
 			NSBeep();
@@ -421,8 +419,9 @@ terminateApp:
 			[notationController closeAllResources];
 		}
 		
-		NotationController *oldNotation = notationController;
-		notationController = [newNotation retain];
+		//the replaced notation stays alive until its successor is fully installed
+		NotationController *oldNotation NS_VALID_UNTIL_END_OF_SCOPE = notationController;
+		notationController = newNotation;
 		
 		if (oldNotation) {
 			[notesTableView abortEditing];
@@ -460,8 +459,6 @@ terminateApp:
 		}
 		
 		[field selectText:nil];
-		
-		[oldNotation autorelease];
     }
 }
 
@@ -698,7 +695,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 
 - (void)deleteAlertDidEnd:(NSAlert *)alert returnCode:(NSInteger)returnCode contextInfo:(void *)contextInfo {
 
-	id retainedDeleteObj = (id)contextInfo;
+	id retainedDeleteObj = (__bridge_transfer id)contextInfo;
 	
 	if (returnCode == NSAlertFirstButtonReturn) {
 		//delete! nil-msgsnd-checking
@@ -718,7 +715,6 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 			[prefsController setConfirmNoteDeletion:NO sender:self];
 		}
 	}
-	[retainedDeleteObj release];
 }
 
 
@@ -729,7 +725,6 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 		id deleteObj = [indexes count] > 1 ? (id)([notationController notesAtIndexes:indexes]) : (id)([notationController noteObjectAtFilteredIndex:[indexes firstIndex]]);
 		
 		if ([prefsController confirmNoteDeletion]) {
-			[deleteObj retain];
 			NSString *warningSingleFormatString = NSLocalizedString(@"Delete the note titled quotemark%@quotemark?", @"alert title when asked to delete a note");
 			NSString *warningMultipleFormatString = NSLocalizedString(@"Delete %d notes?", @"alert title when asked to delete multiple notes");
 			NSString *warnString = currentNote ? [NSString stringWithFormat:warningSingleFormatString, titleOfNote(currentNote)] : 
@@ -738,10 +733,11 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 			NSAlert *alert = NVMakeAlert(warnString, NSLocalizedString(@"Press Command-Z to undo this action later.", @"informational delete-this-note? text"), NSLocalizedString(@"Delete", @"name of delete button"), NSLocalizedString(@"Cancel", @"name of cancel button"), nil);
 			[alert setShowsSuppressionButton:YES];
 			
-			NVBeginAlertSheet(alert, window, self, @selector(deleteAlertDidEnd:returnCode:contextInfo:), (void*)deleteObj);
+			NVBeginAlertSheet(alert, window, self, @selector(deleteAlertDidEnd:returnCode:contextInfo:), (__bridge_retained void *)deleteObj);
 		} else {
 			//just delete the notes outright			
-			[notationController performSelector:[indexes count] > 1 ? @selector(removeNotes:) : @selector(removeNote:) withObject:deleteObj];
+			if ([indexes count] > 1) [notationController removeNotes:deleteObj];
+			else [notationController removeNote:deleteObj];
 		}
 	}
 }
@@ -809,11 +805,11 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
         NSMutableArray *shared = [NSMutableArray arrayWithArray:[labelsOfNote(notes.firstObject) labelCompatibleWords]];
         for (NoteObject *note in notes) {
             NSSet *tags = [NSSet setWithArray:[[labelsOfNote(note) labelCompatibleWords] valueForKey:@"lowercaseString"]];
-            for (NSString *tag in [[shared copy] autorelease])
+            for (NSString *tag in [shared copy])
                 if (![tags containsObject:tag.lowercaseString]) [shared removeObject:tag];
         }
         NSAlert *alert = NVMakeAlert(NSLocalizedString(@"Edit Shared Tags", nil), NSLocalizedString(@"Edit tags shared by the selected notes. Other tags are kept.", nil), NSLocalizedString(@"Apply", nil), NSLocalizedString(@"Cancel", nil), nil);
-        NSTokenField *tags = [[[NSTokenField alloc] initWithFrame:NSMakeRect(0, 0, 380, 55)] autorelease];
+        NSTokenField *tags = [[NSTokenField alloc] initWithFrame:NSMakeRect(0, 0, 380, 55)];
         [tags setTokenizingCharacterSet:[NSCharacterSet labelSeparatorCharacterSet]];
         [tags setObjectValue:shared];
         [tags setDelegate:self];
@@ -854,7 +850,6 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 - (IBAction)importNotes:(id)sender {
 	AlienNoteImporter *importer = [[AlienNoteImporter alloc] init];
 	[importer importNotesFromDialogAroundWindow:window receptionDelegate:self];
-	[importer autorelease];
 }
 
 - (void)settingChangedForSelectorString:(NSString*)selectorString {
@@ -877,8 +872,6 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 		if (newData) {
 			if ((newNotation = [[NotationController alloc] initWithAliasData:newData error:&err])) {
 				[self setNotationController:newNotation];
-				[newNotation release];
-				
 			} else {
 				
 				//set alias data back
@@ -981,7 +974,6 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 
 - (void)applicationWillBecomeActive:(NSNotification *)aNotification {
 	if (!activationRequested) {
-		[previousActiveApplication release];
 		previousActiveApplication = nil;
 		activatedFromAnotherSpace = NO;
 	}
@@ -1006,7 +998,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 
 - (void)updateDesktopPresence {
     if ([prefsController showMenuBarIcon] && !statusItem) {
-        statusItem = [[[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength] retain];
+        statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSSquareStatusItemLength];
         statusItem.button.image = [NSImage imageWithSystemSymbolName:@"note.text" accessibilityDescription:NSLocalizedString(@"Notational Velocity", nil)];
         statusItem.button.image.template = YES;
         statusItem.button.toolTip = NSLocalizedString(@"Notational Velocity — click to show or hide; right-click for commands", nil);
@@ -1028,7 +1020,6 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
         }
     } else if (![prefsController showMenuBarIcon] && statusItem) {
         [[NSStatusBar systemStatusBar] removeStatusItem:statusItem];
-        [statusItem release];
         statusItem = nil;
     }
     NSApplicationActivationPolicy policy = [prefsController showDockIcon] ? NSApplicationActivationPolicyRegular : NSApplicationActivationPolicyAccessory;
@@ -1218,8 +1209,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 	[currentNote updateContentCacheCStringIfNecessary];
 	
 	
-	[currentNote release];
-	currentNote = [aNote retain];
+	currentNote = aNote;
 }
 
 - (void)setNeedsWordCountUpdate {
@@ -1288,7 +1278,6 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 
 - (void)cacheTypedStringIfNecessary:(NSString*)aString {
 	if (!typedStringIsCached) {
-		[typedString release];
 		typedString = [(aString ? aString : [field stringValue]) copy];
 		typedStringIsCached = YES;
 	}
@@ -1483,7 +1472,6 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 				//savedSelectedNotes needs to be empty after de-selecting all notes, 
 				//to ensure that any delayed list-resorting does not re-select savedSelectedNotes
 
-				[savedSelectedNotes release];
 				savedSelectedNotes = nil;
 			}
 		}
@@ -1638,10 +1626,10 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 		
 		isCreatingANote = YES;
 		NSString *title = [[field stringValue] length] ? [field stringValue] : NSLocalizedString(@"Untitled Note", @"Title of a nameless note");
-		NSAttributedString *attributedContents = [textView textStorage] ? [textView textStorage] : [[[NSAttributedString alloc] initWithString:@"" attributes:
-																									 [prefsController noteBodyAttributes]] autorelease];		
-		NoteObject *note = [[[NoteObject alloc] initWithNoteBody:attributedContents title:title delegate:notationController
-														  format:[notationController currentNoteStorageFormat] labels:nil] autorelease];
+		NSAttributedString *attributedContents = [textView textStorage] ? [textView textStorage] : [[NSAttributedString alloc] initWithString:@"" attributes:
+																									 [prefsController noteBodyAttributes]];		
+		NoteObject *note = [[NoteObject alloc] initWithNoteBody:attributedContents title:title delegate:notationController
+														  format:[notationController currentNoteStorageFormat] labels:nil];
 		[notationController addNewNote:note];
 		
 		isCreatingANote = NO;
@@ -1897,8 +1885,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 			if ([notesTableView numberOfSelectedRows] > 0) {
 				NSIndexSet *indexSet = [notesTableView selectedRowIndexes];
 					
-				[savedSelectedNotes release];
-				savedSelectedNotes = [[someNotation notesAtIndexes:indexSet] retain];
+				savedSelectedNotes = [someNotation notesAtIndexes:indexSet];
 			}
 			
 			listUpdateViewCtx = [notesTableView viewingLocation];
@@ -1916,7 +1903,6 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 		if (!isFilteringFromTyping) {
 			if (savedSelectedNotes) {
 				NSIndexSet *indexes = [someNotation indexesOfNotes:savedSelectedNotes];
-				[savedSelectedNotes release];
 				savedSelectedNotes = nil;
 				
 				[notesTableView selectRowIndexes:indexes byExtendingSelection:NO];
@@ -1998,14 +1984,8 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 
 - (void)dealloc {
     if (statusItem) [[NSStatusBar systemStatusBar] removeStatusItem:statusItem];
-    [statusItem release];
-    [statusMenu release];
     if (modifierMonitor) [NSEvent removeMonitor:modifierMonitor];
-    [wordCountLabel release];
-	[previousActiveApplication release];
-	[windowUndoManager release];
 	
-	[super dealloc];
 }
 
 - (IBAction)showPreferencesWindow:(id)sender {
@@ -2019,7 +1999,6 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 			![previousActiveApplication activateWithOptions:0]) {
 			[NSApp hide:sender];
 		}
-		[previousActiveApplication release];
 		previousActiveApplication = nil;
 		activatedFromAnotherSpace = NO;
 		return;
@@ -2052,8 +2031,7 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 }
 
 - (void)captureActivationOrigin {
-	[previousActiveApplication release];
-	previousActiveApplication = [[[NSWorkspace sharedWorkspace] frontmostApplication] retain];
+	previousActiveApplication = [[NSWorkspace sharedWorkspace] frontmostApplication];
 	activatedFromAnotherSpace = ![window isOnActiveSpace];
 	activationRequested = YES;
 }

@@ -200,12 +200,6 @@ void NVMigrateLegacyArchivedPreferences(NSUserDefaults *defaults) {
 	return prefs;
 }
 
-- (void)dealloc {
-	
-	[tableColumns release];
-	[super dealloc];
-}
-
 - (void)registerWithTarget:(id)sender forChangesInSettings:(SEL)firstSEL, ... {
 	NSAssert(firstSEL != NULL, @"need at least one selector");
 
@@ -267,8 +261,7 @@ void NVMigrateLegacyArchivedPreferences(NSUserDefaults *defaults) {
 }
 
 - (void)setNotationPrefs:(NotationPrefs*)newNotationPrefs sender:(id)sender {
-	[notationPrefs autorelease];
-	notationPrefs = [newNotationPrefs retain];
+	notationPrefs = newNotationPrefs;
 	
 	[self resolveNoteBodyFontFromNotationPrefsFromSender:sender];
 	
@@ -399,7 +392,6 @@ void NVMigrateLegacyArchivedPreferences(NSUserDefaults *defaults) {
 }
 
 - (BOOL)registerAppActivationKeystrokeWithTarget:(id)target selector:(SEL)selector {
-	[appActivationHotKey release];
 	appActivationHotKey = [[NVHotKey alloc] initWithTarget:target action:selector];
 	return [self _registerAppActivationHotKey];
 }
@@ -459,7 +451,6 @@ void NVMigrateLegacyArchivedPreferences(NSUserDefaults *defaults) {
 - (void)setSearchTermHighlightColor:(NSColor*)color sender:(id)sender {
 	if (color) {
 		
-		[searchTermHighlightAttributes release];
 		searchTermHighlightAttributes = nil;
 		
 		[defaults setObject:NVArchiveObject(color) forKey:SearchTermHighlightColorKey];
@@ -469,7 +460,6 @@ void NVMigrateLegacyArchivedPreferences(NSUserDefaults *defaults) {
 }
 
 - (void)useSystemSearchTermHighlightColorFromSender:(id)sender {
-	[searchTermHighlightAttributes release];
 	searchTermHighlightAttributes = nil;
 	
 	[defaults removeObjectForKey:SearchTermHighlightColorKey];
@@ -505,7 +495,7 @@ void NVMigrateLegacyArchivedPreferences(NSUserDefaults *defaults) {
 		NSColor *rgb = [highlightColor colorUsingColorSpace:[NSColorSpace genericRGBColorSpace]];
 		CGFloat brightness = rgb.redComponent * 0.299 + rgb.greenComponent * 0.587 + rgb.blueComponent * 0.114;
 		NSColor *textColor = brightness < 0.5 ? [NSColor whiteColor] : [NSColor blackColor];
-		searchTermHighlightAttributes = [@{NSBackgroundColorAttributeName: highlightColor, NSForegroundColorAttributeName: textColor} retain];
+		searchTermHighlightAttributes = @{NSBackgroundColorAttributeName: highlightColor, NSForegroundColorAttributeName: textColor};
 	}
 	return searchTermHighlightAttributes;
 }
@@ -559,26 +549,23 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 
 - (void)_setNoteBodyFont:(NSFont*)aFont {
 	NSFont *oldFont = noteBodyFont;
-	noteBodyFont = [aFont retain];
+	noteBodyFont = aFont;
 	
-	[noteBodyParagraphStyle release];
 	noteBodyParagraphStyle = nil;
 	
-	[noteBodyAttributes release];
 	noteBodyAttributes = nil; //cause method to re-update
 	
 	[defaults setObject:NVArchiveObject(noteBodyFont) forKey:NoteBodyFontKey];
 	
 	//restyle any PTF data on the clipboard to the new font
 	NSData *ptfData = [[NSPasteboard generalPasteboard] dataForType:NVPTFPboardType];
-	NSMutableAttributedString *newString = [[[NSMutableAttributedString alloc] initWithRTF:ptfData documentAttributes:NULL] autorelease];
+	NSMutableAttributedString *newString = [[NSMutableAttributedString alloc] initWithRTF:ptfData documentAttributes:NULL];
 	
 	[newString restyleTextToFont:noteBodyFont usingBaseFont:oldFont];
 	
 	if ((ptfData = [newString RTFFromRange:NSMakeRange(0, [newString length]) documentAttributes:@{}])) {
 		[[NSPasteboard generalPasteboard] setData:ptfData forType:NVPTFPboardType];
 	}
-	[oldFont release];
 }
 
 - (void)setNoteBodyFont:(NSFont*)aFont sender:(id)sender {
@@ -592,11 +579,11 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 
 - (NSFont*)noteBodyFont {
 	if (!noteBodyFont) {
-		noteBodyFont = [NVUnarchivePreference([defaults dataForKey:NoteBodyFontKey], [NSFont class]) retain];
+		noteBodyFont = NVUnarchivePreference([defaults dataForKey:NoteBodyFontKey], [NSFont class]);
 		if (!noteBodyFont) {
 			NSLog(@"Unable to unarchive the note body font; using the default");
 			[defaults removeObjectForKey:NoteBodyFontKey];
-			noteBodyFont = [NVUnarchivePreference([defaults dataForKey:NoteBodyFontKey], [NSFont class]) retain];
+			noteBodyFont = NVUnarchivePreference([defaults dataForKey:NoteBodyFontKey], [NSFont class]);
 		}
 	}
 	
@@ -608,7 +595,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 	
 	if (!noteBodyAttributes && bodyFont) {
 		
-		NSMutableDictionary *attrs = [[NSMutableDictionary dictionaryWithObjectsAndKeys:bodyFont, NSFontAttributeName, nil] retain];
+		NSMutableDictionary *attrs = [NSMutableDictionary dictionaryWithObjectsAndKeys:bodyFont, NSFontAttributeName, nil];
 		
 		//not storing the foreground color in each note will make the database smaller, and black is assumed when drawing text
 		NSColor *fgColor = [self foregroundTextColor];
@@ -644,8 +631,6 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 		}
 		NSDictionary *sizeAttribute = [[NSDictionary alloc] initWithObjectsAndKeys:bodyFont, NSFontAttributeName, nil];
 		float sizeOfTab = [sizeString sizeWithAttributes:sizeAttribute].width;
-		[sizeAttribute release];
-		[sizeString release];
 		
 		noteBodyParagraphStyle = [[NSParagraphStyle defaultParagraphStyle] mutableCopy];
 		
@@ -663,7 +648,6 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 
 - (void)setForegroundTextColor:(NSColor*)aColor sender:(id)sender {
 	if (aColor) {
-		[noteBodyAttributes release];
 		noteBodyAttributes = nil;
 		
 		[defaults setObject:NVArchiveObject(aColor) forKey:ForegroundTextColorKey];
@@ -687,7 +671,6 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 		//highlight color is based on blended-alpha version of background color
 		//(because nslayoutmanager temporary attributes don't seem to like alpha components)
 		//so it's necessary to invalidate the effective cache of that computed highlight color
-		[searchTermHighlightAttributes release];
 		searchTermHighlightAttributes = nil;
 
 		[defaults setObject:NVArchiveObject(aColor) forKey:BackgroundTextColorKey];
@@ -748,7 +731,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 
 - (NSArray*)visibleTableColumns {
 	if (!tableColumns) {
-		tableColumns = [[NSMutableArray arrayWithArray:[defaults arrayForKey:NoteAttributesVisibleKey]] retain];
+		tableColumns = [NSMutableArray arrayWithArray:[defaults arrayForKey:NoteAttributesVisibleKey]];
 		tableColsBitmap = 0U;
 	}
 	
@@ -802,8 +785,8 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 - (NSInteger)colorScheme { return [defaults integerForKey:ColorSchemeKey]; }
 - (void)setColorScheme:(NSInteger)value sender:(id)sender {
     [defaults setInteger:MAX(0, MIN(3, value)) forKey:ColorSchemeKey];
-    [noteBodyAttributes release]; noteBodyAttributes = nil;
-    [searchTermHighlightAttributes release]; searchTermHighlightAttributes = nil;
+    noteBodyAttributes = nil;
+    searchTermHighlightAttributes = nil;
     SEND_CALLBACKS();
     [self notifyCallbacksForSelector:@selector(setForegroundTextColor:sender:) excludingSender:nil];
     [self notifyCallbacksForSelector:@selector(setBackgroundTextColor:sender:) excludingSender:nil];
@@ -855,7 +838,6 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 }
 - (void)resetAppearanceDependentAttributes {
     //the highlight is blended with the background color as it resolved at the time
-    [searchTermHighlightAttributes release];
     searchTermHighlightAttributes = nil;
 }
 - (NSColor *)interfaceSecondaryColor {
@@ -887,7 +869,7 @@ BOOL ColorsEqualWith8BitChannels(NSColor *c1, NSColor *c2) {
 
 - (void)setLastSearchString:(NSString*)string selectedNote:(id<SynchronizedNote>)aNote scrollOffsetForTableView:(NotesTableView*)tv sender:(id)sender {
 	
-	NSMutableString *stringMinusBreak = [[string mutableCopy] autorelease];
+	NSMutableString *stringMinusBreak = [string mutableCopy];
 	[stringMinusBreak replaceOccurrencesOfString:@"\n" withString:@" " options:NSLiteralSearch range:NSMakeRange(0, [stringMinusBreak length])];
 	
 	[defaults setObject:stringMinusBreak forKey:LastSearchStringKey];

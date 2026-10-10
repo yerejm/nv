@@ -13,8 +13,6 @@
 
 - (void)dealloc {
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
-	[separatorColor release];
-	[super dealloc];
 }
 
 - (NSColor *)dividerColor {
@@ -23,8 +21,7 @@
 
 - (void)setSeparatorColor:(NSColor *)color {
 	if (color != separatorColor) {
-		[separatorColor release];
-		separatorColor = [color retain];
+		separatorColor = color;
 	}
 	[self setNeedsDisplay:YES];
 }

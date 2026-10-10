@@ -29,8 +29,8 @@
 @implementation QuitController
 - (id)initWithStorage:(QuitStorage *)storage preferences:(QuitPreferences *)preferences {
     if ((self = [super init])) {
-        notationController = (id)storage;
-        prefsController = (id)preferences;
+        notationController = (id)[storage retain];
+        prefsController = (id)[preferences retain];
     }
     return self;
 }

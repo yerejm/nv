@@ -25,13 +25,7 @@
 @implementation InvocationRecorder
 
 + (id)invocationRecorder {
-	return [[[self alloc] init] autorelease];
-}
-
-- (void)dealloc {
-	[target release];
-	[invocation release];
-	[super dealloc];
+	return [[self alloc] init];
 }
 
 - (id)target {
@@ -50,8 +44,7 @@
 
 - (void)forwardInvocation:(NSInvocation *)anInvocation {
 	if (invocation != anInvocation) {
-		[invocation autorelease];
-		invocation = [anInvocation retain];
+		invocation = anInvocation;
 		
 		[anInvocation setTarget:target];
 		[invocation retainArguments];
@@ -60,8 +53,7 @@
 
 - (id)prepareWithInvocationTarget:(id)aTarget {
 	if (target != aTarget) {
-		[target autorelease];
-		target = [aTarget retain];
+		target = aTarget;
 	}
 	return self;
 }
