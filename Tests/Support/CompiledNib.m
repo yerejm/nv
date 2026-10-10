@@ -1,7 +1,7 @@
 #import "CompiledNib.h"
 
 static BOOL CompileXib(NSString *xib, NSString *output) {
-    NSTask *task = [[[NSTask alloc] init] autorelease];
+    NSTask *task = [[NSTask alloc] init];
     task.executableURL = [NSURL fileURLWithPath:@"/usr/bin/xcrun"];
     task.arguments = @[@"ibtool", @"--minimum-deployment-target", @"15.0", @"--compile", output, xib];
     task.standardOutput = [NSFileHandle fileHandleWithNullDevice];
@@ -24,7 +24,7 @@ static NSNib *BaseLocalizedNib(NSString *xib, NSString *strings, NSString *local
     if (!CompileXib(xib, [base stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"nib"]])) return nil;
     if (strings) [files copyItemAtPath:strings toPath:[localized stringByAppendingPathComponent:[name stringByAppendingPathExtension:@"strings"]] error:NULL];
     NSBundle *bundle = [NSBundle bundleWithPath:[contents stringByDeletingLastPathComponent]];
-    return [[[NSNib alloc] initWithNibNamed:name bundle:bundle] autorelease];
+    return [[NSNib alloc] initWithNibNamed:name bundle:bundle];
 }
 
 NSNib *NVLocalizedNib(NSString *resources, NSString *localization, NSString *name, NSString *scratchDirectory) {

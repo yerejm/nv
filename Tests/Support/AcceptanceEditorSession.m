@@ -66,10 +66,6 @@ BOOL NVCleanupAcceptanceEditor(NSString *directory) {
     return self;
 }
 - (void)dealloc {
-    [_directory release];
-    [_application release];
-    [_identity release];
-    [super dealloc];
 }
 - (BOOL)openURLs:(NSArray *)URLs withApplicationAtURL:(NSURL *)applicationURL workspace:(NSWorkspace *)workspace timeout:(NSTimeInterval)timeout {
     if (!URLs.count || !applicationURL || _opening || _teardownRequested || _finishedOpening) return NO;
@@ -95,9 +91,9 @@ BOOL NVCleanupAcceptanceEditor(NSString *directory) {
             if (application && ![existing containsObject:@(application.processIdentifier)] && application.launchDate &&
                 [application.bundleIdentifier isEqualToString:@"com.apple.TextEdit"] &&
                 [application.bundleURL.path.stringByResolvingSymlinksInPath isEqualToString:applicationURL.path.stringByResolvingSymlinksInPath]) {
-                _application = [application retain];
-                _identity = [@{@"pid": @(application.processIdentifier), @"launched": @(application.launchDate.timeIntervalSince1970),
-                    @"bundleIdentifier": application.bundleIdentifier, @"bundlePath": application.bundleURL.path.stringByResolvingSymlinksInPath} retain];
+                _application = application;
+                _identity = @{@"pid": @(application.processIdentifier), @"launched": @(application.launchDate.timeIntervalSince1970),
+                    @"bundleIdentifier": application.bundleIdentifier, @"bundlePath": application.bundleURL.path.stringByResolvingSymlinksInPath};
                 _openedSuccessfully = !error && [_identity writeToFile:ReceiptPath(_directory) atomically:YES];
             }
             if (!_openedSuccessfully)

@@ -17,7 +17,7 @@
 }
 - (void)testPreferencesUseIsolatedSuite {
     NSString *suite = [@"net.notational.velocity.tests." stringByAppendingString:[[NSUUID UUID] UUIDString]];
-    NSUserDefaults *defaults = [[[NSUserDefaults alloc] initWithSuiteName:suite] autorelease];
+    NSUserDefaults *defaults = [[NSUserDefaults alloc] initWithSuiteName:suite];
     [defaults setObject:self.temporaryDirectory forKey:@"NotesDirectory"];
     XCTAssertEqualObjects([defaults stringForKey:@"NotesDirectory"], self.temporaryDirectory);
     [defaults removePersistentDomainForName:suite];

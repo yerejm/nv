@@ -66,7 +66,7 @@
     [super setUp];
     self.directory = [NSTemporaryDirectory() stringByAppendingPathComponent:NSUUID.UUID.UUIDString];
     XCTAssertTrue([[NSFileManager defaultManager] createDirectoryAtPath:self.directory withIntermediateDirectories:YES attributes:nil error:NULL]);
-    self.application = [[[AcceptanceApplication alloc] init] autorelease];
+    self.application = [[AcceptanceApplication alloc] init];
     self.application.processIdentifier = 12345;
     self.application.launchDate = [NSDate dateWithTimeIntervalSince1970:1700000000];
     self.application.bundleIdentifier = @"com.apple.TextEdit";
@@ -74,10 +74,10 @@
     self.application.normalQuitSucceeds = YES;
     self.application.finishedLaunching = YES;
     self.application.hideSucceeds = YES;
-    self.workspace = [[[AcceptanceWorkspace alloc] init] autorelease];
+    self.workspace = [[AcceptanceWorkspace alloc] init];
     self.workspace.runningApplications = @[];
     self.workspace.openedApplication = self.application;
-    self.session = [[[NVAcceptanceEditorSession alloc] initWithDirectory:self.directory] autorelease];
+    self.session = [[NVAcceptanceEditorSession alloc] initWithDirectory:self.directory];
 }
 - (void)tearDown {
     XCTAssertTrue([self.session tearDown]);
@@ -158,7 +158,7 @@
 - (void)testMismatchedIdentityCannotTerminateProcess {
     for (NSDictionary *change in @[@{@"pid": @99999}, @{@"launched": @1},
                                     @{@"bundleIdentifier": @"another.editor"}, @{@"bundlePath": @"/another/app"}]) {
-        NSMutableDictionary *identity = [[self.identity mutableCopy] autorelease];
+        NSMutableDictionary *identity = [self.identity mutableCopy];
         [identity addEntriesFromDictionary:change];
         XCTAssertFalse(NVStopAcceptanceEditor((id)self.application, identity, 0));
     }
@@ -195,7 +195,7 @@
     XCTAssertTrue(self.application.terminated);
 }
 - (void)testSelfActivatedEditorReturnsActivationToPreviousApplication {
-    AcceptanceApplication *previous = [[[AcceptanceApplication alloc] init] autorelease];
+    AcceptanceApplication *previous = [[AcceptanceApplication alloc] init];
     previous.activationDeactivates = self.application;
     self.workspace.frontmostApplication = previous;
     self.application.active = YES;

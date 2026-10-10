@@ -6,9 +6,9 @@
 @implementation LabelImageTests
 - (NSBitmapImageRep *)bitmapOfImage:(NSImage *)image scale:(CGFloat)scale {
     NSSize size = image.size;
-    NSBitmapImageRep *bitmap = [[[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL pixelsWide:(NSInteger)(size.width * scale)
+    NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL pixelsWide:(NSInteger)(size.width * scale)
         pixelsHigh:(NSInteger)(size.height * scale) bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO
-        colorSpaceName:NSDeviceRGBColorSpace bytesPerRow:0 bitsPerPixel:0] autorelease];
+        colorSpaceName:NSDeviceRGBColorSpace bytesPerRow:0 bitsPerPixel:0];
     bitmap.size = size;
     [NSGraphicsContext saveGraphicsState];
     NSGraphicsContext.currentContext = [NSGraphicsContext graphicsContextWithBitmapImageRep:bitmap];
@@ -18,7 +18,7 @@
 }
 - (void)testLabelImageIsDrawnOnDemandWithTextKnockedOutOfItsFill {
     [NSApplication sharedApplication];
-    LabelsListController *labels = [[[LabelsListController alloc] init] autorelease];
+    LabelsListController *labels = [[LabelsListController alloc] init];
     NSImage *image = [labels cachedLabelImageForWord:@"Project" highlighted:NO];
     XCTAssertEqual(image, [labels cachedLabelImageForWord:@"project" highlighted:NO]);
     XCTAssertGreaterThan(image.size.width, 0);

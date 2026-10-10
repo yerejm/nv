@@ -13,8 +13,6 @@
     [self.selectors addObject:selector];
 }
 - (void)dealloc {
-    [_selectors release];
-    [super dealloc];
 }
 @end
 
@@ -22,9 +20,9 @@
 @end
 @implementation CallbackTests
 - (void)testDispatchExcludesOriginalSender {
-    GlobalPrefs *prefs = [[[GlobalPrefs alloc] init] autorelease];
-    PreferenceObserver *sender = [[[PreferenceObserver alloc] init] autorelease];
-    PreferenceObserver *listener = [[[PreferenceObserver alloc] init] autorelease];
+    GlobalPrefs *prefs = [[GlobalPrefs alloc] init];
+    PreferenceObserver *sender = [[PreferenceObserver alloc] init];
+    PreferenceObserver *listener = [[PreferenceObserver alloc] init];
     SEL setting = @selector(setConfirmNoteDeletion:sender:);
     [prefs registerForSettingChange:setting withTarget:sender];
     [prefs registerForSettingChange:setting withTarget:listener];
@@ -34,16 +32,16 @@
     XCTAssertEqualObjects(listener.selectors, (@[NSStringFromSelector(setting)]));
 }
 - (void)testSelfSenderSuppressesCallbacks {
-    GlobalPrefs *prefs = [[[GlobalPrefs alloc] init] autorelease];
-    PreferenceObserver *listener = [[[PreferenceObserver alloc] init] autorelease];
+    GlobalPrefs *prefs = [[GlobalPrefs alloc] init];
+    PreferenceObserver *listener = [[PreferenceObserver alloc] init];
     [prefs registerForSettingChange:@selector(setConfirmNoteDeletion:sender:) withTarget:listener];
     [prefs setConfirmNoteDeletion:NO sender:prefs];
     XCTAssertFalse([prefs confirmNoteDeletion]);
     XCTAssertEqual(listener.selectors.count, 0U);
 }
 - (void)testUnregisterStopsNotifications {
-    GlobalPrefs *prefs = [[[GlobalPrefs alloc] init] autorelease];
-    PreferenceObserver *listener = [[[PreferenceObserver alloc] init] autorelease];
+    GlobalPrefs *prefs = [[GlobalPrefs alloc] init];
+    PreferenceObserver *listener = [[PreferenceObserver alloc] init];
     SEL setting = @selector(setConfirmNoteDeletion:sender:);
     [prefs registerForSettingChange:setting withTarget:listener];
     [prefs unregisterForNotificationsFromSelector:setting sender:listener];

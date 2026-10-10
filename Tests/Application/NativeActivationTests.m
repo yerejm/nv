@@ -30,7 +30,7 @@
 @end
 @implementation ActivationController
 - (id)initWithWindow:(ActivationWindow *)testWindow {
-    if ((self = [super init])) window = (id)[testWindow retain];
+    if ((self = [super init])) window = (id)testWindow;
     return self;
 }
 - (void)_expandToolbar {}
@@ -54,12 +54,12 @@
 }
 - (void)testActiveMainWindowTogglesHidden {
     NSApplication *original = NSApp;
-    ActivationApplication *application = [[[ActivationApplication alloc] init] autorelease];
+    ActivationApplication *application = [[ActivationApplication alloc] init];
     application.active = YES;
-    ActivationWindow *window = [[[ActivationWindow alloc] init] autorelease];
+    ActivationWindow *window = [[ActivationWindow alloc] init];
     window.main = YES;
     window.activeSpace = YES;
-    ActivationController *controller = [[[ActivationController alloc] initWithWindow:window] autorelease];
+    ActivationController *controller = [[ActivationController alloc] initWithWindow:window];
     @try {
         NSApp = (id)application;
         [controller toggleNVActivation:nil];
@@ -69,10 +69,10 @@
 }
 - (void)testInactiveWindowActivatesAndOrdersFront {
     NSApplication *original = NSApp;
-    ActivationApplication *application = [[[ActivationApplication alloc] init] autorelease];
-    ActivationWindow *window = [[[ActivationWindow alloc] init] autorelease];
+    ActivationApplication *application = [[ActivationApplication alloc] init];
+    ActivationWindow *window = [[ActivationWindow alloc] init];
     window.activeSpace = YES;
-    ActivationController *controller = [[[ActivationController alloc] initWithWindow:window] autorelease];
+    ActivationController *controller = [[ActivationController alloc] initWithWindow:window];
     @try {
         NSApp = (id)application;
         [controller toggleNVActivation:nil];

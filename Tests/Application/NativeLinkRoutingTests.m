@@ -25,7 +25,7 @@
 @end
 @implementation RoutingController
 - (id)initWithStorage:(RoutingStorage *)storage {
-    if ((self = [super init])) notationController = (id)[storage retain];
+    if ((self = [super init])) notationController = (id)storage;
     return self;
 }
 - (void)searchForString:(NSString *)search {}
@@ -34,8 +34,8 @@
 @end
 @implementation NativeLinkRoutingTests
 - (void)testEncodedUUIDRoutesAfterTitleChanges {
-    RoutingStorage *storage = [[[RoutingStorage alloc] init] autorelease];
-    RoutingController *controller = [[[RoutingController alloc] initWithStorage:storage] autorelease];
+    RoutingStorage *storage = [[RoutingStorage alloc] init];
+    RoutingController *controller = [[RoutingController alloc] initWithStorage:storage];
     CFUUIDBytes uuid = [@"00112233-4455-6677-8899-AABBCCDDEEFF" uuidBytes];
     NSData *identity = [NSData dataWithBytes:&uuid length:16];
     NSString *encoded = [[identity encodeBase64WithNewlines:NO] stringWithPercentEscapes];
@@ -44,23 +44,23 @@
     XCTAssertEqualObjects(storage.identity, identity);
 }
 - (void)testMalformedUUIDDoesNotReadBeyondDecodedData {
-    RoutingStorage *storage = [[[RoutingStorage alloc] init] autorelease];
-    RoutingController *controller = [[[RoutingController alloc] initWithStorage:storage] autorelease];
+    RoutingStorage *storage = [[RoutingStorage alloc] init];
+    RoutingController *controller = [[RoutingController alloc] initWithStorage:storage];
     for (NSString *value in @[@"?", @"AA==", @"AAAA", @"!!!!!!!!!!!!!!!!!!"]) {
         XCTAssertTrue([controller interpretNVURL:[NSURL URLWithString:[@"nv://find/title/?NV=" stringByAppendingString:value]]]);
     }
     XCTAssertEqual(storage.lookups, 0U);
 }
 - (void)testOpenURLsRoutesNVLinksAndFiles {
-    RoutingStorage *storage = [[[RoutingStorage alloc] init] autorelease];
-    RoutingController *controller = [[[RoutingController alloc] initWithStorage:storage] autorelease];
+    RoutingStorage *storage = [[RoutingStorage alloc] init];
+    RoutingController *controller = [[RoutingController alloc] initWithStorage:storage];
     [controller application:NSApp openURLs:@[[NSURL URLWithString:@"NV://find/title/?NV=AAAAAAAAAAAAAAAAAAAAAA%3D%3D"],
                                              [NSURL fileURLWithPath:@"/tmp/a.txt"], [NSURL fileURLWithPath:@"/tmp/b.rtf"]]];
     XCTAssertEqual(storage.lookups, 1U);
     XCTAssertEqualObjects(storage.openedPaths, (@[@"/tmp/a.txt", @"/tmp/b.rtf"]));
 }
 - (void)testOpenURLsBeforeLaunchAreKeptForLaunch {
-    RoutingController *controller = [[[RoutingController alloc] initWithStorage:nil] autorelease];
+    RoutingController *controller = [[RoutingController alloc] initWithStorage:nil];
     NSURL *link = [NSURL URLWithString:@"nv://find/title"];
     [controller application:NSApp openURLs:@[[NSURL fileURLWithPath:@"/tmp/a.txt"]]];
     [controller application:NSApp openURLs:@[link, [NSURL fileURLWithPath:@"/tmp/b.txt"]]];

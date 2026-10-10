@@ -96,7 +96,7 @@
     BrokenMD5Init(&context);
     BrokenMD5Update(&context, input, sizeof(input) - 1);
     BrokenMD5Final(digest, &context);
-    NSString *expected = [[[NSString alloc] initWithData:[self fixture:@"broken-md5.txt"] encoding:NSUTF8StringEncoding] autorelease];
+    NSString *expected = [[NSString alloc] initWithData:[self fixture:@"broken-md5.txt"] encoding:NSUTF8StringEncoding];
     XCTAssertEqualObjects([self hex:[NSData dataWithBytes:digest length:sizeof(digest)]], expected);
 }
 @end

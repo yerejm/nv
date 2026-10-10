@@ -8,7 +8,7 @@
 @implementation PreviewTruncationTests
 
 - (NSAttributedString *)body:(NSString *)unit repeated:(NSUInteger)count {
-    return [[[NSAttributedString alloc] initWithString:[@"" stringByPaddingToLength:unit.length * count withString:unit startingAtIndex:0]] autorelease];
+    return [[NSAttributedString alloc] initWithString:[@"" stringByPaddingToLength:unit.length * count withString:unit startingAtIndex:0]];
 }
 
 - (CGFloat)widthOf:(NSString *)string {

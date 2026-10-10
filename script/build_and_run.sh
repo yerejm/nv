@@ -44,13 +44,13 @@ RUN_INCLUDE_FLAGS=()
 while IFS= read -r RUN_INCLUDE_DIRECTORY; do
     RUN_INCLUDE_FLAGS+=(-I "$RUN_INCLUDE_DIRECTORY")
 done < <(/usr/bin/python3 "$RUN_ROOT/Tests/Tools/project_layout.py")
-/usr/bin/xcrun clang -arch arm64 -mmacosx-version-min=15.0 -dynamiclib -undefined dynamic_lookup \
+/usr/bin/xcrun clang -arch arm64 -mmacosx-version-min=15.0 -fobjc-arc -dynamiclib -undefined dynamic_lookup \
     "${RUN_INCLUDE_FLAGS[@]}" \
     "$RUN_ROOT/Tests/Tools/IsolatedLaunch.m" "$RUN_ROOT/Tests/Support/AcceptanceEditorSession.m" \
     -framework Cocoa -framework Carbon -o "$RUN_LIBRARY"
 RUN_ENV=(--env "DYLD_INSERT_LIBRARIES=$RUN_LIBRARY" --env "NV_ISOLATED_ROOT=$RUN_DATA" --env "TMPDIR=$RUN_DATA/tmp/")
 if [[ "$RUN_MODE" == --verify ]]; then
-    /usr/bin/xcrun clang -arch arm64 -mmacosx-version-min=15.0 "${RUN_INCLUDE_FLAGS[@]}" \
+    /usr/bin/xcrun clang -arch arm64 -mmacosx-version-min=15.0 -fobjc-arc "${RUN_INCLUDE_FLAGS[@]}" \
         "$RUN_ROOT/Tests/Tools/AcceptanceEditor.m" "$RUN_ROOT/Tests/Support/AcceptanceEditorSession.m" \
         -framework Cocoa -o "$RUN_EDITOR_HELPER"
     cleanup_acceptance() {

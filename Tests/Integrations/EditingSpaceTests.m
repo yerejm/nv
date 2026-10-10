@@ -9,13 +9,13 @@
 @end
 @implementation EditingSpaceTests
 - (void)setUp {
-    root = [[NSTemporaryDirectory() stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]] retain];
+    root = [NSTemporaryDirectory() stringByAppendingPathComponent:[[NSUUID UUID] UUIDString]];
     [[NSFileManager defaultManager] createDirectoryAtPath:root withIntermediateDirectories:YES attributes:nil error:NULL];
 }
 - (void)tearDown {
     [TemporaryFileCachePreparer removeStaleEditingSpacesInDirectory:root];
     [[NSFileManager defaultManager] removeItemAtPath:root error:NULL];
-    [root release];
+    root = nil;
 }
 - (NSString *)preparedPathOf:(TemporaryFileCachePreparer *)preparer {
     __block NSString *prepared = nil;
@@ -25,7 +25,7 @@
         [done fulfill];
     }];
     [self waitForExpectations:@[done] timeout:20];
-    return [prepared autorelease];
+    return prepared;
 }
 static BOOL IsHFSMountAt(NSString *path) {
     struct statfs volume;
@@ -38,7 +38,7 @@ static mode_t PermissionsOf(NSString *path) {
     return stat(path.fileSystemRepresentation, &info) == 0 ? info.st_mode & 0777 : 0;
 }
 - (void)testProtectedSpaceIsMountedOnlyWhenNeededAndDetachedOnRelease {
-    TemporaryFileCachePreparer *preparer = [[[TemporaryFileCachePreparer alloc] initWithDirectory:root protectsContents:YES] autorelease];
+    TemporaryFileCachePreparer *preparer = [[TemporaryFileCachePreparer alloc] initWithDirectory:root protectsContents:YES];
     NSString *expected = [root stringByAppendingPathComponent:@"NVProtectedEditingSpace"];
     XCTAssertNil(preparer.preparedCachePath);
     XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:expected]);
@@ -56,7 +56,7 @@ static mode_t PermissionsOf(NSString *path) {
     XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:path]);
 }
 - (void)testReleaseDuringPreparationAbandonsTheSpace {
-    TemporaryFileCachePreparer *preparer = [[[TemporaryFileCachePreparer alloc] initWithDirectory:root protectsContents:YES] autorelease];
+    TemporaryFileCachePreparer *preparer = [[TemporaryFileCachePreparer alloc] initWithDirectory:root protectsContents:YES];
     __block BOOL completed = NO;
     [preparer prepareEditingSpace:^(NSString *path) { completed = YES; }];
     XCTAssertTrue(preparer.isPreparing);
@@ -69,9 +69,9 @@ static mode_t PermissionsOf(NSString *path) {
     XCTAssertFalse(IsHFSMountAt([root stringByAppendingPathComponent:@"NVProtectedEditingSpace"]));
 }
 - (void)testSpacesLeftByACrashAreRemoved {
-    TemporaryFileCachePreparer *crashed = [[[TemporaryFileCachePreparer alloc] initWithDirectory:root protectsContents:YES] autorelease];
+    TemporaryFileCachePreparer *crashed = [[TemporaryFileCachePreparer alloc] initWithDirectory:root protectsContents:YES];
     NSString *protectedPath = [self preparedPathOf:crashed];
-    TemporaryFileCachePreparer *plain = [[[TemporaryFileCachePreparer alloc] initWithDirectory:root protectsContents:NO] autorelease];
+    TemporaryFileCachePreparer *plain = [[TemporaryFileCachePreparer alloc] initWithDirectory:root protectsContents:NO];
     NSString *plainPath = [self preparedPathOf:plain];
     XCTAssertTrue([@"left behind" writeToFile:[plainPath stringByAppendingPathComponent:@"note.txt"] atomically:NO encoding:NSUTF8StringEncoding error:NULL]);
     [TemporaryFileCachePreparer removeStaleEditingSpacesInDirectory:root];
@@ -80,7 +80,7 @@ static mode_t PermissionsOf(NSString *path) {
     XCTAssertFalse([[NSFileManager defaultManager] fileExistsAtPath:plainPath]);
 }
 - (void)testPlainSpaceIsPrivateAndRemovedOnRelease {
-    TemporaryFileCachePreparer *preparer = [[[TemporaryFileCachePreparer alloc] initWithDirectory:root protectsContents:NO] autorelease];
+    TemporaryFileCachePreparer *preparer = [[TemporaryFileCachePreparer alloc] initWithDirectory:root protectsContents:NO];
     NSString *path = [self preparedPathOf:preparer];
     XCTAssertEqualObjects(path, [root stringByAppendingPathComponent:@"NVPlainTextEditingSpace"]);
     XCTAssertFalse(IsHFSMountAt(path));

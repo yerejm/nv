@@ -39,10 +39,9 @@
 @end
 
 @interface AcceptanceExportDestination : NSObject
-@property(nonatomic, retain) NSURL *URL;
+@property(nonatomic, strong) NSURL *URL;
 @end
 @implementation AcceptanceExportDestination
-- (void)dealloc { [_URL release]; [super dealloc]; }
 @end
 
 @interface AcceptanceStatusMenuObserver : NSObject <NSMenuDelegate>
@@ -338,14 +337,12 @@ static void SnapshotWindow(NSWindow *window, NSString *name) {
             [(id)NSClassFromString(@"SCScreenshotManager") captureImageWithFilter:filter configuration:configuration completionHandler:^(CGImageRef image, NSError *captureError) {
                 if (!image) NSLog(@"NV acceptance: %@ capture failed: %@", name, captureError);
                 if (image) {
-                    NSBitmapImageRep *bitmap = [[[NSBitmapImageRep alloc] initWithCGImage:image] autorelease];
+                    NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithCGImage:image];
                     [[bitmap representationUsingType:NSBitmapImageFileTypePNG properties:@{}]
                         writeToFile:[acceptanceRoot stringByAppendingPathComponent:name] atomically:YES];
                 }
                 dispatch_async(dispatch_get_main_queue(), ^{ finished = YES; });
             }];
-            [filter release];
-            [configuration release];
         });
     }];
     NSDate *limit = [NSDate dateWithTimeIntervalSinceNow:3];
@@ -399,7 +396,6 @@ static void CheckEditingCache(BOOL encrypted) {
     Check(@"temporary editing cache is isolated", !preparer.protectsContents && [cache hasPrefix:[acceptanceRoot stringByAppendingPathComponent:@"tmp/"]]);
     [preparer releaseEditingSpaceWaiting:YES];
     Check(@"temporary editing cache is removed when released", cache && ![[NSFileManager defaultManager] fileExistsAtPath:cache]);
-    [cache release];
 }
 
 static void DeliverODBEvent(OSType eventID, NSString *path) {
@@ -414,7 +410,7 @@ static void DeliverODBEvent(OSType eventID, NSString *path) {
 //an ODB editor is stood in for by capturing the open request and answering with the editor suite's events
 static void CheckProtectedExternalEdit(NoteObject *note) {
     NSURL *editorURL = [[NSWorkspace sharedWorkspace] URLForApplicationWithBundleIdentifier:@"com.apple.TextEdit"];
-    ExternalEditor *editor = [[[NSClassFromString(@"ExternalEditor") alloc] initWithBundleID:@"com.barebones.bbedit" resolvedURL:editorURL] autorelease];
+    ExternalEditor *editor = [[NSClassFromString(@"ExternalEditor") alloc] initWithBundleID:@"com.barebones.bbedit" resolvedURL:editorURL];
     SEL selector = @selector(openApplicationAtURL:configuration:completionHandler:);
     Method method = class_getInstanceMethod([NSWorkspace class], selector);
     IMP original = method_getImplementation(method);
@@ -422,7 +418,7 @@ static void CheckProtectedExternalEdit(NoteObject *note) {
     IMP captured = imp_implementationWithBlock(^void(NSWorkspace *target, NSURL *applicationURL, NSWorkspaceOpenConfiguration *configuration,
                                                      void (^completion)(NSRunningApplication *, NSError *)) {
         NSAppleEventDescriptor *file = [[configuration.appleEvent paramDescriptorForKeyword:keyDirectObject] coerceToDescriptorType:typeFileURL];
-        editedPath = [[[NSURL URLWithString:[[[NSString alloc] initWithData:file.data encoding:NSUTF8StringEncoding] autorelease]] path] copy];
+        editedPath = [[[NSURL URLWithString:[[NSString alloc] initWithData:file.data encoding:NSUTF8StringEncoding]] path] copy];
     });
     method_setImplementation(method, captured);
     NSString *protectedSpace = [acceptanceRoot stringByAppendingPathComponent:@"tmp/NVProtectedEditingSpace"];
@@ -450,7 +446,6 @@ static void CheckProtectedExternalEdit(NoteObject *note) {
     } @finally {
         method_setImplementation(method, original);
         imp_removeBlock(captured);
-        [editedPath release];
     }
 }
 
@@ -492,8 +487,8 @@ static void RunReopenAcceptance(void) {
 static void CheckExternalEditor(NoteObject *note) {
     NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
     NSURL *editorURL = [workspace URLForApplicationWithBundleIdentifier:@"com.apple.TextEdit"];
-    ExternalEditor *editor = [[[NSClassFromString(@"ExternalEditor") alloc] initWithBundleID:@"com.apple.TextEdit" resolvedURL:editorURL] autorelease];
-    NVAcceptanceEditorSession *session = [[[NVAcceptanceEditorSession alloc] initWithDirectory:acceptanceRoot] autorelease];
+    ExternalEditor *editor = [[NSClassFromString(@"ExternalEditor") alloc] initWithBundleID:@"com.apple.TextEdit" resolvedURL:editorURL];
+    NVAcceptanceEditorSession *session = [[NVAcceptanceEditorSession alloc] initWithDirectory:acceptanceRoot];
     SEL selector = @selector(openURLs:withApplicationAtURL:configuration:completionHandler:);
     Method method = class_getInstanceMethod([NSWorkspace class], selector);
     IMP original = method_getImplementation(method);
@@ -523,7 +518,7 @@ static void CheckExternalEditor(NoteObject *note) {
 }
 
 static BOOL WindowSnapshotShowsControlText(NSView *control, NSString *filename) {
-    NSBitmapImageRep *bitmap = [[[NSBitmapImageRep alloc] initWithData:[NSData dataWithContentsOfFile:[acceptanceRoot stringByAppendingPathComponent:filename]]] autorelease];
+    NSBitmapImageRep *bitmap = [[NSBitmapImageRep alloc] initWithData:[NSData dataWithContentsOfFile:[acceptanceRoot stringByAppendingPathComponent:filename]]];
     if (!bitmap || !control.window) return NO;
     NSRect frame = NSInsetRect([control convertRect:control.bounds toView:nil], 6, 4);
     CGFloat scale = bitmap.pixelsWide / NSWidth(control.window.frame);
@@ -538,7 +533,7 @@ static BOOL WindowSnapshotShowsControlText(NSView *control, NSString *filename) 
 }
 
 static BOOL ShortcutIsFree(NSInteger keyCode, NSUInteger modifiers) {
-    NVHotKey *probe = [[[NVHotKey alloc] initWithTarget:nil action:NULL] autorelease];
+    NVHotKey *probe = [[NVHotKey alloc] initWithTarget:nil action:NULL];
     BOOL free = [probe registerKeyCode:keyCode carbonModifiers:modifiers];
     [probe unregister];
     return free;
@@ -587,7 +582,7 @@ static void CheckShortcutRecorder(PrefsWindowController *preferences, NSWindow *
     Check(@"a recorded shortcut is saved, registered and shown in ⌃⌥⇧⌘ order", !recorder.recording && prefs.appActivationKeyCode == kVK_ANSI_N &&
           prefs.appActivationModifiers == (chord | shiftKey) && !ShortcutIsFree(kVK_ANSI_N, chord | shiftKey) && ShortcutIsFree(kVK_F19, chord) &&
           [recorder.accessibilityLabel hasPrefix:@"⌃⌥⇧⌘"]);
-    NVHotKey *competitor = [[[NVHotKey alloc] initWithTarget:nil action:NULL] autorelease];
+    NVHotKey *competitor = [[NVHotKey alloc] initWithTarget:nil action:NULL];
     [competitor registerKeyCode:kVK_F18 carbonModifiers:chord];
     ClickView(recorder, NSMakePoint(NSMidX(recorder.bounds) - 20, NSMidY(recorder.bounds)));
     TypeKey(prefsWindow, kVK_F18, NSEventModifierFlagCommand | NSEventModifierFlagOption | NSEventModifierFlagControl | NSEventModifierFlagFunction);
@@ -618,7 +613,7 @@ static void CheckShortcutRecorder(PrefsWindowController *preferences, NSWindow *
 
 //the advanced options hang below the sheet until disclosed, when the sheet grows to show them
 static void CheckPassphraseDisclosure(NotationController *notation, NSWindow *parent) {
-    PassphrasePicker *picker = [[[PassphrasePicker alloc] initWithNotationPrefs:notation.notationPrefs] autorelease];
+    PassphrasePicker *picker = [[PassphrasePicker alloc] initWithNotationPrefs:notation.notationPrefs];
     [picker showAroundWindow:parent resultDelegate:nil];
     Pump(0.5);
     NSWindow *sheet = parent.attachedSheet;
@@ -648,7 +643,9 @@ static void CompleteDesktopAcceptance(AppController *app, NotationController *no
         WaitForActivation(window);
         Pump(0.2);
         Check(@"activation restores search focus", window.visible && window.firstResponder != editor);
-        NVHotKey *hotkey = [[[NVHotKey alloc] initWithTarget:[[[NVHotkeyRecorder alloc] init] autorelease] action:@selector(fired:)] autorelease];
+        //hot keys do not keep their targets alive
+        NVHotkeyRecorder *recorder NS_VALID_UNTIL_END_OF_SCOPE = [[NVHotkeyRecorder alloc] init];
+        NVHotKey *hotkey = [[NVHotKey alloc] initWithTarget:recorder action:@selector(fired:)];
         BOOL registered = [hotkey registerKeyCode:kVK_F20 carbonModifiers:cmdKey | optionKey | controlKey];
         EventHotKeyID identity = { 'NVhk', [[hotkey valueForKey:@"identifier"] unsignedIntValue] };
         EventRef event = NULL;
@@ -821,13 +818,13 @@ static void BeginFullScreenAcceptance(AppController *app, NotationController *no
     __block id exitObserver = nil;
     NSNotificationCenter *center = [NSNotificationCenter defaultCenter];
     enterObserver = [center addObserverForName:NSWindowDidEnterFullScreenNotification object:window queue:nil usingBlock:^(NSNotification *notification) {
-        [center removeObserver:enterObserver];
+        [[NSNotificationCenter defaultCenter] removeObserver:enterObserver];
         enterObserver = nil;
         Check(@"full screen enters a Space", (window.styleMask & NSWindowStyleMaskFullScreen) != 0 && window.isOnActiveSpace);
         Check(@"full screen uses widescreen layout and preserves search visibility", [[GlobalPrefs defaultPrefs] horizontalLayout] && window.toolbar.visible == originalSearchVisible);
         Check(@"full screen applies maximum text width", editor.textContainer.size.width <= [[GlobalPrefs defaultPrefs] maxNoteBodyWidth] + 10);
         exitObserver = [center addObserverForName:NSWindowDidExitFullScreenNotification object:window queue:nil usingBlock:^(NSNotification *note) {
-            [center removeObserver:exitObserver];
+            [[NSNotificationCenter defaultCenter] removeObserver:exitObserver];
             exitObserver = nil;
             finished = YES;
             Check(@"full screen exits", (window.styleMask & NSWindowStyleMaskFullScreen) == 0);
@@ -1008,7 +1005,7 @@ static void RunAcceptance(void) {
         [split mouseDown:DividerDoubleClick(split)];
         Check(@"divider double-click collapses notes list", ListPaneCollapsed(split) && !window.toolbar.visible);
         GlobalPrefs *displayPrefs = [GlobalPrefs defaultPrefs];
-        NSString *beforeWidthChange = [[editor.string copy] autorelease];
+        NSString *beforeWidthChange = [editor.string copy];
         [displayPrefs setMaxNoteBodyWidth:320 sender:nil];
         [displayPrefs setManagesTextWidthInWindow:YES sender:nil];
         Check(@"editor text width is capped with centered margins", editor.textContainerInset.width >= 8 && editor.textContainer.size.width <= 330);
@@ -1076,7 +1073,7 @@ static void RunAcceptance(void) {
         Pump(0.1);
         Check(@"menu bar action restores the note window and search focus", NSApp.isActive && !NSApp.isHidden && window.isKeyWindow && window.firstResponder == [[app valueForKey:@"field"] currentEditor]);
         NSMenu *menuBarMenu = [app valueForKey:@"statusMenu"];
-        AcceptanceStatusMenuObserver *menuObserver = [[[AcceptanceStatusMenuObserver alloc] init] autorelease];
+        AcceptanceStatusMenuObserver *menuObserver = [[AcceptanceStatusMenuObserver alloc] init];
         menuBarMenu.delegate = menuObserver;
         dispatch_after(dispatch_time(DISPATCH_TIME_NOW, NSEC_PER_SEC / 3), dispatch_get_main_queue(), ^{
             [menuBarMenu cancelTrackingWithoutAnimation];
@@ -1093,7 +1090,7 @@ static void RunAcceptance(void) {
         while (NSApp.activationPolicy != NSApplicationActivationPolicyRegular && policyLimit.timeIntervalSinceNow > 0) Pump(0.05);
         Check(@"removing the last menu bar entry restores the Dock", NSApp.activationPolicy == NSApplicationActivationPolicyRegular && displayPrefs.showDockIcon && ![app valueForKey:@"statusItem"]);
         [app revealNote:note options:NVEditNoteToReveal | NVOrderFrontWindow];
-        NSString *original = [[editor.string copy] autorelease];
+        NSString *original = [editor.string copy];
         [displayPrefs setUseAutoPairing:YES sender:nil];
         [editor setSelectedRange:NSMakeRange(editor.string.length, 0)];
         NSUInteger pairStart = editor.string.length;
@@ -1130,7 +1127,7 @@ static void RunAcceptance(void) {
         [app flagsChanged:releaseEvent];
         Check(@"releasing Option hides temporary word count", [[app valueForKey:@"wordCountLabel"] isHidden]);
         for (NSString *task in @[@"Task @done(2026-10-07)", @"Task @done - 2026-10-07"]) {
-            NSMutableAttributedString *doneText = [[[NSMutableAttributedString alloc] initWithString:task] autorelease];
+            NSMutableAttributedString *doneText = [[NSMutableAttributedString alloc] initWithString:task];
             [doneText addStrikethroughNearDoneTagsForRange:NSMakeRange(0, doneText.length)];
             Check(@"dated TaskPaper completion marks strike task text", [[doneText attribute:NSStrikethroughStyleAttributeName atIndex:0 effectiveRange:NULL] integerValue] == NSUnderlineStyleSingle);
             Check(@"completion marker remains readable", ![doneText attribute:NSStrikethroughStyleAttributeName atIndex:[task rangeOfString:@"@done"].location effectiveRange:NULL]);
@@ -1145,7 +1142,7 @@ static void RunAcceptance(void) {
         [editor insertText:@"\nPersisted acceptance edit" replacementRange:editor.selectedRange];
         Pump(0.2);
         Check(@"database flush", [notation flushAllNoteChanges]);
-        NSMutableAttributedString *links = [[[NSMutableAttributedString alloc] initWithString:@"[[Project Alpha]] https://example.com/a%2Fb"] autorelease];
+        NSMutableAttributedString *links = [[NSMutableAttributedString alloc] initWithString:@"[[Project Alpha]] https://example.com/a%2Fb"];
         [links addLinkAttributesForRange:NSMakeRange(0, links.length)];
         Check(@"wiki link", [[links attribute:NSLinkAttributeName atIndex:2 effectiveRange:NULL] isKindOfClass:[NSURL class]]);
         Check(@"encoded URL boundary", [[[links attribute:NSLinkAttributeName atIndex:20 effectiveRange:NULL] absoluteString] containsString:@"a%2Fb"]);
@@ -1196,9 +1193,9 @@ static void RunAcceptance(void) {
             NSDate *cancelLimit = [NSDate dateWithTimeIntervalSinceNow:3];
             while (window.attachedSheet && cancelLimit.timeIntervalSinceNow > 0) Pump(0.1);
             Check(@"export panel cancellation completes", !window.attachedSheet && ![exporter valueForKey:@"exportPanel"]);
-            AcceptanceExportDestination *destination = [[[AcceptanceExportDestination alloc] init] autorelease];
+            AcceptanceExportDestination *destination = [[AcceptanceExportDestination alloc] init];
             destination.URL = [NSURL fileURLWithPath:[acceptanceRoot stringByAppendingPathComponent:exportName]];
-            [exporter exportPanelDidEnd:(id)destination returnCode:NSModalResponseOK contextInfo:(void *)[@[note] retain]];
+            [exporter exportPanelDidEnd:(id)destination returnCode:NSModalResponseOK contextInfo:(__bridge_retained void *)@[note]];
             NSString *exportPath = [acceptanceRoot stringByAppendingPathComponent:exportName];
             NSDate *exportLimit = [NSDate dateWithTimeIntervalSinceNow:4];
             while (![[NSFileManager defaultManager] fileExistsAtPath:exportPath] && exportLimit.timeIntervalSinceNow > 0) Pump(0.1);
@@ -1232,8 +1229,8 @@ static void RunAcceptance(void) {
         NSMenuItem *findCommand = FindMenuCommand(NSApp.mainMenu);
         Check(@"Find menu targets the note editor from search focus", findCommand && findCommand.target == editor);
         NSPasteboard *findPasteboard = [NSPasteboard pasteboardWithName:NSPasteboardNameFind];
-        NSString *savedFindString = [[[findPasteboard stringForType:NSPasteboardTypeString] copy] autorelease];
-        NSMenuItem *nextMatch = [[[NSMenuItem alloc] initWithTitle:@"Next" action:@selector(performFindPanelAction:) keyEquivalent:@""] autorelease];
+        NSString *savedFindString = [[findPasteboard stringForType:NSPasteboardTypeString] copy];
+        NSMenuItem *nextMatch = [[NSMenuItem alloc] initWithTitle:@"Next" action:@selector(performFindPanelAction:) keyEquivalent:@""];
         nextMatch.tag = NSTextFinderActionNextMatch;
         [app searchForString:@"Retained"];
         [[app valueForKey:@"notesTableView"] deselectAll:nil];
@@ -1267,7 +1264,7 @@ static void RunAcceptance(void) {
         Pump(0.3);
         Check(@"Find bar survives switching notes", editor.enclosingScrollView.isFindBarVisible && editor.enclosingScrollView.findBarView == findBar);
         [app revealNote:note options:NVEditNoteToReveal];
-        NSMenuItem *useSelection = [[[NSMenuItem alloc] initWithTitle:@"Use Selection" action:@selector(performFindPanelAction:) keyEquivalent:@""] autorelease];
+        NSMenuItem *useSelection = [[NSMenuItem alloc] initWithTitle:@"Use Selection" action:@selector(performFindPanelAction:) keyEquivalent:@""];
         useSelection.tag = NSTextFinderActionSetSearchString;
         [editor setSelectedRange:[editor.string rangeOfString:@"Retained" options:NSCaseInsensitiveSearch]];
         [editor performFindPanelAction:useSelection];
@@ -1299,7 +1296,7 @@ static void RunAcceptance(void) {
         Check(@"activation finishes with the search field focused", window.firstResponder == [[app valueForKey:@"field"] currentEditor]);
         [app revealNote:note options:NVEditNoteToReveal];
         NSString *filename = note.noteFilePath;
-        NSTask *externalWriter = [[[NSTask alloc] init] autorelease];
+        NSTask *externalWriter = [[NSTask alloc] init];
         externalWriter.launchPath = @"/usr/bin/python3";
         externalWriter.arguments = @[@"-c", @"import pathlib,sys; pathlib.Path(sys.argv[1]).write_text('Automatic file monitoring acceptance\\n')", filename];
         [externalWriter launch];

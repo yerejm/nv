@@ -26,14 +26,14 @@ NSData *NVVolumeUUIDForName(NSData *name);
 }
 - (void)testDecryptsFixedLegacyCiphertext {
     for (NSDictionary *vector in [self aesVectors]) {
-        NSMutableData *ciphertext = [[[self bytesFromHex:vector[@"ciphertext"]] mutableCopy] autorelease];
+        NSMutableData *ciphertext = [[self bytesFromHex:vector[@"ciphertext"]] mutableCopy];
         XCTAssertTrue([ciphertext decryptAESDataWithKey:[self bytesFromHex:vector[@"key"]] iv:[self bytesFromHex:vector[@"iv"]]]);
         XCTAssertEqualObjects(ciphertext, [self bytesFromHex:vector[@"plaintext"]]);
     }
 }
 - (void)testEncryptionMatchesLegacyCiphertext {
     for (NSDictionary *vector in [self aesVectors]) {
-        NSMutableData *plaintext = [[[self bytesFromHex:vector[@"plaintext"]] mutableCopy] autorelease];
+        NSMutableData *plaintext = [[self bytesFromHex:vector[@"plaintext"]] mutableCopy];
         XCTAssertTrue([plaintext encryptAESDataWithKey:[self bytesFromHex:vector[@"key"]] iv:[self bytesFromHex:vector[@"iv"]]]);
         XCTAssertEqualObjects(plaintext, [self bytesFromHex:vector[@"ciphertext"]]);
     }
@@ -41,7 +41,7 @@ NSData *NVVolumeUUIDForName(NSData *name);
 - (void)testInvalidPaddingAndLengthsRejectWithoutChangingData {
     NSDictionary *vector = [self aesVectors][1];
     NSData *original = [self bytesFromHex:@"5a6e045708fb7196f02e553d02c3a692"];
-    NSMutableData *ciphertext = [[original mutableCopy] autorelease];
+    NSMutableData *ciphertext = [original mutableCopy];
     NSData *iv = [self bytesFromHex:vector[@"iv"]];
     XCTAssertFalse([ciphertext decryptAESDataWithKey:[self bytesFromHex:vector[@"key"]] iv:iv]);
     XCTAssertEqualObjects(ciphertext, original);

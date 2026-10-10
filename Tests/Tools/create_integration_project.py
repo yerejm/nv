@@ -1,7 +1,7 @@
 import pathlib
 import plistlib
 
-from project_layout import application_project, automatic_reference_counting, compiler_flags, file_groups, header_search_paths
+from project_layout import application_project, automatic_reference_counting, file_groups, header_search_paths
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 original = application_project()
@@ -47,10 +47,7 @@ refs = refs[:len(sources)]
 product = add(dict(isa='PBXFileReference', path='NativeIntegrationTests.xctest',
                    sourceTree='BUILT_PRODUCTS_DIR', explicitFileType='wrapper.cfbundle'))
 children.append(product)
-flags = compiler_flags()
-builds = [add(dict(isa='PBXBuildFile', fileRef=ref, **(
-    dict(settings=dict(COMPILER_FLAGS=flags[source.name])) if source.name in flags else {})))
-    for ref, source in zip(refs, sources)]
+builds = [add(dict(isa='PBXBuildFile', fileRef=ref)) for ref in refs]
 sourcephase = add(dict(isa='PBXSourcesBuildPhase', buildActionMask=2147483647,
                        files=builds, runOnlyForDeploymentPostprocessing=0))
 frameworkphase = add(dict(isa='PBXFrameworksBuildPhase', buildActionMask=2147483647,

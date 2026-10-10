@@ -41,8 +41,8 @@ static NSData *SnapshotPNG(NSView *root) {
     [root layoutSubtreeIfNeeded];
     NSBitmapImageRep *bitmap = [root bitmapImageRepForCachingDisplayInRect:[root bounds]];
     [root cacheDisplayInRect:[root bounds] toBitmapImageRep:bitmap];
-    NSBitmapImageRep *opaque = [[[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL pixelsWide:[bitmap pixelsWide] pixelsHigh:[bitmap pixelsHigh]
-        bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:NSDeviceRGBColorSpace bytesPerRow:0 bitsPerPixel:0] autorelease];
+    NSBitmapImageRep *opaque = [[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL pixelsWide:[bitmap pixelsWide] pixelsHigh:[bitmap pixelsHigh]
+        bitsPerSample:8 samplesPerPixel:4 hasAlpha:YES isPlanar:NO colorSpaceName:NSDeviceRGBColorSpace bytesPerRow:0 bitsPerPixel:0];
     [NSGraphicsContext saveGraphicsState];
     [NSGraphicsContext setCurrentContext:[NSGraphicsContext graphicsContextWithBitmapImageRep:opaque]];
     NSRect pixels = NSMakeRect(0, 0, [bitmap pixelsWide], [bitmap pixelsHigh]);
@@ -87,7 +87,7 @@ static NSArray *LayoutNibNames(NSString *resources) {
         for (NSString *localization in @[@"en", @"de", @"fr", @"it", @"pt", @"zh_CN"]) {
             NSNib *nib = NVLocalizedNib(resources, localization, name, scratch);
             NSArray *objects = nil;
-            if (![nib instantiateWithOwner:[[[LayoutNibOwner alloc] init] autorelease] topLevelObjects:&objects]) {
+            if (![nib instantiateWithOwner:[[LayoutNibOwner alloc] init] topLevelObjects:&objects]) {
                 [problems addObject:[NSString stringWithFormat:@"%@ %@ did not load", localization, name]];
                 continue;
             }

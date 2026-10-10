@@ -34,13 +34,13 @@
 @implementation NativeResourceTests
 - (void)testAlertCompletionPreservesAlertResponseAndContext {
     [NSApplication sharedApplication];
-    CompletionAlert *alert = [[[CompletionAlert alloc] init] autorelease];
-    CompletionRecorder *recorder = [[[CompletionRecorder alloc] init] autorelease];
-    NSWindow *window = [[[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 100, 100) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO] autorelease];
-    NVBeginAlertSheet(alert, window, recorder, @selector(alertDidEnd:returnCode:contextInfo:), recorder);
+    CompletionAlert *alert = [[CompletionAlert alloc] init];
+    CompletionRecorder *recorder = [[CompletionRecorder alloc] init];
+    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 100, 100) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
+    NVBeginAlertSheet(alert, window, recorder, @selector(alertDidEnd:returnCode:contextInfo:), (__bridge void *)recorder);
     XCTAssertEqual(recorder.alert, alert);
     XCTAssertEqual(recorder.response, NSAlertSecondButtonReturn);
-    XCTAssertEqual(recorder.context, recorder);
+    XCTAssertEqual(recorder.context, (__bridge void *)recorder);
 }
 - (void)testLoadsAllLocalizedCompiledResources {
     [NSApplication sharedApplication];
@@ -51,9 +51,9 @@
     XCTAssertEqual(NVPathMakeReference((const UInt8 *)directory.fileSystemRepresentation, &reference, NULL), noErr);
     GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
     [prefs setAliasDataForDefaultDirectory:[NSData aliasDataForFSRef:&reference] sender:prefs];
-    [prefs setNotationPrefs:[[[NotationPrefs alloc] init] autorelease] sender:prefs];
+    [prefs setNotationPrefs:[[NotationPrefs alloc] init] sender:prefs];
     for (NSString *imageFile in [[NSFileManager defaultManager] contentsOfDirectoryAtPath:[root stringByAppendingPathComponent:@"Images"] error:NULL]) {
-        NSImage *image = [[[NSImage alloc] initWithContentsOfFile:[[root stringByAppendingPathComponent:@"Images"] stringByAppendingPathComponent:imageFile]] autorelease];
+        NSImage *image = [[NSImage alloc] initWithContentsOfFile:[[root stringByAppendingPathComponent:@"Images"] stringByAppendingPathComponent:imageFile]];
         if (image) [image setName:[imageFile stringByDeletingPathExtension]];
     }
     for (NSString *localization in @[@"en", @"de", @"it", @"fr", @"pt", @"zh_CN"]) {
@@ -61,12 +61,12 @@
             NSMutableDictionary *registry = [prefs valueForKey:@"selectorObservers"];
             NSMutableDictionary *savedObservers = [NSMutableDictionary dictionary];
             for (NSString *selector in registry)
-                savedObservers[selector] = [[registry[selector] mutableCopy] autorelease];
+                savedObservers[selector] = [registry[selector] mutableCopy];
             NSNib *nib = NVLocalizedNib(root, localization, name, directory);
             XCTAssertNotNil(nib, @"%@ %@", localization, name);
             id owner = [name isEqualToString:@"MainMenu"] ? (id)NSApp :
-                [name isEqualToString:@"Preferences"] ? (id)[[[PrefsWindowController alloc] init] autorelease] :
-                (id)[[[NotationPrefsViewController alloc] init] autorelease];
+                [name isEqualToString:@"Preferences"] ? (id)[[PrefsWindowController alloc] init] :
+                (id)[[NotationPrefsViewController alloc] init];
             NSArray *objects = nil;
             XCTAssertNoThrow(XCTAssertTrue([nib instantiateWithOwner:owner topLevelObjects:&objects], @"%@ %@", localization, name));
             XCTAssertGreaterThan(objects.count, 0U);
@@ -89,7 +89,7 @@
             }
             NSApp.delegate = nil;
             [registry setDictionary:savedObservers];
-            for (NSWindow *window in [[NSApp.windows copy] autorelease]) {
+            for (NSWindow *window in [NSApp.windows copy]) {
                 window.delegate = nil;
                 [window setReleasedWhenClosed:NO];
                 [window close];

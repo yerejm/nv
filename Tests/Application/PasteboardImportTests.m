@@ -20,7 +20,7 @@
 @end
 @implementation PasteboardController
 - (id)initWithStorage:(PasteboardStorage *)storage {
-    if ((self = [super init])) notationController = (id)[storage retain];
+    if ((self = [super init])) notationController = (id)storage;
     return self;
 }
 @end
@@ -35,14 +35,14 @@
     return pasteboard;
 }
 - (void)testDroppedFileURLsAreImported {
-    PasteboardStorage *storage = [[[PasteboardStorage alloc] init] autorelease];
-    PasteboardController *controller = [[[PasteboardController alloc] initWithStorage:storage] autorelease];
+    PasteboardStorage *storage = [[PasteboardStorage alloc] init];
+    PasteboardController *controller = [[PasteboardController alloc] initWithStorage:storage];
     NSPasteboard *pasteboard = [self pasteboardWithObjects:@[[NSURL fileURLWithPath:@"/tmp/a b.txt"], [NSURL fileURLWithPath:@"/tmp/c.rtf"]]];
     XCTAssertTrue([controller addNotesFromPasteboard:pasteboard]);
     XCTAssertEqualObjects(storage.openedPaths, (@[@"/tmp/a b.txt", @"/tmp/c.rtf"]));
 }
 - (void)testFileURLsPasteAsLinks {
-    PasteboardController *controller = [[[PasteboardController alloc] initWithStorage:[[[PasteboardStorage alloc] init] autorelease]] autorelease];
+    PasteboardController *controller = [[PasteboardController alloc] initWithStorage:[[PasteboardStorage alloc] init]];
     NSPasteboard *pasteboard = [self pasteboardWithObjects:@[[NSURL fileURLWithPath:@"/tmp/a b.txt"], [NSURL fileURLWithPath:@"/tmp/c.rtf"]]];
     XCTAssertEqualObjects([controller stringWithNoteURLsOnPasteboard:pasteboard], @"<file:///tmp/a%20b.txt>\n<file:///tmp/c.rtf>");
 }

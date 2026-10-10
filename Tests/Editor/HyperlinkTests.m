@@ -18,13 +18,13 @@
     NSArray *cases = [NSJSONSerialization JSONObjectWithData:[NSData dataWithContentsOfFile:fixture] options:0 error:NULL];
     XCTAssertEqual(cases.count, 77U);
     for (NSDictionary *entry in cases) {
-        NSMutableAttributedString *text = [[[NSMutableAttributedString alloc] initWithString:entry[@"input"]] autorelease];
+        NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:entry[@"input"]];
         [text addLinkAttributesForRange:NSMakeRange(0, text.length)];
         XCTAssertEqualObjects([self links:text], entry[@"matches"], @"case %@", entry[@"id"]);
     }
 }
 - (void)testIncrementalUTF16RangeAndUntouchedLine {
-    NSMutableAttributedString *text = [[[NSMutableAttributedString alloc] initWithString:@"😀 https://example.com\nsecond https://example.org"] autorelease];
+    NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:@"😀 https://example.com\nsecond https://example.org"];
     [text addLinkAttributesForRange:NSMakeRange(0, text.length)];
     NSURL *first = [text attribute:NSLinkAttributeName atIndex:3 effectiveRange:NULL];
     NSRange changed = [text.string rangeOfString:@"example.org"];
@@ -39,7 +39,7 @@
     XCTAssertEqualObjects(links[0][@"start"], @3);
 }
 - (void)testWikiPrecedenceAndEmptyWikiSafety {
-    NSMutableAttributedString *text = [[[NSMutableAttributedString alloc] initWithString:@"[[]] [[https://example.com]] [[Project Alpha]]"] autorelease];
+    NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:@"[[]] [[https://example.com]] [[Project Alpha]]"];
     [text addLinkAttributesForRange:NSMakeRange(0, text.length)];
     NSArray *links = [self links:text];
     XCTAssertEqual(links.count, 2U);
@@ -49,7 +49,7 @@
 - (void)testURLsStopAtUnbalancedSquareBrackets {
     for (NSArray *entry in @[@[@"https://example.com] after", @"https://example.com"], @[@"https://example.com/a]]b", @"https://example.com/a"],
                              @[@"https://[2001:db8::1]/path] after", @"https://[2001:db8::1]/path"]]) {
-        NSMutableAttributedString *text = [[[NSMutableAttributedString alloc] initWithString:entry[0]] autorelease];
+        NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:entry[0]];
         [text addLinkAttributesForRange:NSMakeRange(0, text.length)];
         NSArray *links = [self links:text];
         XCTAssertEqual(links.count, 1U, @"%@", entry[0]);
@@ -60,7 +60,7 @@
 - (void)testTrimmedBareDomainsRetainBrowserScheme {
     for (NSArray *entry in @[@[@"www.example.com/a]]next", @"www.example.com/a", @"http://www.example.com/a"],
                              @[@"example.com/a]]next", @"example.com/a", @"http://example.com/a"]]) {
-        NSMutableAttributedString *text = [[[NSMutableAttributedString alloc] initWithString:entry[0]] autorelease];
+        NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:entry[0]];
         [text addLinkAttributesForRange:NSMakeRange(0, text.length)];
         NSArray *links = [self links:text];
         XCTAssertEqual(links.count, 1U, @"%@", entry[0]);
@@ -70,7 +70,7 @@
 }
 - (void)testEncodedUUIDQueryRetainsIdentity {
     NSString *input = @"nv://find/Title/?NV=ABEiM0RVZneImaq7zN3u%2Fw%3D%3D";
-    NSMutableAttributedString *text = [[[NSMutableAttributedString alloc] initWithString:input] autorelease];
+    NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:input];
     [text addLinkAttributesForRange:NSMakeRange(0, text.length)];
     NSURL *url = [text attribute:NSLinkAttributeName atIndex:0 effectiveRange:NULL];
     NSString *encoded = [[url.query componentsSeparatedByString:@"NV="] lastObject];
@@ -81,7 +81,7 @@
 - (void)testLargeNoteDetection {
     NSMutableString *body = [NSMutableString string];
     for (NSUInteger index = 0; index < 4000; index++) [body appendString:@"ordinary prose https://example.com/path\n"];
-    NSMutableAttributedString *text = [[[NSMutableAttributedString alloc] initWithString:body] autorelease];
+    NSMutableAttributedString *text = [[NSMutableAttributedString alloc] initWithString:body];
     NSDate *start = [NSDate date];
     [text addLinkAttributesForRange:NSMakeRange(0, text.length)];
     XCTAssertEqual([self links:text].count, 4000U);

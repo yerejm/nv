@@ -26,7 +26,7 @@
 @implementation ShortcutRecorderTests
 
 - (TISInputSourceRef)copyLayout:(NSString *)identifier {
-    CFArrayRef sources = TISCreateInputSourceList((CFDictionaryRef)@{(id)kTISPropertyInputSourceID: identifier}, true);
+    CFArrayRef sources = TISCreateInputSourceList((__bridge CFDictionaryRef)@{(__bridge id)kTISPropertyInputSourceID: identifier}, true);
     TISInputSourceRef source = sources && CFArrayGetCount(sources) ? (TISInputSourceRef)CFRetain(CFArrayGetValueAtIndex(sources, 0)) : NULL;
     if (sources) CFRelease(sources);
     return source;
@@ -60,12 +60,12 @@
 
 - (void)testRecordingAsksTheDelegateAndHonoursItsAnswer {
     [NSApplication sharedApplication];
-    NSWindow *window = [[[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 300, 60) styleMask:NSWindowStyleMaskTitled
-                                                      backing:NSBackingStoreBuffered defer:NO] autorelease];
+    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 300, 60) styleMask:NSWindowStyleMaskTitled
+                                                      backing:NSBackingStoreBuffered defer:NO];
     [window setReleasedWhenClosed:NO];
-    NVShortcutRecorder *recorder = [[[NVShortcutRecorder alloc] initWithFrame:NSMakeRect(20, 20, 160, 22)] autorelease];
+    NVShortcutRecorder *recorder = [[NVShortcutRecorder alloc] initWithFrame:NSMakeRect(20, 20, 160, 22)];
     [window.contentView addSubview:recorder];
-    ShortcutRecorderDelegate *delegate = [[[ShortcutRecorderDelegate alloc] init] autorelease];
+    ShortcutRecorderDelegate *delegate = [[ShortcutRecorderDelegate alloc] init];
     recorder.delegate = delegate;
     XCTAssertEqual(recorder.keyCode, -1);
 

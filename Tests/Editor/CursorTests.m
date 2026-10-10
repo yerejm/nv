@@ -16,7 +16,7 @@
 @implementation CursorTests
 - (void)testDarkBackgroundKeepsSystemIBeam {
     [NSApplication sharedApplication];
-    CursorFixture *editor = [[[CursorFixture alloc] initWithFrame:NSMakeRect(0, 0, 200, 100)] autorelease];
+    CursorFixture *editor = [[CursorFixture alloc] initWithFrame:NSMakeRect(0, 0, 200, 100)];
     IMP original = method_getImplementation(class_getClassMethod([NSCursor class], @selector(IBeamCursor)));
     [editor setBackgroundColor:[NSColor blackColor]];
     [editor setInside:YES];
@@ -26,8 +26,8 @@
 }
 - (void)testCursorRectsCanRefreshAfterAppearanceAndVisibilityChanges {
     [NSApplication sharedApplication];
-    CursorFixture *editor = [[[CursorFixture alloc] initWithFrame:NSMakeRect(0, 0, 200, 100)] autorelease];
-    NSWindow *window = [[[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 200, 100) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO] autorelease];
+    CursorFixture *editor = [[CursorFixture alloc] initWithFrame:NSMakeRect(0, 0, 200, 100)];
+    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 200, 100) styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:NO];
     [window setReleasedWhenClosed:NO];
     [window setContentView:editor];
     [editor setBackgroundColor:[NSColor blackColor]];

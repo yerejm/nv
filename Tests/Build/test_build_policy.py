@@ -75,6 +75,41 @@ class BuildPolicyTests(unittest.TestCase):
                 self.assertEqual(set(settings) & obsolete, set())
                 self.assertNotEqual(settings.get('ENABLE_STRICT_OBJC_MSGSEND'), 'NO')
 
+    def test_sources_use_automatic_reference_counting(self):
+        def project(path):
+            return json.loads(subprocess.check_output(['/usr/bin/plutil', '-convert', 'json', '-o', '-', str(ROOT / path)]))
+        application = project('Notation.xcodeproj/project.pbxproj')
+        objects = application['objects']
+        root = objects[application['rootObject']]
+        for key in objects[root['buildConfigurationList']]['buildConfigurations']:
+            with self.subTest(configuration=objects[key]['name']):
+                self.assertEqual(objects[key]['buildSettings'].get('CLANG_ENABLE_OBJC_ARC'), 'YES')
+                self.assertEqual(objects[key]['buildSettings'].get('CLANG_ENABLE_OBJC_WEAK'), 'YES')
+        for item in objects.values():
+            if item.get('isa') == 'XCBuildConfiguration':
+                self.assertNotEqual(item['buildSettings'].get('CLANG_ENABLE_OBJC_ARC'), 'NO')
+            if item.get('isa') == 'PBXBuildFile':
+                self.assertNotIn('objc-arc', str(item.get('settings', {})))
+        for path in ['Tests/Compatibility.xcodeproj/project.pbxproj', 'Tests/NativeIntegration.xcodeproj/project.pbxproj']:
+            for item in project(path)['objects'].values():
+                if item.get('isa') == 'XCBuildConfiguration' and 'PRODUCT_NAME' in item['buildSettings']:
+                    with self.subTest(project=path, configuration=item['name']):
+                        self.assertEqual(item['buildSettings'].get('CLANG_ENABLE_OBJC_ARC'), 'YES')
+                        self.assertEqual(item['buildSettings'].get('CLANG_ENABLE_OBJC_WEAK'), 'YES')
+        # the legacy fixture tools build against the original manually managed sources
+        legacy = {'capture_legacy_databases.m', 'generate_legacy_fixtures.m'}
+        manual = re.compile(r'\s(retain|release|autorelease)\]|\[super dealloc\]|NSAutoreleasePool|retainCount')
+        for directory in ['Sources', 'Vendor', 'Tests']:
+            for source in (ROOT / directory).rglob('*.[mh]'):
+                if source.name not in legacy:
+                    with self.subTest(source=str(source.relative_to(ROOT))):
+                        self.assertIsNone(manual.search(source.read_text(errors='replace')))
+        for script in ['script/build_and_run.sh', 'script/test_external_editor.sh']:
+            for line in (ROOT / script).read_text().splitlines():
+                if 'xcrun clang' in line:
+                    with self.subTest(script=script):
+                        self.assertIn('-fobjc-arc', line)
+
     def test_application_uses_hardened_runtime_with_apple_events_only(self):
         project = json.loads(subprocess.check_output([
             '/usr/bin/plutil', '-convert', 'json', '-o', '-',

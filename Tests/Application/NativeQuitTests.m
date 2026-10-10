@@ -29,8 +29,8 @@
 @implementation QuitController
 - (id)initWithStorage:(QuitStorage *)storage preferences:(QuitPreferences *)preferences {
     if ((self = [super init])) {
-        notationController = (id)[storage retain];
-        prefsController = (id)[preferences retain];
+        notationController = (id)storage;
+        prefsController = (id)preferences;
     }
     return self;
 }
@@ -41,12 +41,12 @@
 - (void)checkQuitWithFlush:(BOOL)success {
     [NSApplication sharedApplication];
     NSMutableArray *events = [NSMutableArray array];
-    QuitStorage *storage = [[[QuitStorage alloc] init] autorelease];
+    QuitStorage *storage = [[QuitStorage alloc] init];
     storage.events = events;
     storage.flushSucceeds = success;
-    QuitPreferences *prefs = [[[QuitPreferences alloc] init] autorelease];
+    QuitPreferences *prefs = [[QuitPreferences alloc] init];
     prefs.events = events;
-    QuitController *controller = [[[QuitController alloc] initWithStorage:storage preferences:prefs] autorelease];
+    QuitController *controller = [[QuitController alloc] initWithStorage:storage preferences:prefs];
     [controller applicationWillTerminate:[NSNotification notificationWithName:NSApplicationWillTerminateNotification object:NSApp]];
     NSArray *expected = success ? @[@"save selection", @"save bookmarks", @"stop monitoring", @"flush notes", @"close journal", @"save preferences"]
                                : @[@"save selection", @"save bookmarks", @"stop monitoring", @"flush notes", @"save preferences"];

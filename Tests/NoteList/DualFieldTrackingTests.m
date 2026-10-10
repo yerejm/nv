@@ -16,10 +16,10 @@
 }
 - (void)testIconTrackingAreaFollowsResizesAndTogglesTheSnapbackButton {
     [NSApplication sharedApplication];
-    NSWindow *window = [[[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 400, 100) styleMask:NSWindowStyleMaskTitled
-                                                      backing:NSBackingStoreBuffered defer:NO] autorelease];
+    NSWindow *window = [[NSWindow alloc] initWithContentRect:NSMakeRect(0, 0, 400, 100) styleMask:NSWindowStyleMaskTitled
+                                                      backing:NSBackingStoreBuffered defer:NO];
     window.releasedWhenClosed = NO;
-    DualField *field = [[[DualField alloc] initWithFrame:NSMakeRect(10, 10, 300, 22)] autorelease];
+    DualField *field = [[DualField alloc] initWithFrame:NSMakeRect(10, 10, 300, 22)];
     [field awakeFromNib];
     [window.contentView addSubview:field];
     [field updateTrackingAreas];

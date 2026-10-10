@@ -5,7 +5,6 @@
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <objc/message.h>
 #import <objc/runtime.h>
-#import "NVArchive.h"
 
 static inline BOOL NVLoadNib(NSString *name, id owner) {
     NSArray *objects = nil;
@@ -31,7 +30,7 @@ static inline CFStringRef NVStringFromOSType(OSType type) {
 }
 
 static inline NSAlert *NVMakeAlert(NSString *title, NSString *information, NSString *first, NSString *second, NSString *third) {
-    NSAlert *alert = NV_AUTORELEASE([[NSAlert alloc] init]);
+    NSAlert *alert = [[NSAlert alloc] init];
     [alert setMessageText:title ?: @""];
     [alert setInformativeText:information ?: @""];
     [alert addButtonWithTitle:first ?: NSLocalizedString(@"OK", nil)];

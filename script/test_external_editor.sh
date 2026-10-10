@@ -5,7 +5,7 @@ EDITOR_TEST_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 EDITOR_TEST_BUILD="$EDITOR_TEST_ROOT/build/editor-tests"
 EDITOR_TEST_HELPER="$EDITOR_TEST_BUILD/acceptance-editor"
 mkdir -p "$EDITOR_TEST_BUILD"
-/usr/bin/xcrun clang -arch arm64 -mmacosx-version-min=15.0 -I "$EDITOR_TEST_ROOT/Tests/Support" \
+/usr/bin/xcrun clang -arch arm64 -mmacosx-version-min=15.0 -fobjc-arc -I "$EDITOR_TEST_ROOT/Tests/Support" \
     "$EDITOR_TEST_ROOT/Tests/Tools/AcceptanceEditor.m" "$EDITOR_TEST_ROOT/Tests/Support/AcceptanceEditorSession.m" \
     -framework Cocoa -o "$EDITOR_TEST_HELPER"
 EDITOR_TEST_DATA="$(mktemp -d "$EDITOR_TEST_BUILD/session.XXXXXX")"

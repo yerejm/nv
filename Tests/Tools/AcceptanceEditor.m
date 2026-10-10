@@ -14,7 +14,7 @@ int main(int argc, const char *argv[]) {
         NSString *path = [directory stringByAppendingPathComponent:@"Temporary editor verification.txt"];
         if ([[NSFileManager defaultManager] fileExistsAtPath:path]) return 1;
         if (![@"Temporary acceptance document.\n" writeToFile:path atomically:YES encoding:NSUTF8StringEncoding error:NULL]) return 1;
-        NVAcceptanceEditorSession *session = [[[NVAcceptanceEditorSession alloc] initWithDirectory:directory] autorelease];
+        NVAcceptanceEditorSession *session = [[NVAcceptanceEditorSession alloc] initWithDirectory:directory];
         __block int interrupted = 0;
         NSMutableArray *signalSources = [NSMutableArray array];
         for (NSNumber *number in @[@(SIGINT), @(SIGTERM), @(SIGHUP)]) {
@@ -27,7 +27,6 @@ int main(int argc, const char *argv[]) {
             });
             dispatch_resume(source);
             [signalSources addObject:source];
-            dispatch_release(source);
         }
         BOOL opened = NO;
         BOOL background = NO;

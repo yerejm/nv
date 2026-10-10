@@ -14,7 +14,7 @@
 - (void)assertDeletion:(DeletedNoteObject *)note {
     XCTAssertTrue([note isKindOfClass:[DeletedNoteObject class]]);
     CFUUIDRef uuid = CFUUIDCreateFromUUIDBytes(NULL, *[note uniqueNoteIDBytes]);
-    NSString *identity = [(NSString *)CFUUIDCreateString(NULL, uuid) autorelease];
+    NSString *identity = CFBridgingRelease(CFUUIDCreateString(NULL, uuid));
     CFRelease(uuid);
     XCTAssertEqualObjects(identity, @"00112233-4455-6677-8899-AABBCCDDEEFF");
     XCTAssertEqual([note logSequenceNumber], 42U);
