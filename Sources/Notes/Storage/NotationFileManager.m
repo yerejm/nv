@@ -43,36 +43,27 @@ NSString *PreUpgradeDatabaseFileName = @"Notes & Settings (before security upgra
 static struct statfs *StatFSVolumeInfo(NotationController *controller);
 
 OSStatus CreateDirectoryIfNotPresent(NVFileReference *parentRef, CFStringRef subDirectoryName, NVFileReference *childRef) {
-    UniChar chars[256];
-    
-    OSStatus result;
-    if ((result = FSRefMakeInDirectoryWithString(parentRef, childRef, subDirectoryName, chars))) {
-		if (result == fnfErr) {
-			result = NVCreateDirectoryUnicode (parentRef, CFStringGetLength(subDirectoryName),
-											   chars, kFSCatInfoNone, NULL, childRef, NULL, NULL);
-		}
-		return result;
+    OSStatus result = NVMakeReference(parentRef, subDirectoryName, childRef);
+    if (result == NVFileNotFoundErr) {
+		result = NVCreateDirectory(parentRef, subDirectoryName, childRef);
     }
-    
-    return noErr;
+    return result;
 }
 
 OSStatus CreateTemporaryFile(NVFileReference *parentRef, NVFileReference *childTempRef) {
-    UniChar chars[256];
-    CFIndex nameLength = 0;
     OSStatus result = noErr;
     
     do {
 		CFStringRef filename = CreateRandomizedFileName();
-		nameLength = CFStringGetLength(filename);
-		result = FSRefMakeInDirectoryWithString(parentRef, childTempRef, filename, chars);
+		result = NVMakeReference(parentRef, filename, childTempRef);
+		if (result == NVFileNotFoundErr) {
+			result = NVCreateFile(parentRef, filename, childTempRef);
+			CFRelease(filename);
+			return result;
+		}
 		CFRelease(filename);
 		
     } while (result == noErr);
-    
-    if (result == fnfErr) {
-		result = NVCreateFileUnicode(parentRef, nameLength, chars, kFSCatInfoNone, NULL, childTempRef, NULL);
-    }
     
     return result;
 }
@@ -157,8 +148,7 @@ CFUUIDRef CopySyntheticUUIDForVolumeCreationDate(NVFileReference *ref) {
     struct statfs volume;
     struct stat info;
     if (NVReferenceMakePath(ref, (UInt8 *)path, sizeof(path)) || statfs(path, &volume) || stat(volume.f_mntonname, &info)) return NULL;
-    UTCDateTime date;
-    UCConvertCFAbsoluteTimeToUTCDateTime((double)info.st_birthtimespec.tv_sec - kCFAbsoluteTimeIntervalSince1970 + (double)info.st_birthtimespec.tv_nsec / 1e9, &date);
+    NVArchivedDate date = NVArchivedDateFromTimespec(info.st_birthtimespec);
     date.highSeconds = CFSwapInt16HostToBig(date.highSeconds);
     date.lowSeconds = CFSwapInt32HostToBig(date.lowSeconds);
     date.fraction = CFSwapInt16HostToBig(date.fraction);
@@ -242,11 +232,11 @@ long BlockSizeForNotation(NotationController *controller) {
     return controller->blockSize;
 }
 
-- (OSStatus)refreshFileRefIfNecessary:(NVFileReference *)childRef withName:(NSString *)filename charsBuffer:(UniChar*)charsBuffer {
+- (OSStatus)refreshFileRefIfNecessary:(NVFileReference *)childRef withName:(NSString *)filename {
 	BOOL isOwned = NO;
-	if (IsZeros(childRef, sizeof(NVFileReference)) || [self fileInNotesDirectory:childRef isOwnedByUs:&isOwned hasCatalogInfo:NULL] != noErr || !isOwned) {
+	if (IsZeros(childRef, sizeof(NVFileReference)) || [self fileInNotesDirectory:childRef isOwnedByUs:&isOwned hasFileInfo:NULL] != noErr || !isOwned) {
 		OSStatus err = noErr;
-		if ((err = FSRefMakeInDirectoryWithString(&noteDirectoryRef, childRef, (__bridge CFStringRef)filename, charsBuffer)) != noErr) {
+		if ((err = NVMakeReference(&noteDirectoryRef, (__bridge CFStringRef)filename, childRef)) != noErr) {
 			NSLog(@"Could not get an fsref for file with name %@: %d\n", filename, err);
 			return err;
 		}
@@ -262,21 +252,16 @@ long BlockSizeForNotation(NotationController *controller) {
 }
 
 - (BOOL)notesDirectoryContainsFile:(NSString*)filename returningFSRef:(NVFileReference*)childRef {
-	UniChar chars[256];
 	if (!filename) return NO;
 	
-	return FSRefMakeInDirectoryWithString(&noteDirectoryRef, childRef, (__bridge CFStringRef)filename, chars) == noErr;
+	return NVMakeReference(&noteDirectoryRef, (__bridge CFStringRef)filename, childRef) == noErr;
 }
 
 - (OSStatus)renameAndForgetNoteDatabaseFile:(NSString*)newfilename {
 	//this method does not move the note database file; for now it is used in cases of upgrading incompatible files
 	
-	UniChar chars[256];
     OSStatus err = noErr;	
-	CFRange range = {0, CFStringGetLength((CFStringRef)newfilename)};
-    CFStringGetCharacters((CFStringRef)newfilename, range, chars);
-    
-    if ((err = NVRenameUnicode(&noteDatabaseRef, range.length, chars, kTextEncodingDefaultFormat, NULL)) != noErr) {
+    if ((err = NVRename(&noteDatabaseRef, (__bridge CFStringRef)newfilename, NULL)) != noErr) {
 		NSLog(@"Error renaming notes database file to %@: %d", newfilename, err);
 		return err;
     }
@@ -338,7 +323,7 @@ long BlockSizeForNotation(NotationController *controller) {
 				}
 				
 				NVFileReference newNotesDirectory;
-				OSErr err = NVMoveObject(&noteDirectoryRef,  &newParentRef, &newNotesDirectory);
+				OSStatus err = NVMoveObject(&noteDirectoryRef,  &newParentRef, &newNotesDirectory);
 				if (err != noErr) {
 					NVRunAlert(NSAlertStyleWarning, [NSString stringWithFormat:NSLocalizedString(@"Couldn't move notes into the chosen folder because %@",nil),
 						[NSString reasonStringFromCarbonFSError:err]], NSLocalizedString(@"Your notes were not moved.",nil), NSLocalizedString(@"OK",nil), NULL, NULL);
@@ -372,7 +357,7 @@ terminate:
     NSError *error = nil;
     NSURL *support = [[NSFileManager defaultManager] URLForDirectory:NSApplicationSupportDirectory inDomain:NSUserDomainMask appropriateForURL:nil create:YES error:&error];
     NVFileReference parent;
-    if (!NVURLGetFileReference((__bridge CFURLRef)support, &parent)) return error ? NVStatusFromErrno((int)[error code]) : fnfErr;
+    if (!NVURLGetFileReference((__bridge CFURLRef)support, &parent)) return error ? NVStatusFromErrno((int)[error code]) : NVFileNotFoundErr;
     return CreateDirectoryIfNotPresent(&parent, (__bridge CFStringRef)NotesDirectoryName, ref);
 }
 
@@ -426,15 +411,10 @@ terminate:
     if (![self currentNoteStorageFormat])
 		return noErr;
     
-    UniChar chars[256];
-    
-    OSStatus err = [self refreshFileRefIfNecessary:childRef withName:oldName charsBuffer:chars];
+    OSStatus err = [self refreshFileRefIfNecessary:childRef withName:oldName];
 	if (noErr != err) return err;
     
-    CFRange range = {0, CFStringGetLength((CFStringRef)newName)};
-    CFStringGetCharacters((CFStringRef)newName, range, chars);
-    
-    if ((err = NVRenameUnicode(childRef, range.length, chars, kTextEncodingDefaultFormat, childRef)) != noErr) {
+    if ((err = NVRename(childRef, (__bridge CFStringRef)newName, childRef)) != noErr) {
 		NSLog(@"Error renaming file %@ to %@: %d", oldName, newName, err);
 		return err;
     }
@@ -442,20 +422,15 @@ terminate:
     return noErr;
 }
 
-- (OSStatus)fileInNotesDirectory:(NVFileReference*)childRef isOwnedByUs:(BOOL*)owned hasCatalogInfo:(FSCatalogInfo *)info {
+- (OSStatus)fileInNotesDirectory:(NVFileReference*)childRef isOwnedByUs:(BOOL*)owned hasFileInfo:(NVFileInfo *)info {
     NVFileReference parentRef;
-    FSCatalogInfoBitmap whichInfo = kFSCatInfoNone;
     
     if (owned) *owned = NO;
-    
-    if (info) {
-		whichInfo = kFSCatInfoContentMod | kFSCatInfoCreateDate | kFSCatInfoAttrMod | kFSCatInfoNodeID | kFSCatInfoDataSizes;
-		bzero(info, sizeof(FSCatalogInfo));
-    }
+    if (info) bzero(info, sizeof(NVFileInfo));
     
     OSStatus err = noErr;
     
-    if ((err = NVGetCatalogInfo(childRef, whichInfo, info, NULL, NULL, &parentRef)) != noErr)
+    if ((err = NVGetFileInfo(childRef, info, NULL, &parentRef)) != noErr)
 	return err;
     
     if (owned) *owned = (NVCompareReferences(&parentRef, &noteDirectoryRef) == noErr);
@@ -464,8 +439,7 @@ terminate:
 }
 
 - (OSStatus)deleteFileInNotesDirectory:(NVFileReference*)childRef forFilename:(NSString*)filename {
-    UniChar chars[256];
-    OSStatus err = [self refreshFileRefIfNecessary:childRef withName:filename charsBuffer:chars];
+    OSStatus err = [self refreshFileRefIfNecessary:childRef withName:filename];
     if (noErr != err) return err;
 
 	if ((err = NVDeleteObject(childRef)) != noErr) {
@@ -489,11 +463,10 @@ terminate:
     UInt64 fileSize = givenFileSize;
     char *notesDataPtr = NULL;
     
-	UniChar chars[256];
-	OSStatus err = [self refreshFileRefIfNecessary:childRef withName:filename charsBuffer:chars];
+	OSStatus err = [self refreshFileRefIfNecessary:childRef withName:filename];
 	if (noErr != err) return nil;
 	
-    if ((err = FSRefReadData(childRef, BlockSizeForNotation(self), &fileSize, (void**)&notesDataPtr, noCacheMask)) != noErr) {
+    if ((err = NVReadFile(childRef, BlockSizeForNotation(self), &fileSize, (void**)&notesDataPtr, true)) != noErr) {
 		NSLog(@"%s: error %d", sel_getName(_cmd), err);
 		return nil;
 	}    
@@ -505,7 +478,7 @@ terminate:
 
 - (OSStatus)createFileIfNotPresentInNotesDirectory:(NVFileReference*)childRef forFilename:(NSString*)filename fileWasCreated:(BOOL*)created {
 	
-	return FSCreateFileIfNotPresentInDirectory(&noteDirectoryRef, childRef, (__bridge CFStringRef)filename, (Boolean*)created);
+	return NVCreateFileIfNotPresent(&noteDirectoryRef, (__bridge CFStringRef)filename, childRef, (Boolean*)created);
 }
 
 - (OSStatus)storeDataAtomicallyInNotesDirectory:(NSData*)data withName:(NSString*)filename destinationRef:(NVFileReference*)destRef {
@@ -525,7 +498,7 @@ terminate:
     }
     
     //now write to temporary file and swap
-    if ((err = FSRefWriteData(&tempFileRef, BlockSizeForNotation(self), [data length], [data bytes], pleaseCacheMask, false)) != noErr) {
+    if ((err = NVWriteFile(&tempFileRef, BlockSizeForNotation(self), [data length], [data bytes], false, false)) != noErr) {
 		NSLog(@"error writing to temporary file: %d", err);
 		
 		return err;
@@ -544,7 +517,7 @@ terminate:
     
 	//don't try to make a new fsref if the file is still inside notes folder, but perhaps under a different name
 	BOOL isOwned = NO;
-	if (IsZeros(destRef,sizeof(NVFileReference)) || [self fileInNotesDirectory:destRef isOwnedByUs:&isOwned hasCatalogInfo:NULL] != noErr || !isOwned) {
+	if (IsZeros(destRef,sizeof(NVFileReference)) || [self fileInNotesDirectory:destRef isOwnedByUs:&isOwned hasFileInfo:NULL] != noErr || !isOwned) {
 		
 		if ((err = [self createFileIfNotPresentInNotesDirectory:destRef forFilename:filename fileWasCreated:nil]) != noErr) {
 			NSLog(@"error creating or getting fsref for file %@: %d", filename, err);
@@ -578,8 +551,7 @@ terminate:
 
 
 - (OSStatus)moveFileToTrash:(NVFileReference *)ref forFilename:(NSString *)filename {
-    UniChar chars[256];
-    OSStatus error = [self refreshFileRefIfNecessary:ref withName:filename charsBuffer:chars];
+    OSStatus error = [self refreshFileRefIfNecessary:ref withName:filename];
     if (error) return error;
     NSString *path = [[NSFileManager defaultManager] pathWithFSRef:ref];
     NSError *failure = nil;

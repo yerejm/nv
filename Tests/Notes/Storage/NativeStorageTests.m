@@ -193,29 +193,120 @@ static BOOL NVUnexpectedObjectWasDecoded = NO;
     XCTAssertNotEqual(realpath(renamed.fileSystemRepresentation, expected), NULL);
     XCTAssertEqual(strcmp((const char *)resolved, expected), 0);
     XCTAssertTrue([[NSFileManager defaultManager] removeItemAtPath:renamed error:NULL]);
-    XCTAssertEqual(NVReferenceMakePath(&reference, resolved, sizeof(resolved)), fnfErr);
+    XCTAssertEqual(NVReferenceMakePath(&reference, resolved, sizeof(resolved)), NVFileNotFoundErr);
 }
 - (void)testUnicodeFilenameAndEmptyFileIO {
     NVFileReference directory, file;
     XCTAssertEqual(NVPathMakeReference((const UInt8 *)self.temporaryDirectory.fileSystemRepresentation, &directory, NULL), noErr);
     NSString *name = @"café 日本語 / test.txt";
-    UniChar characters[255];
-    [name getCharacters:characters range:NSMakeRange(0, name.length)];
-    XCTAssertEqual(NVCreateFileUnicode(&directory, name.length, characters, 0, NULL, &file, NULL), noErr);
-    HFSUniStr255 catalogName;
-    XCTAssertEqual(NVGetCatalogInfo(&file, 0, NULL, &catalogName, NULL, NULL), noErr);
-    XCTAssertEqualObjects([NSString stringWithCharacters:catalogName.unicode length:catalogName.length], name);
+    XCTAssertEqual(NVCreateFile(&directory, (__bridge CFStringRef)name, &file), noErr);
+    CFStringRef fileName = NULL;
+    XCTAssertEqual(NVGetFileInfo(&file, NULL, &fileName, NULL), noErr);
+    XCTAssertEqualObjects(CFBridgingRelease(fileName), name);
     UInt64 length = 0;
     void *bytes = NULL;
-    XCTAssertEqual(NVReadFile(&file, 4096, &length, &bytes, 0), noErr);
+    XCTAssertEqual(NVReadFile(&file, 4096, &length, &bytes, false), noErr);
     XCTAssertEqual(length, 0ULL);
     free(bytes);
     NSData *content = [@"short" dataUsingEncoding:NSUTF8StringEncoding];
-    XCTAssertEqual(NVWriteFile(&file, 2, content.length, content.bytes, 0, true), noErr);
-    XCTAssertEqual(NVWriteFile(&file, 2, 0, NULL, 0, true), noErr);
-    XCTAssertEqual(NVReadFile(&file, 4096, &length, &bytes, 0), noErr);
+    XCTAssertEqual(NVWriteFile(&file, 2, content.length, content.bytes, false, true), noErr);
+    XCTAssertEqual(NVWriteFile(&file, 2, 0, NULL, false, true), noErr);
+    XCTAssertEqual(NVReadFile(&file, 4096, &length, &bytes, true), noErr);
     XCTAssertEqual(length, 0ULL);
     free(bytes);
+}
+- (void)testFileInfoReportsDatesSizeAndFinderType {
+    NSString *path = [self.temporaryDirectory stringByAppendingPathComponent:@"typed"];
+    XCTAssertTrue([@"twelve bytes" writeToFile:path atomically:NO encoding:NSUTF8StringEncoding error:NULL]);
+    const uint8_t finderInfo[32] = {'T', 'E', 'X', 'T', 't', 't', 'x', 't'};
+    XCTAssertEqual(setxattr(path.fileSystemRepresentation, XATTR_FINDERINFO_NAME, finderInfo, sizeof(finderInfo), 0, 0), 0);
+    NVFileReference file, parent, directory;
+    XCTAssertEqual(NVPathMakeReference((const UInt8 *)path.fileSystemRepresentation, &file, NULL), noErr);
+    XCTAssertEqual(NVPathMakeReference((const UInt8 *)self.temporaryDirectory.fileSystemRepresentation, &directory, NULL), noErr);
+    const struct timespec created = {1500000000, 123456789}, modified = {1600000000, 987654321};
+    XCTAssertEqual(NVSetFileDates(&file, &created, &modified), noErr);
+    NVFileInfo info;
+    XCTAssertEqual(NVGetFileInfo(&file, &info, NULL, &parent), noErr);
+    struct stat attributes;
+    XCTAssertEqual(stat(path.fileSystemRepresentation, &attributes), 0);
+    XCTAssertEqual(info.nodeID, (uint64_t)attributes.st_ino);
+    XCTAssertEqual(info.logicalSize, 12ULL);
+    XCTAssertFalse(info.isDirectory);
+    XCTAssertEqual(info.fileType, (OSType)TEXT_TYPE_ID);
+    XCTAssertEqual(info.creationDate.tv_sec, created.tv_sec);
+    XCTAssertEqual(info.creationDate.tv_nsec, created.tv_nsec);
+    XCTAssertEqual(info.contentModificationDate.tv_sec, modified.tv_sec);
+    XCTAssertEqual(info.contentModificationDate.tv_nsec, modified.tv_nsec);
+    XCTAssertEqual(info.attributeModificationDate.tv_sec, attributes.st_ctimespec.tv_sec);
+    XCTAssertEqual(info.attributeModificationDate.tv_nsec, attributes.st_ctimespec.tv_nsec);
+    XCTAssertEqual(NVCompareReferences(&parent, &directory), noErr);
+}
+- (void)testArchivedFileDatesMatchTheCarbonConversion {
+    srandom(1);
+    for (int i = 0; i < 200000; i++) {
+        struct timespec date = {(time_t)(random() % 2200000000L) - 200000000L, random() % 1000000000L};
+        UTCDateTime carbon;
+        XCTAssertEqual(UCConvertCFAbsoluteTimeToUTCDateTime(NVAbsoluteTimeFromTimespec(date), &carbon), noErr);
+        NVArchivedDate archived = NVArchivedDateFromTimespec(date);
+        //Carbon dropped the carry when the fraction rounded up to a whole second
+        BOOL carried = archived.fraction == 0 && carbon.fraction == 0 && archived.lowSeconds == carbon.lowSeconds + 1;
+        if (!carried) {
+            XCTAssertEqual(archived.highSeconds, carbon.highSeconds);
+            XCTAssertEqual(archived.lowSeconds, carbon.lowSeconds);
+            XCTAssertEqual(archived.fraction, carbon.fraction);
+        }
+    }
+    for (UInt32 fraction = 0; fraction < 65536; fraction++) {
+        for (UInt32 seconds = 2082844801U; seconds < 4000000000U; seconds += 917000000U) {
+            NVArchivedDate archived = {0, seconds, (UInt16)fraction};
+            struct timespec date = NVTimespecFromArchivedDate(archived);
+            NVArchivedDate rearchived = NVArchivedDateFromTimespec(date);
+            if (rearchived.lowSeconds != seconds || rearchived.fraction != fraction) {
+                XCTFail(@"%u.%u archived again as %u.%u", seconds, fraction, rearchived.lowSeconds, rearchived.fraction);
+                return;
+            }
+            CFAbsoluteTime carbonTime;
+            UTCDateTime carbon = {0, seconds, (UInt16)fraction};
+            XCTAssertEqual(UCConvertUTCDateTimeToCFAbsoluteTime(&carbon, &carbonTime), noErr);
+            XCTAssertEqualWithAccuracy(NVAbsoluteTimeFromTimespec(date), carbonTime, 1e-6);
+        }
+    }
+    XCTAssertTrue(NVFileDateIsEmpty(NVTimespecFromArchivedDate((NVArchivedDate){0, 0, 0})));
+    //the Unix epoch is the empty date, so both of its archived forms read back the same
+    XCTAssertTrue(NVFileDateIsEmpty(NVTimespecFromArchivedDate((NVArchivedDate){0, 2082844800U, 0})));
+    NVArchivedDate empty = NVArchivedDateFromTimespec((struct timespec){0, 0});
+    XCTAssertTrue(!empty.highSeconds && !empty.lowSeconds && !empty.fraction);
+    XCTAssertEqual(NVCompareFileDates((struct timespec){1600000000, 100}, (struct timespec){1600000000, 200}), 0);
+    XCTAssertEqual(NVCompareFileDates((struct timespec){1600000000, 0}, (struct timespec){1600000000, 20000}), -1);
+    XCTAssertEqual(NVCompareFileDates((struct timespec){1600000001, 0}, (struct timespec){1600000000, 999000000}), 1);
+}
+- (void)testKeyedNoteArchiveKeepsTheCarbonDateLayout {
+    NoteObject *note = [self sampleNote];
+    UTCDateTime carbonDate = {1, 0x01020304, 0x8001};
+    struct timespec date = NVTimespecFromArchivedDate((NVArchivedDate){carbonDate.highSeconds, carbonDate.lowSeconds, carbonDate.fraction});
+    note->fileModifiedDate = date;
+    note->perDiskInfoGroups[0] = (PerDiskInfo){7, 0xAABBCCDD, date};
+    NSData *archive = NVArchiveObject(note);
+    NSDictionary *plist = [NSPropertyListSerialization propertyListWithData:archive options:0 format:NULL error:NULL];
+    NSDictionary *fields = nil;
+    for (id object in plist[@"$objects"])
+        if ([object isKindOfClass:[NSDictionary class]] && object[@"fileModifiedDate"]) fields = object;
+    int64_t expectedDate;
+    memcpy(&expectedDate, &carbonDate, sizeof(expectedDate));
+    XCTAssertEqual([fields[@"fileModifiedDate"] longLongValue], expectedDate);
+    struct { UInt32 diskIDIndex; UInt32 nodeID; UTCDateTime attrTime; } carbonGroup = {
+        CFSwapInt32HostToBig(7), CFSwapInt32HostToBig(0xAABBCCDD),
+        {CFSwapInt16HostToBig(carbonDate.highSeconds), CFSwapInt32HostToBig(carbonDate.lowSeconds), CFSwapInt16HostToBig(carbonDate.fraction)}
+    };
+    XCTAssertEqual(sizeof(carbonGroup), 16UL);
+    XCTAssertEqualObjects(fields[@"perDiskInfoGroups"], [NSData dataWithBytes:&carbonGroup length:sizeof(carbonGroup)]);
+    NoteObject *decoded = NVUnarchiveObject(archive, [NoteObject class]);
+    XCTAssertEqual(decoded->fileModifiedDate.tv_sec, date.tv_sec);
+    XCTAssertEqual(decoded->fileModifiedDate.tv_nsec, date.tv_nsec);
+    XCTAssertEqual(decoded->perDiskInfoGroups[0].diskIDIndex, 7U);
+    XCTAssertEqual(decoded->perDiskInfoGroups[0].nodeID, 0xAABBCCDDU);
+    XCTAssertEqual(decoded->perDiskInfoGroups[0].attrTime.tv_sec, date.tv_sec);
+    XCTAssertEqual(decoded->perDiskInfoGroups[0].attrTime.tv_nsec, date.tv_nsec);
 }
 - (void)testBookmarkResolvesAfterDirectoryRename {
     NSString *path = [self.temporaryDirectory stringByAppendingPathComponent:@"notes"];
@@ -285,7 +376,7 @@ static BOOL NVUnexpectedObjectWasDecoded = NO;
     XCTAssertEqual(getxattr(destinationPath.fileSystemRepresentation, "com.notational.velocity.test", actualMetadata, sizeof(actualMetadata), 0, 0), (ssize_t)sizeof(metadata));
     XCTAssertEqual(memcmp(metadata, actualMetadata, sizeof(metadata)), 0);
     XCTAssertEqual(NVDeleteObject(&newSource), noErr);
-    XCTAssertEqual(NVExchangeFiles(&newSource, &newDestination, NULL, NULL), fnfErr);
+    XCTAssertEqual(NVExchangeFiles(&newSource, &newDestination, NULL, NULL), NVFileNotFoundErr);
     XCTAssertEqualObjects([NSString stringWithContentsOfFile:destinationPath encoding:NSUTF8StringEncoding error:NULL], @"new contents");
 }
 - (void)testExchangeFallbackPreservesBothFiles {
@@ -341,6 +432,25 @@ static BOOL NVUnexpectedObjectWasDecoded = NO;
     XCTAssertTrue([controller flushAllNoteChanges]);
     [controller closeJournal];
     [controller stopFileNotifications];
+}
+- (void)testArchivedPlainTextNotesStillMatchTheirFiles {
+    NotationController *controller = [self controller];
+    [[controller notationPrefs] setNotesStorageFormat:PlainTextFormat];
+    NoteObject *note = [self sampleNote];
+    [controller addNewNote:note];
+    XCTAssertTrue([controller flushAllNoteChanges]);
+    NoteObject *decoded = NVUnarchiveObject(NVArchiveObject(note), [NoteObject class]);
+    [decoded setDelegate:controller];
+    NVFileReference file;
+    NVFileInfo info;
+    CFStringRef name = NULL;
+    XCTAssertEqual(NVPathMakeReference((const UInt8 *)[note noteFilePath].fileSystemRepresentation, &file, NULL), noErr);
+    XCTAssertEqual(NVGetFileInfo(&file, &info, &name, NULL), noErr);
+    XCTAssertNotEqual(info.attributeModificationDate.tv_nsec, 0L);
+    NoteCatalogEntry entry = {info.contentModificationDate, info.attributeModificationDate, (UInt32)info.logicalSize, info.fileType, (UInt32)info.nodeID, name};
+    XCTAssertFalse([controller modifyNoteIfNecessary:decoded usingCatalogEntry:&entry]);
+    CFRelease(name);
+    [controller closeAllResources];
 }
 - (void)testJournalEditAndDeletionRecovery {
     NoteObject *note = [self sampleNote];
@@ -549,7 +659,7 @@ static BOOL NVUnexpectedObjectWasDecoded = NO;
     NotationController *reopened = [self controller];
     XCTAssertTrue([[reopened notationPrefs] usesAuthenticatedFormat]);
     XCTAssertEqual([reopened totalNoteCount], 1U);
-    XCTAssertFalse([[reopened notationPrefs] catalogEntryAllowed:&(NoteCatalogEntry){.filename = (CFMutableStringRef)@"Notes & Settings (before security upgrade)"}]);
+    XCTAssertFalse([[reopened notationPrefs] catalogEntryAllowed:&(NoteCatalogEntry){.filename = CFSTR("Notes & Settings (before security upgrade)")}]);
     [reopened closeAllResources];
 }
 - (void)testRetiredMetadataSurvivesArchiveAndLocalIdentityLinks {
@@ -812,9 +922,10 @@ static BOOL NVUnexpectedObjectWasDecoded = NO;
     XCTAssertEqual(note->logSequenceNumber, 9U);
     XCTAssertEqual(note->currentFormatID, PlainTextFormat);
     XCTAssertEqual(note->nodeID, 0xAABBCCDDU);
-    XCTAssertEqual(note->fileModifiedDate.highSeconds, 5);
-    XCTAssertEqual(note->fileModifiedDate.lowSeconds, 0x01020304U);
-    XCTAssertEqual(note->fileModifiedDate.fraction, 6);
+    NVArchivedDate fileModifiedDate = NVArchivedDateFromTimespec(note->fileModifiedDate);
+    XCTAssertEqual(fileModifiedDate.highSeconds, 5);
+    XCTAssertEqual(fileModifiedDate.lowSeconds, 0x01020304U);
+    XCTAssertEqual(fileModifiedDate.fraction, 6);
     XCTAssertEqual(note->fileEncoding, NSUTF8StringEncoding);
     CFUUIDBytes expectedUUID = [@"00112233-4455-6677-8899-AABBCCDDEEFF" uuidBytes];
     XCTAssertEqual(memcmp(&note->uniqueNoteIDBytes, &expectedUUID, sizeof(CFUUIDBytes)), 0);

@@ -30,7 +30,6 @@
 #import "NotationFileManager.h"
 #import "SecureTextEntryManager.h"
 #import "DiskUUIDEntry.h"
-#include <CoreServices/CoreServices.h>
 #include <Security/Security.h>
 #include <CommonCrypto/CommonCryptor.h>
 #include <CommonCrypto/CommonHMAC.h>

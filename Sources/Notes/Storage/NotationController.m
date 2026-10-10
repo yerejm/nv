@@ -59,8 +59,8 @@
 		lastWordInFilterStr = 0;
 		selectedNoteIndex = NSNotFound;
 		
-		fsCatInfoArray = NULL;
-		HFSUniNameArray = NULL;
+		fileInfoArray = NULL;
+		filenameArray = NULL;
 		catalogEntries = NULL;
 		sortedCatalogEntries = NULL;
 		catEntriesCount = totalCatEntriesCount = 0;
@@ -81,7 +81,7 @@
 
 - (id)initWithAliasData:(NSData *)data error:(OSStatus *)err {
     NVFileReference target;
-    if (![data fsRefAsAlias:&target]) { *err = fnfErr; return nil; }
+    if (![data fsRefAsAlias:&target]) { *err = NVFileNotFoundErr; return nil; }
     return [self initWithDirectoryRef:&target error:err];
 }
 
@@ -200,14 +200,14 @@
 	UInt64 fileSize = 0;
 	char *notesData = NULL;
 	OSStatus err = noErr, result = noErr;
-	if ((err = FSRefReadData(notesFileRef, BlockSizeForNotation(self), &fileSize, (void**)&notesData, forceReadMask)) != noErr)
+	if ((err = NVReadFile(notesFileRef, BlockSizeForNotation(self), &fileSize, (void**)&notesData, false)) != noErr)
 		return [NSNumber numberWithInt:err];
 	
 	FrozenNotation *frozenNotation = nil;
 	NSData *archivedNotation = nil;
 	NSMutableArray *notesToVerify = nil;
 	if (!fileSize) {
-		result = eofErr;
+		result = NVEndOfFileErr;
 		goto returnResult;
 	}
 	archivedNotation = [[NSData alloc] initWithBytesNoCopy:notesData length:fileSize freeWhenDone:NO];
@@ -254,7 +254,7 @@ returnResult:
 	
 	UInt64 fileSize = 0;
 	char *notesData = NULL;
-	if ((err = FSRefReadData(&noteDatabaseRef, BlockSizeForNotation(self), &fileSize, (void**)&notesData, noCacheMask)) != noErr)
+	if ((err = NVReadFile(&noteDatabaseRef, BlockSizeForNotation(self), &fileSize, (void**)&notesData, true)) != noErr)
 		return err;
 	
 	FrozenNotation *frozenNotation = nil;
@@ -1421,12 +1421,17 @@ bail:
 	[notationPrefs setDelegate:nil];
 	[allNotes makeObjectsPerformSelector:@selector(setDelegate:) withObject:nil];
 
-	if (fsCatInfoArray)
-		free(fsCatInfoArray);
-	if (HFSUniNameArray)
-		free(HFSUniNameArray);
-    if (catalogEntries)
+	if (fileInfoArray)
+		free(fileInfoArray);
+	if (filenameArray)
+		free(filenameArray);
+    if (catalogEntries) {
+		size_t i;
+		for (i = 0; i < totalCatEntriesCount; i++) {
+			if (catalogEntries[i].filename) CFRelease(catalogEntries[i].filename);
+		}
 		free(catalogEntries);
+    }
     if (sortedCatalogEntries)
 		free(sortedCatalogEntries);
     if (allNotesBuffer)

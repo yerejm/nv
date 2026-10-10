@@ -23,6 +23,7 @@
 
 
 #include "BufferUtils.h"
+#include <math.h>
 #include <string.h>
 
 static const unsigned char gsToLowerMap[256] = {
@@ -61,6 +62,62 @@ static const unsigned char gsToLowerMap[256] = {
 #define MAX(A,B)	({ __typeof__(A) __a = (A); __typeof__(B) __b = (B); __a < __b ? __b : __a; })
 #endif
 
+
+//seconds from the archived dates' 1904 epoch to the Unix and CFAbsoluteTime epochs
+#define ArchivedDateUnixEpoch 2082844800LL
+#define ArchivedDateAbsoluteTimeEpoch 3061152000.0
+
+NVArchivedDate NVArchivedDateFromTimespec(struct timespec date) {
+	if (NVFileDateIsEmpty(date)) return (NVArchivedDate){0, 0, 0};
+	//rounded through CFAbsoluteTime as UCConvertCFAbsoluteTimeToUTCDateTime did, so dates it archived still compare equal;
+	//unlike that function, a fraction that rounds up to a whole second carries into the seconds
+	double total = NVAbsoluteTimeFromTimespec(date) + ArchivedDateAbsoluteTimeEpoch;
+	if (total < 0.0) return (NVArchivedDate){0, 0, 0};
+	double seconds = floor(total);
+	long fraction = lround((total - seconds) * 65536.0);
+	if (fraction == 65536) {
+		seconds += 1.0;
+		fraction = 0;
+	}
+	uint64_t wholeSeconds = (uint64_t)seconds;
+	return (NVArchivedDate){(UInt16)(wholeSeconds >> 32), (UInt32)wholeSeconds, (UInt16)fraction};
+}
+
+struct timespec NVTimespecFromArchivedDate(NVArchivedDate date) {
+	if (!date.highSeconds && !date.lowSeconds && !date.fraction) return (struct timespec){0, 0};
+	int64_t seconds = (int64_t)((uint64_t)date.highSeconds << 32 | date.lowSeconds) - ArchivedDateUnixEpoch;
+	long nanoseconds = (long)(((uint64_t)date.fraction * 1000000000ULL + 32768) / 65536);
+	return (struct timespec){(time_t)seconds, nanoseconds};
+}
+
+CFAbsoluteTime NVAbsoluteTimeFromTimespec(struct timespec date) {
+	return (CFAbsoluteTime)date.tv_sec - kCFAbsoluteTimeIntervalSince1970 + (double)date.tv_nsec / 1e9;
+}
+
+struct timespec NVTimespecFromAbsoluteTime(CFAbsoluteTime time) {
+	double unixTime = time + kCFAbsoluteTimeIntervalSince1970;
+	double seconds = floor(unixTime);
+	long nanoseconds = lround((unixTime - seconds) * 1e9);
+	if (nanoseconds == 1000000000L) {
+		seconds += 1.0;
+		nanoseconds = 0;
+	}
+	return (struct timespec){(time_t)seconds, nanoseconds};
+}
+
+Boolean NVFileDateIsEmpty(struct timespec date) {
+	return !date.tv_sec && !date.tv_nsec;
+}
+
+static uint64_t ArchivedTicks(struct timespec date) {
+	NVArchivedDate archived = NVArchivedDateFromTimespec(date);
+	return ((uint64_t)archived.highSeconds << 48) | ((uint64_t)archived.lowSeconds << 16) | archived.fraction;
+}
+
+int NVCompareFileDates(struct timespec a, struct timespec b) {
+	uint64_t aTicks = ArchivedTicks(a), bTicks = ArchivedTicks(b);
+	return aTicks < bTicks ? -1 : aTicks > bTicks;
+}
 
 char *replaceString(char *oldString, const char *newString) {
     size_t newLen = strlen(newString) + 1;
@@ -215,7 +272,7 @@ void RemovePerDiskInfoWithTableIndex(UInt32 diskIndex, PerDiskInfo **perDiskGrou
 	}
 }
 
-unsigned int SetPerDiskInfoWithTableIndex(UTCDateTime *dateTime, UInt32 *nodeID, UInt32 diskIndex, PerDiskInfo **perDiskGroups, unsigned int *groupCount) {
+unsigned int SetPerDiskInfoWithTableIndex(struct timespec *dateTime, UInt32 *nodeID, UInt32 diskIndex, PerDiskInfo **perDiskGroups, unsigned int *groupCount) {
 	//if an entry for this diskIndex already exists, then just update it in place
 	//if an entry does not exist, then resize the buffer and add one at the end
 	//if one of dateTime or nodeID is NULL, then do not set it
@@ -227,7 +284,7 @@ unsigned int SetPerDiskInfoWithTableIndex(UTCDateTime *dateTime, UInt32 *nodeID,
 	PerDiskInfo *groups = *perDiskGroups;
 	for (i=0; i<count; i++) {
 		//use this slot if the diskIndex matches OR it's the first one listed and its attrTime and nodeID haven't been touched
-		if (groups[i].diskIDIndex == diskIndex || (!i && groups[i].nodeID == 0U && UTCDateTimeIsEmpty(groups[i].attrTime))) {
+		if (groups[i].diskIDIndex == diskIndex || (!i && groups[i].nodeID == 0U && NVFileDateIsEmpty(groups[i].attrTime))) {
 			if (dateTime) groups[i].attrTime = *dateTime;
 			if (nodeID) groups[i].nodeID = *nodeID;
 			groups[i].diskIDIndex = diskIndex;
@@ -241,45 +298,51 @@ unsigned int SetPerDiskInfoWithTableIndex(UTCDateTime *dateTime, UInt32 *nodeID,
 	//items not currently being set are initialized to a known value, so that they can be initialized later by attrsModifiedDateOfNote and fileNodeIDOfNote
 	//although those functions do not initialize these to anything particularly useful, anyway
 	groups = *perDiskGroups;
-	groups[count].attrTime = dateTime ? *dateTime : (UTCDateTime){0, 0, 0};
+	groups[count].attrTime = dateTime ? *dateTime : (struct timespec){0, 0};
 	groups[count].nodeID = nodeID ? *nodeID : 0;
 	groups[count].diskIDIndex = diskIndex;
 	
 	return count;
 }
 
-COMPILE_ASSERT(sizeof(PerDiskInfo) == 16, PER_DISK_INFO_MUST_BE_16_BYTES);
+COMPILE_ASSERT(sizeof(NVArchivedDate) == 8, ARCHIVED_DATE_MUST_BE_8_BYTES);
+COMPILE_ASSERT(sizeof(NVArchivedPerDiskInfo) == 16, ARCHIVED_PER_DISK_INFO_MUST_BE_16_BYTES);
 
-void CopyPerDiskInfoGroupsToOrder(PerDiskInfo **flippedGroups, unsigned int *existingCount, PerDiskInfo *perDiskGroups, size_t bufferSize, int toHostOrder) {
-	//for decoding and encoding an array of PerDiskInfo structs as a single buffer
-	//swap between host order and big endian
-	//resizes flippedPairs if it is too small (based on *existingCount)
+void DecodePerDiskInfoGroups(PerDiskInfo **perDiskGroups, unsigned int *groupCount, const void *bytes, size_t length) {
+	//resizes perDiskGroups if it is too small (based on *groupCount)
+	size_t i, count = length / sizeof(NVArchivedPerDiskInfo);
 	
-	NSUInteger i, count = bufferSize / sizeof(PerDiskInfo);
+	ResizeArray(perDiskGroups, count, groupCount);
+	PerDiskInfo *groups = *perDiskGroups;
 	
-	ResizeArray(flippedGroups, count, existingCount);
-	PerDiskInfo *newGroups = *flippedGroups;
-		
-	//does this need to flip the entire struct, too?
-	if (toHostOrder) {
-		for (i=0; i<count; i++) {
-			PerDiskInfo group = perDiskGroups[i];
-			newGroups[i].attrTime.highSeconds = CFSwapInt16BigToHost(group.attrTime.highSeconds);
-			newGroups[i].attrTime.lowSeconds = CFSwapInt32BigToHost(group.attrTime.lowSeconds);
-			newGroups[i].attrTime.fraction = CFSwapInt16BigToHost(group.attrTime.fraction);
-			newGroups[i].nodeID = CFSwapInt32BigToHost(group.nodeID);
-			newGroups[i].diskIDIndex = CFSwapInt32BigToHost(group.diskIDIndex);
-		}
-	} else {
-		for (i=0; i<count; i++) {
-			PerDiskInfo group = perDiskGroups[i];
-			newGroups[i].attrTime.highSeconds = CFSwapInt16HostToBig(group.attrTime.highSeconds);
-			newGroups[i].attrTime.lowSeconds = CFSwapInt32HostToBig(group.attrTime.lowSeconds);
-			newGroups[i].attrTime.fraction = CFSwapInt16HostToBig(group.attrTime.fraction);
-			newGroups[i].nodeID = CFSwapInt32HostToBig(group.nodeID);
-			newGroups[i].diskIDIndex = CFSwapInt32HostToBig(group.diskIDIndex);
-		}
+	for (i=0; i<count; i++) {
+		NVArchivedPerDiskInfo group;
+		memcpy(&group, (const char *)bytes + i * sizeof(group), sizeof(group));
+		NVArchivedDate attrTime = {
+			CFSwapInt16BigToHost(group.attrTime.highSeconds),
+			CFSwapInt32BigToHost(group.attrTime.lowSeconds),
+			CFSwapInt16BigToHost(group.attrTime.fraction)
+		};
+		groups[i].attrTime = NVTimespecFromArchivedDate(attrTime);
+		groups[i].nodeID = CFSwapInt32BigToHost(group.nodeID);
+		groups[i].diskIDIndex = CFSwapInt32BigToHost(group.diskIDIndex);
 	}
+}
+
+NVArchivedPerDiskInfo *CreateArchivedPerDiskInfoGroups(const PerDiskInfo *perDiskGroups, unsigned int groupCount) {
+	NVArchivedPerDiskInfo *archivedGroups = calloc(groupCount ? groupCount : 1, sizeof(NVArchivedPerDiskInfo));
+	if (!archivedGroups) abort();
+	
+	unsigned int i;
+	for (i=0; i<groupCount; i++) {
+		NVArchivedDate attrTime = NVArchivedDateFromTimespec(perDiskGroups[i].attrTime);
+		archivedGroups[i].attrTime.highSeconds = CFSwapInt16HostToBig(attrTime.highSeconds);
+		archivedGroups[i].attrTime.lowSeconds = CFSwapInt32HostToBig(attrTime.lowSeconds);
+		archivedGroups[i].attrTime.fraction = CFSwapInt16HostToBig(attrTime.fraction);
+		archivedGroups[i].nodeID = CFSwapInt32HostToBig(perDiskGroups[i].nodeID);
+		archivedGroups[i].diskIDIndex = CFSwapInt32HostToBig(perDiskGroups[i].diskIDIndex);
+	}
+	return archivedGroups;
 }
 
 CFStringRef CreateRandomizedFileName(void) {
@@ -289,42 +352,4 @@ CFStringRef CreateRandomizedFileName(void) {
     CFRelease(string);
     CFRelease(uuid);
     return name;
-}
-
-OSStatus FSCreateFileIfNotPresentInDirectory(NVFileReference *directoryRef, NVFileReference *childRef, CFStringRef filename, Boolean *created) {
-	UniChar chars[256];
-    OSStatus result = noErr;
-	
-    if (created) *created = false;
-    
-    if ((result = FSRefMakeInDirectoryWithString(directoryRef, childRef, filename, chars))) {
-		if (result == fnfErr) {
-			if (created) *created = true;
-			
-			result = NVCreateFileUnicode(directoryRef, CFStringGetLength(filename), chars, kFSCatInfoNone, NULL, childRef, NULL);
-		}
-		return result;
-    }
-    
-    return noErr;	
-}
-
-OSStatus FSRefMakeInDirectoryWithString(NVFileReference *directoryRef, NVFileReference *childRef, CFStringRef filename, UniChar* charsBuffer) {
-    CFRange range;
-    range.location = 0;
-    range.length = CFStringGetLength(filename);
-	
-	if (range.length > 255)	return errFSNameTooLong;
-	
-    CFStringGetCharacters(filename, range, charsBuffer);
-
-    return NVMakeReferenceUnicode(directoryRef, range.length, charsBuffer, kTextEncodingDefaultFormat, childRef);
-}
-
-OSStatus FSRefReadData(NVFileReference *ref, size_t chunkSize, UInt64 *size, void **buffer, UInt16 options) {
-    return NVReadFile(ref, chunkSize, size, buffer, options);
-}
-
-OSStatus FSRefWriteData(NVFileReference *ref, size_t chunkSize, UInt64 size, const void *buffer, UInt16 options, Boolean truncate) {
-    return NVWriteFile(ref, chunkSize, size, buffer, options, truncate);
 }

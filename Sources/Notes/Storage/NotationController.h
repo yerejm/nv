@@ -30,14 +30,12 @@
 
 
 typedef struct _NoteCatalogEntry {
-    UTCDateTime lastModified;
-	UTCDateTime lastAttrModified;
+    struct timespec lastModified;
+	struct timespec lastAttrModified;
     UInt32 logicalSize;
     OSType fileType;
     UInt32 nodeID;
-    unsigned int filenameCharCount;
-    UniChar *filenameChars;
-	CFMutableStringRef filename;
+	CFStringRef filename;
 } NoteCatalogEntry;
 
 @class NoteObject;
@@ -72,8 +70,8 @@ typedef struct _NoteCatalogEntry {
 	
 	NSMutableSet *deletedNotes;
     
-    FSCatalogInfo *fsCatInfoArray;
-    HFSUniStr255 *HFSUniNameArray;
+    NVFileInfo *fileInfoArray;
+    CFStringRef *filenameArray;
 
 	FSEventStreamRef noteDirEventStreamRef;
 	BOOL eventStreamStarted;

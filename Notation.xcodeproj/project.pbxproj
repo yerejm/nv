@@ -43,7 +43,6 @@
 		212EEA2912EFBD1800F89538 /* Como funciona isso?.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 212EEA2412EFBD1800F89538 /* Como funciona isso?.nvhelp */; };
 		212EEA2A12EFBD1800F89538 /* Este é o título de uma nota.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 212EEA2612EFBD1800F89538 /* Este é o título de uma nota.nvhelp */; };
 		21317FAF1113840E00472211 /* Excruciatingly Useful Shortcuts.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 21317FAD1113840E00472211 /* Excruciatingly Useful Shortcuts.nvhelp */; };
-		213FAD530B3C6B52004C74BD /* FSExchangeObjectsCompat.c in Sources */ = {isa = PBXBuildFile; fileRef = 213FAD520B3C6B52004C74BD /* FSExchangeObjectsCompat.c */; };
 		2143322812EC584E000F473B /* Ceci est le titre d'une note.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 2143322412EC584E000F473B /* Ceci est le titre d'une note.nvhelp */; };
 		2143322912EC584E000F473B /* Raccourcis incroyablement utiles.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 2143322612EC584E000F473B /* Raccourcis incroyablement utiles.nvhelp */; };
 		2143331F12ECC4B2000F473B /* Dies ist der Titel einer Notiz.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 2143331B12ECC4B2000F473B /* Dies ist der Titel einer Notiz.nvhelp */; };
@@ -227,8 +226,6 @@
 		212DCA460A6AD28700F74E46 /* EncodingsManager.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = EncodingsManager.m; sourceTree = "<group>"; };
 		212DCF5F0A6DEECB00F74E46 /* DeletionManager.h */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.h; path = DeletionManager.h; sourceTree = "<group>"; };
 		212DCF600A6DEECB00F74E46 /* DeletionManager.m */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.objc; path = DeletionManager.m; sourceTree = "<group>"; };
-		213FAD510B3C6B52004C74BD /* FSExchangeObjectsCompat.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FSExchangeObjectsCompat.h; sourceTree = "<group>"; };
-		213FAD520B3C6B52004C74BD /* FSExchangeObjectsCompat.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = FSExchangeObjectsCompat.c; sourceTree = "<group>"; };
 		2143D3D810E987B100127EA6 /* Pencil.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = Pencil.png; path = Pencil.png; sourceTree = "<group>"; };
 		21447B6D133BFE1E00ACC1A7 /* ExternalEditorListController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExternalEditorListController.h; sourceTree = "<group>"; };
 		21447B6E133BFE1E00ACC1A7 /* ExternalEditorListController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ExternalEditorListController.m; sourceTree = "<group>"; };
@@ -652,8 +649,6 @@
 				212DCF600A6DEECB00F74E46 /* DeletionManager.m */,
 				2168EC5109E33B0300778D02 /* FrozenNotation.h */,
 				2168EC5209E33B0300778D02 /* FrozenNotation.m */,
-				213FAD520B3C6B52004C74BD /* FSExchangeObjectsCompat.c */,
-				213FAD510B3C6B52004C74BD /* FSExchangeObjectsCompat.h */,
 				2114C13D0957732800614E74 /* NotationController.h */,
 				2114C13E0957732800614E74 /* NotationController.m */,
 				21B548F9112F307E00E163A1 /* NotationDirectoryManager.h */,
@@ -1077,7 +1072,6 @@
 				219FD63E0B309B69004E132B /* BlorPasswordRetriever.m in Sources */,
 				211344450B354E000081B064 /* idea_ossl.c in Sources */,
 				211345AB0B35D8540081B064 /* broken_md5.c in Sources */,
-				213FAD530B3C6B52004C74BD /* FSExchangeObjectsCompat.c in Sources */,
 				21C737950B50C73E0048C08A /* MultiplePageView.m in Sources */,
 				21FF94F70B5AD23B00DB6A2F /* ExporterManager.m in Sources */,
 				210A10690B66720F005BE981 /* BookmarksTable.m in Sources */,

@@ -22,11 +22,26 @@
     along with Notational Velocity.  If not, see <http://www.gnu.org/licenses/>. */
 
 
-#include <Carbon/Carbon.h>
+#include <CoreFoundation/CoreFoundation.h>
+#include <time.h>
 
 #define ResizeArray(__DirectBuffer, __objCount, __bufObjCount)	_ResizeBuffer((void***)(void *)(__DirectBuffer), (__objCount), (__bufObjCount), sizeof(typeof(**(__DirectBuffer))))
 
-#define UTCDateTimeIsEmpty(__UTCDT) (*(int64_t*)&((__UTCDT)) == 0LL)
+#pragma pack(push, 2)
+//the layout of Carbon's UTCDateTime, in which notes archive file dates: seconds since 1904 and 1/65536-second fractions
+typedef struct {
+	UInt16 highSeconds;
+	UInt32 lowSeconds;
+	UInt16 fraction;
+} NVArchivedDate;
+
+//a PerDiskInfo as notes archive it, in big-endian order
+typedef struct {
+	UInt32 diskIDIndex;
+	UInt32 nodeID;
+	NVArchivedDate attrTime;
+} NVArchivedPerDiskInfo;
+#pragma pack(pop)
 
 typedef struct _PerDiskInfo {
 	
@@ -38,9 +53,18 @@ typedef struct _PerDiskInfo {
 	UInt32 nodeID;
 	
 	//the attribute modification time of a file
-	UTCDateTime attrTime;
+	struct timespec attrTime;
 	
 } PerDiskInfo;
+
+//the empty date, which is also the Unix epoch, archives as zero
+NVArchivedDate NVArchivedDateFromTimespec(struct timespec date);
+struct timespec NVTimespecFromArchivedDate(NVArchivedDate date);
+CFAbsoluteTime NVAbsoluteTimeFromTimespec(struct timespec date);
+struct timespec NVTimespecFromAbsoluteTime(CFAbsoluteTime time);
+Boolean NVFileDateIsEmpty(struct timespec date);
+//compares at the resolution in which file dates are archived, so dates read back from an archive still match the disk
+int NVCompareFileDates(struct timespec a, struct timespec b);
 
 char *replaceString(char *oldString, const char *newString);
 void _ResizeBuffer(void ***buffer, size_t objCount, unsigned int *bufSize, size_t elemSize);
@@ -54,13 +78,9 @@ NSInteger genericSortContextLast(void* one, void* two, int (*context) (void*, vo
 void QuickSortBuffer(void **buffer, unsigned int objCount, int (*compar)(const void *, const void *));
 
 void RemovePerDiskInfoWithTableIndex(UInt32 diskIndex, PerDiskInfo **perDiskGroups, unsigned int *groupCount);
-unsigned int SetPerDiskInfoWithTableIndex(UTCDateTime *dateTime, UInt32 *nodeID, UInt32 diskIndex, PerDiskInfo **perDiskGroups, unsigned int *groupCount);
-void CopyPerDiskInfoGroupsToOrder(PerDiskInfo **flippedGroups, unsigned int *existingCount, PerDiskInfo *perDiskGroups, size_t bufferSize, int toHostOrder);
+unsigned int SetPerDiskInfoWithTableIndex(struct timespec *dateTime, UInt32 *nodeID, UInt32 diskIndex, PerDiskInfo **perDiskGroups, unsigned int *groupCount);
+void DecodePerDiskInfoGroups(PerDiskInfo **perDiskGroups, unsigned int *groupCount, const void *bytes, size_t length);
+//the caller frees the returned buffer of groupCount entries
+NVArchivedPerDiskInfo *CreateArchivedPerDiskInfoGroups(const PerDiskInfo *perDiskGroups, unsigned int groupCount);
 
 CFStringRef CreateRandomizedFileName(void);
-OSStatus FSCreateFileIfNotPresentInDirectory(NVFileReference *directoryRef, NVFileReference *childRef, CFStringRef filename, Boolean *created);
-OSStatus FSRefMakeInDirectoryWithString(NVFileReference *directoryRef, NVFileReference *childRef, CFStringRef filename, UniChar* charsBuffer);
-OSStatus FSRefReadData(NVFileReference *fsRef, size_t maximumReadSize, UInt64 *bufferSize, void** newBuffer, UInt16 modeOptions);
-OSStatus FSRefWriteData(NVFileReference *fsRef, size_t maximumWriteSize, UInt64 bufferSize, const void* buffer, UInt16 modeOptions, Boolean truncateFile);
-
-CFStringRef CopyReasonFromFSErr(OSStatus err);

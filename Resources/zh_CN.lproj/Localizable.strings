@@ -53,7 +53,6 @@
 "..." = "…";
 
 /* No comment provided by engineer. */
-"Error: the modification date of the file quotemark%@quotemark could not be compared because %@" = "错误: 无法比较文件 “%@” 的修改日期，因为%@";
 
 /* No comment provided by engineer. */
 "Error: the modification date of the file quotemark%@quotemark could not be determined because %@" = "错误: 无法检测文件 “%@” 的修改日期，因为%@";
@@ -137,7 +136,6 @@
 "The URL quotemark%@quotemark could not be accessed: %@." = "链接 “%@” 无法访问: %@。";
 
 /* No comment provided by engineer. */
-"This may be due to an error in the program or operating system." = "这可能是由于错误的程序或操作系统引起的。";
 
 /* string of last resort for errors not found in CarbonErrorStrings */
 "an error of type %d occurred" = "发生%d类错误";

@@ -54,7 +54,6 @@
 "..." = "…";
 
 /* No comment provided by engineer. */
-"Error: the modification date of the file quotemark%@quotemark could not be compared because %@" = "Erreur: la date de modification du fichier “%@” ne peut-être comparée parce que %@";
 
 /* No comment provided by engineer. */
 "Error: the modification date of the file quotemark%@quotemark could not be determined because %@" = "Erreur: la date de modification du fichier “%@” ne peut-être déterminée parce que %@";
@@ -138,7 +137,6 @@
 "The URL quotemark%@quotemark could not be accessed: %@." = "L'URL “%@” n'a pu être trouvée: %@.";
 
 /* No comment provided by engineer. */
-"This may be due to an error in the program or operating system." = "Cela peut-être causé par une erreur dans le programme ou dans le système d'exploitation.";
 
 /* string of last resort for errors not found in CarbonErrorStrings */
 "an error of type %d occurred" = "une erreur de type %d s'est produite";

@@ -93,7 +93,7 @@
 			
 			OSStatus err = [note exportToDirectoryRef:&directoryRef withFilename:filename usingFormat:storageFormat overwrite:overwriteNotes];
 			
-			if (err == dupFNErr) {
+			if (err == NVDuplicateFilenameErr) {
 				//ask about overwriting
 				NSString *existingName = filename ? filename : filenameOfNote(note);
 				if (!filename) existingName = [[existingName stringByDeletingPathExtension] stringByAppendingPathExtension:[NotationPrefs pathExtensionForFormat:storageFormat]];

@@ -107,6 +107,15 @@ class BuildPolicyTests(unittest.TestCase):
                     with self.subTest(script=script):
                         self.assertIn('-fobjc-arc', line)
 
+    def test_storage_layer_uses_no_carbon_file_types(self):
+        carbon = re.compile(r'\b(?:Carbon/Carbon\.h|FSCatalogInfo\w*|HFSUniStr255|FSSpec|UTCDateTime|FSRef|'
+                            r'FSIterator\w*|UCConvert\w+|kFSCat\w+|kFSNode\w+|FileInfo|ItemCount)\b')
+        comments = re.compile(r'//[^\n]*|/\*.*?\*/', re.S)
+        sources = [*sorted((ROOT / 'Sources/Notes').rglob('*.[mhc]')), ROOT / 'Sources/Interchange/EncodingsManager.m']
+        for path in sources:
+            with self.subTest(path=str(path.relative_to(ROOT))):
+                self.assertEqual(carbon.findall(comments.sub('', path.read_text(errors='replace'))), [])
+
     def test_application_uses_hardened_runtime_with_apple_events_only(self):
         project = json.loads(subprocess.check_output([
             '/usr/bin/plutil', '-convert', 'json', '-o', '-',

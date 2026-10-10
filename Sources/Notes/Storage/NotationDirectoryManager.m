@@ -211,23 +211,21 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
     
     OSStatus status = noErr;
     NVDirectoryIterator dirIterator;
-    ItemCount totalObjects = 0, dirObjectCount = 0;
+    size_t totalObjects = 0, dirObjectCount = 0;
     NSUInteger i = 0, catIndex = 0;
     
-    //something like 16 VM pages used here?
-    if (!fsCatInfoArray) fsCatInfoArray = (FSCatalogInfo *)calloc(kMaxFileIteratorCount, sizeof(FSCatalogInfo));
-    if (!HFSUniNameArray) HFSUniNameArray = (HFSUniStr255 *)calloc(kMaxFileIteratorCount, sizeof(HFSUniStr255));
+    if (!fileInfoArray) fileInfoArray = (NVFileInfo *)calloc(kMaxFileIteratorCount, sizeof(NVFileInfo));
+    if (!filenameArray) filenameArray = (CFStringRef *)calloc(kMaxFileIteratorCount, sizeof(CFStringRef));
 	
-    if ((status = NVOpenIterator(&noteDirectoryRef, kFSIterateFlat, &dirIterator)) == noErr) {
+    if ((status = NVOpenIterator(&noteDirectoryRef, &dirIterator)) == noErr) {
 		
         do {
             // Grab a batch of source files to process from the source directory
-            status = NVGetCatalogInfoBulk(dirIterator, kMaxFileIteratorCount, &dirObjectCount, NULL,
-										  kFSCatInfoNodeFlags | kFSCatInfoFinderInfo | kFSCatInfoContentMod | 
-										  kFSCatInfoAttrMod | kFSCatInfoDataSizes | kFSCatInfoNodeID,
-										  fsCatInfoArray, NULL, NULL, HFSUniNameArray);
+            status = NVIterateFiles(dirIterator, kMaxFileIteratorCount, &dirObjectCount, fileInfoArray, NULL, filenameArray);
 			
-            if ((status == errFSNoMoreItems || status == noErr) && dirObjectCount) {
+            if (status != NVNoMoreItemsErr && status != noErr) {
+				for (i = 0; i < dirObjectCount; i++) CFRelease(filenameArray[i]);
+            } else if (dirObjectCount) {
                 status = noErr;
 				
 				totalObjects += dirObjectCount;
@@ -238,40 +236,29 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 					catalogEntries = (NoteCatalogEntry *)realloc(catalogEntries, totalObjects * sizeof(NoteCatalogEntry));
 					sortedCatalogEntries = (NoteCatalogEntry **)realloc(sortedCatalogEntries, totalObjects * sizeof(NoteCatalogEntry*));
 					
-					//clear unused memory to make filename and filenameChars null
+					//clear unused memory to make filename null
 					
 					size_t newSpace = (totalCatEntriesCount - oldCatEntriesCount) * sizeof(NoteCatalogEntry);
 					bzero(catalogEntries + oldCatEntriesCount, newSpace);
 				}
 				
 				for (i = 0; i < dirObjectCount; i++) {
-					// Only read files, not directories
-					if (!(fsCatInfoArray[i].nodeFlags & kFSNodeIsDirectoryMask)) { 
-						//filter these only for files that will be added
-						//that way we can catch changes in files whose format is still being lazily updated
-						
-						NoteCatalogEntry *entry = &catalogEntries[catIndex];
-						HFSUniStr255 *filename = &HFSUniNameArray[i];
-						
-						entry->fileType = ((FileInfo *)fsCatInfoArray[i].finderInfo)->fileType;
-						entry->logicalSize = (UInt32)(fsCatInfoArray[i].dataLogicalSize & 0xFFFFFFFF);
-						entry->nodeID = (UInt32)fsCatInfoArray[i].nodeID;
-						entry->lastModified = fsCatInfoArray[i].contentModDate;
-						entry->lastAttrModified = fsCatInfoArray[i].attributeModDate;
-
-						ResizeArray(&(entry->filenameChars), filename->length, &(entry->filenameCharCount));
-						memcpy(entry->filenameChars, filename->unicode, filename->length * sizeof(UniChar));
-						
-						if (!entry->filename)
-							entry->filename = CFStringCreateMutableWithExternalCharactersNoCopy(NULL, entry->filenameChars, filename->length, entry->filenameCharCount, kCFAllocatorNull);
-						else
-							CFStringSetExternalCharactersNoCopy(entry->filename, entry->filenameChars, filename->length, entry->filenameCharCount);
-						
-						// mipe: Normalize the filename to make sure that it will be found regardless of international characters
-						CFStringNormalize(entry->filename, kCFStringNormalizationFormC);
-
-						catIndex++;
-                    }
+					//filter these only for files that will be added
+					//that way we can catch changes in files whose format is still being lazily updated
+					
+					NoteCatalogEntry *entry = &catalogEntries[catIndex];
+					
+					entry->fileType = fileInfoArray[i].fileType;
+					entry->logicalSize = (UInt32)(fileInfoArray[i].logicalSize & 0xFFFFFFFF);
+					entry->nodeID = (UInt32)fileInfoArray[i].nodeID;
+					entry->lastModified = fileInfoArray[i].contentModificationDate;
+					entry->lastAttrModified = fileInfoArray[i].attributeModificationDate;
+					
+					//the iterator returns names normalized to precomposed form, so they match regardless of how international characters were stored
+					if (entry->filename) CFRelease(entry->filename);
+					entry->filename = filenameArray[i];
+					
+					catIndex++;
                 }
 				
 				catEntriesCount = catIndex;
@@ -295,15 +282,15 @@ void FSEventsCallback(ConstFSEventStreamRef stream, void* info, size_t num_event
 
 - (BOOL)modifyNoteIfNecessary:(NoteObject*)aNoteObject usingCatalogEntry:(NoteCatalogEntry*)catEntry {
 	//check dates
-	UTCDateTime lastReadDate = fileModifiedDateOfNote(aNoteObject);
-	UTCDateTime *lastAttrModDate = attrsModifiedDateOfNote(aNoteObject);
+	struct timespec lastReadDate = fileModifiedDateOfNote(aNoteObject);
+	struct timespec *lastAttrModDate = attrsModifiedDateOfNote(aNoteObject);
 	
 	
 	updateForVerifiedExistingNote(deletionManager, aNoteObject);
 	
 	if (fileSizeOfNote(aNoteObject) != catEntry->logicalSize ||
-		*(int64_t*)&lastReadDate != *(int64_t*)&(catEntry->lastModified) ||
-		*(int64_t*)lastAttrModDate != *(int64_t*)&(catEntry->lastAttrModified)) {
+		NVCompareFileDates(lastReadDate, catEntry->lastModified) ||
+		NVCompareFileDates(*lastAttrModDate, catEntry->lastAttrModified)) {
 
 		//assume the file on disk was modified by someone other than us
 				

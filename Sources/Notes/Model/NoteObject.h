@@ -57,7 +57,7 @@ typedef struct _NoteFilterContext {
 	NSString *filename;
 	UInt32 nodeID;
 	UInt32 logicalSize;
-	UTCDateTime fileModifiedDate, *attrsModifiedDate;
+	struct timespec fileModifiedDate, *attrsModifiedDate;
 	PerDiskInfo *perDiskInfoGroups;
 	unsigned int perDiskInfoGroupCount;
 	int currentFormatID;
@@ -112,8 +112,8 @@ NSInteger compareFileSize(id *a, id *b);
 	NSString* filenameOfNote(NoteObject *note);
 	UInt32 fileNodeIDOfNote(NoteObject *note);
 	UInt32 fileSizeOfNote(NoteObject *note);
-	UTCDateTime fileModifiedDateOfNote(NoteObject *note);
-	UTCDateTime *attrsModifiedDateOfNote(NoteObject *note);
+	struct timespec fileModifiedDateOfNote(NoteObject *note);
+	struct timespec *attrsModifiedDateOfNote(NoteObject *note);
 	CFAbsoluteTime modifiedDateOfNote(NoteObject *note);
 	CFAbsoluteTime createdDateOfNote(NoteObject *note);
 

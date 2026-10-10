@@ -10,30 +10,29 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <math.h>
 #include <copyfile.h>
 
 OSStatus NVStatusFromErrno(int error) {
     switch (error) {
         case 0: return noErr;
-        case ENOENT: return fnfErr;
-        case EEXIST: return dupFNErr;
-        case EACCES: case EPERM: return permErr;
-        case EXDEV: return diffVolErr;
-        case ENOSPC: return dskFulErr;
-        case ENAMETOOLONG: return errFSNameTooLong;
-        case EINVAL: return paramErr;
-        default: return ioErr;
+        case ENOENT: return NVFileNotFoundErr;
+        case EEXIST: return NVDuplicateFilenameErr;
+        case EACCES: case EPERM: return NVPermissionErr;
+        case EXDEV: return NVDifferentVolumeErr;
+        case ENOSPC: return NVDiskFullErr;
+        case ENAMETOOLONG: return NVNameTooLongErr;
+        case EINVAL: return NVParameterErr;
+        default: return NVIOErr;
     }
 }
 
 OSStatus NVPathMakeReference(const UInt8 *path, NVFileReference *ref, Boolean *isDirectory) {
-    if (!path || !ref) return paramErr;
+    if (!path || !ref) return NVParameterErr;
     struct stat info;
     struct statfs volume;
     char resolved[PATH_MAX];
     if (!realpath((const char *)path, resolved) || stat(resolved, &info) || statfs(resolved, &volume))
-        return errno ? NVStatusFromErrno(errno) : ioErr;
+        return errno ? NVStatusFromErrno(errno) : NVIOErr;
     memset(ref, 0, sizeof(*ref));
     ref->volume = volume.f_fsid;
     ref->inode = info.st_ino;
@@ -43,14 +42,14 @@ OSStatus NVPathMakeReference(const UInt8 *path, NVFileReference *ref, Boolean *i
 }
 
 OSStatus NVReferenceMakePath(const NVFileReference *ref, UInt8 *path, size_t size) {
-    if (!ref || !path || !size || !ref->inode) return paramErr;
+    if (!ref || !path || !size || !ref->inode) return NVParameterErr;
     fsid_t volume = ref->volume;
     if (fsgetpath((char *)path, size, &volume, ref->inode) >= 0) return noErr;
     struct stat info;
     struct statfs currentVolume;
     if (stat(ref->path, &info) || statfs(ref->path, &currentVolume)) return NVStatusFromErrno(errno);
-    if (info.st_ino != ref->inode || memcmp(&currentVolume.f_fsid, &ref->volume, sizeof(fsid_t))) return fnfErr;
-    if (strlcpy((char *)path, ref->path, size) >= size) return errFSNameTooLong;
+    if (info.st_ino != ref->inode || memcmp(&currentVolume.f_fsid, &ref->volume, sizeof(fsid_t))) return NVFileNotFoundErr;
+    if (strlcpy((char *)path, ref->path, size) >= size) return NVNameTooLongErr;
     return noErr;
 }
 
@@ -60,129 +59,124 @@ Boolean NVURLGetFileReference(CFURLRef url, NVFileReference *ref) {
 }
 
 OSStatus NVCompareReferences(const NVFileReference *a, const NVFileReference *b) {
-    return a && b && a->inode == b->inode && !memcmp(&a->volume, &b->volume, sizeof(fsid_t)) ? noErr : fnfErr;
+    return a && b && a->inode == b->inode && !memcmp(&a->volume, &b->volume, sizeof(fsid_t)) ? noErr : NVFileNotFoundErr;
 }
 
-static OSStatus ChildPath(const NVFileReference *parent, CFIndex length, const UniChar *name, char path[PATH_MAX]) {
+static OSStatus ChildPath(const NVFileReference *parent, CFStringRef name, char path[PATH_MAX]) {
     OSStatus error = NVReferenceMakePath(parent, (UInt8 *)path, PATH_MAX);
     if (error) return error;
-    if (length < 1 || length > 255 || !name) return errFSNameTooLong;
-    CFMutableStringRef string = CFStringCreateMutable(NULL, 0);
-    CFStringAppendCharacters(string, name, length);
+    CFIndex length = name ? CFStringGetLength(name) : 0;
+    if (length < 1 || length > 255) return NVNameTooLongErr;
+    CFMutableStringRef string = CFStringCreateMutableCopy(NULL, 0, name);
     CFStringFindAndReplace(string, CFSTR("/"), CFSTR(":"), CFRangeMake(0, length), 0);
     char component[PATH_MAX];
     Boolean converted = CFStringGetFileSystemRepresentation(string, component, sizeof(component));
     CFRelease(string);
-    if (!converted || !strcmp(component, ".") || !strcmp(component, "..")) return paramErr;
-    if (strlcat(path, "/", PATH_MAX) >= PATH_MAX || strlcat(path, component, PATH_MAX) >= PATH_MAX) return errFSNameTooLong;
+    if (!converted || !strcmp(component, ".") || !strcmp(component, "..")) return NVParameterErr;
+    if (strlcat(path, "/", PATH_MAX) >= PATH_MAX || strlcat(path, component, PATH_MAX) >= PATH_MAX) return NVNameTooLongErr;
     return noErr;
 }
 
-OSStatus NVMakeReferenceUnicode(const NVFileReference *parent, CFIndex length, const UniChar *name, TextEncoding encoding, NVFileReference *ref) {
+OSStatus NVMakeReference(const NVFileReference *parent, CFStringRef name, NVFileReference *ref) {
     char path[PATH_MAX];
-    OSStatus error = ChildPath(parent, length, name, path);
+    OSStatus error = ChildPath(parent, name, path);
     return error ? error : NVPathMakeReference((UInt8 *)path, ref, NULL);
 }
 
-OSStatus NVCreateFileUnicode(const NVFileReference *parent, CFIndex length, const UniChar *name, FSCatalogInfoBitmap fields, const FSCatalogInfo *info, NVFileReference *ref, FSSpec *spec) {
+OSStatus NVCreateFile(const NVFileReference *parent, CFStringRef name, NVFileReference *ref) {
     char path[PATH_MAX];
-    OSStatus error = ChildPath(parent, length, name, path);
+    OSStatus error = ChildPath(parent, name, path);
     if (error) return error;
     int descriptor = open(path, O_WRONLY | O_CREAT | O_EXCL | O_CLOEXEC, 0600);
     if (descriptor < 0) return NVStatusFromErrno(errno);
     if (close(descriptor)) return NVStatusFromErrno(errno);
-    error = NVPathMakeReference((UInt8 *)path, ref, NULL);
-    return !error && info ? NVSetCatalogInfo(ref, fields, info) : error;
+    return NVPathMakeReference((UInt8 *)path, ref, NULL);
 }
 
-OSStatus NVCreateDirectoryUnicode(const NVFileReference *parent, CFIndex length, const UniChar *name, FSCatalogInfoBitmap fields, const FSCatalogInfo *info, NVFileReference *ref, FSSpec *spec, UInt32 *directoryID) {
+OSStatus NVCreateDirectory(const NVFileReference *parent, CFStringRef name, NVFileReference *ref) {
     char path[PATH_MAX];
-    OSStatus error = ChildPath(parent, length, name, path);
+    OSStatus error = ChildPath(parent, name, path);
     if (error) return error;
     if (mkdir(path, 0700)) return NVStatusFromErrno(errno);
-    error = NVPathMakeReference((UInt8 *)path, ref, NULL);
-    if (!error && directoryID) *directoryID = (UInt32)ref->inode;
-    return !error && info ? NVSetCatalogInfo(ref, fields, info) : error;
+    return NVPathMakeReference((UInt8 *)path, ref, NULL);
 }
 
-static UTCDateTime CatalogDate(struct timespec time) {
-    UTCDateTime date = {0};
-    UCConvertCFAbsoluteTimeToUTCDateTime((CFAbsoluteTime)time.tv_sec - kCFAbsoluteTimeIntervalSince1970 + (double)time.tv_nsec / 1e9, &date);
-    return date;
+OSStatus NVCreateFileIfNotPresent(const NVFileReference *parent, CFStringRef name, NVFileReference *ref, Boolean *created) {
+    if (created) *created = false;
+    OSStatus error = NVMakeReference(parent, name, ref);
+    if (error != NVFileNotFoundErr) return error;
+    if (created) *created = true;
+    return NVCreateFile(parent, name, ref);
 }
 
-OSStatus NVGetCatalogInfo(const NVFileReference *ref, FSCatalogInfoBitmap fields, FSCatalogInfo *info, HFSUniStr255 *name, FSSpec *spec, NVFileReference *parent) {
+static OSType FileTypeAtPath(const char *path) {
+    //Finder info is stored big-endian, and starts with the file type
+    uint8_t finderInfo[32];
+    if (getxattr(path, XATTR_FINDERINFO_NAME, finderInfo, sizeof(finderInfo), 0, 0) < 4) return 0;
+    return (OSType)finderInfo[0] << 24 | (OSType)finderInfo[1] << 16 | (OSType)finderInfo[2] << 8 | finderInfo[3];
+}
+
+OSStatus NVGetFileInfo(const NVFileReference *ref, NVFileInfo *info, CFStringRef *name, NVFileReference *parent) {
     char path[PATH_MAX];
     OSStatus error = NVReferenceMakePath(ref, (UInt8 *)path, sizeof(path));
     if (error) return error;
     struct stat attributes;
     if (stat(path, &attributes)) return NVStatusFromErrno(errno);
     if (info) {
-        memset(info, 0, sizeof(*info));
-        info->nodeID = (UInt32)attributes.st_ino;
-        info->nodeFlags = S_ISDIR(attributes.st_mode) ? kFSNodeIsDirectoryMask : 0;
-        info->dataLogicalSize = (UInt64)attributes.st_size;
-        info->dataPhysicalSize = (UInt64)attributes.st_blocks * 512;
-        info->createDate = CatalogDate(attributes.st_birthtimespec);
-        info->contentModDate = CatalogDate(attributes.st_mtimespec);
-        info->attributeModDate = CatalogDate(attributes.st_ctimespec);
-        info->accessDate = CatalogDate(attributes.st_atimespec);
-        if (fields & kFSCatInfoFinderInfo) getxattr(path, "com.apple.FinderInfo", info->finderInfo, sizeof(info->finderInfo), 0, 0);
+        *info = (NVFileInfo){
+            .nodeID = attributes.st_ino,
+            .logicalSize = (uint64_t)attributes.st_size,
+            .isDirectory = S_ISDIR(attributes.st_mode),
+            .fileType = FileTypeAtPath(path),
+            .creationDate = attributes.st_birthtimespec,
+            .contentModificationDate = attributes.st_mtimespec,
+            .attributeModificationDate = attributes.st_ctimespec,
+        };
     }
     char *component = strrchr(path, '/');
     if (name) {
         const char *base = component && component[1] ? component + 1 : path;
-        CFMutableStringRef string = CFStringCreateMutable(NULL, 0);
-        CFStringRef utf8 = CFStringCreateWithFileSystemRepresentation(NULL, base);
-        if (!utf8) { CFRelease(string); return paramErr; }
-        CFStringAppend(string, utf8);
-        CFRelease(utf8);
+        CFStringRef decoded = CFStringCreateWithFileSystemRepresentation(NULL, base);
+        if (!decoded) return NVParameterErr;
+        CFMutableStringRef string = CFStringCreateMutableCopy(NULL, 0, decoded);
+        CFRelease(decoded);
         CFStringNormalize(string, kCFStringNormalizationFormC);
         CFStringFindAndReplace(string, CFSTR(":"), CFSTR("/"), CFRangeMake(0, CFStringGetLength(string)), 0);
-        name->length = (UInt16)MIN(CFStringGetLength(string), 255);
-        CFStringGetCharacters(string, CFRangeMake(0, name->length), name->unicode);
-        CFRelease(string);
+        *name = string;
     }
     if (parent) {
         if (component == path) path[1] = '\0'; else if (component) *component = '\0';
         error = NVPathMakeReference((UInt8 *)path, parent, NULL);
+        if (error && name) { CFRelease(*name); *name = NULL; }
     }
     return error;
 }
 
-OSStatus NVSetCatalogInfo(const NVFileReference *ref, FSCatalogInfoBitmap fields, const FSCatalogInfo *info) {
-    if (!info) return paramErr;
+OSStatus NVSetFileDates(const NVFileReference *ref, const struct timespec *creationDate, const struct timespec *modificationDate) {
     char path[PATH_MAX];
     OSStatus error = NVReferenceMakePath(ref, (UInt8 *)path, sizeof(path));
     if (error) return error;
     struct attrlist attributes = { .bitmapcount = ATTR_BIT_MAP_COUNT };
     struct timespec times[2];
     size_t count = 0;
-    if (fields & kFSCatInfoCreateDate) {
-        CFAbsoluteTime time;
-        UCConvertUTCDateTimeToCFAbsoluteTime(&info->createDate, &time);
-        double unixTime = time + kCFAbsoluteTimeIntervalSince1970;
-        times[count++] = (struct timespec){ (time_t)unixTime, (long)((unixTime - floor(unixTime)) * 1e9) };
+    if (creationDate) {
+        times[count++] = *creationDate;
         attributes.commonattr |= ATTR_CMN_CRTIME;
     }
-    if (fields & kFSCatInfoContentMod) {
-        CFAbsoluteTime time;
-        UCConvertUTCDateTimeToCFAbsoluteTime(&info->contentModDate, &time);
-        double unixTime = time + kCFAbsoluteTimeIntervalSince1970;
-        times[count++] = (struct timespec){ (time_t)unixTime, (long)((unixTime - floor(unixTime)) * 1e9) };
+    if (modificationDate) {
+        times[count++] = *modificationDate;
         attributes.commonattr |= ATTR_CMN_MODTIME;
     }
     if (count && setattrlist(path, &attributes, times, count * sizeof(*times), 0)) return NVStatusFromErrno(errno);
-    if ((fields & kFSCatInfoFinderInfo) && setxattr(path, "com.apple.FinderInfo", info->finderInfo, sizeof(info->finderInfo), 0, 0)) return NVStatusFromErrno(errno);
     return noErr;
 }
 
-OSStatus NVRenameUnicode(const NVFileReference *ref, CFIndex length, const UniChar *name, TextEncoding encoding, NVFileReference *result) {
+OSStatus NVRename(const NVFileReference *ref, CFStringRef name, NVFileReference *result) {
     char source[PATH_MAX], destination[PATH_MAX];
     NVFileReference parent;
     OSStatus error = NVReferenceMakePath(ref, (UInt8 *)source, sizeof(source));
-    if (!error) error = NVGetCatalogInfo(ref, 0, NULL, NULL, NULL, &parent);
-    if (!error) error = ChildPath(&parent, length, name, destination);
+    if (!error) error = NVGetFileInfo(ref, NULL, NULL, &parent);
+    if (!error) error = ChildPath(&parent, name, destination);
     if (error) return error;
     if (!strcmp(source, destination)) { if (result) *result = *ref; return noErr; }
     if (renamex_np(source, destination, RENAME_EXCL)) return NVStatusFromErrno(errno);
@@ -194,7 +188,7 @@ OSStatus NVMoveObject(const NVFileReference *ref, const NVFileReference *parent,
     OSStatus error = NVReferenceMakePath(ref, (UInt8 *)source, sizeof(source));
     if (!error) error = NVReferenceMakePath(parent, (UInt8 *)destination, sizeof(destination));
     if (error) return error;
-    if (strlcat(destination, strrchr(source, '/'), sizeof(destination)) >= sizeof(destination)) return errFSNameTooLong;
+    if (strlcat(destination, strrchr(source, '/'), sizeof(destination)) >= sizeof(destination)) return NVNameTooLongErr;
     if (renamex_np(source, destination, RENAME_EXCL)) return NVStatusFromErrno(errno);
     return result ? NVPathMakeReference((UInt8 *)destination, result, NULL) : noErr;
 }
@@ -207,36 +201,35 @@ OSStatus NVDeleteObject(const NVFileReference *ref) {
 
 struct NVDirectoryIterator { DIR *directory; NVFileReference parent; };
 
-OSStatus NVOpenIterator(const NVFileReference *ref, FSIteratorFlags flags, NVDirectoryIterator *iterator) {
+OSStatus NVOpenIterator(const NVFileReference *ref, NVDirectoryIterator *iterator) {
     char path[PATH_MAX];
     OSStatus error = NVReferenceMakePath(ref, (UInt8 *)path, sizeof(path));
     if (error) return error;
     DIR *directory = opendir(path);
     if (!directory) return NVStatusFromErrno(errno);
     *iterator = malloc(sizeof(**iterator));
-    if (!*iterator) { closedir(directory); return memFullErr; }
+    if (!*iterator) { closedir(directory); return NVMemoryFullErr; }
     **iterator = (struct NVDirectoryIterator){directory, *ref};
     return noErr;
 }
 
-OSStatus NVGetCatalogInfoBulk(NVDirectoryIterator iterator, ItemCount maximum, ItemCount *count, Boolean *changed, FSCatalogInfoBitmap fields, FSCatalogInfo *info, NVFileReference *refs, FSSpec *specs, HFSUniStr255 *names) {
+OSStatus NVIterateFiles(NVDirectoryIterator iterator, size_t maximum, size_t *count, NVFileInfo *info, NVFileReference *refs, CFStringRef *names) {
     *count = 0;
-    if (changed) *changed = false;
     while (*count < maximum) {
         errno = 0;
         struct dirent *entry = readdir(iterator->directory);
-        if (!entry) return errno ? NVStatusFromErrno(errno) : errFSNoMoreItems;
+        if (!entry) return errno ? NVStatusFromErrno(errno) : NVNoMoreItemsErr;
         if (!strcmp(entry->d_name, ".") || !strcmp(entry->d_name, "..")) continue;
         char path[PATH_MAX];
         OSStatus error = NVReferenceMakePath(&iterator->parent, (UInt8 *)path, sizeof(path));
         if (error) return error;
-        if (strlcat(path, "/", sizeof(path)) >= sizeof(path) || strlcat(path, entry->d_name, sizeof(path)) >= sizeof(path)) return errFSNameTooLong;
+        if (strlcat(path, "/", sizeof(path)) >= sizeof(path) || strlcat(path, entry->d_name, sizeof(path)) >= sizeof(path)) return NVNameTooLongErr;
         struct stat attributes;
         if (lstat(path, &attributes) || !S_ISREG(attributes.st_mode)) continue;
         NVFileReference ref;
         error = NVPathMakeReference((UInt8 *)path, &ref, NULL);
-        if (error == fnfErr) continue;
-        if (!error) error = NVGetCatalogInfo(&ref, fields, info ? info + *count : NULL, names ? names + *count : NULL, NULL, NULL);
+        if (error == NVFileNotFoundErr) continue;
+        if (!error) error = NVGetFileInfo(&ref, info ? info + *count : NULL, names ? names + *count : NULL, NULL);
         if (error) return error;
         if (refs) refs[*count] = ref;
         ++*count;
@@ -260,18 +253,18 @@ static int OpenReference(const NVFileReference *ref, int flags) {
     return descriptor;
 }
 
-OSStatus NVReadFile(const NVFileReference *ref, size_t chunkSize, UInt64 *size, void **buffer, UInt16 options) {
-    if (!ref || !size || !buffer || !chunkSize) return paramErr;
+OSStatus NVReadFile(const NVFileReference *ref, size_t chunkSize, UInt64 *size, void **buffer, Boolean uncached) {
+    if (!ref || !size || !buffer || !chunkSize) return NVParameterErr;
     *buffer = NULL;
     int descriptor = OpenReference(ref, O_RDONLY);
     if (descriptor < 0) return NVStatusFromErrno(errno);
     struct stat info;
     if (fstat(descriptor, &info)) { OSStatus error = NVStatusFromErrno(errno); close(descriptor); return error; }
     UInt64 requested = *size ? *size : (UInt64)info.st_size;
-    if (requested > SIZE_MAX) { close(descriptor); return memFullErr; }
+    if (requested > SIZE_MAX) { close(descriptor); return NVMemoryFullErr; }
     void *bytes = malloc(requested ? (size_t)requested : 1);
-    if (!bytes) { close(descriptor); return memFullErr; }
-    if (options & noCacheMask) fcntl(descriptor, F_NOCACHE, 1);
+    if (!bytes) { close(descriptor); return NVMemoryFullErr; }
+    if (uncached) fcntl(descriptor, F_NOCACHE, 1);
     size_t total = 0;
     OSStatus error = noErr;
     while (total < requested) {
@@ -287,17 +280,17 @@ OSStatus NVReadFile(const NVFileReference *ref, size_t chunkSize, UInt64 *size, 
     return noErr;
 }
 
-OSStatus NVWriteFile(const NVFileReference *ref, size_t chunkSize, UInt64 size, const void *buffer, UInt16 options, Boolean truncate) {
-    if (!ref || (!buffer && size) || !chunkSize || size > SIZE_MAX) return paramErr;
+OSStatus NVWriteFile(const NVFileReference *ref, size_t chunkSize, UInt64 size, const void *buffer, Boolean uncached, Boolean truncate) {
+    if (!ref || (!buffer && size) || !chunkSize || size > SIZE_MAX) return NVParameterErr;
     int descriptor = OpenReference(ref, O_WRONLY);
     if (descriptor < 0) return NVStatusFromErrno(errno);
-    if (options & noCacheMask) fcntl(descriptor, F_NOCACHE, 1);
+    if (uncached) fcntl(descriptor, F_NOCACHE, 1);
     size_t total = 0;
     OSStatus error = noErr;
     while (total < size) {
         ssize_t amount = write(descriptor, (const char *)buffer + total, MIN(chunkSize, (size_t)size - total));
         if (amount < 0) { if (errno == EINTR) continue; error = NVStatusFromErrno(errno); break; }
-        if (!amount) { error = ioErr; break; }
+        if (!amount) { error = NVIOErr; break; }
         total += (size_t)amount;
     }
     if (!error && truncate && ftruncate(descriptor, (off_t)size)) error = NVStatusFromErrno(errno);
@@ -323,7 +316,7 @@ static OSStatus ExchangeFiles(const NVFileReference *source, const NVFileReferen
         if (errno != ENOTSUP && errno != ENOSYS && errno != EINVAL) return NVStatusFromErrno(errno);
         // Keep the original file available until replacement succeeds on filesystems without swap support.
         char backup[PATH_MAX];
-        if (snprintf(backup, sizeof(backup), "%s.swap.XXXXXX", sourcePath) >= (int)sizeof(backup)) return errFSNameTooLong;
+        if (snprintf(backup, sizeof(backup), "%s.swap.XXXXXX", sourcePath) >= (int)sizeof(backup)) return NVNameTooLongErr;
         int descriptor = mkstemp(backup);
         if (descriptor < 0) return NVStatusFromErrno(errno);
         close(descriptor);

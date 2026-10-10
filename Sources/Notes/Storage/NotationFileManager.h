@@ -23,7 +23,6 @@
 
 #import <Cocoa/Cocoa.h>
 #import "NotationController.h"
-#include "FSExchangeObjectsCompat.h"
 #import "BufferUtils.h"
 
 extern NSString *NotesDatabaseFileName;
@@ -55,7 +54,7 @@ UInt32 diskUUIDIndexForNotation(NotationController *controller);
 - (BOOL)notesDirectoryIsTrashed;
 
 - (BOOL)notesDirectoryContainsFile:(NSString*)filename returningFSRef:(NVFileReference*)childRef;
-- (OSStatus)refreshFileRefIfNecessary:(NVFileReference *)childRef withName:(NSString *)filename charsBuffer:(UniChar*)charsBuffer;
+- (OSStatus)refreshFileRefIfNecessary:(NVFileReference *)childRef withName:(NSString *)filename;
 
 - (OSStatus)renameAndForgetNoteDatabaseFile:(NSString*)newfilename;
 - (BOOL)removeSpuriousDatabaseFileNotes;
@@ -69,7 +68,7 @@ UInt32 diskUUIDIndexForNotation(NotationController *controller);
 - (NSMutableData*)dataFromFileInNotesDirectory:(NVFileReference*)childRef forFilename:(NSString*)filename fileSize:(UInt64)givenFileSize;
 - (OSStatus)noteFileRenamed:(NVFileReference*)childRef fromName:(NSString*)oldName toName:(NSString*)newName;
 - (NSString*)uniqueFilenameForTitle:(NSString*)title fromNote:(NoteObject*)note;
-- (OSStatus)fileInNotesDirectory:(NVFileReference*)childRef isOwnedByUs:(BOOL*)owned hasCatalogInfo:(FSCatalogInfo *)info;
+- (OSStatus)fileInNotesDirectory:(NVFileReference*)childRef isOwnedByUs:(BOOL*)owned hasFileInfo:(NVFileInfo *)info;
 - (OSStatus)deleteFileInNotesDirectory:(NVFileReference*)childRef forFilename:(NSString*)filename;
 - (OSStatus)createFileIfNotPresentInNotesDirectory:(NVFileReference*)childRef forFilename:(NSString*)filename fileWasCreated:(BOOL*)created;
 - (OSStatus)storeDataAtomicallyInNotesDirectory:(NSData*)data withName:(NSString*)filename destinationRef:(NVFileReference*)destRef;
