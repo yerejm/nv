@@ -1041,6 +1041,13 @@ static BOOL NVFindActionSelectsNote(NSInteger action) {
 	[self fixCursorForBackgroundUpdatingMouseInside:NO];
 }
 
+//mouse moves reach the first responder wherever they occur, so the editor must not claim the cursor over the divider's grab area along its edge
+- (void)mouseMoved:(NSEvent *)event {
+	NSView *frameView = [[[self window] contentView] superview];
+	if (![[frameView hitTest:[frameView convertPoint:[event locationInWindow] fromView:nil]] isDescendantOf:self]) return;
+	[super mouseMoved:event];
+}
+
 - (void)_fixCursorForBackgroundUpdatingMouseInside:(NSNumber*)num {
 	[self fixCursorForBackgroundUpdatingMouseInside:[num boolValue]];
 }

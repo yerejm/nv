@@ -1757,6 +1757,11 @@ static NSString *NVNotesListSizeKey(BOOL sideBySide) {
 	return proposedMax - 100.0;
 }
 
+//the thin divider is drawn a point wide, too narrow to grab reliably
+- (NSRect)splitView:(NSSplitView *)sender effectiveRect:(NSRect)proposedEffectiveRect forDrawnRect:(NSRect)drawnRect ofDividerAtIndex:(NSInteger)dividerIndex {
+	return [sender isVertical] ? NSInsetRect(proposedEffectiveRect, -3.0, 0) : NSInsetRect(proposedEffectiveRect, 0, -3.0);
+}
+
 //window resizing goes to the editor while it has room, as the notes list keeps the size the user chose
 - (BOOL)splitView:(NSSplitView *)sender shouldAdjustSizeOfSubview:(NSView *)subview {
 	if (subview != [[sender subviews] firstObject]) return YES;
