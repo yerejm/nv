@@ -30,16 +30,13 @@
 	if ((self = [super init])) {
 		NSAssert(aUUIDRef != nil, @"need a real UUID");
 		uuidRef = CFRetain(aUUIDRef);
-		lastAccessed = [[NSDate date] retain];
+		lastAccessed = [NSDate date];
 	}
 	return self;
 }
 
 - (void)dealloc {
-
-	[lastAccessed release];
 	CFRelease(uuidRef);
-	[super dealloc];
 }
 + (BOOL)supportsSecureCoding {
 	return YES;
@@ -59,7 +56,7 @@
 	
     if ((self = [super init])) {
 
-		lastAccessed = [[decoder decodeObjectOfClass:[NSDate class] forKey:VAR_STR(lastAccessed)] retain];
+		lastAccessed = [decoder decodeObjectOfClass:[NSDate class] forKey:VAR_STR(lastAccessed)];
 		
 		NSUInteger decodedByteCount = 0;
 		const uint8_t *bytes = [decoder decodeBytesForKey:VAR_STR(uuidRef) returnedLength:&decodedByteCount];
@@ -73,8 +70,7 @@
 }
 
 - (void)see {
-	[lastAccessed release];
-	lastAccessed = [[NSDate date] retain];
+	lastAccessed = [NSDate date];
 }
 
 - (CFUUIDRef)uuidRef {
@@ -86,7 +82,7 @@
 }
 
 - (NSString*)description {
-	return [NSString stringWithFormat:@"DiskUUIDEntry(%@, %@)", lastAccessed, [(id)CFUUIDCreateString(NULL, uuidRef) autorelease]];
+	return [NSString stringWithFormat:@"DiskUUIDEntry(%@, %@)", lastAccessed, CFBridgingRelease(CFUUIDCreateString(NULL, uuidRef))];
 }
 
 - (NSUInteger)hash {

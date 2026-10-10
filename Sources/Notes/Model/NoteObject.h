@@ -51,7 +51,7 @@ typedef struct _NoteFilterContext {
 	
 	NSString *dateModifiedString, *dateCreatedString;
 	
-	id delegate; //the notes controller
+	__unsafe_unretained id delegate; //the notes controller
 
 	//for syncing to text file
 	NSString *filename;

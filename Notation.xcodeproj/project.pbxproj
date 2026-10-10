@@ -22,7 +22,7 @@
 		211345AB0B35D8540081B064 /* broken_md5.c in Sources */ = {isa = PBXBuildFile; fileRef = 211345A90B35D8540081B064 /* broken_md5.c */; };
 		2114C11609575BD400614E74 /* AppController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2114C11509575BD400614E74 /* AppController.m */; };
 		2114C13F0957732800614E74 /* NotationController.m in Sources */ = {isa = PBXBuildFile; fileRef = 2114C13E0957732800614E74 /* NotationController.m */; };
-		2114C1460957733200614E74 /* NoteObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 2114C1450957733200614E74 /* NoteObject.m */; };
+		2114C1460957733200614E74 /* NoteObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 2114C1450957733200614E74 /* NoteObject.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		2114C23E095883A600614E74 /* NSData_transformations.m in Sources */ = {isa = PBXBuildFile; fileRef = 2114C23C095883A600614E74 /* NSData_transformations.m */; };
 		2114C25B095885C800614E74 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = 2114C259095885C800614E74 /* Localizable.strings */; };
 		2114C2A80958D24800614E74 /* sha1.c in Sources */ = {isa = PBXBuildFile; fileRef = 2114C2A70958D24800614E74 /* sha1.c */; };
@@ -59,7 +59,7 @@
 		214495870ADCC07E00E2A2B6 /* PassphraseChanger.xib in Resources */ = {isa = PBXBuildFile; fileRef = 214495810ADCC07E00E2A2B6 /* PassphraseChanger.xib */; };
 		21469C8C0BEBA6A10094835F /* TemporaryFileCachePreparer.m in Sources */ = {isa = PBXBuildFile; fileRef = 21469C8A0BEBA6A10094835F /* TemporaryFileCachePreparer.m */; };
 		2147D82C131EC86100C65006 /* COPYING.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2147D82B131EC86100C65006 /* COPYING.txt */; };
-		215309F412E4E92300AF2739 /* DiskUUIDEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 215309F312E4E92300AF2739 /* DiskUUIDEntry.m */; };
+		215309F412E4E92300AF2739 /* DiskUUIDEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 215309F312E4E92300AF2739 /* DiskUUIDEntry.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21544FBE0B06331800C0D1D5 /* KeyDerivationManager.xib in Resources */ = {isa = PBXBuildFile; fileRef = 21544FB80B06331800C0D1D5 /* KeyDerivationManager.xib */; };
 		21544FC10B06332600C0D1D5 /* KeyDerivationManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 21544FC00B06332600C0D1D5 /* KeyDerivationManager.m */; };
 		215452080B06541800C0D1D5 /* PassphraseChanger.m in Sources */ = {isa = PBXBuildFile; fileRef = 215450F80B06509600C0D1D5 /* PassphraseChanger.m */; };
@@ -75,8 +75,8 @@
 		216DA1AD12D15F310004B9CE /* ListDividerDrag.png in Resources */ = {isa = PBXBuildFile; fileRef = 216DA1AC12D15F310004B9CE /* ListDividerDrag.png */; };
 		216DA22612D17DB70004B9CE /* AugmentedScrollView.m in Sources */ = {isa = PBXBuildFile; fileRef = 216DA22512D17DB70004B9CE /* AugmentedScrollView.m */; };
 		217CEBA309E9885500DF0E09 /* NotationFileManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 217CEBA209E9885500DF0E09 /* NotationFileManager.m */; };
-		217D4282096545A000E84749 /* LabelObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 217D4281096545A000E84749 /* LabelObject.m */; };
-		2181171309F311110020A252 /* DeletedNoteObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 2181171209F311110020A252 /* DeletedNoteObject.m */; };
+		217D4282096545A000E84749 /* LabelObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 217D4281096545A000E84749 /* LabelObject.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
+		2181171309F311110020A252 /* DeletedNoteObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 2181171209F311110020A252 /* DeletedNoteObject.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21813562105AF27400A0AE18 /* Acknowledgments.txt in Resources */ = {isa = PBXBuildFile; fileRef = 21813561105AF27400A0AE18 /* Acknowledgments.txt */; };
 		2182B3C3106B2509008641E4 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 2182B3C1106B2509008641E4 /* MainMenu.xib */; };
 		218D43330AA2ABC600F36CCA /* NotesTableView.m in Sources */ = {isa = PBXBuildFile; fileRef = 2191930209CFBEBD00586B15 /* NotesTableView.m */; };

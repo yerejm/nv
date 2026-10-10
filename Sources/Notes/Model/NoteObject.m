@@ -74,16 +74,6 @@ static void setCatalogNodeID(NoteObject *note, UInt32 cnid);
 	
 	[self invalidateFSRef];
 	
-	[tableTitleString release];
-	[titleString release];
-	[labelString release];
-	[labelSet release];
-	[undoManager release];
-	[filename release];
-	[dateModifiedString release];
-	[dateCreatedString release];
-	[prefixParentNotes release];
-	
 	if (perDiskInfoGroups)
 		free(perDiskInfoGroups);
 		
@@ -93,8 +83,6 @@ static void setCatalogNodeID(NoteObject *note, UInt32 cnid);
 		free(cContents);
 	if (cLabels)
 	    free(cLabels);
-	
-	[super dealloc];
 }
 
 - (id)delegate {
@@ -107,7 +95,7 @@ static void setCatalogNodeID(NoteObject *note, UInt32 cnid);
 		delegate = theDelegate;
 		
 		//do things that ought to have been done during init, but were not possible due to lack of delegate information
-		if (!filename) filename = [[delegate uniqueFilenameForTitle:titleString fromNote:self] retain];
+		if (!filename) filename = [delegate uniqueFilenameForTitle:titleString fromNote:self];
 		if (!tableTitleString && !didUnarchive) [self updateTablePreviewString];
 		if (!labelSet && !didUnarchive) [self updateLabelConnectionsAfterDecoding];
 	}
@@ -171,8 +159,8 @@ giveID:
 
 NSInteger compareFilename(id *one, id *two) {
     
-    return (NSInteger)CFStringCompare((CFStringRef)((*(NoteObject**)one)->filename), 
-				(CFStringRef)((*(NoteObject**)two)->filename), kCFCompareCaseInsensitive);
+    return (NSInteger)CFStringCompare((__bridge CFStringRef)((*(NoteObject**)one)->filename), 
+				(__bridge CFStringRef)((*(NoteObject**)two)->filename), kCFCompareCaseInsensitive);
 }
 
 NSInteger compareDateModified(id *a, id *b) {
@@ -182,13 +170,13 @@ NSInteger compareDateCreated(id *a, id *b) {
     return (*(NoteObject**)a)->createdDate - (*(NoteObject**)b)->createdDate;
 }
 NSInteger compareLabelString(id *a, id *b) {    
-    return (NSInteger)CFStringCompare((CFStringRef)(labelsOfNote(*(NoteObject **)a)), 
-								(CFStringRef)(labelsOfNote(*(NoteObject **)b)), kCFCompareCaseInsensitive);
+    return (NSInteger)CFStringCompare((__bridge CFStringRef)(labelsOfNote(*(NoteObject **)a)), 
+								(__bridge CFStringRef)(labelsOfNote(*(NoteObject **)b)), kCFCompareCaseInsensitive);
 }
 NSInteger compareTitleString(id *a, id *b) {
 	//add kCFCompareNumerically to options for natural order sort
-    CFComparisonResult stringResult = CFStringCompare((CFStringRef)(titleOfNote(*(NoteObject**)a)), 
-													  (CFStringRef)(titleOfNote(*(NoteObject**)b)), 
+    CFComparisonResult stringResult = CFStringCompare((__bridge CFStringRef)(titleOfNote(*(NoteObject**)a)), 
+													  (__bridge CFStringRef)(titleOfNote(*(NoteObject**)b)), 
 													  kCFCompareCaseInsensitive);
 	if (stringResult == kCFCompareEqualTo) {
 		
@@ -213,12 +201,12 @@ NSInteger compareDateCreatedReverse(id *a, id *b) {
     return (*(NoteObject**)b)->createdDate - (*(NoteObject**)a)->createdDate;
 }
 NSInteger compareLabelStringReverse(id *a, id *b) {    
-    return (NSInteger)CFStringCompare((CFStringRef)(labelsOfNote(*(NoteObject **)b)), 
-								(CFStringRef)(labelsOfNote(*(NoteObject **)a)), kCFCompareCaseInsensitive);
+    return (NSInteger)CFStringCompare((__bridge CFStringRef)(labelsOfNote(*(NoteObject **)b)), 
+								(__bridge CFStringRef)(labelsOfNote(*(NoteObject **)a)), kCFCompareCaseInsensitive);
 }
 NSInteger compareTitleStringReverse(id *a, id *b) {
-    CFComparisonResult stringResult = CFStringCompare((CFStringRef)(titleOfNote(*(NoteObject **)b)), 
-													  (CFStringRef)(titleOfNote(*(NoteObject **)a)), 
+    CFComparisonResult stringResult = CFStringCompare((__bridge CFStringRef)(titleOfNote(*(NoteObject **)b)), 
+													  (__bridge CFStringRef)(titleOfNote(*(NoteObject **)a)), 
 													  kCFCompareCaseInsensitive);
 	
 	if (stringResult == kCFCompareEqualTo) {
@@ -348,12 +336,12 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 			
 			syncServicesMD = [NVDecodeObjectOfClasses(decoder, NVPropertyListClasses(), [NSDictionary class], VAR_STR(syncServicesMD)) mutableCopy];
 			
-			titleString = [[decoder decodeObjectOfClass:[NSString class] forKey:VAR_STR(titleString)] retain];
-			labelString = [[decoder decodeObjectOfClass:[NSString class] forKey:VAR_STR(labelString)] retain];
+			titleString = [decoder decodeObjectOfClass:[NSString class] forKey:VAR_STR(titleString)];
+			labelString = [decoder decodeObjectOfClass:[NSString class] forKey:VAR_STR(labelString)];
 			//done tags and heading markers are stored as NSNull attribute values
 			NSSet *contentClasses = [NVPropertyListClasses() setByAddingObjectsFromArray:@[[NSAttributedString class], [NSNull class], [NSURL class]]];
 			contentString = [NVDecodeObjectOfClasses(decoder, contentClasses, [NSAttributedString class], VAR_STR(contentString)) mutableCopy];
-			filename = [[decoder decodeObjectOfClass:[NSString class] forKey:VAR_STR(filename)] retain];
+			filename = [decoder decodeObjectOfClass:[NSString class] forKey:VAR_STR(filename)];
 			
 		} else {
             NSRange32 range32;
@@ -383,10 +371,10 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 			[decoder decodeValueOfObjCType:@encode(CFUUIDBytes) at:&uniqueNoteIDBytes size:sizeof(uniqueNoteIDBytes)];
 			[decoder decodeValueOfObjCType:@encode(unsigned int) at:&serverModifiedTime size:sizeof(serverModifiedTime)];
 			
-			titleString = [[decoder decodeObject] retain];
-			labelString = [[decoder decodeObject] retain];
+			titleString = [decoder decodeObject];
+			labelString = [decoder decodeObject];
 			contentString = [[decoder decodeObject] mutableCopy];
-			filename = [[decoder decodeObject] retain];
+			filename = [decoder decodeObject];
             selectedRange.location = range32.location;
             selectedRange.length = range32.length;
 			contentsWere7Bit = (*(unsigned int*)&scrolledProportion) != 0; //hacko wacko
@@ -397,8 +385,8 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		cTitleFoundPtr = cTitle = titleString ? strdup([titleString lowercaseUTF8String]) : NULL;
 		cLabelsFoundPtr = cLabels = labelString ? strdup([labelString lowercaseUTF8String]) : NULL;
 		
-		dateCreatedString = [[NSString relativeDateStringWithAbsoluteTime:createdDate] retain];
-		dateModifiedString = [[NSString relativeDateStringWithAbsoluteTime:modifiedDate] retain];
+		dateCreatedString = [NSString relativeDateStringWithAbsoluteTime:createdDate];
+		dateModifiedString = [NSString relativeDateStringWithAbsoluteTime:modifiedDate];
 		
 		if (!titleString && !contentString && !labelString) return nil;
 	}
@@ -465,14 +453,14 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		}
 		
 		currentFormatID = formatID;
-		filename = [[delegate uniqueFilenameForTitle:titleString fromNote:nil] retain];
+		filename = [delegate uniqueFilenameForTitle:titleString fromNote:nil];
 		
 		CFUUIDRef uuidRef = CFUUIDCreate(kCFAllocatorDefault);
 		uniqueNoteIDBytes = CFUUIDGetUUIDBytes(uuidRef);
 		CFRelease(uuidRef);
 
 		createdDate = modifiedDate = CFAbsoluteTimeGetCurrent();
-		dateCreatedString = [dateModifiedString = [[NSString relativeDateStringWithAbsoluteTime:modifiedDate] retain] retain];
+		dateCreatedString = dateModifiedString = [NSString relativeDateStringWithAbsoluteTime:modifiedDate];
 		UCConvertCFAbsoluteTimeToUTCDateTime(modifiedDate, &fileModifiedDate);
 
 		if (delegate)
@@ -488,7 +476,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	NSAssert(aDelegate != nil, @"must supply a delegate");
     if ((self = [self init])) {
 		delegate = aDelegate;
-		filename = [(NSString*)entry->filename copy];
+		filename = [(__bridge NSString*)entry->filename copy];
 		currentFormatID = [delegate currentNoteStorageFormat];
 		fileModifiedDate = entry->lastModified;
 		setAttrModifiedDate(self, &(entry->lastAttrModified));
@@ -518,7 +506,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		}
 		if (!modifiedDate || !createdDate) {
 			modifiedDate = createdDate = CFAbsoluteTimeGetCurrent();
-			dateModifiedString = [dateCreatedString = [[NSString relativeDateStringWithAbsoluteTime:createdDate] retain] retain];	
+			dateModifiedString = dateCreatedString = [NSString relativeDateStringWithAbsoluteTime:createdDate];	
 		}
     }
 	
@@ -588,11 +576,10 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	
 	NSDictionary *dict = [NSDictionary dictionaryWithObjectsAndKeys:titleFont, NSFontAttributeName, nil];
 	
-	NSMutableAttributedString *largeAttributedTitleString = [[[NSMutableAttributedString alloc] initWithString:titleString attributes:dict] autorelease];
+	NSMutableAttributedString *largeAttributedTitleString = [[NSMutableAttributedString alloc] initWithString:titleString attributes:dict];
 	
 	NSAttributedString *noAttrBreak = [[NSAttributedString alloc] initWithString:@"\n\n\n" attributes:nil];
 	[largeAttributedTitleString appendAttributedString:noAttrBreak];
-	[noAttrBreak release];
 
 	//other header things here, too? like date created/mod/printed? tags?
 	NSMutableAttributedString *contentMinusColor = [[self contentString] mutableCopy];
@@ -600,14 +587,12 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	
 	[largeAttributedTitleString appendAttributedString:contentMinusColor];
 	
-	[contentMinusColor release];
 	
 	return largeAttributedTitleString;
 }
 
 - (void)updateTablePreviewString {
 	//delegate required for this method
-	[tableTitleString release];
 	GlobalPrefs *prefs = [GlobalPrefs defaultPrefs];
 
 	if ([prefs tableColumnsShowPreview]) {
@@ -615,14 +600,14 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 			//is called for visible notes at launch and resize only, generation of images for invisible notes is delayed until after launch
 			
 			NSSize labelBlockSize = ColumnIsSet(NoteLabelsColumn, [prefs tableColumnsBitmap]) ? [self sizeOfLabelBlocks] : NSZeroSize;
-			tableTitleString = [[titleString attributedMultiLinePreviewFromBodyText:contentString upToWidth:[delegate titleColumnWidth] 
-																	 intrusionWidth:labelBlockSize.width] retain];
+			tableTitleString = [titleString attributedMultiLinePreviewFromBodyText:contentString upToWidth:[delegate titleColumnWidth] 
+																	 intrusionWidth:labelBlockSize.width];
 		} else {
-			tableTitleString = [[titleString attributedSingleLinePreviewFromBodyText:contentString upToWidth:[delegate titleColumnWidth]] retain];
+			tableTitleString = [titleString attributedSingleLinePreviewFromBodyText:contentString upToWidth:[delegate titleColumnWidth]];
 		}
 	} else {
 		if ([prefs horizontalLayout]) {
-			tableTitleString = [[titleString attributedSingleLineTitle] retain];
+			tableTitleString = [titleString attributedSingleLineTitle];
 		} else {
 			tableTitleString = nil;
 		}
@@ -630,8 +615,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 }
 
 - (void)setTitleString:(NSString*)aNewTitle {
-	
-	NSString *oldTitle = [titleString retain];
 	
     if ([self _setTitleString:aNewTitle]) {
 		//do you really want to do this when the format is a single DB and the file on disk hasn't been removed?
@@ -660,7 +643,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		
 		[self updateTablePreviewString];
 		
-		[oldTitle release];
 		
 		[delegate note:self attributeChanged:NoteTitleColumnString];
     }
@@ -670,7 +652,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
     if (!aNewTitle || ![aNewTitle length] || (titleString && [aNewTitle isEqualToString:titleString]))
 	return NO;
 
-    [titleString release];
     titleString = [aNewTitle copy];
     
     cTitleFoundPtr = cTitle = replaceString(cTitle, [titleString lowercaseUTF8String]);
@@ -693,8 +674,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 				NSLog(@"Couldn't rename note %@", titleString);
 				
 				//revert name
-				[filename release];
-				filename = [oldName retain];
+				filename = oldName;
 				return;
 			}
 		} else {
@@ -709,7 +689,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 		[delegate updateLinksToNote:self fromOldName:oldName];
 		//update all the notes that link to the old filename as well!!
 		
-		[oldName release];
     }
 }
 
@@ -725,10 +704,10 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	[contentString santizeForeignStylesForImporting];
 	
 	//renormalize the title, in case it is still somehow derived from decomposed HFS+ filenames
-	CFMutableStringRef normalizedString = CFStringCreateMutableCopy(NULL, 0, (CFStringRef)titleString);
+	CFMutableStringRef normalizedString = CFStringCreateMutableCopy(NULL, 0, (__bridge CFStringRef)titleString);
 	CFStringNormalize(normalizedString, kCFStringNormalizationFormC);
 	
-	[self _setTitleString:(NSString*)normalizedString];
+	[self _setTitleString:(__bridge NSString*)normalizedString];
 	CFRelease(normalizedString);
 	
 	if ([delegate currentNoteStorageFormat] == RTFTextFormat)
@@ -748,27 +727,23 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 }
 
 - (void)updateDateStrings {
-	[dateModifiedString release];
-	[dateCreatedString release];
 	
-	dateCreatedString = [[NSString relativeDateStringWithAbsoluteTime:createdDate] retain];
-	dateModifiedString = [[NSString relativeDateStringWithAbsoluteTime:modifiedDate] retain];
+	dateCreatedString = [NSString relativeDateStringWithAbsoluteTime:createdDate];
+	dateModifiedString = [NSString relativeDateStringWithAbsoluteTime:modifiedDate];
 }
 
 - (void)setDateModified:(CFAbsoluteTime)newTime {
 	modifiedDate = newTime;
 	
-	[dateModifiedString release];
 	
-	dateModifiedString = [[NSString relativeDateStringWithAbsoluteTime:modifiedDate] retain];
+	dateModifiedString = [NSString relativeDateStringWithAbsoluteTime:modifiedDate];
 }
 
 - (void)setDateAdded:(CFAbsoluteTime)newTime {
 	createdDate = newTime;
 	
-	[dateCreatedString release];
 	
-	dateCreatedString = [[NSString relativeDateStringWithAbsoluteTime:createdDate] retain];	
+	dateCreatedString = [NSString relativeDateStringWithAbsoluteTime:createdDate];	
 }
 
 
@@ -832,7 +807,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	//when removing this note from NotationController, other LabelObjects as well as LabelsListController should know not to list it
 	if (delegate) {
 		[delegate note:self didRemoveLabelSet:labelSet];
-		[labelSet autorelease];
 		labelSet = nil;
 	} else {
 		NSLog(@"not disconnecting labels because no delegate exists");
@@ -842,7 +816,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 - (BOOL)_setLabelString:(NSString*)newLabelString {
 	if (newLabelString && ![newLabelString isEqualToString:labelString]) {
 		
-		[labelString release];
 		labelString = [newLabelString copy];
 		
 		cLabelsFoundPtr = cLabels = replaceString(cLabels, [labelString lowercaseUTF8String]);
@@ -881,7 +854,6 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 			[aLabel addNote:self];
 			
 			[newLabelSet addObject:aLabel];
-			[aLabel autorelease];
 		}
 	}
 	
@@ -918,10 +890,11 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 	
 	float totalWidth = 0.0, height = 0.0;
 	
-	if (![labelString length]) goto returnSizeIfNecessary;
-	
-	NSArray *words = [self orderedLabelTitles];
-	if (![words count]) goto returnSizeIfNecessary;
+	NSArray *words = [labelString length] ? [self orderedLabelTitles] : nil;
+	if (![words count]) {
+		if (reqSize) *reqSize = NSZeroSize;
+		return;
+	}
 	
 	NSPoint nextBoxPoint = onRight ? NSMakePoint(NSMaxX(aRect), aRect.origin.y) : aRect.origin;
 	NSMutableArray *images = reqSize || !onRight ? nil : [NSMutableArray arrayWithCapacity:[words count]];
@@ -956,8 +929,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 			}
 		}
 	} else {
-	returnSizeIfNecessary:
-		if (reqSize) *reqSize = NSMakeSize(totalWidth, height);
+		*reqSize = NSMakeSize(totalWidth, height);
 	}
 }
 
@@ -1067,7 +1039,6 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 			contentMinusColor = [contentString mutableCopy];
 			[contentMinusColor removeAttribute:NSForegroundColorAttributeName range:NSMakeRange(0, [contentMinusColor length])];
 			formattedData = [contentMinusColor RTFFromRange:NSMakeRange(0, [contentMinusColor length]) documentAttributes:@{}];
-			[contentMinusColor release];
 			
 			break;
 		case HTMLFormat:
@@ -1284,7 +1255,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
     if (![self updateFromData:data inFormat:currentFormatID])
 		return NO;
 	
-	[self setFilename:(NSString*)catEntry->filename withExternalTrigger:YES];
+	[self setFilename:(__bridge NSString*)catEntry->filename withExternalTrigger:YES];
     
     fileModifiedDate = catEntry->lastModified;
 	setAttrModifiedDate(self, &(catEntry->lastAttrModified));
@@ -1355,7 +1326,6 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 	    if ((stringFromData = [NSMutableString newShortLivedStringFromData:data ofGuessedEncoding:&fileEncoding withPath:NULL orWithFSRef:noteFileRefInit(self)])) {
 			attributedStringFromData = [[NSMutableAttributedString alloc] initWithString:stringFromData 
 																			  attributes:[[GlobalPrefs defaultPrefs] noteBodyAttributes]];
-			[stringFromData release];
 	    } else {
 			NSLog(@"String could not be initialized from data");
 	    }
@@ -1380,8 +1350,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 		return NO;
     }
     
-	[contentString release];
-	contentString = [attributedStringFromData retain];
+	contentString = attributedStringFromData;
 	[contentString santizeForeignStylesForImporting];
 	
 	contentCacheNeedsUpdate = YES;
@@ -1392,7 +1361,6 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
     
 	//don't update the date modified here, as this could be old data
     
-    [attributedStringFromData release];
     
     return YES;
 }
@@ -1451,7 +1419,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 	NSData *formattedData = nil;
 	NSError *error = nil;
 	
-	NSMutableAttributedString *contentMinusColor = [[contentString mutableCopy] autorelease];
+	NSMutableAttributedString *contentMinusColor = [contentString mutableCopy];
 	[contentMinusColor removeAttribute:NSForegroundColorAttributeName range:NSMakeRange(0, [contentMinusColor length])];
 
 	
@@ -1498,7 +1466,7 @@ static void DrawLabelBlockAboveBaseline(NSImage *img, NSPoint baselinePoint) {
 	BOOL fileWasCreated = NO;
 	
 	NVFileReference fileRef;
-	OSStatus err = FSCreateFileIfNotPresentInDirectory(directoryRef, &fileRef, (CFStringRef)newfilename, (Boolean*)&fileWasCreated);
+	OSStatus err = FSCreateFileIfNotPresentInDirectory(directoryRef, &fileRef, (__bridge CFStringRef)newfilename, (Boolean*)&fileWasCreated);
 	if (err != noErr) {
 		NSLog(@"FSCreateFileIfNotPresentInDirectory: %d", err);
 		return err;
