@@ -41,7 +41,7 @@ static dispatch_queue_t EditingSpaceQueue(void) {
 }
 
 static NSString *RunTool(NSString *path, NSArray *arguments, int *status) {
-	NSTask *task = [[[NSTask alloc] init] autorelease];
+	NSTask *task = [[NSTask alloc] init];
 	NSPipe *output = [NSPipe pipe];
 	[task setExecutableURL:[NSURL fileURLWithPath:path]];
 	[task setArguments:arguments];
@@ -56,7 +56,7 @@ static NSString *RunTool(NSString *path, NSArray *arguments, int *status) {
 	NSData *data = [[output fileHandleForReading] readDataToEndOfFileAndReturnError:NULL];
 	[task waitUntilExit];
 	*status = [task terminationStatus];
-	return data ? [[[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] autorelease] : nil;
+	return data ? [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding] : nil;
 }
 
 static NSString *DeviceMountedAt(NSString *path) {
@@ -158,14 +158,6 @@ static NSString *MountRAMDisk(NSString *mountPath) {
 	return self;
 }
 
-- (void)dealloc {
-	[directory release];
-	[deviceName release];
-	[preparedCachePath release];
-	[pendingCompletions release];
-	[super dealloc];
-}
-
 - (BOOL)protectsContents {
 	return protectsContents;
 }
@@ -188,11 +180,11 @@ static NSString *MountRAMDisk(NSString *mountPath) {
 		return;
 	}
 	if (!protectsContents) {
-		if (CreatePrivateDirectory([self _spacePath])) preparedCachePath = [[self _spacePath] retain];
+		if (CreatePrivateDirectory([self _spacePath])) preparedCachePath = [self _spacePath];
 		completion(preparedCachePath);
 		return;
 	}
-	[pendingCompletions addObject:[[completion copy] autorelease]];
+	[pendingCompletions addObject:[completion copy]];
 	releaseRequested = NO;
 	if (preparing) return;
 	preparing = YES;
@@ -218,22 +210,21 @@ static NSString *MountRAMDisk(NSString *mountPath) {
 	}
 	if (device) {
 		deviceName = [device copy];
-		preparedCachePath = [[self _spacePath] retain];
+		preparedCachePath = [self _spacePath];
 	}
-	NSArray *completions = [[pendingCompletions copy] autorelease];
+	NSArray *completions = [pendingCompletions copy];
 	[pendingCompletions removeAllObjects];
 	for (void (^completion)(NSString *) in completions) completion(preparedCachePath);
 }
 
 - (void)releaseEditingSpaceWaiting:(BOOL)wait {
 	if (preparing) releaseRequested = YES;
-	[preparedCachePath release];
 	preparedCachePath = nil;
 	if (!protectsContents) {
 		[[NSFileManager defaultManager] removeItemAtPath:[self _spacePath] error:NULL];
 		return;
 	}
-	NSString *device = [deviceName autorelease];
+	NSString *device = deviceName;
 	deviceName = nil;
 	NSString *mountPath = [self _spacePath];
 	//with no disk of its own, waiting still lets an abandoned preparation finish detaching

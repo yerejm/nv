@@ -49,7 +49,7 @@
 		2143331F12ECC4B2000F473B /* Dies ist der Titel einer Notiz.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 2143331B12ECC4B2000F473B /* Dies ist der Titel einer Notiz.nvhelp */; };
 		2143332012ECC4B2000F473B /* Moglicherweise nutzliche Tastenkurzel.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 2143331D12ECC4B2000F473B /* Moglicherweise nutzliche Tastenkurzel.nvhelp */; };
 		2143D3D910E987B100127EA6 /* Pencil.png in Resources */ = {isa = PBXBuildFile; fileRef = 2143D3D810E987B100127EA6 /* Pencil.png */; };
-		21447B6F133BFE1E00ACC1A7 /* ExternalEditorListController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21447B6E133BFE1E00ACC1A7 /* ExternalEditorListController.m */; };
+		21447B6F133BFE1E00ACC1A7 /* ExternalEditorListController.m in Sources */ = {isa = PBXBuildFile; fileRef = 21447B6E133BFE1E00ACC1A7 /* ExternalEditorListController.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		214493F60ADB892C00E2A2B6 /* CoreServices.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 214493E70ADB892C00E2A2B6 /* CoreServices.framework */; };
 		214495030ADC7C8D00E2A2B6 /* SecurityInterface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 214494F80ADC7C8D00E2A2B6 /* SecurityInterface.framework */; };
 		2144950F0ADC883100E2A2B6 /* PasswordAssistantButton.tif in Resources */ = {isa = PBXBuildFile; fileRef = 2144950D0ADC883000E2A2B6 /* PasswordAssistantButton.tif */; };
@@ -57,7 +57,7 @@
 		214495130ADC8A6600E2A2B6 /* PassphrasePicker.m in Sources */ = {isa = PBXBuildFile; fileRef = 214495120ADC8A6600E2A2B6 /* PassphrasePicker.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		2144957A0ADCC06300E2A2B6 /* PassphrasePicker.xib in Resources */ = {isa = PBXBuildFile; fileRef = 214495740ADCC06300E2A2B6 /* PassphrasePicker.xib */; };
 		214495870ADCC07E00E2A2B6 /* PassphraseChanger.xib in Resources */ = {isa = PBXBuildFile; fileRef = 214495810ADCC07E00E2A2B6 /* PassphraseChanger.xib */; };
-		21469C8C0BEBA6A10094835F /* TemporaryFileCachePreparer.m in Sources */ = {isa = PBXBuildFile; fileRef = 21469C8A0BEBA6A10094835F /* TemporaryFileCachePreparer.m */; };
+		21469C8C0BEBA6A10094835F /* TemporaryFileCachePreparer.m in Sources */ = {isa = PBXBuildFile; fileRef = 21469C8A0BEBA6A10094835F /* TemporaryFileCachePreparer.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		2147D82C131EC86100C65006 /* COPYING.txt in Resources */ = {isa = PBXBuildFile; fileRef = 2147D82B131EC86100C65006 /* COPYING.txt */; };
 		215309F412E4E92300AF2739 /* DiskUUIDEntry.m in Sources */ = {isa = PBXBuildFile; fileRef = 215309F312E4E92300AF2739 /* DiskUUIDEntry.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		21544FBE0B06331800C0D1D5 /* KeyDerivationManager.xib in Resources */ = {isa = PBXBuildFile; fileRef = 21544FB80B06331800C0D1D5 /* KeyDerivationManager.xib */; };
