@@ -25,7 +25,7 @@
 
 @implementation StickiesDocument
 
-- (id)initWithCoder:(id)decoder {
+- (instancetype)initWithCoder:(id)decoder {
 	if (!(self = [super init]))
 		return nil;
 	

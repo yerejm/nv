@@ -97,10 +97,10 @@ typedef struct _NoteCatalogEntry {
 	NSUndoManager *undoManager;
 }
 
-- (id)init;
-- (id)initWithAliasData:(NSData*)data error:(OSStatus*)err;
-- (id)initWithDefaultDirectoryReturningError:(OSStatus*)err;
-- (id)initWithDirectoryRef:(NVFileReference*)directoryRef error:(OSStatus*)err;
+- (instancetype)init;
+- (instancetype)initWithAliasData:(NSData*)data error:(OSStatus*)err;
+- (instancetype)initWithDefaultDirectoryReturningError:(OSStatus*)err;
+- (instancetype)initWithDirectoryRef:(NVFileReference*)directoryRef error:(OSStatus*)err;
 - (void)setAliasNeedsUpdating:(BOOL)needsUpdate;
 - (BOOL)aliasNeedsUpdating;
 - (NSData*)aliasDataForNoteDirectory;

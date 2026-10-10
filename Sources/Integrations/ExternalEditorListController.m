@@ -39,7 +39,7 @@ NSString *ExternalEditorsChangedNotification = @"ExternalEditorsChanged";
 
 @implementation ExternalEditor
 
-- (id)initWithBundleID:(NSString*)aBundleIdentifier resolvedURL:(NSURL*)aURL {
+- (instancetype)initWithBundleID:(NSString*)aBundleIdentifier resolvedURL:(NSURL*)aURL {
 	if ((self = [self init])) {
 		bundleIdentifier = aBundleIdentifier;
 		resolvedURL = aURL;
@@ -167,7 +167,7 @@ static ExternalEditorListController* sharedInstance = nil;
     return sharedInstance;
 }
 
-- (id)initWithUserDefaults {
+- (instancetype)initWithUserDefaults {
 	if ((self = [self init])) {
 		//TextEdit is not an ODB editor, but can be used to open files directly
 		[[NSUserDefaults standardUserDefaults] registerDefaults:
@@ -178,7 +178,7 @@ static ExternalEditorListController* sharedInstance = nil;
 	return self;
 }
 
-- (id)init {
+- (instancetype)init {
 	if ((self = [super init])) {
 		
 		userEditorList = [[NSMutableArray alloc] init];		

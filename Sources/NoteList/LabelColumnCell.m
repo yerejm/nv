@@ -27,7 +27,7 @@
 
 @implementation LabelColumnCell
 
-- (id)init {
+- (instancetype)init {
 	if ((self = [super init])) {
 		[self setEditable:YES];
 

@@ -42,6 +42,6 @@
 - (IBAction)okNewPassword:(id)sender;
 - (IBAction)discloseAdvancedSettings:(id)sender;
 - (void)showAroundWindow:(NSWindow*)window;
-- (id)initWithNotationPrefs:(NotationPrefs*)prefs;
+- (instancetype)initWithNotationPrefs:(NotationPrefs*)prefs;
 
 @end

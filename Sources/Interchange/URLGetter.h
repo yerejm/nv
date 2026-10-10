@@ -45,7 +45,7 @@
 }
 
 - (IBAction)cancelDownload:(id)sender;
-- (id)initWithURL:(NSURL*)aUrl delegate:(id)aDelegate userData:(id)someObj;
+- (instancetype)initWithURL:(NSURL*)aUrl delegate:(id)aDelegate userData:(id)someObj;
 
 - (NSURL*)url;
 - (id)userData;

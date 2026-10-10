@@ -25,7 +25,7 @@
 @implementation KeyDerivationDelaySliderCell 
 
 
-- (id)init {
+- (instancetype)init {
 	if ((self = [super init])) {
 		[self setNumberOfTickMarks:10];
 		[self setMinValue:0.05];
@@ -66,7 +66,7 @@
 	[super setDoubleValue:log(aDouble)];
 }
 
-- (id)initWithCoder:(NSCoder *)decoder {
+- (instancetype)initWithCoder:(NSCoder *)decoder {
 	if ((self = [super initWithCoder:decoder])) {
 		[KeyDerivationDelaySlider setCellClass:[KeyDerivationDelaySliderCell class]];
 		NSCell *myCell = [[KeyDerivationDelaySliderCell alloc] init];

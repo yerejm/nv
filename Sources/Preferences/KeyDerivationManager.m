@@ -23,7 +23,7 @@
 
 @implementation KeyDerivationManager
 
-- (id)initWithNotationPrefs:(NotationPrefs*)prefs {
+- (instancetype)initWithNotationPrefs:(NotationPrefs*)prefs {
 	notationPrefs = prefs;
 	
 	//compute initial test duration for the current iteration number
@@ -51,7 +51,7 @@
 	[self updateToolTip];
 }
 
-- (id)init {
+- (instancetype)init {
 	if ((self = [super init])) {
 		if (!view) {
 			if (!NVLoadNib(@"KeyDerivationManager", self))  {

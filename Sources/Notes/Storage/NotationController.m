@@ -42,7 +42,7 @@
 
 @implementation NotationController
 
-- (id)init {
+- (instancetype)init {
     if ((self = [super init])) {
 		directoryChangesFound = notesChanged = aliasNeedsUpdating = NO;
 		
@@ -79,13 +79,13 @@
 }
 
 
-- (id)initWithAliasData:(NSData *)data error:(OSStatus *)err {
+- (instancetype)initWithAliasData:(NSData *)data error:(OSStatus *)err {
     NVFileReference target;
     if (![data fsRefAsAlias:&target]) { *err = NVFileNotFoundErr; return nil; }
     return [self initWithDirectoryRef:&target error:err];
 }
 
-- (id)initWithDefaultDirectoryReturningError:(OSStatus*)err {
+- (instancetype)initWithDefaultDirectoryReturningError:(OSStatus*)err {
     NVFileReference targetRef;
     
     OSStatus anErr = noErr;
@@ -102,7 +102,7 @@
     return nil;
 }
 
-- (id)initWithDirectoryRef:(NVFileReference*)directoryRef error:(OSStatus*)err {
+- (instancetype)initWithDirectoryRef:(NVFileReference*)directoryRef error:(OSStatus*)err {
     
     *err = noErr;
     

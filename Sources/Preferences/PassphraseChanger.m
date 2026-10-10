@@ -57,7 +57,7 @@
 	}
 }
 
-- (id)initWithNotationPrefs:(NotationPrefs*)prefs {
+- (instancetype)initWithNotationPrefs:(NotationPrefs*)prefs {
 	if ((self = [super init])) {
 		notationPrefs = prefs;
 		

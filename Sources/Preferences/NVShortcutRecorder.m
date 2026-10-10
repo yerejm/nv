@@ -114,12 +114,12 @@ NSString *NVShortcutDescription(NSInteger keyCode, NSUInteger carbonModifiers, T
 	[self _update];
 }
 
-- (id)initWithFrame:(NSRect)frame {
+- (instancetype)initWithFrame:(NSRect)frame {
 	if ((self = [super initWithFrame:frame])) [self _setUpRecorder];
 	return self;
 }
 
-- (id)initWithCoder:(NSCoder *)coder {
+- (instancetype)initWithCoder:(NSCoder *)coder {
 	if ((self = [super initWithCoder:coder])) [self _setUpRecorder];
 	return self;
 }

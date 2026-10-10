@@ -41,7 +41,7 @@ typedef struct _NSRect32 {
     NSDate *mModificationDate;	
 }
 
-- (id)initWithCoder:(id)decoder;
+- (instancetype)initWithCoder:(id)decoder;
 - (void)encodeWithCoder:(id)coder;
 - (NSDate *)creationDate;
 - (NSDate *)modificationDate;

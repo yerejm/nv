@@ -39,7 +39,7 @@ extern NSString *ExternalEditorsChangedNotification;
 	NSMutableDictionary *knownPathExtensions;
 }
 
-- (id)initWithBundleID:(NSString*)aBundleIdentifier resolvedURL:(NSURL*)aURL;
+- (instancetype)initWithBundleID:(NSString*)aBundleIdentifier resolvedURL:(NSURL*)aURL;
 - (BOOL)canEditNoteDirectly:(NoteObject*)aNote;
 - (BOOL)canEditAllNotes:(NSArray*)notes;
 - (NSImage*)iconImage;
@@ -60,7 +60,7 @@ extern NSString *ExternalEditorsChangedNotification;
 	
 	NSMutableArray *_installedODBEditors;
 }
-- (id)initWithUserDefaults;
+- (instancetype)initWithUserDefaults;
 + (ExternalEditorListController*)sharedInstance;
 - (void)addUserEditorFromDialog:(id)sender;
 - (void)resetUserEditors:(id)sender;

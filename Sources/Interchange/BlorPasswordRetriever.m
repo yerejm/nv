@@ -31,7 +31,7 @@
 
 @implementation BlorPasswordRetriever
 
-- (id)initWithBlor:(NSString*)blorPath {
+- (instancetype)initWithBlor:(NSString*)blorPath {
 	if ((self = [super init])) {
 		path = blorPath;
 		
@@ -158,7 +158,7 @@
 
 @implementation BlorNoteEnumerator
 
-- (id)initWithBlor:(NSString*)blorPath passwordHashData:(NSData*)passwordHashData {
+- (instancetype)initWithBlor:(NSString*)blorPath passwordHashData:(NSData*)passwordHashData {
 	if ((self = [super init])) {
 		path = blorPath;
 		

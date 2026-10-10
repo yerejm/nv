@@ -31,7 +31,7 @@
 
 @implementation LabelsListController
 
-- (id)init {
+- (instancetype)init {
 	if ((self = [super init])) {
 	    
 	    allLabels = [[NSCountedSet alloc] init];

@@ -25,7 +25,7 @@
 
 @implementation UnifiedCell
 
-- (id)init {
+- (instancetype)init {
 	if ((self = [super init])) {
 
 		[self setTruncatesLastVisibleLine:YES];

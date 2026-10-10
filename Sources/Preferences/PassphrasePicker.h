@@ -44,7 +44,7 @@
 - (IBAction)cancelNewPassword:(id)sender;
 - (IBAction)okNewPassword:(id)sender;
 
-- (id)initWithNotationPrefs:(NotationPrefs*)prefs;
+- (instancetype)initWithNotationPrefs:(NotationPrefs*)prefs;
 @end
 
 @interface NSObject (PassphrasePickerDelegate)

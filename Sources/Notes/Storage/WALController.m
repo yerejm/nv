@@ -78,7 +78,7 @@ const char WALAuthenticatedJournalMagic[8] = {'N', 'V', 'W', 'A', 'L', 0, 0, 5};
 
 @implementation WALController
 
-- (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key {
+- (instancetype)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key {
     if ((self = [super init])) {
 		logFD = -1;
 		
@@ -184,11 +184,11 @@ const char WALAuthenticatedJournalMagic[8] = {'N', 'V', 'W', 'A', 'L', 0, 0, 5};
 //if these operations are all successful, log file is removed
 
 
-- (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key {
+- (instancetype)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key {
 	return [self initWithParentFSRep:path encryptionKey:key authenticated:YES];
 }
 
-- (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key authenticated:(BOOL)authenticated {
+- (instancetype)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key authenticated:(BOOL)authenticated {
     if ((self = [super initWithParentFSRep:path encryptionKey:key])) {
 	authenticatedRecords = authenticated;
 	
@@ -431,11 +431,11 @@ const char WALAuthenticatedJournalMagic[8] = {'N', 'V', 'W', 'A', 'L', 0, 0, 5};
 
 //if that works, then remove the log file
 
-- (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key {
+- (instancetype)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key {
 	return [self initWithParentFSRep:path encryptionKey:key acceptingUnauthenticatedRecords:NO];
 }
 
-- (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key acceptingUnauthenticatedRecords:(BOOL)acceptsUnauthenticated {
+- (instancetype)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key acceptingUnauthenticatedRecords:(BOOL)acceptsUnauthenticated {
     if ((self = [super initWithParentFSRep:path encryptionKey:key])) {
 	fileLength = totalBytesRead = 0;
 	acceptsUnauthenticatedRecords = acceptsUnauthenticated;

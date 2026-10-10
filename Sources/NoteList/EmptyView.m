@@ -21,7 +21,7 @@
 
 @implementation EmptyView
 
-- (id)initWithFrame:(NSRect)frameRect {
+- (instancetype)initWithFrame:(NSRect)frameRect {
 	if ((self = [super initWithFrame:frameRect]) != nil) {
 		lastNotesNumber = -1;
 	}

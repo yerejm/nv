@@ -29,7 +29,7 @@
 	NSInvocation *invocation;
 }
 
-+ (id)invocationRecorder;
++ (instancetype)invocationRecorder;
 - (id)target;
 - (NSInvocation *)invocation;
 - (id)prepareWithInvocationTarget:(id)aTarget;

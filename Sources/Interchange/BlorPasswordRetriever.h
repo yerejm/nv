@@ -34,7 +34,7 @@
 	NSData *hashData;
 }
 
-- (id)initWithBlor:(NSString*)blorPath;
+- (instancetype)initWithBlor:(NSString*)blorPath;
 
 - (IBAction)cancelAction:(id)sender;
 - (IBAction)importAction:(id)sender;
@@ -55,7 +55,7 @@
 	unsigned int currentByteOffset, suspectedNoteCount;
 }
 
-- (id)initWithBlor:(NSString*)blorPath passwordHashData:(NSData*)passwordHashData;
+- (instancetype)initWithBlor:(NSString*)blorPath passwordHashData:(NSData*)passwordHashData;
 - (unsigned int)suspectedNoteCount;
 - (void)decryptNextBytesOfLength:(long)length;
 - (id)nextNote;

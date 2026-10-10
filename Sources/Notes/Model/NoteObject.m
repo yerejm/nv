@@ -52,7 +52,7 @@ static NVFileReference *noteFileRefInit(NoteObject* obj);
 static void setAttrModifiedDate(NoteObject *note, struct timespec *dateTime);
 static void setCatalogNodeID(NoteObject *note, UInt32 cnid);
 
-- (id)init {
+- (instancetype)init {
     if ((self = [super init])) {
 	
 		perDiskInfoGroups = calloc(1, sizeof(PerDiskInfo));
@@ -299,7 +299,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	return YES;
 }
 
-- (id)initWithCoder:(NSCoder*)decoder {
+- (instancetype)initWithCoder:(NSCoder*)decoder {
 	if ((self = [self init])) {
 		
 		if ([decoder allowsKeyedCoding]) {
@@ -433,7 +433,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 	}
 }
 
-- (id)initWithNoteBody:(NSAttributedString*)bodyText title:(NSString*)aNoteTitle delegate:(id)aDelegate format:(int)formatID labels:(NSString*)aLabelString {
+- (instancetype)initWithNoteBody:(NSAttributedString*)bodyText title:(NSString*)aNoteTitle delegate:(id)aDelegate format:(int)formatID labels:(NSString*)aLabelString {
 	//delegate optional here
     if ((self = [self init])) {
 		
@@ -477,7 +477,7 @@ force_inline id unifiedCellForNote(NotesTableView *tv, NoteObject *note, NSInteg
 
 //only get the fsrefs until we absolutely need them
 
-- (id)initWithCatalogEntry:(NoteCatalogEntry*)entry delegate:(id)aDelegate {
+- (instancetype)initWithCatalogEntry:(NoteCatalogEntry*)entry delegate:(id)aDelegate {
 	NSAssert(aDelegate != nil, @"must supply a delegate");
     if ((self = [self init])) {
 		delegate = aDelegate;

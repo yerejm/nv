@@ -34,9 +34,9 @@
 	__weak id delegate;
 }
 
-- (id)initWithDictionary:(NSDictionary*)aDict;
-- (id)initWithNoteObject:(NoteObject*)aNote searchString:(NSString*)aString;
-- (id)initWithNoteUUIDBytes:(CFUUIDBytes)bytes searchString:(NSString*)aString;
+- (instancetype)initWithDictionary:(NSDictionary*)aDict;
+- (instancetype)initWithNoteObject:(NoteObject*)aNote searchString:(NSString*)aString;
+- (instancetype)initWithNoteUUIDBytes:(CFUUIDBytes)bytes searchString:(NSString*)aString;
 
 - (NSString*)searchString;
 - (NoteObject*)noteObject;
@@ -92,7 +92,7 @@
 	NoteBookmark *currentBookmark;
 }
 
-- (id)initWithBookmarks:(NSArray*)array;
+- (instancetype)initWithBookmarks:(NSArray*)array;
 - (NSArray*)dictionaryReps;
 
 - (id)dataSource;

@@ -38,8 +38,8 @@
 + (void)alertNoteTooLarge;
 + (void)alertProtectedSpaceUnavailable;
 
-- (id)initWithNotationPrefs:(NotationPrefs*)prefs;
-- (id)initWithDirectory:(NSString*)aDirectory protectsContents:(BOOL)protects;
+- (instancetype)initWithNotationPrefs:(NotationPrefs*)prefs;
+- (instancetype)initWithDirectory:(NSString*)aDirectory protectsContents:(BOOL)protects;
 
 - (BOOL)protectsContents;
 - (BOOL)isPreparing;

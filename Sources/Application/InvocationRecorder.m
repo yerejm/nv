@@ -24,7 +24,7 @@
 
 @implementation InvocationRecorder
 
-+ (id)invocationRecorder {
++ (instancetype)invocationRecorder {
 	return [[self alloc] init];
 }
 

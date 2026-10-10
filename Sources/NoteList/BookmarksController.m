@@ -33,7 +33,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 
 @implementation NoteBookmark
 
-- (id)initWithDictionary:(NSDictionary*)aDict {
+- (instancetype)initWithDictionary:(NSDictionary*)aDict {
 	if (aDict) {
 		NSString *uuidString = [aDict objectForKey:BMNoteUUIDStringKey];
 		if (uuidString) {
@@ -49,7 +49,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 	return self;
 }
 
-- (id)initWithNoteUUIDBytes:(CFUUIDBytes)bytes searchString:(NSString*)aString {
+- (instancetype)initWithNoteUUIDBytes:(CFUUIDBytes)bytes searchString:(NSString*)aString {
 	if ((self = [super init])) {
 		uuidBytes = bytes;
 		searchString = [aString copy];
@@ -58,7 +58,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 	return self;
 }
 
-- (id)initWithNoteObject:(NoteObject*)aNote searchString:(NSString*)aString {
+- (instancetype)initWithNoteObject:(NoteObject*)aNote searchString:(NSString*)aString {
 	
 	if ((self = [super init]) && aNote) {
 		noteObject = aNote;
@@ -130,7 +130,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 
 @implementation BookmarksController
 
-- (id)init {
+- (instancetype)init {
 	if ((self = [super init])) {
 		bookmarks = [[NSMutableArray alloc] init];
 		isSelectingProgrammatically = isRestoringSearch = NO;
@@ -162,7 +162,7 @@ static NSString *BMNoteUUIDStringKey = @"NoteUUIDString";
 	[bookmarks makeObjectsPerformSelector:@selector(setDelegate:) withObject:nil];
 }
 
-- (id)initWithBookmarks:(NSArray*)array {
+- (instancetype)initWithBookmarks:(NSArray*)array {
 	if ((self = [self init])) {
 		unsigned int i;
 		for (i=0; i<[array count]; i++) {

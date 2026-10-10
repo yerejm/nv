@@ -49,7 +49,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 @implementation NotationPrefs
 
 
-- (id)init {
+- (instancetype)init {
     if ((self = [super init])) {
 		allowedTypes = NULL;
 		
@@ -86,7 +86,7 @@ NSString *NotationPrefsDidChangeNotification = @"NotationPrefsDidChangeNotificat
 	return YES;
 }
 
-- (id)initWithCoder:(NSCoder*)decoder {
+- (instancetype)initWithCoder:(NSCoder*)decoder {
     if ((self = [super init])) {
 		NSAssert([decoder allowsKeyedCoding], @"Keyed decoding only!");
 		

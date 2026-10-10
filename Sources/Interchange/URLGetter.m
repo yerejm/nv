@@ -19,7 +19,7 @@
 
 @implementation URLGetter
 
-- (id)initWithURL:(NSURL*)aUrl delegate:(id)aDelegate userData:(id)someObj {
+- (instancetype)initWithURL:(NSURL*)aUrl delegate:(id)aDelegate userData:(id)someObj {
 	if (!aUrl || [aUrl isFileURL]) {
 		return nil;
 	}

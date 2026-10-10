@@ -32,7 +32,7 @@
 	BOOL hasDeletedNotes;
 }
 
-- (id)initWithNotationController:(NotationController*)aNotationController;
+- (instancetype)initWithNotationController:(NotationController*)aNotationController;
 - (NotationController*)notationController;
 - (IBAction)changeConfirmDeletion:(id)sender;
 - (BOOL)noteFileIsAlreadyDeleted:(NoteObject*)aNote;

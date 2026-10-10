@@ -36,7 +36,7 @@
 NSString* titleOfLabel(LabelObject *label);
 int compareLabel(const void *one, const void *two);
 
-- (id)initWithTitle:(NSString*)name;
+- (instancetype)initWithTitle:(NSString*)name;
 - (NSString*)title;
 - (NSString*)associativeIdentifier;
 - (void)setTitle:(NSString*)title;

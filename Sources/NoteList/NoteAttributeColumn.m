@@ -70,7 +70,7 @@
 
 @implementation NoteAttributeColumn
 
-- (id)initWithIdentifier:(id)anObject {
+- (instancetype)initWithIdentifier:(id)anObject {
 	
 	if ((self = [super initWithIdentifier:anObject])) {
 

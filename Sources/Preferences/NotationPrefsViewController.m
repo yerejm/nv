@@ -55,7 +55,7 @@
     return view;
 }
 
-- (id)init {
+- (instancetype)init {
     if ((self = [super init])) {
 		didAwakeFromNib = NO;
 		notationPrefs = [[GlobalPrefs defaultPrefs] notationPrefs];

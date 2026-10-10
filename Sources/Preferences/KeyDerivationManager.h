@@ -38,7 +38,7 @@
 	NSLayoutConstraint *collapsedLayout, *expandedLayout;
 }
 
-- (id)initWithNotationPrefs:(NotationPrefs*)prefs;
+- (instancetype)initWithNotationPrefs:(NotationPrefs*)prefs;
 - (NSView*)view;
 - (IBAction)sliderChanged:(id)sender;
 - (int)hashIterationCount;

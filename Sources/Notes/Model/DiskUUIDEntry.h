@@ -29,7 +29,7 @@
 	CFUUIDRef uuidRef;
 }
 
-- (id)initWithUUIDRef:(CFUUIDRef)aUUIDRef;
+- (instancetype)initWithUUIDRef:(CFUUIDRef)aUUIDRef;
 - (void)see;
 - (CFUUIDRef)uuidRef;
 - (NSDate*)lastAccessed;

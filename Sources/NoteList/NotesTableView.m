@@ -44,7 +44,7 @@ static void _CopyItemWithSelectorFromMenu(NSMenu *destMenu, NSMenu *sourceMenu, 
 }
 
 //there's something wrong with this initialization under panther, I think
-- (id)initWithCoder:(NSCoder *)decoder {
+- (instancetype)initWithCoder:(NSCoder *)decoder {
     if ((self = [super initWithCoder:decoder])) {
 	
 	globalPrefs = [GlobalPrefs defaultPrefs];

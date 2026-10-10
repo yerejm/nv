@@ -50,7 +50,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 
 @implementation AlienNoteImporter
 
-- (id)init {
+- (instancetype)init {
 	if ((self = [super init])) {
 		shouldGrabCreationDates = NO;
 		documentSettings = [[NSMutableDictionary alloc] init];
@@ -100,7 +100,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 	return blorPath;
 }
 
-- (id)initWithStoragePaths:(NSArray*)filenames {
+- (instancetype)initWithStoragePaths:(NSArray*)filenames {
 	if ((self = [self init])) {
 		if ((source = filenames)) {
 		
@@ -113,7 +113,7 @@ NSString *ShouldImportCreationDates = @"ShouldImportCreationDates";
 	return self;
 }
 
-- (id)initWithStoragePath:(NSString*)filename {
+- (instancetype)initWithStoragePath:(NSString*)filename {
 	if ((self = [self init])) {
 		if ((source = filename)) {
 			

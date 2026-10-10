@@ -12,7 +12,7 @@ BOOL NVHotKeyIsFunctionKey(NSInteger keyCode);
 	EventHandlerRef handlerRef;
 }
 
-- (id)initWithTarget:(id)aTarget action:(SEL)anAction;
+- (instancetype)initWithTarget:(id)aTarget action:(SEL)anAction;
 //replaces any earlier registration; NO when another app already owns the combination
 - (BOOL)registerKeyCode:(NSInteger)keyCode carbonModifiers:(NSUInteger)modifiers;
 - (void)unregister;

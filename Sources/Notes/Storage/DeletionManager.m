@@ -27,14 +27,14 @@
 
 @implementation DeletionManager
 
-- (id)init {
+- (instancetype)init {
 	if ((self = [super init])) {
 		deletedNotes = [[NSMutableArray alloc] init];
 	}
 	return self;
 }
 
-- (id)initWithNotationController:(NotationController*)aNotationController {
+- (instancetype)initWithNotationController:(NotationController*)aNotationController {
 	if ((self = [self init])) {
 		notationController = aNotationController;
 	}

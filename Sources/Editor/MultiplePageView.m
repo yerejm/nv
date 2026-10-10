@@ -45,7 +45,7 @@
 
 @implementation MultiplePageView
 
-- (id)initWithFrame:(NSRect)rect {
+- (instancetype)initWithFrame:(NSRect)rect {
     if ((self = [super initWithFrame:rect])) {
 		
 		textStorage = [[NSTextStorage alloc] init]; 

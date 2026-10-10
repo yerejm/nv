@@ -65,7 +65,7 @@ extern const char WALAuthenticatedJournalMagic[8];
 	z_stream compressionStream;
 }
 
-- (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key;
+- (instancetype)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key;
 - (id)delegate;
 - (void)setDelegate:(id)aDelegate;
 - (BOOL)logFileStillExists;
@@ -79,9 +79,9 @@ extern const char WALAuthenticatedJournalMagic[8];
 	BOOL authenticatedRecords;
 }
 //writes authenticated records
-- (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key;
+- (instancetype)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key;
 //unauthenticated records are the format that versions before epoch 5 read
-- (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key authenticated:(BOOL)authenticated;
+- (instancetype)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key authenticated:(BOOL)authenticated;
 - (BOOL)writeEstablishedNote:(id<SynchronizedNote>)aNoteObject;
 - (BOOL)writeRemovalForNote:(id<SynchronizedNote>)aNoteObject;
 - (BOOL)writeNoteObject:(id<SynchronizedNote>)aNoteObject;
@@ -103,8 +103,8 @@ extern const char WALAuthenticatedJournalMagic[8];
 }
 
 //unauthenticated (pre-epoch-5) journals are refused
-- (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key;
-- (id)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key acceptingUnauthenticatedRecords:(BOOL)acceptsUnauthenticated;
+- (instancetype)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key;
+- (instancetype)initWithParentFSRep:(const char*)path encryptionKey:(NSData*)key acceptingUnauthenticatedRecords:(BOOL)acceptsUnauthenticated;
 //records that failed authentication, or unauthenticated records that were refused, stop recovery
 - (BOOL)rejectedUnverifiedRecords;
 - (id <SynchronizedNote>)recoverNextObject;

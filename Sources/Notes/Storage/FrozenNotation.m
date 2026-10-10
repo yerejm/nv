@@ -34,7 +34,7 @@
 	return YES;
 }
 
-- (id)initWithCoder:(NSCoder*)decoder {
+- (instancetype)initWithCoder:(NSCoder*)decoder {
 	if ([decoder containsValueForKey:VAR_STR(prefs)]) {
 		prefs = [decoder decodeObjectOfClass:[NotationPrefs class] forKey:VAR_STR(prefs)];
 		notesData = [decoder decodeObjectOfClass:[NSMutableData class] forKey:VAR_STR(notesData)];
@@ -61,7 +61,7 @@
 	}
 }
 
-- (id)initWithNotes:(NSMutableArray*)notes deletedNotes:(NSMutableSet*)antiNotes prefs:(NotationPrefs*)somePrefs {
+- (instancetype)initWithNotes:(NSMutableArray*)notes deletedNotes:(NSMutableSet*)antiNotes prefs:(NotationPrefs*)somePrefs {
 	
 	if ((self = [super init])) {
 

@@ -108,7 +108,7 @@ static void sendCallbacksForGlobalPrefs(GlobalPrefs* self, SEL selector, id orig
 	}
 }
 
-- (id)init {
+- (instancetype)init {
 	if ((self = [super init])) {
 
 		runCallbacksIMP = (void (*)(GlobalPrefs*, SEL, SEL, id))[self methodForSelector:@selector(notifyCallbacksForSelector:excludingSender:)];

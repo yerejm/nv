@@ -34,8 +34,8 @@
 	id <SynchronizedNote> originalNote;
 }
 
-+ (id)deletedNoteWithNote:(id <SynchronizedNote>)aNote;
-- (id)initWithExistingObject:(id<SynchronizedNote>)note;
++ (instancetype)deletedNoteWithNote:(id <SynchronizedNote>)aNote;
+- (instancetype)initWithExistingObject:(id<SynchronizedNote>)note;
 
 - (id<SynchronizedNote>)originalNote;
 

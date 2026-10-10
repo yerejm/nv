@@ -17,7 +17,7 @@ def method(source, prefix):
 
 source = (ROOT / 'Sources/Application/GlobalPrefs.m').read_text()
 assignment = re.search(r'runCallbacksIMP = .*?;', source).group()
-callback = source[source.index('static void sendCallbacksForGlobalPrefs'):source.index('\n- (id)init')]
+callback = source[source.index('static void sendCallbacksForGlobalPrefs'):source.index('\n- (instancetype)init')]
 methods = [method(source, prefix) for prefix in [
     '- (void)registerWithTarget:', '- (void)registerForSettingChange:',
     '- (void)unregisterForNotificationsFromSelector:', '- (void)notifyCallbacksForSelector:',
@@ -30,7 +30,7 @@ declaration += '\n'.join(item[:item.index('{')].strip() + ';' for item in method
 static NSString *ConfirmNoteDeletionKey = @"ConfirmNoteDeletion";
 @implementation GlobalPrefs
 ''' + callback + '''
-- (id)init {
+- (instancetype)init {
     if ((self = [super init])) {
         ''' + assignment + '''
         selectorObservers = [[NSMutableDictionary alloc] init];

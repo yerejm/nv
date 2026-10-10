@@ -26,7 +26,7 @@
 
 @implementation DiskUUIDEntry
 
-- (id)initWithUUIDRef:(CFUUIDRef)aUUIDRef {
+- (instancetype)initWithUUIDRef:(CFUUIDRef)aUUIDRef {
 	if ((self = [super init])) {
 		NSAssert(aUUIDRef != nil, @"need a real UUID");
 		uuidRef = CFRetain(aUUIDRef);
@@ -51,7 +51,7 @@
 	[coder encodeBytes:(const uint8_t *)&bytes length:sizeof(CFUUIDBytes) forKey:VAR_STR(uuidRef)];
 
 }
-- (id)initWithCoder:(NSCoder*)decoder {
+- (instancetype)initWithCoder:(NSCoder*)decoder {
 	NSAssert([decoder allowsKeyedCoding], @"keyed-decoding only!");
 	
     if ((self = [super init])) {

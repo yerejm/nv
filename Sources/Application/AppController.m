@@ -72,7 +72,7 @@ static void NVUseMenuFontForStyledTitles(NSMenu *menu) {
 
 static NSString *NVFullScreenSwitchedLayoutKey = @"FullScreenSwitchedLayout";
 
-- (id)init {
+- (instancetype)init {
     if ((self = [super init])) {
 		
 		windowUndoManager = [[NSUndoManager alloc] init];

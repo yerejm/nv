@@ -39,7 +39,7 @@ static SecureTextEntryManager *sharedInstance = nil;
     return sharedInstance;
 }
 
-- (id)init {
+- (instancetype)init {
 	if ((self = [super init])) {
 		
 		[[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(applicationDidBecomeActive:) 

@@ -28,7 +28,7 @@
 
 @implementation LabelObject
 
-- (id)initWithTitle:(NSString*)name {
+- (instancetype)initWithTitle:(NSString*)name {
     if ((self = [super init])) {
 		labelName = name;
 		lowercaseName = [name lowercaseString];

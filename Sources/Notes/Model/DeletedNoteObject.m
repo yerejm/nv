@@ -26,11 +26,11 @@
 
 @implementation DeletedNoteObject
 
-+ (id)deletedNoteWithNote:(id <SynchronizedNote>)aNote {
++ (instancetype)deletedNoteWithNote:(id <SynchronizedNote>)aNote {
 	return [[DeletedNoteObject alloc] initWithExistingObject:aNote];
 }
 
-- (id)initWithExistingObject:(id<SynchronizedNote>)note {
+- (instancetype)initWithExistingObject:(id<SynchronizedNote>)note {
     if ((self = [super init])) {
 		CFUUIDBytes *bytes = [note uniqueNoteIDBytes];
 		uniqueNoteIDBytes = *bytes;
@@ -46,7 +46,7 @@
 	return YES;
 }
 
-- (id)initWithCoder:(NSCoder*)decoder {
+- (instancetype)initWithCoder:(NSCoder*)decoder {
     if ((self = [super init])) {
 		
 		if ([decoder allowsKeyedCoding]) {

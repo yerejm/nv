@@ -25,7 +25,7 @@ static OSStatus NVHotKeyPressed(EventHandlerCallRef handler, EventRef event, voi
 	return noErr;
 }
 
-- (id)initWithTarget:(id)aTarget action:(SEL)anAction {
+- (instancetype)initWithTarget:(id)aTarget action:(SEL)anAction {
 	if ((self = [super init])) {
 		static UInt32 nextIdentifier = 1;
 		identifier = nextIdentifier++;

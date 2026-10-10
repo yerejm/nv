@@ -143,13 +143,13 @@ static NSString *MountRAMDisk(NSString *mountPath) {
 			   NSLocalizedString(@"OK", nil), nil, nil);
 }
 
-- (id)initWithNotationPrefs:(NotationPrefs*)prefs {
+- (instancetype)initWithNotationPrefs:(NotationPrefs*)prefs {
 	NSAssert(prefs != nil, @"prefs are nil");
 	return [self initWithDirectory:NSTemporaryDirectory() protectsContents:[prefs notesStorageFormat] == SingleDatabaseFormat &&
 			[prefs doesEncryption] && ![[NSUserDefaults standardUserDefaults] boolForKey:@"UseInsecureTempEditing"]];
 }
 
-- (id)initWithDirectory:(NSString*)aDirectory protectsContents:(BOOL)protects {
+- (instancetype)initWithDirectory:(NSString*)aDirectory protectsContents:(BOOL)protects {
 	if ((self = [super init])) {
 		directory = [aDirectory copy];
 		protectsContents = protects;

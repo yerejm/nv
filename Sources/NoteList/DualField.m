@@ -63,7 +63,7 @@ static void DrawFieldSymbol(NSString *name, NSRect rect, CGFloat opacity) {
 
 @implementation DualFieldCell
 
-- (id) init {
+- (instancetype)init {
 	self = [super init];
 	if (self != nil) {
 		[self setStringValue:@""];
