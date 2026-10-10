@@ -96,14 +96,11 @@ class BuildPolicyTests(unittest.TestCase):
                     with self.subTest(project=path, configuration=item['name']):
                         self.assertEqual(item['buildSettings'].get('CLANG_ENABLE_OBJC_ARC'), 'YES')
                         self.assertEqual(item['buildSettings'].get('CLANG_ENABLE_OBJC_WEAK'), 'YES')
-        # the legacy fixture tools build against the original manually managed sources
-        legacy = {'capture_legacy_databases.m', 'generate_legacy_fixtures.m'}
         manual = re.compile(r'\s(retain|release|autorelease)\]|\[super dealloc\]|NSAutoreleasePool|retainCount')
         for directory in ['Sources', 'Vendor', 'Tests']:
             for source in (ROOT / directory).rglob('*.[mh]'):
-                if source.name not in legacy:
-                    with self.subTest(source=str(source.relative_to(ROOT))):
-                        self.assertIsNone(manual.search(source.read_text(errors='replace')))
+                with self.subTest(source=str(source.relative_to(ROOT))):
+                    self.assertIsNone(manual.search(source.read_text(errors='replace')))
         for script in ['script/build_and_run.sh', 'script/test_external_editor.sh']:
             for line in (ROOT / script).read_text().splitlines():
                 if 'xcrun clang' in line:
