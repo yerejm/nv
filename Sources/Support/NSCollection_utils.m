@@ -174,12 +174,9 @@
 				NSAttributedString *titleDesc = [[NSAttributedString alloc] initWithString:[NSString stringWithFormat:@" (%@)", titleOfNote(aNote)] attributes:grayAttrs];
 				[titleString appendAttributedString:titleDesc];
 				[item setAttributedTitle:titleString];
-				[titleDesc release];
-				[titleString release];
 				[item setRepresentedObject:urlString];
 				[item setTarget:[item representedObject]];
 				[urlsMenu addItem:item];
-				[item release];
 			}
 		}
 	}
@@ -194,16 +191,16 @@
 	[self sortUsingFunction:(NSInteger (*)(id, id, void *))genericSortContextLast context:compare];
 }
 
-- (void)sortStableUsingFunction:(NSInteger (*)(id *, id *))compare usingBuffer:(id **)buffer ofSize:(unsigned int*)bufSize {
-	CFIndex count = CFArrayGetCount((CFArrayRef)self);
+- (void)sortStableUsingFunction:(NSInteger (*)(id *, id *))compare usingBuffer:(__unsafe_unretained id **)buffer ofSize:(unsigned int*)bufSize {
+	CFIndex count = CFArrayGetCount((__bridge CFArrayRef)self);
 	
-	ResizeArray(buffer, count, bufSize);
+	_ResizeBuffer((void ***)(void *)buffer, count, bufSize, sizeof(id));
 	
-	CFArrayGetValues((CFArrayRef)self, CFRangeMake(0, [self count]), (const void **)*buffer);
+	CFArrayGetValues((__bridge CFArrayRef)self, CFRangeMake(0, [self count]), (const void **)(void *)*buffer);
 	
 	mergesort((void *)*buffer, (size_t)count, sizeof(id), (int (*)(const void *, const void *))compare);
 	
-	CFArrayReplaceValues((CFMutableArrayRef)self, CFRangeMake(0, count), (const void **)*buffer, count);
+	CFArrayReplaceValues((__bridge CFMutableArrayRef)self, CFRangeMake(0, count), (const void **)(void *)*buffer, count);
 }
 
 @end

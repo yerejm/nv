@@ -49,7 +49,7 @@
     NSString *string = [[NSFileManager defaultManager] stringWithFileSystemRepresentation:path length:strlen(path)];
     NSImage *image = [[[NSWorkspace sharedWorkspace] iconForFile:string] copy];
     [image setSize:NSMakeSize(16, 16)];
-    return [image autorelease];
+    return image;
 }
 
 @end

@@ -145,7 +145,6 @@
 		}
 		NSKeyedUnarchiver *unarchiver = NVUnarchiverForData(notesData);
 		allNotes = [NVDecodeArrayOfObjectsOfClass(unarchiver, [NoteObject class], @"notes") mutableCopy];
-		[unarchiver autorelease];
 		
 	} @catch (NSException *e) {
 		*err = kCoderErr;
@@ -202,7 +201,6 @@
             @try {
                 NSKeyedUnarchiver *unarchiver = NVUnarchiverForData(notesData);
                 allNotes = [NVDecodeArrayOfObjectsOfClass(unarchiver, [NoteObject class], @"notes") mutableCopy];
-                [unarchiver autorelease];
             } @catch (NSException *e) {
                 //only databases from before the first keyed format (epoch 2) can hold positional archives
                 if ([prefs epochIteration] >= 2) @throw;

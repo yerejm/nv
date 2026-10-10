@@ -3,7 +3,7 @@ import pathlib
 import plistlib
 import subprocess
 
-from project_layout import file_groups, header_search_paths
+from project_layout import automatic_reference_counting, compiler_flags, file_groups, header_search_paths
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 objects = {}
@@ -33,14 +33,22 @@ refs = refs[:len(sources)]
 product = add(dict(isa='PBXFileReference', path='CompatibilityTests.xctest',
                    sourceTree='BUILT_PRODUCTS_DIR', explicitFileType='wrapper.cfbundle'))
 children.append(product)
-builds = [add(dict(isa='PBXBuildFile', fileRef=ref)) for ref in refs]
+# generated units take the flags of the application source they are extracted from
+origins = {'GlobalPrefsCallbacks.m': 'GlobalPrefs.m', 'NSStringUtilities.m': 'NSString_NV.m',
+           'HyperlinkUnits.m': 'AttributedPlainText.m', 'VolumeIdentity.m': 'NotationFileManager.m',
+           'EditorCursor.m': 'LinkingEditor.m'}
+flags = compiler_flags()
+flags = [flags.get(origins.get(name, name)) if source.startswith(('Sources/', 'build/generated-tests/')) else None
+         for source in sources for name in [pathlib.PurePosixPath(source).name]]
+builds = [add(dict(isa='PBXBuildFile', fileRef=ref, **(dict(settings=dict(COMPILER_FLAGS=flag)) if flag else {})))
+          for ref, flag in zip(refs, flags)]
 sourcephase = add(dict(isa='PBXSourcesBuildPhase', buildActionMask=2147483647,
                        files=builds, runOnlyForDeploymentPostprocessing=0))
 frameworkphase = add(dict(isa='PBXFrameworksBuildPhase', buildActionMask=2147483647,
                           files=[], runOnlyForDeploymentPostprocessing=0))
 settings = dict(
     ARCHS='arm64', SDKROOT='macosx', MACOSX_DEPLOYMENT_TARGET='15.0',
-    CLANG_ENABLE_OBJC_ARC='NO', GCC_PREFIX_HEADER='$(SRCROOT)/../Configuration/Notation_Prefix.pch',
+    **automatic_reference_counting(), GCC_PREFIX_HEADER='$(SRCROOT)/../Configuration/Notation_Prefix.pch',
     HEADER_SEARCH_PATHS=header_search_paths(), GENERATE_INFOPLIST_FILE='YES',
     PRODUCT_BUNDLE_IDENTIFIER='net.notational.velocity.tests', PRODUCT_NAME='CompatibilityTests',
     FRAMEWORK_SEARCH_PATHS=['$(PLATFORM_DIR)/Developer/Library/Frameworks', '$(SRCROOT)/..'],

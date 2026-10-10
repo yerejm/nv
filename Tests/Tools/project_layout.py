@@ -21,6 +21,27 @@ def header_search_paths():
             for path in settings['HEADER_SEARCH_PATHS']] + ['$(SRCROOT)/Support']
 
 
+def compiler_flags():
+    objects = application_project()['objects']
+    flags = {}
+    for obj in objects.values():
+        if obj.get('isa') == 'PBXBuildFile' and 'COMPILER_FLAGS' in obj.get('settings', {}):
+            flags[objects[obj['fileRef']]['path'].split('/')[-1]] = obj['settings']['COMPILER_FLAGS']
+    return flags
+
+
+def automatic_reference_counting():
+    objects = application_project()['objects']
+    settings = next(obj['buildSettings'] for obj in objects.values()
+                    if obj.get('isa') == 'XCBuildConfiguration' and obj.get('name') == 'Development'
+                    and obj['buildSettings'].get('INFOPLIST_FILE') == 'Configuration/Info.plist')
+    project = next(obj['buildSettings'] for obj in objects.values()
+                   if obj.get('isa') == 'XCBuildConfiguration' and obj.get('name') == 'Development'
+                   and obj is not settings and 'INFOPLIST_FILE' not in obj['buildSettings'])
+    return {key: settings.get(key, project.get(key, 'NO'))
+            for key in ['CLANG_ENABLE_OBJC_ARC', 'CLANG_ENABLE_OBJC_WEAK']}
+
+
 def file_groups(add, filenames):
     root_children = []
     group = add(dict(isa='PBXGroup', children=root_children, sourceTree='<group>'))

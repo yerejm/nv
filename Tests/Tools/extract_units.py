@@ -40,9 +40,11 @@ static NSString *ConfirmNoteDeletionKey = @"ConfirmNoteDeletion";
 }
 - (void)dealloc {
     [defaults removePersistentDomainForName:@"net.notational.velocity.tests.callbacks"];
+#if !__has_feature(objc_arc)
     [defaults release];
     [selectorObservers release];
     [super dealloc];
+#endif
 }
 ''' + '\n'.join(methods) + '\n@end\n')
 

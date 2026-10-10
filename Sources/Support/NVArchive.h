@@ -3,6 +3,15 @@
 
 #import <Foundation/Foundation.h>
 
+//lets these inline helpers compile in both manual and automatic reference counting sources during the ARC migration
+#ifndef NV_AUTORELEASE
+#if __has_feature(objc_arc)
+#define NV_AUTORELEASE(object) (object)
+#else
+#define NV_AUTORELEASE(object) [(object) autorelease]
+#endif
+#endif
+
 static inline NSData *NVArchiveObject(id object) {
     NSError *error = nil;
     NSData *data = [NSKeyedArchiver archivedDataWithRootObject:object requiringSecureCoding:YES error:&error];
@@ -12,7 +21,7 @@ static inline NSData *NVArchiveObject(id object) {
 
 static inline NSKeyedUnarchiver *NVUnarchiverForData(NSData *data) {
     NSError *error = nil;
-    NSKeyedUnarchiver *coder = [[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error];
+    NSKeyedUnarchiver *coder = NV_AUTORELEASE([[NSKeyedUnarchiver alloc] initForReadingFromData:data error:&error]);
     if (!coder) [NSException raise:NSInvalidUnarchiveOperationException format:@"%@", error];
     [coder setRequiresSecureCoding:YES];
     [coder setDecodingFailurePolicy:NSDecodingFailurePolicyRaiseException];
@@ -31,11 +40,9 @@ static inline id NVUnarchiveLegacyObject(NSData *data) {
 }
 
 static inline id NVUnarchiveLegacyStickies(NSData *data) {
-    NSUnarchiver *coder = [[NSUnarchiver alloc] initForReadingWithData:data];
+    NSUnarchiver *coder = NV_AUTORELEASE([[NSUnarchiver alloc] initForReadingWithData:data]);
     [coder decodeClassName:@"Document" asClassName:@"StickiesDocument"];
-    id object = [[coder decodeObject] retain];
-    [coder release];
-    return [object autorelease];
+    return [coder decodeObject];
 }
 #pragma clang diagnostic pop
 
@@ -75,14 +82,8 @@ static inline NSArray *NVDecodeArrayOfObjectsOfClass(NSCoder *decoder, Class ele
 static inline id NVUnarchiveObject(NSData *data, Class rootClass) {
     if (!data) return nil;
     NSKeyedUnarchiver *coder = NVUnarchiverForData(data);
-    id object = nil;
-    @try {
-        object = [coder decodeObjectOfClass:rootClass forKey:NSKeyedArchiveRootObjectKey];
-        [coder finishDecoding];
-        [[object retain] autorelease];
-    } @finally {
-        [coder release];
-    }
+    id object = [coder decodeObjectOfClass:rootClass forKey:NSKeyedArchiveRootObjectKey];
+    [coder finishDecoding];
     return object;
 }
 

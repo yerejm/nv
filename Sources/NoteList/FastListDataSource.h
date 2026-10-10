@@ -26,7 +26,7 @@
 @class NoteAttributeColumn;
 
 @interface FastListDataSource : NSObject {
-	id *objects;
+	__unsafe_unretained id *objects;
     NSUInteger count;
 }
 

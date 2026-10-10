@@ -59,7 +59,7 @@ typedef struct _NoteCatalogEntry {
 	float titleColumnWidth;
 	NoteAttributeColumn* sortColumn;
 	
-    NoteObject **allNotesBuffer;
+    NoteObject * __unsafe_unretained *allNotesBuffer;
 	unsigned int allNotesBufferSize;
     
     NSUInteger selectedNoteIndex;

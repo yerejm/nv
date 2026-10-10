@@ -89,24 +89,21 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
     }
     
     if (!days[ThisDay]) {
-		days[ThisDay] = [NSLocalizedString(@"Today", nil) retain];
-		days[NextDay] = [NSLocalizedString(@"Tomorrow", nil) retain];
-		days[PriorDay] = [NSLocalizedString(@"Yesterday", nil) retain];
+		days[ThisDay] = NSLocalizedString(@"Today", nil);
+		days[NextDay] = NSLocalizedString(@"Tomorrow", nil);
+		days[PriorDay] = NSLocalizedString(@"Yesterday", nil);
     }
 
-    CFStringRef dateString = CFDateFormatterCreateStringWithDate(kCFAllocatorDefault, timeOnlyFormatter, date);
+    NSString *dateString = CFBridgingRelease(CFDateFormatterCreateStringWithDate(kCFAllocatorDefault, timeOnlyFormatter, date));
 	
 	if ([[GlobalPrefs defaultPrefs] horizontalLayout]) {
 		//if today, return the time only; otherwise say "Yesterday", etc.; and this method shouldn't be called unless day != NoSpecialDay
 		if (day == PriorDay || day == NextDay)
 			return days[day];
-		return [(id)dateString autorelease];
+		return dateString;
 	}
     
-    NSString *relativeTimeString = [days[day] stringByAppendingFormat:@"  %@", dateString];
-	CFRelease(dateString);
-	
-	return relativeTimeString;
+	return [days[day] stringByAppendingFormat:@"  %@", dateString];
 }
 
 //take into account yesterday/today thing
@@ -119,7 +116,7 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 	}
 	NSInteger minutesCount = (NSInteger)((NSInteger)absTime / 60);
 	
-	NSString *dateString = (NSString*)CFDictionaryGetValue(dateStringsCache, (const void *)minutesCount);
+	NSString *dateString = (__bridge NSString*)CFDictionaryGetValue(dateStringsCache, (const void *)minutesCount);
 	
 	if (!dateString) {
 		int day = dayFromAbsoluteTime(absTime);
@@ -134,7 +131,7 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 		CFDateRef date = CFDateCreate(kCFAllocatorDefault, absTime);
 		
 		if (day == NoSpecialDay) {
-			dateString = [(NSString*)CFDateFormatterCreateStringWithDate(kCFAllocatorDefault, dateAndTimeFormatter, date) autorelease];
+			dateString = CFBridgingRelease(CFDateFormatterCreateStringWithDate(kCFAllocatorDefault, dateAndTimeFormatter, date));
 		} else {
 			dateString = [NSString relativeTimeStringWithDate:date relativeDay:day];
 		}
@@ -142,7 +139,7 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 		CFRelease(date);
 		
 		//ints as pointers ints as pointers ints as pointers
-		CFDictionarySetValue(dateStringsCache, (const void *)minutesCount, (const void *)dateString);
+		CFDictionarySetValue(dateStringsCache, (const void *)minutesCount, (__bridge const void *)dateString);
 	}
 	
     return dateString;
@@ -189,8 +186,8 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 - (NSString*)fourCharTypeString {
 	if ([[self dataUsingEncoding:NSMacOSRomanStringEncoding allowLossyConversion:YES] length] >= 4) {
 		//only truncate; don't return a string containing null characters for the last few bytes
-		OSType type = NVOSTypeFromString((CFStringRef)self);
-		return [(id)NVStringFromOSType(type) autorelease];
+		OSType type = NVOSTypeFromString((__bridge CFStringRef)self);
+		return CFBridgingRelease(NVStringFromOSType(type));
 	}
 	return self;
 }
@@ -226,7 +223,7 @@ static int dayFromAbsoluteTime(CFAbsoluteTime absTime) {
 											  [NSString stringWithFormat:@"\n\r\t%C%C", (unichar)NSLineSeparatorCharacter, (unichar)NSParagraphSeparatorCharacter]];
 	
 	NSScanner *scanner = [NSScanner scannerWithString:self];
-	[scanner setCharactersToBeSkipped:[[[NSMutableCharacterSet alloc] init] autorelease]];
+	[scanner setCharactersToBeSkipped:[[NSMutableCharacterSet alloc] init]];
 	
 	//skip any blank space before the title; this will not be preserved for round-tripped syncing
 	BOOL didSkipInitialWS = [scanner scanCharactersFromSet:[NSCharacterSet whitespaceAndNewlineCharacterSet] intoString:NULL];
@@ -380,8 +377,8 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 	
 	//here we are making assumptions (based on observations and CFString.c) about the implementation of CFStringGetCStringPtr:
 	//with a non-western language preference, kCFStringEncodingASCII or another Latin variant must be used instead of kCFStringEncodingMacRoman
-	if ((cstringPtr = CFStringGetCStringPtr((CFStringRef)self, kCFStringEncodingMacRoman)) ||
-		(cstringPtr = CFStringGetCStringPtr((CFStringRef)self, kCFStringEncodingASCII))) {
+	if ((cstringPtr = CFStringGetCStringPtr((__bridge CFStringRef)self, kCFStringEncodingMacRoman)) ||
+		(cstringPtr = CFStringGetCStringPtr((__bridge CFStringRef)self, kCFStringEncodingASCII))) {
 		
 		size_t length = [self length];
 		char *cstringBuffer = (char*)malloc(length + 1);
@@ -398,10 +395,11 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 
 - (const char*)lowercaseUTF8String {
 	
-	CFMutableStringRef str2 = CFStringCreateMutableCopy(NULL, 0, (CFStringRef)self);
+	//the returned C string may point into this copy, so it lives until the autorelease pool drains
+	CFMutableStringRef str2 = (CFMutableStringRef)CFAutorelease(CFStringCreateMutableCopy(NULL, 0, (__bridge CFStringRef)self));
 	CFStringLowercase(str2, NULL);
 	
-	const char *utf8String = [(NSString*)str2 UTF8String];
+	const char *utf8String = [(__bridge NSString*)str2 UTF8String];
 	
 	if (!utf8String) {
 		
@@ -416,21 +414,20 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 			
 		} else {
 			//-UTF8String failed and CFStringGetCStringPtr was not a good fallback; try lossy MacOSRoman and pray
-			NSMutableData *nullTerminatedData = [[[(NSString*)str2 dataUsingEncoding:NSMacOSRomanStringEncoding allowLossyConversion:YES] mutableCopy] autorelease];
+			NSMutableData *nullTerminatedData = [[(__bridge NSString*)str2 dataUsingEncoding:NSMacOSRomanStringEncoding allowLossyConversion:YES] mutableCopy];
 			[nullTerminatedData appendBytes:"\0" length:1];
 			utf8String = [nullTerminatedData bytes];
 		}
 	}
-	[(id)str2 autorelease];
 	return utf8String;
 }
 
 - (NSString *)stringByReplacingPercentEscapes {
-    return [(NSString*) CFURLCreateStringByReplacingPercentEscapes(NULL, (CFStringRef) self, CFSTR("")) autorelease];
+    return CFBridgingRelease(CFURLCreateStringByReplacingPercentEscapes(NULL, (__bridge CFStringRef)self, CFSTR("")));
 }
 
 - (NSString*)stringWithPercentEscapes {
-    NSMutableCharacterSet *allowed = [[[NSCharacterSet URLQueryAllowedCharacterSet] mutableCopy] autorelease];
+    NSMutableCharacterSet *allowed = [[NSCharacterSet URLQueryAllowedCharacterSet] mutableCopy];
     [allowed removeCharactersInString:@"=,!$&'()*+;@?\n\"<>#\t :/"];
     return [self stringByAddingPercentEncodingWithAllowedCharacters:allowed];
 }
@@ -439,7 +436,7 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 	static NSDictionary *reasons = nil;
 	if (!reasons) {
 		NSURL *url = [[NSBundle mainBundle] URLForResource:@"CarbonErrorStrings" withExtension:@"plist"];
-		if (url) reasons = [[NSDictionary dictionaryWithContentsOfURL:url error:NULL] retain];
+		if (url) reasons = [NSDictionary dictionaryWithContentsOfURL:url error:NULL];
 	}
 	
 	NSString *reason = [reasons objectForKey:[[NSNumber numberWithInt:(int)err] stringValue]];
@@ -456,7 +453,7 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 
 - (CFUUIDBytes)uuidBytes {
 	CFUUIDBytes bytes = {0};
-	CFUUIDRef uuidRef = CFUUIDCreateFromString(NULL, (CFStringRef)self);
+	CFUUIDRef uuidRef = CFUUIDCreateFromString(NULL, (__bridge CFStringRef)self);
 	if (uuidRef) {
 		bytes = CFUUIDGetUUIDBytes(uuidRef);
 		CFRelease(uuidRef);
@@ -474,7 +471,7 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 		CFRelease(uuidRef);
 	}
 	
-	return [(NSString*)uuidString autorelease];	
+	return CFBridgingRelease(uuidString);
 }
 
 
@@ -484,7 +481,7 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 
 - (NSData *)decodeBase64WithNewlines:(BOOL)encodedWithNewlines {
     NSDataBase64DecodingOptions options = encodedWithNewlines ? NSDataBase64DecodingIgnoreUnknownCharacters : 0;
-    NSData *decoded = [[[NSData alloc] initWithBase64EncodedString:self options:options] autorelease];
+    NSData *decoded = [[NSData alloc] initWithBase64EncodedString:self options:options];
     return decoded ? [NSMutableData dataWithData:decoded] : [NSMutableData data];
 }
 
@@ -597,7 +594,7 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 + (NSCharacterSet*)labelSeparatorCharacterSet {
 	static NSMutableCharacterSet *charSet = nil;
 	if (!charSet) {
-		charSet = [[NSMutableCharacterSet whitespaceCharacterSet] retain];
+		charSet = [NSMutableCharacterSet whitespaceCharacterSet];
 		[charSet formUnionWithCharacterSet:[NSCharacterSet characterSetWithCharactersInString:@",;"]];
 	}
 
@@ -607,8 +604,8 @@ BOOL IsHardLineBreakUnichar(unichar uchar, NSString *str, unsigned charIndex) {
 + (NSCharacterSet*)listBulletsCharacterSet {
 	static NSCharacterSet *charSet = nil;
 	if (!charSet) {
-		charSet = [[NSCharacterSet characterSetWithCharactersInString:[NSString stringWithFormat:@"-+*!#%C%C%C%C%C%C%C", 
-																	   0x2022, 0x2014, 0x2013, 0x2043, 0x2713, 0x25AA, 0x25C6]] retain];
+		charSet = [NSCharacterSet characterSetWithCharactersInString:[NSString stringWithFormat:@"-+*!#%C%C%C%C%C%C%C", 
+																	   0x2022, 0x2014, 0x2013, 0x2043, 0x2713, 0x25AA, 0x25C6]];
 	}
 	
 	return charSet;

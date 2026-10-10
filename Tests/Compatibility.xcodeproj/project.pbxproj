@@ -570,6 +570,11 @@
 			<string>PBXBuildFile</string>
 			<key>fileRef</key>
 			<string>00000000000000000000001B</string>
+			<key>settings</key>
+			<dict>
+				<key>COMPILER_FLAGS</key>
+				<string>-fobjc-arc</string>
+			</dict>
 		</dict>
 		<key>000000000000000000000033</key>
 		<dict>
@@ -670,6 +675,8 @@
 				<string>15.0</string>
 				<key>CLANG_ENABLE_OBJC_ARC</key>
 				<string>NO</string>
+				<key>CLANG_ENABLE_OBJC_WEAK</key>
+				<string>NO</string>
 				<key>GCC_PREFIX_HEADER</key>
 				<string>$(SRCROOT)/../Configuration/Notation_Prefix.pch</string>
 				<key>HEADER_SEARCH_PATHS</key>
@@ -734,6 +741,8 @@
 				<key>MACOSX_DEPLOYMENT_TARGET</key>
 				<string>15.0</string>
 				<key>CLANG_ENABLE_OBJC_ARC</key>
+				<string>NO</string>
+				<key>CLANG_ENABLE_OBJC_WEAK</key>
 				<string>NO</string>
 				<key>GCC_PREFIX_HEADER</key>
 				<string>$(SRCROOT)/../Configuration/Notation_Prefix.pch</string>
