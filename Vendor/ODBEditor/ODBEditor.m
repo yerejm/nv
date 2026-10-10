@@ -59,7 +59,6 @@ static ODBEditor	*_sharedODBEditor;
 		UInt32  packageCreator = 0;
 		
 		if (_sharedODBEditor != nil) {
-			[self autorelease];
 			[NSException raise: NSInternalInconsistencyException format: @"ODBEditor is a singleton - use [ODBEditor sharedODBEditor]"];
 			return nil;
 		}
@@ -92,20 +91,15 @@ static ODBEditor	*_sharedODBEditor;
 	[appleEventManager removeEventHandlerForEventClass: kODBEditorSuite andEventID: kAEModifiedFile];
 	[appleEventManager removeEventHandlerForEventClass: kODBEditorSuite andEventID: kAEClosedFile];
 	[[NSNotificationCenter defaultCenter] removeObserver:self];
-	[_filePathsBeingEdited release];
-	[editingSpacePreparer release];
-	[super dealloc];
 }
 
 - (void)initializeDatabase:(NotationPrefs*)prefs {
 	TemporaryFileCachePreparer *preparer = [[TemporaryFileCachePreparer alloc] initWithNotationPrefs:prefs];
 	//settings are reapplied often; the current space is kept while its protection still matches
 	if (editingSpacePreparer && [editingSpacePreparer protectsContents] == [preparer protectsContents]) {
-		[preparer release];
 		return;
 	}
 	[editingSpacePreparer releaseEditingSpaceWaiting:NO];
-	[editingSpacePreparer release];
 	editingSpacePreparer = preparer;
 }
 
@@ -133,7 +127,10 @@ static ODBEditor	*_sharedODBEditor;
 }
 
 - (BOOL)editNote:(NoteObject*)aNote inEditor:(ExternalEditor*)ed context:(NSDictionary *)context {
-	if (!aNote) goto beepReturn;
+	if (!aNote) {
+		NSBeep();
+		return NO;
+	}
 	
 	//let's first see if we can avoid this whole ODB protocol rigmarole altogether, and ideally even allow non-plain-text editors to be used		
 	if ([ed canEditNoteDirectly:aNote]) {
@@ -150,11 +147,13 @@ static ODBEditor	*_sharedODBEditor;
 	
 	if (!editingSpacePreparer) {
 		NSLog(@"not editing '%@' because no database has initialized an editing space", aNote);
-		goto beepReturn;
+		NSBeep();
+		return NO;
 	}
 	if (![ed isODBEditor]) {
 		NSLog(@"not editing '%@' with '%@' because it is not an ODB editor and the note-file cannot be saved directly", aNote, ed);
-		goto beepReturn;
+		NSBeep();
+		return NO;
 	}
 	
 	BOOL protectsContents = [editingSpacePreparer protectsContents];
@@ -180,9 +179,6 @@ static ODBEditor	*_sharedODBEditor;
 		[self _editFile:path inEditor:ed options:[NSDictionary dictionaryWithObject:titleOfNote(aNote) forKey:ODBEditorCustomPathKey] forClient:aNote context:context];
 	}];
 	return YES;
-beepReturn:
-	NSBeep();
-	return NO;
 }
 
 @end
@@ -228,8 +224,8 @@ beepReturn:
     [configuration setAppleEvent:event];
     [[NSWorkspace sharedWorkspace] openApplicationAtURL:applicationURL configuration:configuration completionHandler:^(NSRunningApplication *application, NSError *error) {
         dispatch_async(dispatch_get_main_queue(), ^{
-            if (error && [_filePathsBeingEdited objectForKey:path] == record) {
-                [_filePathsBeingEdited removeObjectForKey:path];
+            if (error && [self->_filePathsBeingEdited objectForKey:path] == record) {
+                [self->_filePathsBeingEdited removeObjectForKey:path];
                 [[NSFileManager defaultManager] removeItemAtPath:path error:NULL];
                 [self _releaseEditingSpaceIfUnused];
                 NSLog(@"Could not open external editing session: %@", error);
@@ -242,10 +238,10 @@ beepReturn:
 
 - (void)handleModifiedFileEvent:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
 	NSAppleEventDescriptor *fpDescriptor = [[event paramDescriptorForKeyword: keyDirectObject] coerceToDescriptorType: typeFileURL];
-	NSString *urlString = [[[NSString alloc] initWithData: [fpDescriptor data] encoding: NSUTF8StringEncoding] autorelease];
+	NSString *urlString = [[NSString alloc] initWithData: [fpDescriptor data] encoding: NSUTF8StringEncoding];
 	NSString *path = [[[NSURL URLWithString: urlString] path] stringByResolvingSymlinksInPath];
 	NSAppleEventDescriptor	*nfpDescription = [[event paramDescriptorForKeyword: keyNewLocation] coerceToDescriptorType: typeFileURL];
-	NSString *newUrlString = [[[NSString alloc] initWithData: [nfpDescription data] encoding: NSUTF8StringEncoding] autorelease];
+	NSString *newUrlString = [[NSString alloc] initWithData: [nfpDescription data] encoding: NSUTF8StringEncoding];
 	NSString *newPath = [[NSURL URLWithString: newUrlString] path];
 	NSDictionary *dictionary = [_filePathsBeingEdited objectForKey: path];
 	
@@ -272,7 +268,7 @@ beepReturn:
 
 - (void)handleClosedFileEvent:(NSAppleEventDescriptor *)event withReplyEvent:(NSAppleEventDescriptor *)replyEvent {
 	NSAppleEventDescriptor  *descriptor = [[event paramDescriptorForKeyword: keyDirectObject] coerceToDescriptorType: typeFileURL];
-	NSString				*urlString = [[[NSString alloc] initWithData: [descriptor data] encoding: NSUTF8StringEncoding] autorelease];
+	NSString				*urlString = [[NSString alloc] initWithData: [descriptor data] encoding: NSUTF8StringEncoding];
 	NSString				*fileName = [[[NSURL URLWithString: urlString] path] stringByResolvingSymlinksInPath];
 	NSDictionary			*dictionary = [_filePathsBeingEdited objectForKey: fileName];
 	

@@ -32,8 +32,8 @@
 		2128651E1278AF220013820A /* ServicesMenu.strings in Resources */ = {isa = PBXBuildFile; fileRef = 2128651C1278AF220013820A /* ServicesMenu.strings */; };
 		21286597128B14F10013820A /* Kontaktdaten.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 21286591128B14F10013820A /* Kontaktdaten.nvhelp */; };
 		21286598128B14F10013820A /* Wie funktioniert dieses Programm?.nvhelp in Resources */ = {isa = PBXBuildFile; fileRef = 21286593128B14F10013820A /* Wie funktioniert dieses Programm?.nvhelp */; };
-		212897E61330030100380B64 /* ODBEditor.m in Sources */ = {isa = PBXBuildFile; fileRef = 212897E31330030100380B64 /* ODBEditor.m */; };
-		212897E71330030100380B64 /* NSAppleEventDescriptor-Extensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 212897E41330030100380B64 /* NSAppleEventDescriptor-Extensions.m */; };
+		212897E61330030100380B64 /* ODBEditor.m in Sources */ = {isa = PBXBuildFile; fileRef = 212897E31330030100380B64 /* ODBEditor.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
+		212897E71330030100380B64 /* NSAppleEventDescriptor-Extensions.m in Sources */ = {isa = PBXBuildFile; fileRef = 212897E41330030100380B64 /* NSAppleEventDescriptor-Extensions.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		212B84620978422300F3597F /* NSString_NV.m in Sources */ = {isa = PBXBuildFile; fileRef = 212B84610978422300F3597F /* NSString_NV.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		212DCA470A6AD28700F74E46 /* EncodingsManager.m in Sources */ = {isa = PBXBuildFile; fileRef = 212DCA460A6AD28700F74E46 /* EncodingsManager.m */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		212DCB310A6AE38500F74E46 /* EncodingsManager.xib in Resources */ = {isa = PBXBuildFile; fileRef = 212DCB2F0A6AE38500F74E46 /* EncodingsManager.xib */; };
